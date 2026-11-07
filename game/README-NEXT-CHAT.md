@@ -20,6 +20,11 @@ Hi Claude. This is MajorasPride's game, and we build it together, one chat at a 
 6. I play on PC and on my phone.
 
 =====================================================================
+## v8.4.1 "WHO'S NEXT" (Nov 7, 2026)
+=====================================================================
+- `38-titan-status.js`: select-screen tags + a note on the titan file. Edit `TITAN_STATUS` when a titan is finished (remove it) or becomes next (`'next'`); `TITAN_SOON` holds the shadow cards (VOIDMAW). Notes: `patch-notes/v8.4.1.md`.
+
+=====================================================================
 ## v8.4 "NEW INFERNOTH + LOADOUT" (Nov 7, 2026)
 =====================================================================
 - Moved from `sandbox/src/` into `tools/v8-src/`: `32-infernoth-brawler.js` (armor, rage, BRAWLER), `33-infernoth-meltdown-ults.js` (MELTDOWN, KING, LAVA DOMAIN, GROUND ZERO), `34-poses-all.js`, `35-loadout.js` (paths, goals, Focus swaps, elements, upgrade card), `36-element-looks.js`, `37-loadout-page.js` (titan file page follows the element + DEFAULT picks on the select screen).
