@@ -15,7 +15,7 @@
    ===================================================================== */
 VULT.sword.announce="IF I DON'T... WHO WILL!";   // MajorasPride: said when the ultimate starts (Goku-style line)
 VULT.sword.line="LET THEM COME.";   // MajorasPride: said in the cutscene when it lands (Optimus Prime nod)
-VULT.brawl.announce="";
+VULT.brawl.announce="FEAR NOT! I'M HERE NOW!";   // MajorasPride: Brawler intro line (Nov 6)
 VULT.brawl.line="THIS CITY HAS A SHIELD!";   // MajorasPride picked this one (Nov 6)
 VULT.brawl.name='STAR RUSH';
 const CINE={on:false};
