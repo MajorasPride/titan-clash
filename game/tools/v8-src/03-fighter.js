@@ -41,8 +41,8 @@ function v8Input(f,inp,dt){ const A=f.atk, canAct=!f.dead&&f.stun<=0&&game.state
  // SUPER / ULTIMATE
  if(inp.super>0&&canAct&&(!A||A.id==='stance')){ inp.super=0;
   if(!f.ultUsed&&f.hp/f.def.hp<=.25){ f.ultUsed=true; f.dropHeld(); f.v8fly=false; f.atk=null; f.startAtk('ultimate'); v8UltStart(f); }
-  else if(f.coreReady){ inp.super=.25; } // let the old code run the Titan Core super
-  else if(f.isPlayer) toast('ULTIMATE UNLOCKS BELOW 25% HEALTH','#ffd43b',1100); }
+  else if(f.coreReady){ f.coreReady=false; f.dropHeld(); f.v8fly=false; f.atk=null; f.startAtk('ultimate'); v8UltStart(f); } // v8.4.3: the Titan Core fires the titan's real ultimate (was the old pre-v8.3 super). It doesn't use up the low-health one
+  else if(f.isPlayer) toast('ULTIMATE UNLOCKS BELOW 25% HEALTH, OR GRAB A TITAN CORE','#ffd43b',1100); }
  // stance
  if(inp.transform>0){ inp.transform=0; if(canAct&&!A&&f.tfCd<=0) v8Stance(f); }
  // flight (RAGNAVOX): jump again in the air to take off, jump in the air again to drop

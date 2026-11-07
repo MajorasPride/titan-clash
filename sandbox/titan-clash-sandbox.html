@@ -2387,7 +2387,7 @@ function updateTopple(dt){ for(let i=topplers.length-1;i>=0;i--){ const T=topple
   Snd.boom(); Snd.thud(); game.shake=Math.max(game.shake,1.2);
   if(game.p) for(const f of [game.p,game.e]){ if(f.dead||f.hidden||f.pos.y>14) continue; const px=f.pos.x-x0, pz=f.pos.z-z0, t=px*T.dx+pz*T.dz, sd=px*T.dz-pz*T.dx;
    if(t>-2&&t<L+2&&Math.abs(sd)<half+f.radius()){ f.takeHit(T.by&&T.by!==f?T.by:HZ,34,30,8,false,{x:T.dz*Math.sign(sd||1),z:-T.dx*Math.sign(sd||1)}); News.add(`${f.def.name} GETS FLATTENED BY A FALLING SKYSCRAPER!`,true,'flat',4); } } } }
-const PU={health:{c:0x51ff7a,label:'+HEALTH'},energy:{c:0x4dc9ff,label:'+ENERGY'},rage:{c:0xff3b3b,label:'RAGE MODE!'},core:{c:0xffd23f,label:'TITAN CORE! SUPER READY!'}};
+const PU={health:{c:0x51ff7a,label:'+HEALTH'},energy:{c:0x4dc9ff,label:'+ENERGY'},rage:{c:0xff3b3b,label:'RAGE MODE!'},core:{c:0xffd23f,label:'TITAN CORE! ULTIMATE READY!'}};
 const puGeo=new THREE.OctahedronGeometry(1.5,0), puMats={};
 function spawnPickup(type,x,z,y){ const m=new THREE.Mesh(puGeo,puMats[type]||(puMats[type]=glowM(PU[type].c,2.6))); m.position.set(x,y||2.5,z); if(type==='core') m.scale.setScalar(1.6); scene.add(m); const p={type,m,x,z,t:0,life:type==='core'?60:25,chute:null}; pickups.push(p); return p; }
 function maybeDrop(x,z){ if(game.mode!=='match'||game.state!=='fight'||Math.random()>.22||pickups.length>6) return; const r=Math.random(); spawnPickup(r<.45?'health':r<.85?'energy':'rage',x,z); }
@@ -2407,7 +2407,7 @@ function updateHazards(dt){ if(game.mode!=='match'||game.state!=='fight'||!game.
  for(const l of lavaPools) for(const f of fs){ if(!f.dead&&!f.hidden&&f.pos.y<1&&Math.hypot(f.pos.x-l.x,f.pos.z-l.z)<l.r+1){ f.takeHit(HZ,14*dt,0,0,true,{x:f.pos.x-l.x+.01,z:f.pos.z-l.z}); if(Math.random()<.3) burst(f.pos.clone().setY(1),0xff5a14,2,6); if(f.isPlayer) toast('HOT! GET OUT OF THE LAVA!','#ff6a2c',500); } }
  game.hzT-=dt;
  game.dropT-=dt; if(game.dropT<=0){ game.dropT=rand(26,36); supplyDrop(); }
- if(!game.coreDone){ game.coreT-=dt; if(game.coreT<=0){ game.coreDone=true; for(let t=0;t<20;t++){ const x=rand(-35,35), z=rand(-35,35); if(inBuilding(x,z,3)) continue; spawnPickup('core',x,z,3); News.add('A GLOWING TITAN CORE HAS APPEARED! WHOEVER GRABS IT GETS A SUPER MOVE',true); toast('A TITAN CORE APPEARED!','#ffd23f',1500); break; } } }
+ if(!game.coreDone){ game.coreT-=dt; if(game.coreT<=0){ game.coreDone=true; for(let t=0;t<20;t++){ const x=rand(-35,35), z=rand(-35,35); if(inBuilding(x,z,3)) continue; spawnPickup('core',x,z,3); News.add('A GLOWING TITAN CORE HAS APPEARED! WHOEVER GRABS IT GETS AN ULTIMATE',true); toast('A TITAN CORE APPEARED!','#ffd23f',1500); break; } } }
 }
 
 /* ================= DISASTERS: every city's disaster escalates in 3 stages and fights back ================= */
@@ -4027,8 +4027,8 @@ function v8Input(f,inp,dt){ const A=f.atk, canAct=!f.dead&&f.stun<=0&&game.state
  // SUPER / ULTIMATE
  if(inp.super>0&&canAct&&(!A||A.id==='stance')){ inp.super=0;
   if(!f.ultUsed&&f.hp/f.def.hp<=.25){ f.ultUsed=true; f.dropHeld(); f.v8fly=false; f.atk=null; f.startAtk('ultimate'); v8UltStart(f); }
-  else if(f.coreReady){ inp.super=.25; } // let the old code run the Titan Core super
-  else if(f.isPlayer) toast('ULTIMATE UNLOCKS BELOW 25% HEALTH','#ffd43b',1100); }
+  else if(f.coreReady){ f.coreReady=false; f.dropHeld(); f.v8fly=false; f.atk=null; f.startAtk('ultimate'); v8UltStart(f); } // v8.4.3: the Titan Core fires the titan's real ultimate (was the old pre-v8.3 super). It doesn't use up the low-health one
+  else if(f.isPlayer) toast('ULTIMATE UNLOCKS BELOW 25% HEALTH, OR GRAB A TITAN CORE','#ffd43b',1100); }
  // stance
  if(inp.transform>0){ inp.transform=0; if(canAct&&!A&&f.tfCd<=0) v8Stance(f); }
  // flight (RAGNAVOX): jump again in the air to take off, jump in the air again to drop
