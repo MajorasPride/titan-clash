@@ -20,6 +20,11 @@ Hi Claude. This is MajorasPride's game, and we build it together, one chat at a 
 6. I play on PC and on my phone.
 
 =====================================================================
+## v8.4.2 buildings break again (Nov 7, 2026)
+=====================================================================
+- `39-building-hits.js`: the new kits' hit code (coneHit, landHit...) only checks the rival. A wrapper on `FP.update` calls `bldSwing()` once per attack when `a.t` passes `a.hitAt` (close-up moves only; ultimates and ranged moves have their own). Damage per button in `BLDHIT`. Testing tip: headless Chrome runs a few frames a second, so wait until `f.atk` ends (not a fixed time) and keep `f.yaw` facing the building (attacks face the camera's `aimYaw`). Notes: `patch-notes/v8.4.2.md`.
+
+=====================================================================
 ## v8.4.1 "WHO'S NEXT" (Nov 7, 2026)
 =====================================================================
 - `38-titan-status.js`: select-screen tags + a note on the titan file. Edit `TITAN_STATUS` when a titan is finished (remove it) or becomes next (`'next'`); `TITAN_SOON` holds the shadow cards (VOIDMAW). Notes: `patch-notes/v8.4.1.md`.

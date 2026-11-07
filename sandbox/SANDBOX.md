@@ -23,6 +23,9 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 14e (Nov 7, 2026): rebuilt with the game's v8.4.2
+- VALOR's and INFERNOTH's moves break buildings again (they never hit buildings since the new kits). Comes from the game fix, `game/tools/v8-src/39-building-hits.js`.
+
 ### Sandbox 14d (Nov 7, 2026): rebuilt with the game's v8.4.1
 - Same sandbox, rebuilt from v8.4.1 (the select screen's who's-next tags and the VOIDMAW coming-soon card). VOIDMAW is still playable here from ⚙ → TITANS.
 

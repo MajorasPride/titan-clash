@@ -25,6 +25,9 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 14e (Nov 7, 2026): rebuilt with the game's v8.4.2
+- VALOR's and INFERNOTH's moves break buildings again (they never hit buildings since the new kits). Comes from the game fix, `game/tools/v8-src/39-building-hits.js`.
+
 ### Sandbox 14d (Nov 7, 2026): rebuilt with the game's v8.4.1
 - Same sandbox, rebuilt from v8.4.1 (the select screen's who's-next tags and the VOIDMAW coming-soon card). VOIDMAW is still playable here from ⚙ → TITANS.
 
@@ -678,6 +681,9 @@ v8.4 NEW INFERNOTH + LOADOUT (Nov 7, 2026). From the sandbox (Sandbox 13 to 14b)
 v8.4.1 WHO'S NEXT (Nov 7, 2026). Select screen tags: ASHVIN = NEXT UP · IN THE LAB, RAIKOU and RAGNAVOX =
     OLD KIT · REWORK COMING (still playable), finished titans have no tag, and a shadow VOIDMAW · COMING SOON
     card (can't be picked). The titan file shows the same note. Code: tools/v8-src/38-titan-status.js.
+v8.4.2 BUILDINGS BREAK AGAIN (Nov 7, 2026). The new moves (VALOR since v8.3, INFERNOTH since v8.4) only
+    checked for the rival, so they never hurt buildings (Destroy the City didn't work). Every close-up move now
+    hits the buildings in front of the titan once per swing. Code: tools/v8-src/39-building-hits.js.
 
 #####################################################################
 -->
@@ -7161,6 +7167,33 @@ function titanTags(){ if(typeof v8tabs==='undefined'||vsMode==='story') return;
  if(st&&doss.style.display!=='none'){ const h=doss.querySelector('.cn'); if(h&&!doss.querySelector('.tnote')){ const n=document.createElement('div'); n.className='tnote '+st; n.innerHTML=`<b>${STATUS_TXT[st]}</b>${STATUS_FILE[st]}`; h.after(n); } } }
 { const o=renderDossier; renderDossier=function(){ const r=o(); try{ titanTags(); }catch(e){ console.error(e); } return r; }; }
 
+/* =====================================================================
+   v8.4.2 (Nov 7, 2026): BUILDINGS TAKE HITS FROM THE NEW MOVES. MajorasPride: "I can't destroy buildings...
+   buildings need hitboxes too." The new kits (VALOR since v8.3, INFERNOTH since v8.4) only checked for the
+   rival, never for buildings, so in Destroy the City (no rival) they hit nothing.
+   Now every close-up move with a hit moment also hits the buildings in front of the titan, once per swing.
+   Building damage by button: LIGHT 14 · MEDIUM 28 · HEAVY 55 (up to 2x when charged) · SPECIAL 45 · other moves 30.
+   Ultimates, beams, shots, stomps and grabs already had their own building damage and are left alone.
+   ===================================================================== */
+const BLDHIT={light:14,medium:28,heavy:55,special:45,other:30,reach:9,width:11};
+function bldClass(f,id){ const F=f.F||{};
+ if(LIGHT.includes(id)||id===F.J) return 'light';
+ if(id===F.K||(HEAVYSET[F.K]&&HEAVYSET[F.K].includes(id))) return 'heavy';
+ if(id===F.M) return 'medium'; if(id===F.L) return 'special'; return 'other'; }
+function bldSwing(f,a){ const M=MOVES[a.id]||{}; if(a.id==='ultimate'||M.ranged||a.id==='stance'||a.id==='bweave') return;
+ const fx=Math.sin(f.yaw), fz=Math.cos(f.yaw), rad=f.radius(), reach=rad+BLDHIT.reach*(f.scale||1);
+ const cx=f.pos.x+fx*(rad+reach*.5), cz=f.pos.z+fz*(rad+reach*.5);
+ let dmg=BLDHIT[bldClass(f,a.id)]*(1+Math.min(1,a.chg||0)); let n=0;
+ for(const b of city){ if(!b.alive) continue;
+  const px=clamp(cx,b.x-b.w/2,b.x+b.w/2), pz=clamp(cz,b.z-b.d/2,b.z+b.d/2), dx=px-f.pos.x, dz=pz-f.pos.z, d=Math.hypot(dx,dz);
+  if(d>reach+rad*.5) continue; if(d>1&&(dx*fx+dz*fz)/d<.35) continue;                       // only in front of him
+  if(f.pos.y-(f._floor||0)>b.h+2) continue;                                                // jumping over the roof
+  if(bHit(b,dmg,fx,fz,Math.min(b.h-1,f.pos.y+6*(f.scale||1)),f,px,pz)){ n++; if(n>=2) break; } }
+ if(n) game.shake=Math.max(game.shake,.25); }
+{ const o=FP.update; FP.update=function(dt,inp,opp){ const r=o.call(this,dt,inp,opp);
+  try{ const a=this.atk; if(a&&isCore(this)&&!a._bld&&a.hitAt!=null&&a.t>=a.hitAt&&game.state==='fight'&&game.mode==='match'){ a._bld=1; bldSwing(this,a); } }catch(e){ console.error(e); }
+  return r; }; }
+
 </script>
 <!-- V8 END -->
 <!-- SANDBOX START -->
@@ -7489,7 +7522,7 @@ function spdSync(){ document.querySelectorAll('#sbMenu [data-spd]').forEach(b=>b
 
 /* Which sandbox build is this? Shown small in the top-right corner and in the ⚙ menu, so an old (cached) copy is easy to spot.
    Bump SB_BUILD every time the sandbox is pushed. */
-const SB_BUILD='14d · Nov 7';
+const SB_BUILD='14e · Nov 7';
 { const d=document.createElement('div'); d.id='sbVer'; d.textContent='SANDBOX '+SB_BUILD;
   d.style.cssText="position:fixed;right:8px;bottom:6px;z-index:25;font:10px/1 'Russo One',sans-serif;letter-spacing:1px;color:#9fb3c8;opacity:.75;pointer-events:none";
   document.body.appendChild(d); }
