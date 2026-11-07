@@ -472,6 +472,9 @@ v8.3 NEW VALOR (Nov 7, 2026). Everything approved in the sandbox moved into the 
     (fonts/ui-fonts.js). WORLDROOT is off the roster (archive/titan-clash-worldroot-archive.js); the
     Titan Lab code and its "+ BUILD YOUR OWN" card came out (archive/titan-clash-titan-lab-archive.js).
     Code: tools/v8-src/10-31. Notes: patch-notes/v8.3.md.
+v8.3.1 BUG FIXES (Nov 7, 2026). The heavy button no longer stays "KO!" after you stop playing VALOR.
+    Buildings smashed while a cutscene had them hidden stay gone (no more ghost buildings after an
+    ultimate). Code: tools/v8-src/14-valor-boxer.js, 24-cine-view.js. Notes: patch-notes/v8.3.1.md.
 
 #####################################################################
 -->
@@ -4969,7 +4972,8 @@ function koAdd(f,n){ if(!f||f.def.id!=='valor') return; const was=f.ko||0; f.ko=
 #koBar.full .t div{background:#fff;box-shadow:0 0 10px #ffd43b}#koBar.full{animation:koP .5s infinite alternate}@keyframes koP{to{color:#fff}}
 @media (pointer:coarse){#koBar{left:40px;top:126px;width:110px}}`; document.head.appendChild(s); }
 function koTick(){ let b=el('koBar'); const p=game.p; if(!b){ b=document.createElement('div'); b.id='koBar'; b.innerHTML='KO PUNCH<div class="t"><div></div></div>'; document.body.appendChild(b); }
- const on=!!(p&&game.mode==='match'&&p.def.id==='valor'); b.style.display=on?'block':'none'; if(!on) return;
+ const on=!!(p&&game.mode==='match'&&p.def.id==='valor'); b.style.display=on?'block':'none';
+ if(!on){ const hv=document.querySelector('#tbtns .hv'); if(hv&&hv.textContent!=='HEAVY') hv.textContent='HEAVY'; return; }   // Nov 7 fix: KO! stayed on the heavy button after switching away from VALOR
  const k=p.ko||0; b.firstChild.textContent=k>=100?(isBrawl(p)?'KO PUNCH READY · HEAVY':'KO READY · BRAWLER'):'KO PUNCH'; b.querySelector('.t div').style.width=k+'%'; b.classList.toggle('full',k>=100);
  const hv=document.querySelector('#tbtns .hv'); if(hv) hv.textContent=k>=100&&isBrawl(p)?'KO!':'HEAVY'; }
 { const o=updateHUD; updateHUD=function(dt){ o(dt); try{ koTick(); }catch(e){ console.error(e); } }; }
@@ -4979,7 +4983,7 @@ function koTick(){ let b=el('koBar'); const p=game.p; if(!b){ b=document.createE
 SB.ultRdy=true;
 { const oI=v8Input; v8Input=function(f,inp,dt){
   if(SB.ultRdy&&(f===game.p)&&game.state==='fight'){
-   if(f.def.id==='valor') f.ko=100;
+   if(f.def.id==='valor'&&!SB.meterCtl) f.ko=100;   // the sandbox's METERS tool (meterCtl) handles the KO meter itself
    const canAct=!f.dead&&f.stun<=0&&f.rollT<=0&&!f.grabbedBy;
    if(inp.super>0&&canAct&&(!f.atk||f.atk.id==='stance')&&!(f.atk&&f.atk.id==='ultimate')){ inp.super=0; f.ultUsed=true; f.dropHeld&&f.dropHeld(); f.v8fly=false; f.atk=null; f.startAtk('ultimate'); v8UltStart(f); } }
   return oI(f,inp,dt); }; }
@@ -5802,9 +5806,12 @@ function segHitsBox(x0,z0,x1,z1,b,pad){ const minX=b.x-b.w/2-pad, maxX=b.x+b.w/2
 function viewClear(){ const f=CINE.f, o=CINE.o; if(!f||!o) return; const c=camera.position, want=new Set();
  for(const b of city){ if(!b.alive&&!(b.mesh&&b.mesh.visible)) continue;
   for(const t of [f.pos,o.pos,f.chest(),o.chest()]){ if(segHitsBox(c.x,c.z,t.x,t.z,b,4)){ want.add(b); break; } } }
- for(const b of VIEW.hid) if(!want.has(b)){ for(const m of bParts(b)) m.visible=true; VIEW.hid.delete(b); }
+ for(const b of VIEW.hid) if(!want.has(b)){ viewShow(b); VIEW.hid.delete(b); }
  for(const b of want) if(!VIEW.hid.has(b)){ const parts=bParts(b); if(!parts.some(m=>m.visible)) continue; for(const m of parts) m.visible=false; VIEW.hid.add(b); } }
-function viewRestore(){ for(const b of VIEW.hid) for(const m of bParts(b)) m.visible=true; VIEW.hid.clear(); }
+// Nov 7 fix (phantom buildings): a building smashed while it was hidden for the camera stays gone. Only standing
+// (or still-toppling) buildings come back; before, every hidden building was switched back on, so smashed ones returned as ghosts.
+function viewShow(b){ const gone=!b.alive&&!(typeof topplers!=='undefined'&&topplers.some(T=>T.b===b)); for(const m of bParts(b)) m.visible=!gone; }
+function viewRestore(){ for(const b of VIEW.hid) viewShow(b); VIEW.hid.clear(); }
 { const oC=updateCamera; updateCamera=function(dt){ const r=oC(dt); if(CINE.on&&game.mode==='match'){ try{ viewClear(); }catch(e){ console.error(e); } } else if(VIEW.hid.size) viewRestore(); return r; }; }
 { const o=cineEnd; cineEnd=function(){ o(); viewRestore(); }; }
 { const oR=sbReset; sbReset=function(){ viewRestore(); oR(); }; }

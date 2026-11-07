@@ -69,7 +69,8 @@ function koAdd(f,n){ if(!f||f.def.id!=='valor') return; const was=f.ko||0; f.ko=
 #koBar.full .t div{background:#fff;box-shadow:0 0 10px #ffd43b}#koBar.full{animation:koP .5s infinite alternate}@keyframes koP{to{color:#fff}}
 @media (pointer:coarse){#koBar{left:40px;top:126px;width:110px}}`; document.head.appendChild(s); }
 function koTick(){ let b=el('koBar'); const p=game.p; if(!b){ b=document.createElement('div'); b.id='koBar'; b.innerHTML='KO PUNCH<div class="t"><div></div></div>'; document.body.appendChild(b); }
- const on=!!(p&&game.mode==='match'&&p.def.id==='valor'); b.style.display=on?'block':'none'; if(!on) return;
+ const on=!!(p&&game.mode==='match'&&p.def.id==='valor'); b.style.display=on?'block':'none';
+ if(!on){ const hv=document.querySelector('#tbtns .hv'); if(hv&&hv.textContent!=='HEAVY') hv.textContent='HEAVY'; return; }   // Nov 7 fix: KO! stayed on the heavy button after switching away from VALOR
  const k=p.ko||0; b.firstChild.textContent=k>=100?(isBrawl(p)?'KO PUNCH READY · HEAVY':'KO READY · BRAWLER'):'KO PUNCH'; b.querySelector('.t div').style.width=k+'%'; b.classList.toggle('full',k>=100);
  const hv=document.querySelector('#tbtns .hv'); if(hv) hv.textContent=k>=100&&isBrawl(p)?'KO!':'HEAVY'; }
 { const o=updateHUD; updateHUD=function(dt){ o(dt); try{ koTick(); }catch(e){ console.error(e); } }; }
@@ -79,7 +80,7 @@ function koTick(){ let b=el('koBar'); const p=game.p; if(!b){ b=document.createE
 SB.ultRdy=true;
 { const oI=v8Input; v8Input=function(f,inp,dt){
   if(SB.ultRdy&&(f===game.p)&&game.state==='fight'){
-   if(f.def.id==='valor') f.ko=100;
+   if(f.def.id==='valor'&&!SB.meterCtl) f.ko=100;   // the sandbox's METERS tool (meterCtl) handles the KO meter itself
    const canAct=!f.dead&&f.stun<=0&&f.rollT<=0&&!f.grabbedBy;
    if(inp.super>0&&canAct&&(!f.atk||f.atk.id==='stance')&&!(f.atk&&f.atk.id==='ultimate')){ inp.super=0; f.ultUsed=true; f.dropHeld&&f.dropHeld(); f.v8fly=false; f.atk=null; f.startAtk('ultimate'); v8UltStart(f); } }
   return oI(f,inp,dt); }; }

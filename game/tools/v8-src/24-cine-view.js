@@ -14,9 +14,12 @@ function segHitsBox(x0,z0,x1,z1,b,pad){ const minX=b.x-b.w/2-pad, maxX=b.x+b.w/2
 function viewClear(){ const f=CINE.f, o=CINE.o; if(!f||!o) return; const c=camera.position, want=new Set();
  for(const b of city){ if(!b.alive&&!(b.mesh&&b.mesh.visible)) continue;
   for(const t of [f.pos,o.pos,f.chest(),o.chest()]){ if(segHitsBox(c.x,c.z,t.x,t.z,b,4)){ want.add(b); break; } } }
- for(const b of VIEW.hid) if(!want.has(b)){ for(const m of bParts(b)) m.visible=true; VIEW.hid.delete(b); }
+ for(const b of VIEW.hid) if(!want.has(b)){ viewShow(b); VIEW.hid.delete(b); }
  for(const b of want) if(!VIEW.hid.has(b)){ const parts=bParts(b); if(!parts.some(m=>m.visible)) continue; for(const m of parts) m.visible=false; VIEW.hid.add(b); } }
-function viewRestore(){ for(const b of VIEW.hid) for(const m of bParts(b)) m.visible=true; VIEW.hid.clear(); }
+// Nov 7 fix (phantom buildings): a building smashed while it was hidden for the camera stays gone. Only standing
+// (or still-toppling) buildings come back; before, every hidden building was switched back on, so smashed ones returned as ghosts.
+function viewShow(b){ const gone=!b.alive&&!(typeof topplers!=='undefined'&&topplers.some(T=>T.b===b)); for(const m of bParts(b)) m.visible=!gone; }
+function viewRestore(){ for(const b of VIEW.hid) viewShow(b); VIEW.hid.clear(); }
 { const oC=updateCamera; updateCamera=function(dt){ const r=oC(dt); if(CINE.on&&game.mode==='match'){ try{ viewClear(); }catch(e){ console.error(e); } } else if(VIEW.hid.size) viewRestore(); return r; }; }
 { const o=cineEnd; cineEnd=function(){ o(); viewRestore(); }; }
 { const oR=sbReset; sbReset=function(){ viewRestore(); oR(); }; }

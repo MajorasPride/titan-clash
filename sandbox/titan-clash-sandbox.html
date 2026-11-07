@@ -25,6 +25,15 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 14b (Nov 7, 2026): bug fixes, METERS tool, loadout page follows the element
+Status: **testing**. Code: `sandbox/src/14-meters.js`, `sandbox/src/15-loadout-page.js` (+ two game fixes, v8.3.1).
+- **Fixed (also in the game, v8.3.1):** the heavy button stayed "KO!" after switching away from VALOR; buildings smashed while a cutscene hid them came back as ghosts.
+- **⚙ → METERS:** NORMAL / ALWAYS FULL / OFF for INFERNOTH's rage and VALOR's KO Punch meter (you and the dummy). ALWAYS FULL rage means no stance switching (rage rule). SUPERS READY no longer fills VALOR's KO meter (that's why his bar always looked full; VALOR has no rage, that bar is his KO meter).
+- Phone: VALOR's KO bar sits where INFERNOTH's armor/rage bars go, on one line (it covered the path card).
+- **Rage check:** it works, but only fills from damage taken (about 22% of his health in BRAWLER, 15% in MELTDOWN), so it never fills against a STAND dummy.
+- **Titan file page (ABILITIES & LOADOUT):** the path upgrades are worded for the picked element (names stay the same); the ELEMENT line says what it does, what it beats and how this titan looks in it; the FOCUS line lists the move swaps instead of the old +15%.
+- Still to fix (found, not done): that page lists old ultimate names (LAST STAND: SHIELD OF DAWN, CORE MELTDOWN) and VALOR's heavy as "Heavy".
+
 ### Sandbox 14 (Nov 7, 2026): loadout rework for VALOR and INFERNOTH
 Status: **testing**. Code: `sandbox/src/12-loadout.js`, `sandbox/src/13-element-looks.js`. Sandbox only. Plan: Game Plan > Ideas Inbox > Loadout rethink.
 - **⚙ menu → LOADOUT:** PATH, FOCUS and ELEMENT for you and the dummy. Every pick starts on **DEFAULT** (the titan's normal setup), so players don't see which one was the original. Changing a pick restarts the fight. New test tool: **ALL UPGRADES** (all 3 at once).
@@ -651,6 +660,9 @@ v8.3 NEW VALOR (Nov 7, 2026). Everything approved in the sandbox moved into the 
     (fonts/ui-fonts.js). WORLDROOT is off the roster (archive/titan-clash-worldroot-archive.js); the
     Titan Lab code and its "+ BUILD YOUR OWN" card came out (archive/titan-clash-titan-lab-archive.js).
     Code: tools/v8-src/10-31. Notes: patch-notes/v8.3.md.
+v8.3.1 BUG FIXES (Nov 7, 2026). The heavy button no longer stays "KO!" after you stop playing VALOR.
+    Buildings smashed while a cutscene had them hidden stay gone (no more ghost buildings after an
+    ultimate). Code: tools/v8-src/14-valor-boxer.js, 24-cine-view.js. Notes: patch-notes/v8.3.1.md.
 
 #####################################################################
 -->
@@ -5156,7 +5168,8 @@ function koAdd(f,n){ if(!f||f.def.id!=='valor') return; const was=f.ko||0; f.ko=
 #koBar.full .t div{background:#fff;box-shadow:0 0 10px #ffd43b}#koBar.full{animation:koP .5s infinite alternate}@keyframes koP{to{color:#fff}}
 @media (pointer:coarse){#koBar{left:40px;top:126px;width:110px}}`; document.head.appendChild(s); }
 function koTick(){ let b=el('koBar'); const p=game.p; if(!b){ b=document.createElement('div'); b.id='koBar'; b.innerHTML='KO PUNCH<div class="t"><div></div></div>'; document.body.appendChild(b); }
- const on=!!(p&&game.mode==='match'&&p.def.id==='valor'); b.style.display=on?'block':'none'; if(!on) return;
+ const on=!!(p&&game.mode==='match'&&p.def.id==='valor'); b.style.display=on?'block':'none';
+ if(!on){ const hv=document.querySelector('#tbtns .hv'); if(hv&&hv.textContent!=='HEAVY') hv.textContent='HEAVY'; return; }   // Nov 7 fix: KO! stayed on the heavy button after switching away from VALOR
  const k=p.ko||0; b.firstChild.textContent=k>=100?(isBrawl(p)?'KO PUNCH READY · HEAVY':'KO READY · BRAWLER'):'KO PUNCH'; b.querySelector('.t div').style.width=k+'%'; b.classList.toggle('full',k>=100);
  const hv=document.querySelector('#tbtns .hv'); if(hv) hv.textContent=k>=100&&isBrawl(p)?'KO!':'HEAVY'; }
 { const o=updateHUD; updateHUD=function(dt){ o(dt); try{ koTick(); }catch(e){ console.error(e); } }; }
@@ -5166,7 +5179,7 @@ function koTick(){ let b=el('koBar'); const p=game.p; if(!b){ b=document.createE
 SB.ultRdy=true;
 { const oI=v8Input; v8Input=function(f,inp,dt){
   if(SB.ultRdy&&(f===game.p)&&game.state==='fight'){
-   if(f.def.id==='valor') f.ko=100;
+   if(f.def.id==='valor'&&!SB.meterCtl) f.ko=100;   // the sandbox's METERS tool (meterCtl) handles the KO meter itself
    const canAct=!f.dead&&f.stun<=0&&f.rollT<=0&&!f.grabbedBy;
    if(inp.super>0&&canAct&&(!f.atk||f.atk.id==='stance')&&!(f.atk&&f.atk.id==='ultimate')){ inp.super=0; f.ultUsed=true; f.dropHeld&&f.dropHeld(); f.v8fly=false; f.atk=null; f.startAtk('ultimate'); v8UltStart(f); } }
   return oI(f,inp,dt); }; }
@@ -5989,9 +6002,12 @@ function segHitsBox(x0,z0,x1,z1,b,pad){ const minX=b.x-b.w/2-pad, maxX=b.x+b.w/2
 function viewClear(){ const f=CINE.f, o=CINE.o; if(!f||!o) return; const c=camera.position, want=new Set();
  for(const b of city){ if(!b.alive&&!(b.mesh&&b.mesh.visible)) continue;
   for(const t of [f.pos,o.pos,f.chest(),o.chest()]){ if(segHitsBox(c.x,c.z,t.x,t.z,b,4)){ want.add(b); break; } } }
- for(const b of VIEW.hid) if(!want.has(b)){ for(const m of bParts(b)) m.visible=true; VIEW.hid.delete(b); }
+ for(const b of VIEW.hid) if(!want.has(b)){ viewShow(b); VIEW.hid.delete(b); }
  for(const b of want) if(!VIEW.hid.has(b)){ const parts=bParts(b); if(!parts.some(m=>m.visible)) continue; for(const m of parts) m.visible=false; VIEW.hid.add(b); } }
-function viewRestore(){ for(const b of VIEW.hid) for(const m of bParts(b)) m.visible=true; VIEW.hid.clear(); }
+// Nov 7 fix (phantom buildings): a building smashed while it was hidden for the camera stays gone. Only standing
+// (or still-toppling) buildings come back; before, every hidden building was switched back on, so smashed ones returned as ghosts.
+function viewShow(b){ const gone=!b.alive&&!(typeof topplers!=='undefined'&&topplers.some(T=>T.b===b)); for(const m of bParts(b)) m.visible=!gone; }
+function viewRestore(){ for(const b of VIEW.hid) viewShow(b); VIEW.hid.clear(); }
 { const oC=updateCamera; updateCamera=function(dt){ const r=oC(dt); if(CINE.on&&game.mode==='match'){ try{ viewClear(); }catch(e){ console.error(e); } } else if(VIEW.hid.size) viewRestore(); return r; }; }
 { const o=cineEnd; cineEnd=function(){ o(); viewRestore(); }; }
 { const oR=sbReset; sbReset=function(){ viewRestore(); oR(); }; }
@@ -6902,7 +6918,7 @@ const ULTP={
 
 /* Which sandbox build is this? Shown small in the top-right corner and in the ⚙ menu, so an old (cached) copy is easy to spot.
    Bump SB_BUILD every time the sandbox is pushed. */
-const SB_BUILD='14 · Nov 7';
+const SB_BUILD='14b · Nov 7';
 { const d=document.createElement('div'); d.id='sbVer'; d.textContent='SANDBOX '+SB_BUILD;
   d.style.cssText="position:fixed;right:8px;bottom:6px;z-index:25;font:10px/1 'Russo One',sans-serif;letter-spacing:1px;color:#9fb3c8;opacity:.75;pointer-events:none";
   document.body.appendChild(d); }
@@ -7383,6 +7399,85 @@ const infOf=()=>[game.p,game.e].find(f=>isInf(f));
 // his hits splash water / crackle in his element
 { const oTH=FP.takeHit; FP.takeHit=function(src,dmg,kb,launch,cont,dir){ const hp0=this.hp; oTH.call(this,src,dmg,kb,launch,cont,dir);
   if(!cont&&this.hp<hp0&&isInf(src)&&lookRemapOn(src)&&game.time-(src._elxT||0)>.12){ src._elxT=game.time; withF(src,()=>wfxHit(this.chest(),6)); if(lookEl(src)==='lightning'&&!src.beamOn&&game.time-(src._elxZ||0)>.5){ src._elxZ=game.time; zapBolt(src.chest(),this.chest()); } } }; }
+
+/* =====================================================================
+   SANDBOX 14b: METERS TEST TOOL (Nov 7, 2026). Sandbox only.
+   MajorasPride: "Rage meter always on or off in sandbox button."
+   ⚙ menu → METERS: NORMAL · ALWAYS FULL · OFF. Works on whoever has a meter, you and the dummy:
+   - INFERNOTH: RAGE. ALWAYS FULL = he stays in rage (white-hot, nothing staggers him, GROUND ZERO ready
+     with SUPERS READY). OFF = rage never fills.
+   - VALOR: the KO PUNCH meter (his Little Mac meter, not a rage meter). ALWAYS FULL = every heavy in
+     Brawler is a KO Punch. OFF = empty.
+   SUPERS READY no longer fills VALOR's KO meter by itself (that's why his bar always looked full).
+   Never saved; the game isn't affected.
+   ===================================================================== */
+SB.meter='normal'; SB.meterCtl=true;   // meterCtl: tells the game's SUPERS READY to leave the KO meter alone
+{ const o=enterRage; enterRage=function(f){ if(SB.meter==='off') return; return o(f); }; }
+function meterTick(){ if(game.mode!=='match'||game.state!=='fight'||SB.meter==='normal') return;
+ for(const f of [game.p,game.e]){ if(!f||f.dead) continue;
+  if(isInf(f)){ infInit(f);
+   if(SB.meter==='full'){ if(!(f.kRageT>0)) enterRage(f); f.kRageT=f.kRageMax||INF.dur[f.stIdx||0]; f.kRage=100; }
+   else { f.kRage=0; f.kRageT=0; } }
+  if(f.def&&f.def.id==='valor') f.ko=SB.meter==='full'?100:0; } }
+{ const o=updateHUD; updateHUD=function(dt){ try{ meterTick(); }catch(e){ console.error(e); } o(dt); }; }
+function meterUI(){ const m=el('sbMenu'); if(!m||m.querySelector('[data-mt]')) return;
+ const box=m.querySelector('.box'), kit=el('sbKit'), d=document.createElement('div'); d.className='sec';
+ d.innerHTML=`<div class="lbl">METERS (INFERNOTH rage · VALOR KO punch · you and the dummy)</div><div class="row">${[['normal','NORMAL'],['full','ALWAYS FULL'],['off','OFF']].map(([k,n])=>`<button data-mt="${k}">${n}</button>`).join('')}</div>`;
+ box.insertBefore(d,kit.closest('.sec'));
+ d.addEventListener('pointerdown',e=>{ const b=e.target.closest('button'); if(!b) return; e.preventDefault(); e.stopPropagation(); SB.meter=b.dataset.mt;
+  if(SB.meter==='normal') for(const f of [game.p,game.e]){ if(isInf(f)){ f.kRage=0; f.kRageT=0; } if(f&&f.def&&f.def.id==='valor') f.ko=0; }
+  meterSync(); toast('METERS: '+b.textContent,'#7fd4ff',700); }); }
+function meterSync(){ document.querySelectorAll('#sbMenu [data-mt]').forEach(b=>b.classList.toggle('on',b.dataset.mt===SB.meter)); }
+{ const oS=sbStart; sbStart=function(){ oS(); meterUI(); meterSync(); }; }
+{ const oS=sbSync; sbSync=function(){ oS(); meterSync(); }; }
+// phone: the KO bar sat on top of the path card; put it where INFERNOTH's armor/rage bars go, on one line
+{ const s=document.createElement('style'); s.textContent=`#koBar{white-space:nowrap}
+@media (pointer:coarse) and (max-height:520px){ #koBar{left:24px!important;top:178px!important;width:150px!important} }`; document.head.appendChild(s); }
+
+/* =====================================================================
+   SANDBOX 14b: THE LOADOUT PAGE FOLLOWS THE ELEMENT (Nov 7, 2026). Sandbox only.
+   MajorasPride: "I should pick an element and the page changes what they do. Says water when I picked lightning."
+   On the titan file's ABILITIES & LOADOUT page:
+   - The path upgrades are worded for the picked element (Tidewall builds a lightning wall in Lightning, etc.).
+     Upgrade names stay the same in every element (his call from Sandbox 14).
+   - The ELEMENT line shows what the element does now (Sandbox 14 rules + matchup) and how this titan looks in it.
+   - The FOCUS line shows the move swaps (Sandbox 14), not the old +15% damage numbers.
+   ===================================================================== */
+const ELTXT={
+ fire:'Pressure: every hit adds heat, 3 heat = a 3s burn (never a stun). Beats Lightning: burning wipes their shock count.',
+ water:'Control: hits slow the rival for 2s. Heals only standing in a river. Beats Fire: their burns last half as long and your hits clear their heat.',
+ lightning:'Burst: every 5th hit in a row shocks them and zaps the nearest building. Beats Water: shocks a Water titan every 4th hit.'};
+const ELLOOK={
+ valor:{water:'Painted Demon Slayer-style water ribbons, splashes and his water dragon.',
+  fire:'Painted flame curls, ember bursts, fire rings and a flame ribbon. The water dragon and giant shield turn to fire.',
+  lightning:'Painted bolts, spark stars and a jagged purple-edged ribbon. The water dragon and giant shield turn to lightning.'},
+ infernoth:{fire:'Orange to white-hot rage glow, lava spit, lava pools and a heat beam.',
+  water:'Deep-sea blue to cyan rage glow, boiling water and steam instead of lava, a water-jet beam, boiling rain under a storm-green sky.',
+  lightning:'Purple to white rage glow, plasma instead of lava, lightning breath, lightning strikes in LAVA DOMAIN under a black-purple storm.'}};
+// path upgrade wording per element (only the upgrades whose wording names an element)
+const PATHTXT={
+ valor:{tidewall:{
+  water:'Sword & Shield: hold block to build a water wall that throws small shots back. Brawler: Tide Hook sends a wave that eats shots',
+  fire:'Sword & Shield: hold block to build a wall of fire that throws small shots back. Brawler: Tide Hook sends a wave of fire that eats shots',
+  lightning:'Sword & Shield: hold block to build a lightning wall that throws small shots back. Brawler: Tide Hook sends a crackling lightning wave that eats shots'}},
+ infernoth:{
+  rampage:{water:'BRAWLER: smashing buildings with a grab or stomp fills rage. MELTDOWN: buildings knocked down by the water-jet beam fill rage',
+   lightning:'BRAWLER: smashing buildings with a grab or stomp fills rage. MELTDOWN: buildings blasted down by the lightning breath fill rage'},
+  scorch:{water:'BRAWLER: Burrow\'s boiling water spout lasts 3s and the stomp leaves steaming cracks. MELTDOWN: the water-jet beam\'s boiling ground lasts twice as long',
+   lightning:'BRAWLER: Burrow\'s plasma spout lasts 3s and the stomp leaves crackling cracks. MELTDOWN: the lightning breath\'s scorched ground lasts twice as long'},
+  kingmon:{water:'BRAWLER: KING\'s tail WHACK sends them farther and they land in a boiling water burst. MELTDOWN: LAVA DOMAIN\'s beam pins them longer',
+   lightning:'BRAWLER: KING\'s tail WHACK sends them farther and they land in a lightning burst. MELTDOWN: LAVA DOMAIN\'s beam pins them longer'},
+  erupt:{water:'BRAWLER: Volcano Leap\'s eruption ring is twice as big. MELTDOWN: LAVA DOMAIN\'s boiling rain lasts 20s instead of 15',
+   lightning:'BRAWLER: Volcano Leap\'s eruption ring is twice as big. MELTDOWN: LAVA DOMAIN\'s lightning strikes last 20s instead of 15'}}};
+function focusTxt(id,fo){ if(fo==='hybrid'||!FOCUS_SWAP[id]||!FOCUS_SWAP[id][fo]) return 'The kit as it is: no moves swapped.';
+ const S=FOCUS_SWAP[id][fo], nm=k=>MOVES[k]?MOVES[k].name.replace(/\s*\(.*\)$/,''):k;
+ return (fo==='melee'?'Close-up moves in: ':'Ranged moves in: ')+Object.entries(S).map(([a,b])=>`${nm(b)} replaces ${nm(a)}`).join(' · ')+'.'; }
+{ const o=renderDossier; renderDossier=function(){ const d=getDef(selId); if(!d||!d.core||vsMode==='story') return o();
+  const id=d.id, L=loadOf(id), el=V8ELEM[L.el]?L.el:(homeEl({def:d})||'fire'), T=V8TREE[id], keepT=[], keepE={}, keepF={};
+  if(T) for(const k of ['A','B']) T[k].nodes.forEach(n=>{ const v=PATHTXT[id]&&PATHTXT[id][n[2]]&&PATHTXT[id][n[2]][el]; if(v){ keepT.push([n,n[1]]); n[1]=v; } });
+  for(const k in V8ELEM){ keepE[k]=V8ELEM[k].d; V8ELEM[k].d=ELTXT[k]+(ELLOOK[id]&&ELLOOK[id][k]?' Look: '+ELLOOK[id][k]:''); }
+  for(const k in V8FOCUS){ keepF[k]=V8FOCUS[k].d; V8FOCUS[k].d=focusTxt(id,k); }
+  try{ return o(); } finally{ for(const [n,t] of keepT) n[1]=t; for(const k in keepE) V8ELEM[k].d=keepE[k]; for(const k in keepF) V8FOCUS[k].d=keepF[k]; } }; }
 
 </script>
 <!-- SANDBOX END -->

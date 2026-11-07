@@ -23,6 +23,15 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 14b (Nov 7, 2026): bug fixes, METERS tool, loadout page follows the element
+Status: **testing**. Code: `sandbox/src/14-meters.js`, `sandbox/src/15-loadout-page.js` (+ two game fixes, v8.3.1).
+- **Fixed (also in the game, v8.3.1):** the heavy button stayed "KO!" after switching away from VALOR; buildings smashed while a cutscene hid them came back as ghosts.
+- **⚙ → METERS:** NORMAL / ALWAYS FULL / OFF for INFERNOTH's rage and VALOR's KO Punch meter (you and the dummy). ALWAYS FULL rage means no stance switching (rage rule). SUPERS READY no longer fills VALOR's KO meter (that's why his bar always looked full; VALOR has no rage, that bar is his KO meter).
+- Phone: VALOR's KO bar sits where INFERNOTH's armor/rage bars go, on one line (it covered the path card).
+- **Rage check:** it works, but only fills from damage taken (about 22% of his health in BRAWLER, 15% in MELTDOWN), so it never fills against a STAND dummy.
+- **Titan file page (ABILITIES & LOADOUT):** the path upgrades are worded for the picked element (names stay the same); the ELEMENT line says what it does, what it beats and how this titan looks in it; the FOCUS line lists the move swaps instead of the old +15%.
+- Still to fix (found, not done): that page lists old ultimate names (LAST STAND: SHIELD OF DAWN, CORE MELTDOWN) and VALOR's heavy as "Heavy".
+
 ### Sandbox 14 (Nov 7, 2026): loadout rework for VALOR and INFERNOTH
 Status: **testing**. Code: `sandbox/src/12-loadout.js`, `sandbox/src/13-element-looks.js`. Sandbox only. Plan: Game Plan > Ideas Inbox > Loadout rethink.
 - **⚙ menu → LOADOUT:** PATH, FOCUS and ELEMENT for you and the dummy. Every pick starts on **DEFAULT** (the titan's normal setup), so players don't see which one was the original. Changing a pick restarts the fight. New test tool: **ALL UPGRADES** (all 3 at once).

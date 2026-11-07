@@ -20,6 +20,12 @@ Hi Claude. This is MajorasPride's game, and we build it together, one chat at a 
 6. I play on PC and on my phone.
 
 =====================================================================
+## v8.3.1 bug fixes (Nov 7, 2026)
+=====================================================================
+- `14-valor-boxer.js`: the heavy button label goes back to HEAVY when the player isn't VALOR. SUPERS READY leaves the KO meter alone when `SB.meterCtl` is set (the sandbox's METERS tool).
+- `24-cine-view.js`: `viewShow()` brings back only standing (or still-toppling) buildings after a cutscene hid them. Notes: `patch-notes/v8.3.1.md`.
+
+=====================================================================
 ## v8.3 "NEW VALOR" (Nov 7, 2026)
 =====================================================================
 - The sandbox VALOR (both stances, combat, 1/2/3, water, both ultimates + cutscenes, fonts) is in the game: `tools/v8-src/10-...31-...js` (moved from `sandbox/src/`). `11-skill-keys.js` holds the 1/2/3 keys and the sandbox hooks (sbStart, sbSync, sbReset... call `sbBase`, which only the sandbox fills in). `30-game-settings.js` sets the sandbox test switches to normal play.
