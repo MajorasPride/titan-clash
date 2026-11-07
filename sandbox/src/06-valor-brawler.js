@@ -65,7 +65,7 @@ Object.assign(V8MOVE,{
   else f.kb.multiplyScalar(.5); },
  geyser(f,a,dt,pm,o){ if(once(a,'w',a.hitAt*.6)){ Snd.whoosh(); const fx=f.pos.x+Math.sin(f.yaw)*9*f.scale, fz=f.pos.z+Math.cos(f.yaw)*9*f.scale; ring(fx,.5,fz,9,WATER,.35); }
   if(a.t>=a.hitAt&&!a._gy){ a._gy=1; const fx=f.pos.x+Math.sin(f.yaw)*9*f.scale, fz=f.pos.z+Math.cos(f.yaw)*9*f.scale;
-   pillar(fx,fz,3.5,WATER,.7,45); burst(V(fx,3,fz),WATER,40,30); burst(V(fx,3,fz),0xffffff,16,22); dust(fx,fz,4,4); game.shake=Math.max(game.shake,.6); Snd.boom();
+   burst(V(fx,3,fz),WATER,40,30); burst(V(fx,3,fz),0xffffff,16,22); dust(fx,fz,4,4); game.shake=Math.max(game.shake,.6); Snd.boom();
    coneHit(f,a,o,15,1.2,14*pm,6,36,'clang'); if(a.landed){ game.hitStop=Math.max(game.hitStop,.08); if(f.isPlayer) toast('GEYSER! (JUMP TO CHASE)','#3fa9ff',800); } } },
  bdive(f,a,dt,pm,o){ if(once(a,'d',0)){ f.vy=Math.min(f.vy,-80); Snd.whoosh(); }
   if(a.landT==null){ a.t=Math.min(a.t,.5); if(Math.random()<dt*30) burst(f.chest(),WATER,2,6);

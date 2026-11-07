@@ -22,6 +22,13 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 7 (Nov 6, 2026): painted water for VALOR (Okami ink + Demon Slayer flow)
+Status: **testing**. Feedback: waiting. Code: `sandbox/src/09-water-fx.js`.
+- MajorasPride picked "both": flowing water ribbons with black ink outlines, Japanese woodblock wave style. Water stays VALOR's element (no light magic).
+- Sword swings leave a painted water ribbon (deep blue, white foam edge, ink outline). Hits throw ink-outlined wave curls and splashes.
+- Tide Hook = arc of curling waves. Leg Sweep, Shield Dive, Spin Slash, Overhead Cleave, Sword Plunge = painted wave ring on the ground. Geyser Uppercut and Rising Slash = rising column of curls (the plain white geyser pillar is gone). Shield Throw, Follow Dash and Charging Star leave water trails. KO Star Punch = big wave burst.
+- Only VALOR for now. If it's a keeper, every element gets its own painted look.
+
 ### Sandbox 6 (Nov 6, 2026): Brawler = boxer (Little Mac style) + Leg Sweep + SUPERS READY
 Status: **testing**. Feedback: waiting. Code: `sandbox/src/08-valor-boxer.js`.
 - MajorasPride said yes to: a leg sweep, Little Mac style boxing, and both together.
