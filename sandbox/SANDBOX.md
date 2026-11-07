@@ -22,6 +22,15 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 6 (Nov 6, 2026): Brawler = boxer (Little Mac style) + Leg Sweep + SUPERS READY
+Status: **testing**. Feedback: waiting. Code: `sandbox/src/08-valor-boxer.js`.
+- MajorasPride said yes to: a leg sweep, Little Mac style boxing, and both together.
+- Faster, snappier jabs. **Leg Sweep** (L L M or M M): low spinning kick that trips the rival.
+- **Weave:** tap BLOCK in Brawler = duck/slip, can't be hit for a moment. Keep holding = normal block (shield in hand only).
+- **KO meter** (bar under VALOR's health): fills when you land hits (+12) or slip a hit (+20), drops when you get hit (-25). Full = next HEAVY is the **KO Star Punch** (huge hit, smashes a block). Phone HEAVY button says KO! when it's ready.
+- **Weak in the air:** Brawler jumps lower and has no air jabs (Shield Dive still works).
+- **SUPERS READY** (⚙ test tools, on by default), like MvC2 training mode: the ultimate works at any health, any time, and the KO meter stays full. The ultimate is still the old one (Last Stand: Shield of Dawn) until the cutscene work.
+
 ### Sandbox 5 (Nov 6, 2026): TITAN SPEED test
 Status: **testing**. Feedback: waiting. Code: `sandbox/src/07-speed.js`.
 - ⚙ menu → TITAN SPEED: 100% (now) · 115% · 130%. Speeds up both titans' movement and every attack (wind-up, swing, recovery). Cooldowns, energy and damage stay the same. To help decide if the titans should be faster.
