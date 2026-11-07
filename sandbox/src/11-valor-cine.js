@@ -101,7 +101,7 @@ function vsArt(){ if(vsArt.done) return; vsArt.done=1; try{ const crest=wfxTex('
 #v8cut.vs-brawl .band{background:radial-gradient(#0006 1.4px,#0000 1.6px) 0 0/8px 8px,linear-gradient(90deg,#ffd43b 0%,#ff9f43 45%,#c8323c 75%,#000c 92%)!important;box-shadow:0 0 50px #ffd43b,inset 0 -6px 0 #0b0f1e,inset 0 6px 0 #0b0f1e!important;transform:skewY(5deg)!important}
 #v8cut.vs-brawl .who{color:#fff;transform:rotate(5deg)!important;text-shadow:6px 6px 0 #c8323c}
 #v8cut.vs-brawl .ult{color:#fff!important;transform:rotate(5deg)!important;text-shadow:2px 2px 0 #c8323c}
-#v8cut.vs-brawl:before{content:'';position:absolute;right:5vw;top:12vh;width:32vh;height:32vh;background:conic-gradient(from 0deg,#ffd43b 0 10deg,#0000 10deg 20deg,#ffd43b 20deg 30deg,#0000 30deg 40deg,#ffd43b 40deg 50deg,#0000 50deg 60deg,#ffd43b 60deg 70deg,#0000 70deg 80deg,#ffd43b 80deg 90deg,#0000 90deg 100deg,#ffd43b 100deg 110deg,#0000 110deg 120deg,#ffd43b 120deg 130deg,#0000 130deg 140deg,#ffd43b 140deg 150deg,#0000 150deg 160deg,#ffd43b 160deg 170deg,#0000 170deg 180deg,#ffd43b 180deg 190deg,#0000 190deg 200deg,#ffd43b 200deg 210deg,#0000 210deg 220deg,#ffd43b 220deg 230deg,#0000 230deg 240deg,#ffd43b 240deg 250deg,#0000 250deg 260deg,#ffd43b 260deg 270deg,#0000 270deg 280deg,#ffd43b 280deg 290deg,#0000 290deg 300deg,#ffd43b 300deg 310deg,#0000 310deg 320deg,#ffd43b 320deg 330deg,#0000 330deg 340deg,#ffd43b 340deg 350deg,#0000 350deg);border-radius:50%;-webkit-mask:radial-gradient(#000 30%,#0000 70%);mask:radial-gradient(#000 30%,#0000 70%);animation:vsSpin 2s linear infinite}
+#v8cut.vs-brawl:before{content:'';position:absolute;right:5vw;top:12vh;width:32vh;height:32vh;background:url(${whirl}) center/contain no-repeat;animation:vsSpin .8s linear infinite reverse;filter:drop-shadow(0 0 12px #ffd43b)}
 @keyframes vsSpin{to{transform:rotate(360deg)}}`; document.head.appendChild(s); }catch(e){ console.error(e); } }
 
 /* =====================================================================
@@ -199,3 +199,81 @@ ultBrawl=function(f,a,dt,pm,o){ const t=a.t; a.brawl=1; if(a.miss) return;
   if(k>2.45||!f.atk||f.atk.id!=='ultimate') cineEnd(); }; }
 // clean up a flying shield if the fight resets
 { const oR=sbReset; sbReset=function(){ const a=game.p&&game.p.atk; if(a&&a.sh){ scene.remove(a.sh.m); a.sh=null; } if(game.p&&game.p.P&&game.p.P.v8shield) game.p.P.v8shield.visible=true; oR(); }; }
+
+/* v3 SHIELD PIN cutscene (Nov 6): MajorasPride: "cutscene starts with the shield throw, bounce back, attack,
+   like Civil War, where he drops the monster." From the hit: slow-mo impact close-up -> the shield ricochets
+   straight back and VALOR catches it -> he charges and takes the monster's legs out (it DROPS) ->
+   pinned shield bashes -> raise (top-down freeze) -> SLAM. */
+ultBrawl=function(f,a,dt,pm,o){ const t=a.t; a.brawl=1; if(a.miss) return;
+ if(once(a,'s',0)){ if(canHit(o)) f.yaw=Math.atan2(o.pos.x-f.pos.x,o.pos.z-f.pos.z); f.kb.set(0,0,0); Snd.mech&&Snd.mech(); }
+ if(!a.hitT){ f.kb.multiplyScalar(.5);
+  if(once(a,'throw',.3)){ a.sh={pos:f.chest().add(V(Math.sin(f.yaw)*6,0,Math.cos(f.yaw)*6)),yaw:f.yaw,d:0,m:v8DiscMesh()}; if(f.P.v8shield) f.P.v8shield.visible=false; Snd.whoosh(); }
+  const S=a.sh; if(S){ const step=150*dt; if(canHit(o)){ const want=Math.atan2(o.pos.x-S.pos.x,o.pos.z-S.pos.z); S.yaw+=clamp(angDiff(want,S.yaw)||0,-.5*dt,.5*dt); }
+   S.pos.x+=Math.sin(S.yaw)*step; S.pos.z+=Math.cos(S.yaw)*step; S.d+=step; S.pos.y=lerp(S.pos.y,canHit(o)?o.chest().y:10,dt*3); S.m.position.copy(S.pos); S.m.rotation.y+=dt*20;
+   if(Math.random()<dt*25) wfxSprite('spray',S.pos.clone(),7,.3,{grow:.3});
+   if(canHit(o)&&S.pos.distanceTo(o.chest())<o.radius()+6){ a.hitT=t; a.hitAt0=S.pos.clone(); ultHit(f,o,8*pm,6,0,o.chest()); clangFX(o.chest()); wfxHit(o.chest(),12); ultLanded(f,a); }
+   else if(S.d>150){ scene.remove(S.m); a.sh=null; if(f.P.v8shield) f.P.v8shield.visible=true; ultMiss(f,a,t); } }
+  if(t>2&&!a.hitT&&!a.miss){ if(a.sh){ scene.remove(a.sh.m); a.sh=null; } if(f.P.v8shield) f.P.v8shield.visible=true; ultMiss(f,a,t); }
+  return; }
+ const k=t-a.hitT, S=a.sh; a.dur=Math.max(a.dur,a.hitT+2.6); ultHold(o,null); if(k<.85) f.kb.set(0,0,0);
+ // 2. the shield ricochets straight back to VALOR
+ if(S&&k<.5){ const hand=f.chest().add(V(Math.sin(f.yaw)*4,0,Math.cos(f.yaw)*4)); S.pos.lerp(hand,Math.min(1,dt*7)); S.m.position.copy(S.pos); S.m.rotation.y-=dt*24; if(Math.random()<dt*30) wfxSprite('spray',S.pos.clone(),6,.3,{grow:.3}); if(Math.random()<dt*18) wfxSprite(Math.random()<.5?'curl':'curlM',S.pos.clone(),9,.45,{grow:.3,spin:rand(-4,4)}); }
+ if(once(a,'catch',a.hitT+.48)&&S){ scene.remove(S.m); a.sh=null; if(f.P.v8shield) f.P.v8shield.visible=true; Snd.block(); burst(f.chest(),0xffffff,14,10); }
+ // 3. he charges in and takes the legs out: the monster DROPS
+ if(k>=.5&&k<.8){ const toO=V(o.pos.x-f.pos.x,0,o.pos.z-f.pos.z), d=toO.length(); if(d>o.radius()+f.radius()+2){ toO.normalize(); f.pos.addScaledVector(toO,Math.min(d-(o.radius()+f.radius()+2),140*dt)); f.yaw=Math.atan2(toO.x,toO.z); }
+  if(Math.random()<dt*30) wfxSprite('foam',f.pos.clone().add(V(0,3,0)),7,.3,{grow:.4}); if(Math.random()<dt*14) wfxSprite('crest',f.pos.clone().add(V(0,2,0)),14,.45,{grow:.3}); if(Math.random()<dt*10) wfxFlat('ripple',f.pos.x,f.pos.z,10,.5); }
+ if(once(a,'drop',a.hitT+.8)){ const at=o.pos.clone().add(V(0,4,0)); clangFX(at); wfxHit(at,12); ultHit(f,o,8*pm,0,0,null); o.pos.y=0; o.vy=0; o.stun=Math.max(o.stun,2); a.down=1;
+  ring(o.pos.x,.5,o.pos.z,26,WATER,.5); dust(o.pos.x,o.pos.z,12,12); wfxFlat('ripple',o.pos.x,o.pos.z,28,.8); game.shake=Math.max(game.shake,1.1); game.hitStop=Math.max(game.hitStop,.12); Snd.boom(); Snd.thud&&Snd.thud(); toast('DOWN!','#ffd43b',300); wfxColumn(o.pos.x,o.pos.z,22,5); for(let i=0;i<5;i++){ const g=i/5*Math.PI*2; wfxSprite(i%2?'spray':'sprayM',V(o.pos.x+Math.cos(g)*10,4,o.pos.z+Math.sin(g)*10),13,.5,{grow:.5}); } }
+ // the monster lies flat while pinned
+ if(a.down&&o.root){ const R=o.root; if(R&&R.rotation){ if(a._rx==null) a._rx=R.rotation.x; R.rotation.x=lerp(R.rotation.x,a._rx-1.3,Math.min(1,dt*10)); a._R=R; } }
+ // 4. pinned: shield bashes, raise, SLAM
+ for(let i=0;i<4;i++) if(once(a,'b'+i,a.hitT+1+i*.16)){ const at=o.pos.clone().add(V(0,4,0)); ultHit(f,o,4*pm,0,0,null); clangFX(at); wfxHit(at,8); toast(['BAM!','WHAM!','KRAK!','POW!'][i],['#ffd43b','#7fd4ff','#ff6b6b','#ffd43b'][i],260); }
+ if(once(a,'raise',a.hitT+1.7)){ ring(f.pos.x,f.chest().y+10,f.pos.z,10,0xffffff,.4); burst(f.chest().add(V(0,10,0)),0xffffff,20,10); Snd.tone('triangle',500,1500,.3,.08); }
+ if(once(a,'slam',a.hitT+1.95)){ const x=o.pos.x,z=o.pos.z; ultHit(f,o,22*pm,30,12,o.chest()); clangFX(o.chest()); wfxRing(x,z,34,.8); wfxFlat('whirl',x,z,28,1,0,8);
+  for(let i=0;i<8;i++){ const g=i/8*Math.PI*2; wfxSprite(i%2?'crest':'foam',V(x+Math.cos(g)*16,4,z+Math.sin(g)*16),16,.7,{grow:.5}); }
+  smash(x,z,10,0,0,0,2,60); dust(x,z,14,14); flashScreen('#ffd43b'); game.hitStop=Math.max(game.hitStop,.2); game.shake=Math.max(game.shake,1.5); Snd.boom(); banner('K.O.!',900); }
+ if(k>2.3&&a._R){ a._R.rotation.x=a._rx; a._R=null; a.down=0; }
+};
+{ const oC=cineCam; cineCam=function(){ const f=CINE.f, o=CINE.o, a=CINE.a; if(!f||!o||!CINE.brawl||a.hitT==null) return oC();
+  const k=a.t-a.hitT, fy=f.yaw, fw=V(Math.sin(fy),0,Math.cos(fy)), side=V(Math.cos(fy),0,-Math.sin(fy)), fc=f.chest(), oc=o.chest();
+  const toF=V(f.pos.x-o.pos.x,0,f.pos.z-o.pos.z).normalize(), sideO=V(toF.z,0,-toF.x);
+  if(k<.12){ cineShot(0); camAt(oc.clone().addScaledVector(toF,16).addScaledVector(sideO,9).add(V(0,2,0)),oc); return; }                                           // 1. impact close-up on the monster (quote)
+  if(k<.5){ if(cineShot(1)) cq.classList.remove('show'); const S=a.sh, p=S?S.pos:fc; camAt(p.clone().lerp(oc,.5).addScaledVector(sideO,46).add(V(0,10,0)),p.clone().lerp(fc,.5)); return; } // 2. side: the ricochet back
+  if(k<.8){ cineShot(2); camAt(fc.clone().addScaledVector(toF,-1).addScaledVector(V(-toF.z,0,toF.x),14).add(V(0,-4,0)).sub(V(fw.x*16,0,fw.z*16)),oc); return; } // 3. behind VALOR as he charges
+  if(k<1.7){ if(cineShot(3)){ cineEl.classList.add('comic'); } camAt(o.pos.clone().addScaledVector(sideO,24).add(V(0,2.5,0)),o.pos.clone().lerp(f.pos,.5).add(V(0,5,0))); return; } // 4. ground level: dropped + pinned
+  if(k<1.95){ if(cineShot(4)){ cineEl.classList.remove('comic'); cineFreeze(380,.7); } camAt(f.pos.clone().add(V(4,60,4)),f.pos.clone().add(V(0,8,0))); return; } // top-down: shield raised
+  if(cineShot(5)){ cineFlash(); } camAt(o.pos.clone().addScaledVector(sideO,26).addScaledVector(toF,8).add(V(0,1.5,0)),oc.clone().add(V(0,2,0)));               // low angle: SLAM
+  if(k>2.5||!f.atk||f.atk.id!=='ultimate') cineEnd(); }; }
+// if the cutscene or fight ends early, stand the monster back up
+{ const o=cineEnd; cineEnd=function(){ const a=CINE.a; if(a&&a._R){ a._R.rotation.x=a._rx; a._R=null; } o(); }; }
+
+/* GIANT WATER SHIELD (Nov 6): MajorasPride: "a giant water shield attack as he rushes. Make it awesome."
+   During the charge a huge painted water shield forms in front of VALOR (spinning rings, foam edge, ink
+   outline) and grows as he runs; when he takes the monster down it bursts into a wall of water. */
+function drawWShield(x){ const c=128;
+ const rings=[[124,'#0b0f1e'],[118,'#123f9e'],[100,'#0b0f1e'],[95,'#2f8ff0'],[74,'#0b0f1e'],[69,'#ffffff'],[58,'#0b0f1e'],[53,'#7fd8ff'],[34,'#0b0f1e'],[29,'#2f8ff0']];
+ for(const [r,col] of rings){ x.beginPath(); x.arc(c,c,r,0,7); x.fillStyle=col; x.fill(); }
+ // flowing wave marks around the outer ring
+ x.strokeStyle='#9fe3ff'; x.lineWidth=5; for(let i=0;i<10;i++){ const a=i/10*Math.PI*2; x.beginPath(); x.arc(c,c,108,a,a+.35); x.stroke(); }
+ // a wave curl emblem in the middle
+ x.save(); x.translate(c,c); x.scale(.2,.2); x.translate(-128,-128); drawCurl(x,false); x.restore();
+ // foam dots on the rim
+ x.lineWidth=3; x.strokeStyle='#0b0f1e'; x.fillStyle='#fff'; for(let i=0;i<16;i++){ const a=i/16*Math.PI*2+.1; x.beginPath(); x.arc(c+Math.cos(a)*121,c+Math.sin(a)*121,i%2?6:9,0,7); x.fill(); x.stroke(); } }
+{ const o=wfxTex; wfxTex=function(k){ if(k!=='wshield') return o(k); if(!WFX.tex[k]) WFX.tex[k]=wfxCanvas(drawWShield); return WFX.tex[k]; }; }
+function wsMake(){ const m=new THREE.MeshBasicMaterial({map:wfxTex('wshield'),transparent:true,depthWrite:false,fog:false,toneMapped:false,side:THREE.DoubleSide}); const g=new THREE.Mesh(new THREE.CircleGeometry(1,40),m);
+ g.renderOrder=6; scene.add(g); return g; }
+function wsKill(a,burstIt){ const W=a.ws; if(!W) return; a.ws=null; if(burstIt){ const p=W.position.clone(), r=W.scale.x;
+  for(let i=0;i<12;i++){ const g=i/12*Math.PI*2; wfxSprite(i%3===0?'crest':i%3===1?'curl':'curlM',p.clone().add(V(Math.cos(g)*r*.8,Math.sin(g)*r*.8,0)),14,.6,{grow:.5,vel:V(Math.cos(g)*30,Math.sin(g)*30+10,0)}); }
+  wfxSprite('splash',p,r*2.4,.5,{grow:.6}); wfxSprite('foam',p,r*1.8,.5,{grow:.6}); }
+ scene.remove(W); W.material.dispose(); W.geometry.dispose(); }
+{ const oB=ultBrawl; ultBrawl=function(f,a,dt,pm,o){ oB(f,a,dt,pm,o); if(!a.hitT||a.miss) return; const k=a.t-a.hitT;
+  if(k>=.48&&k<.8){ if(!a.ws){ a.ws=wsMake(); Snd.tone('sawtooth',120,500,.4,.1); Snd.whoosh(); }
+   const W=a.ws, q=clamp((k-.48)/.25,0,1), r=lerp(8,26,ez(q))*(f.scale||1), fw=V(Math.sin(f.yaw),0,Math.cos(f.yaw));
+   W.position.copy(f.chest()).addScaledVector(fw,f.radius()+5); W.lookAt(W.position.clone().add(fw)); W.rotateZ(a.t*6); W.scale.setScalar(r);
+   if(Math.random()<dt*40){ const g=rand(0,6.28); wfxSprite(Math.random()<.5?'spray':'sprayM',W.position.clone().add(V(Math.cos(g)*r,Math.sin(g)*r,0)),8,.3,{grow:.4}); }
+   if(Math.random()<dt*20) wfxSprite('crest',f.pos.clone().addScaledVector(fw,-6).add(V(0,2,0)),16,.4,{grow:.3}); }
+  if(k>=.8&&a.ws){ wsKill(a,true); ring(o.pos.x,4,o.pos.z,30,WATER,.5); game.shake=Math.max(game.shake,1.3); } }; }
+{ const o=cineEnd; cineEnd=function(){ const a=CINE.a; if(a&&a.ws) wsKill(a,false); o(); }; }
+// charge shot: pull the camera back and up so VALOR, the water shield and the monster are all in frame
+{ const oC=cineCam; cineCam=function(){ const f=CINE.f, o=CINE.o, a=CINE.a; if(f&&o&&CINE.brawl&&a.hitT!=null){ const k=a.t-a.hitT; if(k>=.5&&k<.8){ cineShot(2);
+   const toO=V(o.pos.x-f.pos.x,0,o.pos.z-f.pos.z).normalize(), sd=V(toO.z,0,-toO.x); camAt(f.pos.clone().addScaledVector(toO,-26).addScaledVector(sd,16).add(V(0,16,0)),f.chest().lerp(o.chest(),.35)); return; } } return oC(); }; }

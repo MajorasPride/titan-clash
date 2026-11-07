@@ -14,7 +14,7 @@ Object.assign(MOVES.bjab,{dur:.24,hitAt:.1});
 Object.assign(MOVES,{
  bsweep:{name:'Leg Sweep (trips)',dur:.6,hitAt:.32,moveMul:.1,anim:'bsweep',holdP:.25},
  bweave:{name:'Weave',dur:.32,moveMul:0,anim:'bweave',noCharge:1},
- starpunch:{name:'KO Star Punch',dur:1.0,hitAt:.55,moveMul:0,anim:'bstar',noCharge:1},
+ starpunch:{name:'KO Punch',dur:1.0,hitAt:.55,moveMul:0,anim:'bstar',noCharge:1},
 });
 STRINGS['valor:1']={ L:{id:'bjab',c:0}, LL:{id:'bjab',c:1}, LLL:{id:'bjab',c:2,end:1},
  LLM:{id:'bsweep',end:1}, LM:{id:'thook'}, M:{id:'thook'}, MM:{id:'bsweep',end:1} };
