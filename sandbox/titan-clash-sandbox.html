@@ -24,6 +24,21 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 12 (Nov 6, 2026): both ultimates redone (Shield Barrage + flash-step Tidecrest Oath)
+Status: **testing**. Feedback: waiting. Code: `sandbox/src/15-shield-barrage.js`, `sandbox/src/16-sword-flash.js`. Sandbox only, not in the game.
+- **Brawler: SHIELD BARRAGE** (MajorasPride: "forget the ground thing", 4 throws that bounce back, dynamic, cinematic). Aimed throw (a miss = no cutscene), then SPIN TOSS, JUMP SPIN TOSS, a throw off the CHIN (slow-mo, head snaps back), catch, charge behind the giant water shield (kept, his pick), ULTIMATE SHIELD BASH (freeze), and the monster flies off in a straight line like a beam with a water trail and crashes far away. New camera angle every throw. The Sandbox 10 tackle / pin / slam code is still in 11-valor-cine.js but no longer used.
+- **Sword: TIDECREST OATH** (MajorasPride: lunging, super fast cuts; a BlazBlue-style super; finish with an Akuma pose and a dragon in the sky). Draw stance, then an aimed LUNGE (a miss = no cutscene). On a hit: the world goes dark like a fighting-game super, 6 flash-step cuts through the monster from every side, each pass leaving fading blue afterimage clones. He lands far side, back to the camera in an Akuma-style stand, while a giant painted water dragon (our own design) draws itself coiling up through the clouds behind the monster. On the sheathe click, every cut opens and one giant cut splits the monster and the sky, and the dragon bursts into water.
+- Ultimate lines unchanged. Brawler ultimate renamed SHIELD BARRAGE (was SHIELD PIN).
+- **Sword v3, Hibiki's Astral (BlazBlue: Central Fiction) as the reference** (his call, our style on top): the lunge lands, black smoke swallows the monster, VALOR and a **water clone of VALOR** dash through it from opposite sides at once (an X every pass), the last pass is the crossing slash, and the screen cuts to black for a beat. Then the Akuma stand, the dragon and the sky cut.
+- **Final city shot** (his reference: a dragon in a figure-8 coil over a night city in a lightning storm): after the sky cut, a wide shot over Neon City, VALOR in front with his back turned (Akuma stand), the water dragon (our own design, not the reference's dragon) coiled in a figure-8 over the skyline with lightning cracking around it.
+- **Brawler v2:** VALOR runs at the monster while he throws (closing the gap every throw), catches on the run, lunging throws like Cap's MvC shield throw. Some shots from a flat side-on fighting-game angle. More shots on VALOR (the catch, behind him for the chin throw, a longer hero shot at the end) because he said "show VALOR more".
+- **Ultimate camera** (`sandbox/src/17-ult-camera.js`): when an ultimate lands, 1 in 3 times the whole cutscene plays from a flat side-on fighting-game camera; the rest are cinematic. The sword's Akuma stand + final dragon shot always stay cinematic. ⚙ menu: ULT CAMERA: RANDOM / CINEMATIC / FIGHTING GAME.
+### Sandbox 11 (Nov 6, 2026): ultimate body poses (no more stiff "T-pose")
+Status: **testing**. Feedback: waiting. Code: `sandbox/src/14-ult-poses.js`. Sandbox only, not in the game.
+- Why: MajorasPride: "Why is the model just staying there when doing the ultimate?" The ultimate used one fixed pose (arms up) the whole time while the code slid VALOR around.
+- **Tidecrest Oath (sword):** plants his feet and raises the sword while the water gathers, thrusts forward to launch the dragon, holds his guard while it coils, winds back and does one huge draw-cut, turns away and sheathes on the click, then stands tall.
+- **Shield Pin (brawler):** wind-up and shield throw, reaches out and catches the ricochet, sprints behind the water shield (running legs), low tackle, down on one knee with alternating shield bash / right punch, stands with the shield raised in both hands, then slams it down.
+- Misses get their own stumble pose. Other titans keep the old ultimate pose until they get their own.
 ### Sandbox 10 (Nov 6, 2026): the two ultimates rebuilt to play completely differently
 Status: **testing**. Feedback: waiting. Code: end of `sandbox/src/11-valor-cine.js`.
 - Why: MajorasPride said both ultimates were "literally the same" (both rushed in and punched).
@@ -6109,6 +6124,355 @@ function uPoseBrawl(k,f,a){ const t=a.t;
  k.armL=lerp(lerp(-1.5,-2.95,u),-.9,s); k.armR=lerp(lerp(-1.3,-2.85,u),-.9,s); k.elL=k.elR=lerp(lerp(-1.2,-.2,u),-.15,s); k.azL=lerp(.4,-.15,u); k.azR=lerp(.3,.15,u);
  k.lean=lerp(lerp(.85,-.25,u),.75,s)*(1-rec*.6); k.headX=lerp(lerp(.4,-.4,u),.35,s);
  k.legL=lerp(lerp(-1.1,-.3,u),-.9,s)*(1-rec); k.knL=lerp(lerp(1.3,.2,u),1.0,s)*(1-rec*.7); k.legR=lerp(lerp(.6,.2,u),.5,s)*(1-rec); k.knR=lerp(lerp(1.4,.2,u),.8,s)*(1-rec*.7); }
+
+/* =====================================================================
+   SANDBOX TEST 12: BRAWLER ULTIMATE = SHIELD BARRAGE CUTSCENE (Nov 6, 2026)
+   MajorasPride: "He's just punching the ground? Forget the ground thing. Just shield throw, 4 times bounce
+   back, but dynamic throwing. Make it look sick: spin toss, jump spin toss, bounce to chin then back for an
+   ultimate shield bash, then it tosses the enemy like a beam. Make it cinematic too." Keep the giant water shield for the bash.
+   Flow: 1) aimed throw (a miss = no cutscene)  2) SPIN TOSS  3) JUMP SPIN TOSS  4) off the CHIN (slow-mo, head snaps back)
+   5) catch, charge behind the giant water shield, ULTIMATE SHIELD BASH (freeze)  6) the monster flies off in a straight
+   line like a beam with a water trail and crashes far away. Every throw bounces back to his hand.
+   The tackle / pin / ground punches / slam of Sandbox 10 are no longer used (their code is still in 11-valor-cine.js).
+   ===================================================================== */
+const SB12={ R1:[0,.32], T2:[.6,.74], R2:[.74,1.0], T3:[1.25,1.38], LAND:1.5, R3:[1.38,1.66], T4:[1.8,1.9], R4:[1.9,2.25], BASH:2.5, CRASH:3.3, END:4.4 };
+const sbHand=f=>f.chest().add(V(Math.sin(f.yaw)*5,0,Math.cos(f.yaw)*5));
+function sbChin(o){ const h=V(); if(o.P&&o.P.head){ o.P.head.getWorldPosition(h); return h; } return o.chest().add(V(0,o.radius()*.6,0)); }
+// where the flying shield is at time k (null = in his hand)
+function sbShieldPos(a,k,f,o){ const S=SB12, seg=(r,from,to,arc,side)=>{ const q=ez(clamp((k-r[0])/(r[1]-r[0]),0,1)); const p=from.clone().lerp(to,q); p.y+=Math.sin(q*Math.PI)*(arc||0);
+   if(side){ const sd=V(Math.cos(f.yaw),0,-Math.sin(f.yaw)); p.addScaledVector(sd,Math.sin(q*Math.PI)*side); } return p; };
+ if(k<S.R1[1]) return seg(S.R1,a.hitAt0||o.chest(),sbHand(f),6,0);
+ if(k>=S.T2[0]&&k<S.T2[1]) return seg(S.T2,sbHand(f),o.chest(),2,-14);
+ if(k>=S.R2[0]&&k<S.R2[1]) return seg(S.R2,o.chest(),sbHand(f),8,12);
+ if(k>=S.T3[0]&&k<S.T3[1]) return seg(S.T3,sbHand(f),o.chest(),-4,0);
+ if(k>=S.R3[0]&&k<S.R3[1]) return seg(S.R3,o.chest(),sbHand(f),14,-10);
+ if(k>=S.T4[0]&&k<S.T4[1]) return seg(S.T4,sbHand(f),sbChin(o),0,0);
+ if(k>=S.R4[0]&&k<S.R4[1]) return seg(S.R4,sbChin(o),sbHand(f).add(V(0,4,0)),22,0);
+ return null; }
+
+VULT.brawl.name='SHIELD BARRAGE';
+ultBrawl=function(f,a,dt,pm,o){ const t=a.t; a.brawl=1; if(a.miss) return;
+ // 1. the aimed opening throw (same as before: a miss = no cutscene)
+ if(once(a,'s',0)){ if(canHit(o)) f.yaw=Math.atan2(o.pos.x-f.pos.x,o.pos.z-f.pos.z); f.kb.set(0,0,0); Snd.mech&&Snd.mech(); }
+ if(!a.hitT){ f.kb.multiplyScalar(.5);
+  if(once(a,'throw',.3)){ a.sh={pos:sbHand(f),yaw:f.yaw,d:0,m:v8DiscMesh()}; if(f.P.v8shield) f.P.v8shield.visible=false; Snd.whoosh(); }
+  const S=a.sh; if(S){ const step=150*dt; if(canHit(o)){ const want=Math.atan2(o.pos.x-S.pos.x,o.pos.z-S.pos.z); S.yaw+=clamp(angDiff(want,S.yaw)||0,-.5*dt,.5*dt); }
+   S.pos.x+=Math.sin(S.yaw)*step; S.pos.z+=Math.cos(S.yaw)*step; S.d+=step; S.pos.y=lerp(S.pos.y,canHit(o)?o.chest().y:10,dt*3); S.m.position.copy(S.pos); S.m.rotation.y+=dt*20;
+   if(Math.random()<dt*25) wfxSprite('spray',S.pos.clone(),7,.3,{grow:.3});
+   if(canHit(o)&&S.pos.distanceTo(o.chest())<o.radius()+6){ a.hitT=t; a.hitAt0=S.pos.clone(); ultHit(f,o,6*pm,0,0,o.chest()); clangFX(o.chest()); wfxHit(o.chest(),12); toast('BAM!','#ffd43b',260); ultLanded(f,a); }
+   else if(S.d>150){ scene.remove(S.m); a.sh=null; if(f.P.v8shield) f.P.v8shield.visible=true; ultMiss(f,a,t); } }
+  if(t>2&&!a.hitT&&!a.miss){ if(a.sh){ scene.remove(a.sh.m); a.sh=null; } if(f.P.v8shield) f.P.v8shield.visible=true; ultMiss(f,a,t); }
+  return; }
+ const k=t-a.hitT, C=SB12; a.dur=Math.max(a.dur,a.hitT+C.END); f.kb.set(0,0,0);
+ if(k<C.BASH){ ultHold(o,null); o.pos.y=0; if(canHit(o)) f.yaw=Math.atan2(o.pos.x-f.pos.x,o.pos.z-f.pos.z); }
+ // the shield: flying or in his hand
+ const sp=sbShieldPos(a,k,f,o);
+ if(sp){ if(!a.sh) a.sh={m:v8DiscMesh()}; a.sh.m.position.copy(sp); a.sh.m.rotation.y+=dt*26; a.sh.m.rotation.z=Math.sin(k*9)*.5; if(f.P.v8shield) f.P.v8shield.visible=false;
+  if(Math.random()<dt*35) wfxSprite(Math.random()<.5?'spray':'sprayM',sp.clone(),7,.3,{grow:.35}); if(Math.random()<dt*14) wfxSprite(Math.random()<.5?'curl':'curlM',sp.clone(),9,.4,{grow:.3,spin:rand(-4,4)}); }
+ else if(a.sh){ scene.remove(a.sh.m); a.sh=null; if(f.P.v8shield) f.P.v8shield.visible=true; Snd.block(); burst(f.chest(),0xffffff,10,8); }
+ const hitFX=(at,word,col,dmg)=>{ ultHit(f,o,dmg*pm,0,0,null); clangFX(at); wfxHit(at,12); burst(at,WATER,16,18); toast(word,col,260); game.shake=Math.max(game.shake,.7); game.hitStop=Math.max(game.hitStop,.06); Snd.thud&&Snd.thud(); };
+ // 2. SPIN TOSS
+ if(once(a,'w2',a.hitT+C.T2[0])){ Snd.whoosh(); wfxFlat('whirl',f.pos.x,f.pos.z,16,.5,0,6); }
+ if(once(a,'h2',a.hitT+C.T2[1])) hitFX(o.chest(),'WHAM!','#7fd4ff',5);
+ // 3. JUMP SPIN TOSS
+ if(k>=C.R2[1]&&k<C.LAND){ const q=(k-C.R2[1])/(C.LAND-C.R2[1]); f.pos.y=Math.sin(q*Math.PI)*28; f.vy=0; f.onGround=false; if(Math.random()<dt*20) wfxSprite('foam',f.pos.clone().add(V(0,2,0)),6,.3,{grow:.4}); }
+ if(once(a,'jump',a.hitT+C.R2[1])){ Snd.whoosh(); ring(f.pos.x,.5,f.pos.z,14,WATER,.4); wfxFlat('ripple',f.pos.x,f.pos.z,16,.5); }
+ if(once(a,'w3',a.hitT+C.T3[0])) Snd.whoosh();
+ if(once(a,'h3',a.hitT+C.T3[1])) hitFX(o.chest(),'KRAK!','#ff6b6b',5);
+ if(once(a,'land',a.hitT+C.LAND)){ f.pos.y=0; f.onGround=true; dust(f.pos.x,f.pos.z,8,8); wfxFlat('ripple',f.pos.x,f.pos.z,18,.6); Snd.thud&&Snd.thud(); }
+ // 4. OFF THE CHIN: slow-mo, the monster's head snaps back
+ if(once(a,'w4',a.hitT+C.T4[0])) Snd.whoosh();
+ if(once(a,'chin',a.hitT+C.T4[1])){ const at=sbChin(o); hitFX(at,'POW!','#ffd43b',7); cineFlash(); cineFreeze(450,.7); a.chinT=k; Snd.tone('square',900,200,.25,.1); }
+ if(a.chinT!=null&&k<C.BASH) o.tilt=lerp(o.tilt,-.55,Math.min(1,dt*14));   // head and body rocked back
+ // 5. charge behind the giant water shield... ULTIMATE SHIELD BASH
+ if(k>=C.R4[1]&&k<C.BASH){ const toO=V(o.pos.x-f.pos.x,0,o.pos.z-f.pos.z), d=toO.length(); if(d>o.radius()+f.radius()+2){ toO.normalize(); f.pos.addScaledVector(toO,Math.min(d-(o.radius()+f.radius()+2),170*dt)); }
+  if(!a.ws){ a.ws=wsMake(); Snd.tone('sawtooth',120,500,.4,.1); Snd.whoosh(); }
+  const W=a.ws, q=clamp((k-C.R4[1])/(C.BASH-C.R4[1]),0,1), r=lerp(8,28,ez(q))*(f.scale||1), fw=V(Math.sin(f.yaw),0,Math.cos(f.yaw));
+  W.position.copy(f.chest()).addScaledVector(fw,f.radius()+5); W.lookAt(W.position.clone().add(fw)); W.rotateZ(a.t*6); W.scale.setScalar(r);
+  if(Math.random()<dt*40){ const g=rand(0,6.28); wfxSprite(Math.random()<.5?'spray':'sprayM',W.position.clone().add(V(Math.cos(g)*r,Math.sin(g)*r,0)),8,.3,{grow:.4}); } }
+ if(once(a,'bash',a.hitT+C.BASH)){ const at=o.chest(); wsKill(a,true); ultHit(f,o,22*pm,0,0,null); clangFX(at); wfxHit(at,16); burst(at,0xffffff,40,30); burst(at,WATER,40,34);
+  a.fly={dir:V(Math.sin(f.yaw),0,Math.cos(f.yaw)),y0:o.pos.y}; o.flying=true; cineFlash(); cineFreeze(380,.7); flashScreen('#7fd4ff'); game.shake=Math.max(game.shake,1.6); game.hitStop=Math.max(game.hitStop,.15); Snd.boom(); toast('THWACK!','#ffd43b',320); }
+ // 6. LAUNCHED LIKE A BEAM: a straight line with a water trail, crash far away
+ if(a.fly&&k<C.CRASH){ ultHold(o,null); o.pos.addScaledVector(a.fly.dir,200*dt); o.pos.y=lerp(o.pos.y,6,dt*6); o.tilt=lerp(o.tilt,-1.3,Math.min(1,dt*10));
+  a._tr=(a._tr||0)-dt; if(a._tr<=0){ a._tr=.02; const p=o.chest().addScaledVector(a.fly.dir,-o.radius()); wfxSprite(Math.random()<.5?'curl':'curlM',p,15,.6,{grow:.3}); wfxSprite('foam',p.clone().add(V(rand(-3,3),rand(-3,3),rand(-3,3))),9,.45,{grow:.4}); wfxSprite('crest',p.clone().addScaledVector(a.fly.dir,-6),18,.5,{grow:.2}); } }
+ if(a.fly&&once(a,'crash',a.hitT+C.CRASH)){ const x=o.pos.x,z=o.pos.z; o.pos.y=0; o.flying=false; o.stun=Math.max(o.stun,1.5); ultHit(f,o,8*pm,0,0,null);
+  smash(x,z,14,0,a.fly.dir.x,a.fly.dir.z,2,80); dust(x,z,16,16); wfxRing(x,z,36,.8); wfxColumn(x,z,40,8); wfxFlat('whirl',x,z,30,1,0,8); game.shake=Math.max(game.shake,1.5); Snd.boom(); banner('K.O.!',900); }
+ if(k>C.CRASH+.1&&o.flying) o.flying=false;
+};
+// if the cutscene ends early: stand the monster back up, clean up the flying shield
+{ const o=cineEnd; cineEnd=function(){ const a=CINE.a, f=CINE.f, m=CINE.o; if(a&&a.sh&&a.sh.m){ scene.remove(a.sh.m); a.sh=null; } if(f&&f.P&&f.P.v8shield) f.P.v8shield.visible=true; if(m) m.flying=false; if(f&&f.pos.y>0&&a&&a.brawl){ f.pos.y=0; f.onGround=true; } o(); }; }
+
+/* ---------------- VALOR's body for each throw ---------------- */
+uPoseBrawl=function(k,f,a){ const t=a.t;
+ if(a.miss){ k.armL=-.4; k.elL=-.8; k.azL=.3; k.armR=-1; k.elR=-1.5; k.lean=.3; k.twist=.3; k.knL=.4; k.knR=.3; k.legL=-.3; k.headX=.2; return; }
+ if(a.hitT==null){ const w=uq(t,0,.26), s=uq(t,.26,.4);      // wind up and throw
+  k.armL=lerp(-1.1,-1.4,w); k.azL=lerp(lerp(.2,1.1,w),-.85,s); k.elL=lerp(lerp(-1.2,-1.4,w),0,s); k.twist=lerp(lerp(0,-.8,w),.6,s); k.lean=lerp(lerp(0,-.1,w),.25,s); k.armR=-.5; k.elR=-1.1;
+  k.legL=lerp(.2*w,-.7,s); k.knL=lerp(.3*w,.3,s); k.legR=lerp(-.2*w,.4,s); k.knR=lerp(.5*w,.4,s); return; }
+ const kk=t-a.hitT, C=SB12, catchP=()=>{ k.armL=-1.5; k.elL=-.5; k.azL=.1; k.armR=-1.1; k.elR=-1.5; k.azR=.3; k.legL=-.4; k.knL=.4; k.legR=.3; k.knR=.45; k.lean=.12; };
+ if(kk<C.R1[1]){ const r=uq(kk,.05,.3); catchP(); k.armL=lerp(-1.4,-1.65,r); k.elL=lerp(0,-.05,r); k.azL=lerp(-.85,-.1,r); k.twist=lerp(.6,-.1,r); return; }   // reach and catch
+ if(kk<C.T2[0]+.05){ // SPIN TOSS: one full turn, the arm whips out on release
+  const q=uq(kk,C.R1[1],C.T2[0]); k.spin=q*Math.PI*2; k.armL=-1.45; k.azL=lerp(.9,-.85,uq(kk,C.T2[0]-.06,C.T2[0]+.02)); k.elL=lerp(-.6,0,q); k.armR=-.9; k.elR=-1.4; k.azR=.4;
+  k.lean=.2; k.knL=k.knR=.45; k.legL=-.3; k.legR=.2; return; }
+ if(kk<C.R2[1]){ catchP(); k.azL=lerp(-.85,-.1,uq(kk,C.R2[0],C.R2[1])); k.lean=.15; return; }
+ if(kk<C.LAND){ // JUMP SPIN TOSS: tuck, spin in the air, throw down at the monster
+  const q=uq(kk,C.R2[1],C.T3[0]); k.spin=q*Math.PI*2; k.knL=k.knR=1.2; k.legL=k.legR=-.6; k.armR=-1; k.elR=-1.4;
+  const rel=uq(kk,C.T3[0]-.05,C.T3[0]+.03); k.armL=lerp(-1.4,-1.15,rel); k.azL=lerp(.9,-.85,rel); k.elL=lerp(-.7,0,rel); k.lean=lerp(.1,.55,rel); return; }
+ if(kk<C.R3[1]){ const l=1-uq(kk,C.LAND,C.LAND+.12)*.6; catchP(); k.knL=k.knR=.9*l+.3; k.legL=k.legR=-.6*l; k.lean=.4*l+.1; k.azL=lerp(-.85,-.1,uq(kk,C.R3[0],C.R3[1])); return; }
+ if(kk<C.R4[0]){ // UNDERHAND toss up at the chin
+  const w=uq(kk,C.R3[1],C.T4[0]-.04), s=uq(kk,C.T4[0]-.04,C.T4[0]+.04); k.armL=lerp(lerp(-1.5,.6,w),-2.3,s); k.elL=lerp(-.5,-.1,w); k.azL=.15; k.knL=k.knR=lerp(.4,1.1,w)*(1-s*.7); k.legL=-.7*w; k.legR=.3;
+  k.lean=lerp(lerp(.12,.45,w),-.2,s); k.twist=lerp(.3*w,-.2,s); k.armR=-1.1; k.elR=-1.5; k.headX=lerp(.2*w,-.3,s); return; }
+ if(kk<C.R4[1]){ k.armL=lerp(-2.3,-2.6,uq(kk,C.R4[0],C.R4[1])); k.elL=-.1; k.azL=.1; k.armR=-1.1; k.elR=-1.5; k.headX=-.35; k.lean=-.1; k.legL=-.3; k.knL=.3; return; }   // reaches up to catch it
+ if(kk<C.BASH){ uRun(k,22); k.lean=.65; k.armL=-1.55; k.elL=-.15; k.azL=.5; k.armR=-.9; k.elR=-1.5; k.azR=.2; k.headX=.25; return; }       // the charge
+ if(kk<C.BASH+.6){ k.armL=-1.62; k.elL=-.05; k.azL=.2; k.twist=.75; k.lean=.5; k.legL=-.95; k.knL=.4; k.legR=.55; k.knR=.6; k.armR=-.6; k.elR=-1.2; return; }   // BASH follow-through
+ const st=uq(kk,C.BASH+.6,C.BASH+.95); k.armL=lerp(-1.62,-1.0,st); k.elL=lerp(-.05,-1.4,st); k.azL=.35; k.twist=lerp(.75,.15,st); k.lean=lerp(.5,-.05,st); k.legL=lerp(-.95,-.25,st); k.knL=lerp(.4,.15,st); k.legR=lerp(.55,.15,st); k.knR=lerp(.6,.1,st);
+ k.armR=lerp(-.6,-.25,st); k.elR=lerp(-1.2,-.3,st); k.headX=.05; };   // stands tall, shield up, watching it fly
+
+/* ---------------- the camera: a new angle for every throw ---------------- */
+{ const oC=cineCam; cineCam=function(){ const f=CINE.f, o=CINE.o, a=CINE.a; if(!f||!o||!CINE.brawl||a.hitT==null) return oC();
+  const k=a.t-a.hitT, C=SB12, fc=f.chest(), oc=o.chest(), toO=V(o.pos.x-f.pos.x,0,o.pos.z-f.pos.z).normalize(), sd=V(toO.z,0,-toO.x), mid=fc.clone().lerp(oc,.5);
+  if(k<.12){ cineShot(0); camAt(oc.clone().addScaledVector(toO,-16).addScaledVector(sd,10).add(V(0,2,0)),oc); return; }   // impact close-up (quote)
+  if(k<C.R1[1]){ if(cineShot(9)) cq.classList.remove('show'); camAt(fc.clone().addScaledVector(toO,16).addScaledVector(sd,-12).add(V(0,-2,0)),fc.clone().add(V(0,2,0))); return; }   // VALOR catches it
+  if(k<C.T2[1]){ cineShot(1); const g=(k-C.R1[1])*2; camAt(fc.clone().addScaledVector(toO,20).addScaledVector(sd,Math.sin(g)*14).add(V(0,-3,0)),fc.clone().add(V(0,3,0))); return; }       // low in front: the spin toss
+  if(k<C.R2[1]){ cineShot(2); camAt(oc.clone().addScaledVector(toO,14).addScaledVector(sd,-12).add(V(0,6,0)),fc); return; }                                                                  // over the monster's shoulder
+  if(k<C.R3[1]){ if(cineShot(3)) cineEl.classList.add('comic'); camAt(V(f.pos.x,0,f.pos.z).addScaledVector(sd,40).addScaledVector(toO,-16).add(V(0,3,0)),fc.clone().lerp(oc,.25)); return; } // ground, looking up at the jump (keeps VALOR in frame)
+  if(k<C.R4[0]+.25){ if(cineShot(4)) cineEl.classList.remove('comic'); const ch=sbChin(o); camAt(V(f.pos.x,2,f.pos.z).addScaledVector(toO,-14).addScaledVector(sd,9),ch.clone().lerp(fc,.35)); return; }   // low behind VALOR, looking up past him at the chin
+  if(k<C.BASH){ cineShot(5); camAt(f.pos.clone().addScaledVector(toO,-28).addScaledVector(sd,16).add(V(0,16,0)),fc.clone().lerp(oc,.4)); return; }                                              // behind the charge
+  if(k<C.BASH+.15){ if(cineShot(6)) cineEl.classList.add('comic'); camAt(mid.clone().addScaledVector(sd,24).add(V(0,-1,0)),mid); return; }                                                     // side freeze on the BASH
+  if(k<C.CRASH+.1){ if(cineShot(7)) cineEl.classList.remove('comic'); const d=a.fly?a.fly.dir:toO, s2=V(d.z,0,-d.x); camAt(oc.clone().addScaledVector(d,-30).addScaledVector(s2,18).add(V(0,8,0)),oc); return; } // chase the flying monster
+  if(cineShot(8)) cineFlash(); const g=uq(k,C.CRASH+.1,C.END)*.8; camAt(fc.clone().addScaledVector(toO,20).addScaledVector(sd,-10+16*g).add(V(0,-3,0)),fc.clone().add(V(0,3,0)));                                                       // hero shot: VALOR, the crash far behind
+  if(k>C.END-.05||!f.atk||f.atk.id!=='ultimate') cineEnd(); }; }
+
+/* v2 (MajorasPride: "he should be running to him while throwing, like he's closing the distance", plus some shots
+   from a flat side-on fighting-game angle like MvC / Captain America's shield throw):
+   - from the first catch until the last catch he runs at the monster, closing the gap a bit more with every throw
+   - catches happen on the run (running legs), throws are lunging throws (front knee bent, back leg straight)
+   - the spin toss and the jump toss are shown from the side, both titans in frame like a 2D fighting game */
+{ const oB=ultBrawl; ultBrawl=function(f,a,dt,pm,o){ oB(f,a,dt,pm,o); if(!a.hitT||a.miss) return; const k=a.t-a.hitT, C=SB12;
+  if(k<C.R4[1]){ if(a.d0==null) a.d0=Math.hypot(o.pos.x-f.pos.x,o.pos.z-f.pos.z); const near=o.radius()+f.radius()+22, want=lerp(a.d0,near,clamp(k/C.R4[1],0,1));
+   const toO=V(o.pos.x-f.pos.x,0,o.pos.z-f.pos.z), d=toO.length(); if(d>want){ toO.normalize(); f.pos.addScaledVector(toO,Math.min(d-want,90*dt)); }
+   if(f.onGround&&Math.random()<dt*10) dust(f.pos.x,f.pos.z,3,3); } }; }
+{ const oP=uPoseBrawl; uPoseBrawl=function(k,f,a){ oP(k,f,a); if(a.hitT==null||a.miss) return; const kk=a.t-a.hitT, C=SB12;
+  const lunge=(t0)=>{ const w=Math.max(0,1-Math.abs(kk-t0)/.12); if(w>0){ k.legL=lerp(k.legL,-1.05,w); k.knL=lerp(k.knL,.55,w); k.legR=lerp(k.legR,.75,w); k.knR=lerp(k.knR,.08,w); k.lean=lerp(k.lean,.45,w); } return w>0; };
+  if(lunge(C.T2[0])||lunge(C.T4[0])) return;            // lunging release (the jump toss stays in the air)
+  const run=(kk<C.R1[1]&&kk>.08)||(kk>=C.T2[0]+.12&&kk<C.R2[1])||(kk>=C.LAND+.1&&kk<C.R3[1])||(kk>=C.R4[0]&&kk<C.R4[1]);
+  if(run){ const T=game.time*18; k.legL=-.85*Math.sin(T); k.legR=.85*Math.sin(T); k.knL=.6+.4*Math.cos(T); k.knR=.6-.4*Math.cos(T); k.lean=Math.max(k.lean,.3); } }; }
+{ const oC=cineCam; cineCam=function(){ const f=CINE.f, o=CINE.o, a=CINE.a; if(!f||!o||!CINE.brawl||a.hitT==null) return oC(); const k=a.t-a.hitT, C=SB12;
+  const side=(k>=C.R1[1]&&k<C.T2[1])||(k>=C.R2[1]&&k<C.R3[1]); if(!side) return oC();
+  if(cineShot(k<C.T2[1]?40:41)) cineEl.classList.remove('comic');
+  const fc=f.chest(), oc=o.chest(), mid=V((f.pos.x+o.pos.x)/2,0,(f.pos.z+o.pos.z)/2), toO=V(o.pos.x-f.pos.x,0,o.pos.z-f.pos.z), d=toO.length(); toO.normalize(); const sd=V(toO.z,0,-toO.x);
+  const back=Math.max(60,(d+o.radius()*2+20)*.9), hy=(fc.y-f.pos.y)*.9;          // flat side view, both titans in frame
+  camAt(mid.clone().addScaledVector(sd,back).add(V(0,hy,0)),mid.clone().add(V(0,hy+Math.max(0,f.pos.y)*.4,0))); }; }
+
+/* =====================================================================
+   SANDBOX TEST 13: SWORD ULTIMATE = FLASH-STEP CUTS + THE SKY DRAGON (Nov 6, 2026)
+   MajorasPride: "Sword attack should be him lunging and cutting in super fast moves." Lunge opener (no dragon shot),
+   anime dash cuts, then "an Akuma pose with a dragon in the background... like that in the sky" (he showed a huge
+   coiled dragon in the clouds + Akuma standing with his back turned). Our own design: a blue painted WATER dragon,
+   not any existing character.
+   Flow: 1) crouch in a draw stance, then LUNGE straight ahead (aimed; a miss = no cutscene)
+   2) hit = cutscene: 6 flash-step cuts through the monster from every side (a blur, water slash lines)
+   3) he lands far side, back to the camera, Akuma-style: fists down, shoulders square, sword point-down
+      while a giant water dragon draws itself coiling up through the clouds in the sky behind the monster
+   4) the sheathe click: every cut opens at once, the dragon roars, the monster is blown away in a water burst.
+   ===================================================================== */
+const SW13={ LUNGE:.28, CUTS:6, CUT:.2, C0:.1, LAND:1.42, DRAGON:[1.3,2.1], CLICK:2.55, OPEN:2.7, FINAL:3.15, END:5.0 };   // FINAL = the wide city shot (MajorasPride, Nov 6)
+
+/* ---------------- the sky dragon (ink-painted water, built from a tube along a coil) ---------------- */
+function dragonTex(){ return wfxCanvas((x,w,h)=>{ // u = along the body, v = around it
+  const g=x.createLinearGradient(0,0,0,h); g.addColorStop(0,'#f2fbff'); g.addColorStop(.22,'#bfeeff'); g.addColorStop(.3,'#2f8ff0'); g.addColorStop(.75,'#123f9e'); g.addColorStop(1,'#2f8ff0'); x.fillStyle=g; x.fillRect(0,0,w,h);
+  x.strokeStyle='#0b0f1e'; x.lineWidth=5; for(let i=0;i<4;i++){ x.beginPath(); x.moveTo(i*w/4,h*.26); x.lineTo(i*w/4,h*.3); x.stroke(); }          // belly plates
+  x.lineWidth=4; for(let r=0;r<3;r++) for(let i=0;i<4;i++){ const cx=i*w/4+(r%2)*w/8, cy=h*(.42+r*.17); x.beginPath(); x.arc(cx,cy,w/9,Math.PI*.15,Math.PI*.85); x.stroke(); x.strokeStyle=r%2?'#0b0f1e':'#7fd8ff'; } // scales
+ },256,256); }
+function dragonMake(C,right,fwd,s){ const G=new THREE.Group(), pts=[];
+ // a figure-8 coil hanging over the city (MajorasPride's reference shot), weaving over and under itself, head rising in the middle
+ pts.push(V(-6*s,-30*s,10*s)); pts.push(V(-2*s,0,6*s));
+ for(let i=0;i<=24;i++){ const t=-Math.PI/2+i/24*Math.PI*2, d=1+Math.sin(t)*Math.sin(t);
+  pts.push(V(70*s*Math.cos(t)/d, 40*s+46*s*Math.sin(t)*Math.cos(t)/d, Math.sin(2*t)*12*s)); }
+ pts.push(V(0,70*s,-6*s)); pts.push(V(0,88*s,-22*s)); pts.push(V(0,90*s,-40*s));   // the neck rises out of the middle, head looking down at us
+ const curve=new THREE.CatmullRomCurve3(pts), TS=220, RS=14, taper=u=>u<.15?lerp(1.2,7,u/.15):u>.86?lerp(7,5.2,(u-.86)/.14):7;
+ const tube=(scl,mat)=>{ const geo=new THREE.TubeGeometry(curve,TS,1,RS,false), P=geo.attributes.position;
+  for(let j=0;j<=TS;j++){ const c=curve.getPointAt(j/TS), r=taper(j/TS)*s*scl; for(let i=0;i<=RS;i++){ const n=j*(RS+1)+i, v=V(P.getX(n),P.getY(n),P.getZ(n)).sub(c).normalize().multiplyScalar(r).add(c); P.setXYZ(n,v.x,v.y,v.z); } }
+  P.needsUpdate=true; const m=new THREE.Mesh(geo,mat); m.renderOrder=5; G.add(m); return m; };
+ const tex=dragonTex(); tex.wrapS=tex.wrapT=THREE.RepeatWrapping; tex.repeat.set(46,1);
+ const body=tube(1,new THREE.MeshBasicMaterial({map:tex,fog:false,toneMapped:false})), ink=tube(1.13,new THREE.MeshBasicMaterial({color:0x0b0f1e,side:THREE.BackSide,fog:false}));
+ // head: our own design (blue water dragon, white foam mane, glowing eyes)
+ const H=new THREE.Group(), blue=new THREE.MeshBasicMaterial({color:0x2f8ff0,fog:false}), pale=new THREE.MeshBasicMaterial({color:0xbfeeff,fog:false}), blk=new THREE.MeshBasicMaterial({color:0x0b0f1e,side:THREE.BackSide,fog:false});
+ const part=(geo,mat,x,y,z,rx)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); if(rx) m.rotation.x=rx; H.add(m); const o=new THREE.Mesh(geo,blk); o.position.copy(m.position); o.rotation.copy(m.rotation); o.scale.setScalar(1.12); H.add(o); return m; };
+ part(new THREE.BoxGeometry(10,7,11),blue,0,0,0); part(new THREE.BoxGeometry(7,4,11),blue,0,-.5,9); part(new THREE.BoxGeometry(6.5,2,9),pale,0,-3.5,8,.35);   // skull, snout, open jaw
+ for(const sx of [-1,1]){ const h=part(new THREE.ConeGeometry(1.1,12,6),pale,sx*3,5,-4,-.9); h.rotation.z=sx*.25;                                                 // horns swept back
+  const e=new THREE.Mesh(new THREE.SphereGeometry(1.1,8,6),new THREE.MeshBasicMaterial({color:0xffffff,fog:false})); e.position.set(sx*3.6,1.6,4.5); H.add(e);       // glowing eyes
+  const wh=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([V(sx*3,-1,13),V(sx*9,-4,18),V(sx*16,2,12),V(sx*22,-6,4)]),20,.35,5,false),pale); H.add(wh); } // water whiskers
+ H.scale.setScalar(s*1.1); G.add(H);
+ const end=curve.getPointAt(1), tan=curve.getTangentAt(1); H.position.copy(end); H.lookAt(end.clone().add(tan));
+ // place the coil in the world: right / up / away from the camera
+ const m4=new THREE.Matrix4().makeBasis(right,V(0,1,0),fwd); G.applyMatrix4(m4); G.position.copy(C); scene.add(G);
+ return {G,body,ink,H,curve,m4,C,s,idx:body.geometry.index.count,frac:0}; }
+function dragonPoint(D,u){ return D.curve.getPointAt(u).applyMatrix4(D.m4).add(D.C); }
+function dragonReveal(D,q){ D.frac=q; const n=Math.floor(D.idx*q/6)*6; D.body.geometry.setDrawRange(0,n); D.ink.geometry.setDrawRange(0,n); D.H.visible=q>.985; }
+function dragonKill(a,burstIt){ const D=a.dragon; if(!D) return; a.dragon=null;
+ if(burstIt) for(let i=0;i<26;i++){ const p=dragonPoint(D,i/25); wfxSprite(i%3?'foam':'splash',p,22*D.s,.8,{grow:.6,vel:V(rand(-10,10),rand(-20,0),rand(-10,10))}); }
+ scene.remove(D.G); D.G.traverse(o=>{ if(o.geometry) o.geometry.dispose(); if(o.material){ if(o.material.map) o.material.map.dispose(); o.material.dispose(); } }); }
+
+/* ---------------- the move ---------------- */
+VULT.sword.name='TIDECREST OATH';
+ultSword=function(f,a,dt,pm,o){ const t=a.t, C=SW13; if(a.miss){ a.trail=false; return; }
+ // 1. the draw stance, then the LUNGE
+ if(once(a,'stance',0)){ f.kb.set(0,0,0); ring(f.pos.x,1,f.pos.z,12,WATER,.4); Snd.tone('triangle',600,1200,.25,.06); }
+ if(!a.hitT){ f.kb.set(0,0,0);
+  if(t<C.LUNGE){ if(Math.random()<dt*20) wfxSprite(Math.random()<.5?'curl':'curlM',f.chest().add(V(rand(-8,8),rand(-4,6),rand(-8,8))),6,.3,{grow:.2}); return; }
+  if(once(a,'go',C.LUNGE)){ a.lg={dir:V(Math.sin(f.yaw),0,Math.cos(f.yaw)),d:0}; a.trail=true; Snd.whoosh(); Snd.tone('sawtooth',1400,300,.18,.08); wfxFlat('ripple',f.pos.x,f.pos.z,16,.5); }
+  const L=a.lg, step=300*dt; f.pos.addScaledVector(L.dir,step); L.d+=step;
+  if(Math.random()<dt*50) wfxSprite('crest',f.pos.clone().addScaledVector(L.dir,-6).add(V(0,6,0)),14,.35,{grow:.2});
+  if(canHit(o)&&f.pos.distanceTo(o.pos)<o.radius()+f.radius()+4){ a.hitT=t; a.p0=f.pos.clone(); a.dir0=L.dir.clone(); ultHit(f,o,6*pm,0,0,o.chest()); slashFX(o.chest(),f); ultLanded(f,a); }
+  else if(L.d>120){ a.trail=false; ultMiss(f,a,t); }
+  return; }
+ const k=t-a.hitT; a.dur=Math.max(a.dur,a.hitT+C.END); f.kb.set(0,0,0); if(k<C.OPEN) ultHold(o,null); if(k<C.OPEN) o.pos.y=0;
+ const R=o.radius()+f.radius()+10, toO=V(o.pos.x-a.p0.x,0,o.pos.z-a.p0.z).normalize(), base=Math.atan2(-toO.x,-toO.z);
+ // 2. FLASH-STEP CUTS: he blurs through the monster from side to side, each pass a cut
+ if(k>=C.C0&&k<C.C0+C.CUTS*C.CUT){ const i=Math.floor((k-C.C0)/C.CUT), q=((k-C.C0)-i*C.CUT)/C.CUT, a1=base+i*2.55, a2=a1+Math.PI+(i%2?.5:-.5);
+  const A=V(o.pos.x+Math.sin(a1)*R,0,o.pos.z+Math.cos(a1)*R), B=V(o.pos.x+Math.sin(a2)*R,0,o.pos.z+Math.cos(a2)*R), m=ez(clamp((q-.2)/.5,0,1));
+  f.pos.copy(A.clone().lerp(B,m)); f.yaw=Math.atan2(B.x-A.x,B.z-A.z); f.onGround=true; a.trail=true; a.ci=i;
+  if(once(a,'c'+i,a.hitT+C.C0+i*C.CUT+C.CUT*.45)){ ultHit(f,o,4*pm,0,0,null); const at=o.chest().add(V(rand(-3,3),rand(-4,4),rand(-3,3)));
+   for(let j=0;j<7;j++) wfxSprite('crest',A.clone().lerp(B,j/6).add(V(0,o.chest().y-o.pos.y,0)),13,.5,{grow:.2,top:1});
+   burst(at,0xffffff,10,16); wfxHit(at,7); Snd.tone('sawtooth',1600,300,.1,.07); game.hitStop=Math.max(game.hitStop,.04); toast(['SHING!','SLASH!','ZAN!','SHING!','SLASH!','ZAN!'][i],['#ffffff','#7fd4ff','#ffd43b'][i%3],200); } }
+ // 3. he lands far side, back to the camera, and squares up (Akuma-style) while the dragon draws itself in the sky
+ if(k>=C.C0+C.CUTS*C.CUT&&k<C.OPEN+.6){ const stand=o.pos.clone().addScaledVector(toO,-(R+26)); stand.y=0;
+  f.pos.lerp(stand,Math.min(1,dt*14)); f.yaw=Math.atan2(o.pos.x-f.pos.x,o.pos.z-f.pos.z); if(k>C.LAND) a.trail=false; }
+ if(once(a,'land',a.hitT+C.LAND)){ dust(f.pos.x,f.pos.z,8,8); wfxFlat('ripple',f.pos.x,f.pos.z,18,.6); Snd.thud&&Snd.thud(); }
+ if(k>=C.DRAGON[0]&&!a.dragon&&!a.dDone){ const fw=V(o.pos.x-f.pos.x,0,o.pos.z-f.pos.z).normalize(), rt=V(-fw.z,0,fw.x); a.dragon=dragonMake(o.pos.clone().addScaledVector(fw,170).add(V(0,(f.chest().y-f.pos.y)*3.2,0)),rt,fw,(f.scale||1)*1.6); dragonReveal(a.dragon,0); Snd.tone('sawtooth',80,240,1.2,.1); }
+ const D=a.dragon; if(D){ const q=clamp((k-C.DRAGON[0])/(C.DRAGON[1]-C.DRAGON[0]),0,1); dragonReveal(D,ez(q));
+  a._cl=(a._cl||0)-dt; if(a._cl<=0){ a._cl=.03; const u=Math.random()*Math.max(.05,D.frac), p=dragonPoint(D,u).add(V(rand(-10,10),rand(-6,2),rand(-10,10)).multiplyScalar(D.s));     // clouds of foam around the coil
+   wfxSprite(Math.random()<.7?'foam':'splash',p,rand(16,28)*D.s,rand(.6,1.1),{grow:.3}); if(q<1) wfxSprite(Math.random()<.5?'curl':'curlM',dragonPoint(D,D.frac),14*D.s,.5,{grow:.4}); }
+  D.H.rotation.z=Math.sin(game.time*3)*.05; if(once(a,'roarD',a.hitT+C.DRAGON[1])){ Snd.roar&&Snd.roar(); game.shake=Math.max(game.shake,.5); } }
+ // 4. the click: every cut opens at once, the dragon roars down, the monster is blown away
+ if(once(a,'click',a.hitT+C.CLICK)){ Snd.tone('square',2400,1800,.05,.08); Snd.tone('triangle',1600,1600,.08,.05); cineFreeze(450,.55); }
+ if(once(a,'open',a.hitT+C.OPEN)){ const at=o.chest(); for(let i=0;i<6;i++){ const g=i/6*Math.PI; for(let j=-3;j<=3;j++) wfxSprite('crest',at.clone().add(V(Math.cos(g)*j*4,Math.sin(g)*j*4,0)),12,.6,{grow:.3,top:1}); }
+  ultHit(f,o,24*pm,40,24,o.chest()); slashFX(at,f); wfxColumn(o.pos.x,o.pos.z,60,10); wfxRing(o.pos.x,o.pos.z,40,.9); burst(at,WATER,50,40); burst(at,0xffffff,30,30);
+  if(D){ D.H.scale.multiplyScalar(1.15); } flashScreen('#7fd4ff'); game.shake=Math.max(game.shake,1.6); game.hitStop=Math.max(game.hitStop,.15); Snd.boom(); banner('TIDECREST OATH!',900); }
+ // the final shot: the dragon stays coiled over the city, lightning cracks around it
+ if(a.dragon&&k>=C.OPEN){ a._lt=(a._lt||0)-dt; if(a._lt<=0){ a._lt=rand(.18,.4); boltAt(a,dragonPoint(a.dragon,rand(.1,.95)).add(V(rand(-40,40),rand(10,60),rand(-20,20)).multiplyScalar(a.dragon.s))); } }
+ boltTick(a,dt); };
+{ const o=cineEnd; cineEnd=function(){ const a=CINE.a; if(a&&a.dragon){ dragonKill(a,false); a.dDone=1; } if(a) a.trail=false; o(); }; }
+{ const oR=sbReset; sbReset=function(){ const a=game.p&&game.p.atk; if(a&&a.dragon) dragonKill(a,false); oR(); }; }
+
+/* ---------------- VALOR's body ---------------- */
+uPoseSword=function(k,f,a){ const t=a.t, S=f.v8||{}, C=SW13;
+ if(a.miss){ k.armR=-.7; k.elR=-.6; k.azR=.2; k.armL=-.6; k.elL=-1.2; k.azL=.3; k.lean=.35; k.knL=.6; k.knR=.3; k.legL=-.5; k.headX=.2; S.blade=-1.2; return; }
+ if(a.hitT==null){
+  if(t<C.LUNGE){ const w=uq(t,0,.18); k.knL=k.knR=1.0*w; k.legL=-.6*w; k.legR=.45*w; k.lean=.45*w; k.twist=.5*w;            // low draw stance, hand on the hilt at his hip
+   k.armR=lerp(-.6,.1,w); k.elR=lerp(-.4,-1.5,w); k.azR=.35*w; k.armL=-1.1; k.elL=-1.3; k.azL=.45; k.headX=.25*w; S.blade=lerp(-1.4,.6,w); return; }
+  k.armR=-1.5; k.elR=0; k.azR=-.15; k.twist=-.45; k.lean=.65; k.legL=-1.0; k.knL=.4; k.legR=.7; k.knR=.5; k.armL=-.6; k.elL=-1.1; k.azL=.5; k.headX=.2; S.blade=-Math.PI/2; return; }   // the lunge
+ const kk=t-a.hitT;
+ if(kk<C.C0+C.CUTS*C.CUT){ const i=a.ci||0, q=clamp(((kk-C.C0)-i*C.CUT)/C.CUT,0,1), s=i%2?-1:1, sw=ez(clamp((q-.15)/.5,0,1));   // a slash on every pass
+  k.twist=lerp(.9*s,-1.0*s,sw); k.armR=-1.4; k.elR=-.2; k.azR=lerp(.8*s,-.7*s,sw); k.lean=.6; k.legL=-1.0; k.knL=.45; k.legR=.75; k.knR=.55; k.armL=-.7; k.elL=-1.2; k.azL=.5; k.headX=.2; S.blade=-Math.PI/2; return; }
+ // the Akuma stand: back to us, shoulders square, fists down and a little out, sword point-down at his side, head slightly lowered
+ const st=uq(kk,C.C0+C.CUTS*C.CUT,C.LAND+.15), cl=uq(kk,C.CLICK-.12,C.CLICK);
+ k.armL=lerp(-.6,.08,st); k.elL=lerp(-1.1,-.3,st); k.azL=lerp(.5,-.28,st); k.armR=lerp(-1.4,.08,st); k.elR=lerp(-.2,-.3,st); k.azR=lerp(-.7,.28,st);
+ k.twist=0; k.lean=lerp(.6,-.04,st); k.legL=lerp(-1,-.12,st); k.knL=lerp(.45,.08,st); k.legR=lerp(.75,.12,st); k.knR=lerp(.55,.08,st); k.headX=lerp(.2,.16,st)+.06*cl;
+ S.blade=lerp(-Math.PI/2,-.1,st); };
+
+/* ---------------- the camera ---------------- */
+{ const oC=cineCam; cineCam=function(){ const f=CINE.f, o=CINE.o, a=CINE.a; if(!f||!o||CINE.brawl||a.hitT==null||!a.p0) return oC();
+  const k=a.t-a.hitT, C=SW13, fc=f.chest(), oc=o.chest(), toO=V(o.pos.x-a.p0.x,0,o.pos.z-a.p0.z).normalize(), sd=V(toO.z,0,-toO.x);
+  if(k<C.C0){ cineShot(0); camAt(fc.clone().addScaledVector(toO,-14).addScaledVector(sd,10).add(V(0,2,0)),oc); return; }                                       // the lunge connects (quote)
+  if(k<C.C0+C.CUTS*C.CUT){ const i=a.ci||0; if(cineShot(10+i)){ cq.classList.remove('show'); cineEl.classList.toggle('comic',i%2===1); }                       // a new angle every cut
+   const ang=[.6,-1.4,2.3,-2.6,1.4,-.3][i], r=[46,38,52,40,48,36][i], h=[3,16,6,22,2,10][i]; camAt(V(oc.x+Math.sin(ang)*r,o.pos.y+h,oc.z+Math.cos(ang)*r),oc); return; }
+  if(k<C.DRAGON[0]+.35){ if(cineShot(20)) cineEl.classList.remove('comic'); camAt(fc.clone().addScaledVector(toO,-24).addScaledVector(sd,14).add(V(0,-4,0)),fc.clone().lerp(oc,.5).add(V(0,8,0))); return; } // low, he lands
+  if(k<C.OPEN){ cineShot(21); const D=a.dragon, up=D?dragonPoint(D,.55):oc.clone().add(V(0,60,0));                                                         // the Akuma shot: his back, the dragon in the sky
+   const q=uq(k,C.DRAGON[0]+.35,C.OPEN), hy=fc.y-f.pos.y; camAt(f.pos.clone().addScaledVector(toO,-(50-8*q)).addScaledVector(sd,5).add(V(0,hy*.55,0)),f.pos.clone().addScaledVector(toO,70).add(V(0,hy*3.4+14*q,0))); return; }
+  if(k<C.FINAL){ if(cineShot(22)) cineFlash(); camAt(oc.clone().addScaledVector(sd,40).addScaledVector(toO,-12).add(V(0,4,0)),oc.clone().add(V(0,6,0))); return; } // every cut opens
+  // FINAL SHOT: wide over the city, VALOR in front with his back to us (Akuma stand), the dragon coiled over the skyline
+  if(cineShot(23)){ cineFlash(); CINE.fov0=camera.fov; camera.fov=82; camera.updateProjectionMatrix(); }
+  const q=uq(k,C.FINAL,C.END), hy=fc.y-f.pos.y; camAt(f.pos.clone().addScaledVector(toO,-(62+14*q)).addScaledVector(sd,3).add(V(0,hy*.7,0)),f.pos.clone().addScaledVector(toO,120).add(V(0,hy*4.2,0)));
+  if(k>C.END-.05||!f.atk||f.atk.id!=='ultimate') cineEnd(); }; }
+
+/* ---------------- v2 (MajorasPride sent a BlazBlue super frame: dark screen + afterimage clones) ----------------
+   During the flash cuts the world goes dark like a fighting-game super (buildings hidden, a black dome around the
+   fight) and every pass leaves see-through blue afterimage clones of VALOR that fade out.
+   Finish ("pose and dragon sky cut"): the Akuma stand with the dragon in the sky, then on the click one giant cut
+   line splits the monster AND the sky, and the dragon bursts into water. */
+function superBG(a,o,on){ if(on&&!a.bg){ const m=new THREE.Mesh(new THREE.SphereGeometry(120,24,16),new THREE.MeshBasicMaterial({color:0x02060f,side:THREE.BackSide,fog:false})); m.position.copy(o.pos); scene.add(m); a.bg=m;
+  a.hid=[]; for(const b of city){ if(b.mesh&&b.mesh.visible){ b.mesh.visible=false; a.hid.push(b.mesh); } } }
+ if(!on&&a.bg){ scene.remove(a.bg); a.bg.geometry.dispose(); a.bg.material.dispose(); a.bg=null; for(const m of a.hid||[]) m.visible=true; a.hid=null; } }
+function ghostAdd(a,f){ const g=f.root.clone(true), mat=new THREE.MeshBasicMaterial({color:0x7fd4ff,transparent:true,opacity:.5,depthWrite:false,fog:false});
+ g.traverse(o=>{ if(o.isMesh) o.material=mat; else if(o.isSprite||o.isPoints||o.isLine) o.visible=false; }); scene.add(g); (a.ghosts||(a.ghosts=[])).push({g,mat,t:0}); }
+function ghostTick(a,dt){ if(!a.ghosts) return; for(const G of a.ghosts){ G.t+=dt; G.mat.opacity=Math.max(0,.5*(1-G.t/.7)); } a.ghosts=a.ghosts.filter(G=>{ if(G.t<.7) return true; scene.remove(G.g); G.mat.dispose(); return false; }); }
+function ghostClear(a){ for(const G of a.ghosts||[]){ scene.remove(G.g); G.mat.dispose(); } a.ghosts=[]; }
+{ const oS=ultSword; ultSword=function(f,a,dt,pm,o){ oS(f,a,dt,pm,o); if(a.hitT==null||a.miss) return; const k=a.t-a.hitT, C=SW13, end=C.C0+C.CUTS*C.CUT;
+  superBG(a,o,k>=C.C0-.02&&k<end+.08);
+  if(k>=C.C0&&k<end){ a._gh=(a._gh||0)-dt; if(a._gh<=0){ a._gh=C.CUT/3; ghostAdd(a,f); } }
+  ghostTick(a,dt);
+  // the giant cut through the monster and up into the sky, through the dragon
+  if(once(a,'skycut',a.hitT+C.OPEN)){ const D=a.dragon, from=o.pos.clone().add(V(-30,0,0)), to=D?dragonPoint(D,.7):o.chest().add(V(40,140,0));
+   for(let i=0;i<=26;i++) wfxSprite(i%3?'crest':'foam',from.clone().lerp(to,i/26),24,.9,{grow:.3,top:1}); } }; }
+{ const o=cineEnd; cineEnd=function(){ const a=CINE.a; if(a&&!a.brawl){ superBG(a,null,false); ghostClear(a); } o(); }; }
+{ const oR=sbReset; sbReset=function(){ const a=game.p&&game.p.atk; if(a){ superBG(a,null,false); ghostClear(a); } oR(); }; }
+
+/* ---------------- v3: Hibiki (BlazBlue: Central Fiction) Astral as the reference (MajorasPride: "ok to copy for now, we add our own style")
+   Divine Nightfall: Raven = the strike lands, the opponent is swallowed by darkness, Hibiki and a clone attack from both sides,
+   a crossing slash, the screen goes black. Ours: the lunge lands, black smoke swallows the monster, VALOR and a WATER CLONE of
+   VALOR dash through it from opposite sides at the same time (they cross in an X every pass), the last pass is the crossing
+   slash, the screen cuts to black for a beat, the clone splashes away, then the Akuma stand + sky dragon + sky cut finish. */
+{ const s=document.createElement('style'); s.textContent=`#vcine .blk{position:absolute;inset:0;z-index:5;background:#000;opacity:0}#vcine .blk.go{animation:vblk .6s ease-out}@keyframes vblk{0%,45%{opacity:1}100%{opacity:0}}`; document.head.appendChild(s);
+  const b=document.createElement('div'); b.className='blk'; cineEl.appendChild(b); }
+function twinMake(a,f){ const g=f.root.clone(true), mat=new THREE.MeshBasicMaterial({color:0x3fa9ff,transparent:true,opacity:.8,depthWrite:true,fog:false});
+ g.traverse(o=>{ if(o.isMesh) o.material=mat; else if(o.isSprite||o.isPoints||o.isLine) o.visible=false; });
+ const src=[], dst=[]; f.root.traverse(o=>src.push(o)); g.traverse(o=>dst.push(o)); scene.add(g); a.twin={g,mat,src,dst}; }
+function twinKill(a,splash){ const T=a.twin; if(!T) return; a.twin=null; if(splash){ const p=T.g.position.clone().add(V(0,8,0)); wfxSprite('splash',p,26,.5,{grow:.6}); for(let i=0;i<6;i++) wfxSprite(i%2?'curl':'curlM',p.clone().add(V(rand(-6,6),rand(-6,6),rand(-6,6))),12,.5,{grow:.4}); }
+ scene.remove(T.g); T.mat.dispose(); }
+{ const oS=ultSword; ultSword=function(f,a,dt,pm,o){ oS(f,a,dt,pm,o); if(a.hitT==null||a.miss) return; const k=a.t-a.hitT, C=SW13, end=C.C0+C.CUTS*C.CUT;
+  // the darkness swallows the monster
+  if(once(a,'shroud',a.hitT)){ const at=o.chest(); burst(at,0x000000,60,26); burst(at,0x1a1030,30,18); }
+  // the water clone: mirrors VALOR through the monster (he goes A->B, it goes B->A), same moves
+  if(k>=C.C0&&k<end+.05){ if(!a.twin) twinMake(a,f); const T=a.twin; T.g.position.set(2*o.pos.x-f.pos.x,f.pos.y,2*o.pos.z-f.pos.z); T.g.rotation.set(f.root.rotation.x,f.root.rotation.y+Math.PI,f.root.rotation.z);
+   for(let i=1;i<T.src.length&&i<T.dst.length;i++){ T.dst[i].position.copy(T.src[i].position); T.dst[i].rotation.copy(T.src[i].rotation); T.dst[i].scale.copy(T.src[i].scale); }
+   if(Math.random()<dt*30) wfxSprite('spray',T.g.position.clone().add(V(0,8,0)),7,.3,{grow:.4}); }
+  // the crossing slash: the screen cuts to black, the clone splashes away
+  if(once(a,'cross',a.hitT+end)){ const b=cineEl.querySelector('.blk'); b.classList.remove('go'); void b.offsetWidth; b.classList.add('go'); twinKill(a,true); Snd.tone('sawtooth',2000,200,.2,.1); game.hitStop=Math.max(game.hitStop,.1); } }; }
+{ const o=cineEnd; cineEnd=function(){ const a=CINE.a; if(a&&!a.brawl) twinKill(a,false); o(); }; }
+{ const oR=sbReset; sbReset=function(){ const a=game.p&&game.p.atk; if(a) twinKill(a,false); oR(); }; }
+
+/* lightning bolts for the final shot (jagged white-blue beams that flash and fade) */
+function boltAt(a,top){ const G=new THREE.Group(), mat=new THREE.MeshBasicMaterial({color:0xdff6ff,transparent:true,opacity:1,fog:false,toneMapped:false}); let p=top.clone();
+ const s=a.dragon?a.dragon.s:1; for(let i=0;i<9;i++){ const q=p.clone().add(V(rand(-14,14),-rand(10,18),rand(-14,14)).multiplyScalar(s)), len=p.distanceTo(q);
+  const m=new THREE.Mesh(new THREE.BoxGeometry(1.4*s,len,1.4*s),mat); m.position.copy(p).lerp(q,.5); m.quaternion.setFromUnitVectors(V(0,1,0),q.clone().sub(p).normalize()); G.add(m); p=q; }
+ scene.add(G); (a.bolts||(a.bolts=[])).push({G,mat,t:0}); Snd.tone('sawtooth',90,40,.25,.06); }
+function boltTick(a,dt){ if(!a.bolts) return; for(const B of a.bolts){ B.t+=dt; B.mat.opacity=B.t<.08?1:Math.max(0,1-(B.t-.08)/.2); }
+ a.bolts=a.bolts.filter(B=>{ if(B.t<.3) return true; scene.remove(B.G); B.G.traverse(o=>o.geometry&&o.geometry.dispose()); B.mat.dispose(); return false; }); }
+function boltClear(a){ for(const B of a.bolts||[]){ scene.remove(B.G); B.mat.dispose(); } a.bolts=[]; }
+{ const o=cineEnd; cineEnd=function(){ const a=CINE.a; if(a&&!a.brawl){ boltClear(a); if(a.dragon){ dragonKill(a,true); a.dDone=1; } } if(CINE.fov0){ camera.fov=CINE.fov0; camera.updateProjectionMatrix(); CINE.fov0=0; } o(); }; }
+
+/* =====================================================================
+   SANDBOX TEST 14: ULTIMATE CAMERA = CINEMATIC OR FIGHTING-GAME ANGLE (Nov 6, 2026)
+   MajorasPride: "ultimates should show an original fighting game angle every 33%, so sometimes you get cinematic
+   and a 33% chance of showing it at the angle of a fighting game."
+   When an ultimate lands, 1 in 3 times the whole cutscene plays from a flat side-on camera (like MvC / Street Fighter:
+   both titans in frame, the camera stays on one side and slides along with them). The rest of the time = the cinematic shots.
+   The sword's final city + dragon shot always plays (it's the payoff).
+   ⚙ menu: ULT CAMERA: RANDOM / CINEMATIC / FIGHTING GAME (to test either one).
+   ===================================================================== */
+SB.ultCam='random';
+{ const oL=ultLanded; ultLanded=function(f,a){ const was=a._cut; oL(f,a); if(was) return;
+  CINE.side=SB.ultCam==='side'||(SB.ultCam==='random'&&Math.random()<1/3);
+  const o=f.opp, toO=V(o.pos.x-f.pos.x,0,o.pos.z-f.pos.z).normalize(); CINE.sideV=V(toO.z,0,-toO.x); }; }
+function sideCam(){ const f=CINE.f, o=CINE.o; const fc=f.chest(), oc=o.chest(), sd=CINE.sideV, hy=(fc.y-f.pos.y)*.9;
+ let d=Math.hypot(o.pos.x-f.pos.x,o.pos.z-f.pos.z), mid=V((f.pos.x+o.pos.x)/2,0,(f.pos.z+o.pos.z)/2);
+ if(d>220){ const toO=V(o.pos.x-f.pos.x,0,o.pos.z-f.pos.z).normalize(); mid=f.pos.clone().addScaledVector(toO,110); d=220; }   // the rival flew far: keep VALOR in frame
+ const back=Math.max(60,(d+o.radius()*2+20)*.9), lift=Math.max(f.pos.y,o.pos.y)*.5;
+ camAt(mid.clone().addScaledVector(sd,back).add(V(0,hy+lift,0)),mid.clone().add(V(0,hy+lift,0))); }
+{ const oC=cineCam; cineCam=function(){ const f=CINE.f, o=CINE.o, a=CINE.a; if(!CINE.side||!f||!o||!a||a.hitT==null) return oC();
+  const k=a.t-a.hitT;
+  if(!CINE.brawl&&typeof SW13!=='undefined'&&k>=SW13.FINAL) return oC();          // sword: the final city + dragon shot always plays
+  if(!CINE.brawl&&typeof SW13!=='undefined'&&k>=SW13.DRAGON[0]+.35&&k<SW13.OPEN){ return oC(); } // sword: the Akuma stand + sky dragon also stays cinematic
+  if(cineShot(50)){ cq.classList.remove('show'); }
+  sideCam(); if(CINE.brawl?k>SB12.END-.05:k>SW13.END-.05) cineEnd(); }; }
+{ const oE=cineEnd; cineEnd=function(){ CINE.side=false; oE(); }; }
+// ⚙ menu button
+function ultCamUI(){ const m=el('sbMenu'); if(!m||m.querySelector('[data-cm]')) return; const ref=m.querySelector('[data-t=ultRdy]')||m.querySelector('[data-t=slow]'); if(!ref) return;
+ const b=document.createElement('button'); b.dataset.cm='1'; const L={random:'ULT CAMERA: RANDOM',cine:'ULT CAMERA: CINEMATIC',side:'ULT CAMERA: FIGHTING GAME'}; b.textContent=L[SB.ultCam];
+ b.addEventListener('click',e=>{ e.stopPropagation(); const n=['random','cine','side']; SB.ultCam=n[(n.indexOf(SB.ultCam)+1)%3]; b.textContent=L[SB.ultCam]; }); ref.parentNode.appendChild(b); }
+{ const oS=sbStart; sbStart=function(){ oS(); ultCamUI(); }; }
+setTimeout(ultCamUI,800);
 
 </script>
 <!-- SANDBOX END -->
