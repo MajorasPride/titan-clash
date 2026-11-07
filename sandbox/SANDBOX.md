@@ -31,6 +31,7 @@ Status: **testing**. Feedback: waiting. Code: `sandbox/src/04-combat.js`.
 - **Combo fling:** each hit in a string pushes a little more; finishers fling the rival a tad.
 - **Wall splat:** combo a rival into a building and they get pinned + stunned, then bounce back off. Break-away is rock-paper-scissors: STRIKE beats DASH, DASH beats GRAB, GRAB beats BLOCK (wall throw), BLOCK beats STRIKE (brace off the wall). The dummy picks too (BLOCK mode = always block, FIGHT BACK = random).
 - **Phone layout:** LIGHT big in the corner, MEDIUM / HEAVY / SPECIAL around it, 1 2 3 in an outer arc, BLOCK / DASH / JUMP / GRAB to the left. 1/2/3 have a cooldown sweep (spin) and flash when ready. PC gets a 1/2/3 bar at the bottom.
+- **Fullscreen:** ⛶ FULLSCREEN button next to ⚙ (also in the menu). Browser fullscreen + landscape lock on phones, and the TitanVision TV frame is removed so the fight fills the screen. iPhone Safari can't go truly fullscreen; it still drops the frame.
 - **Arena (⚙ menu):** BUILDINGS on/off (on by default now, so walls can be tested), PEOPLE & CARS on/off, WALL SPLAT on/off.
 ### Sandbox 2 (Nov 6, 2026): VOIDMAW, the dark-magic kaiju
 Status: **testing**. Feedback: waiting.
