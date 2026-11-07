@@ -23,6 +23,11 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 13f (Nov 7, 2026): KING without buildings, cleanup, build tag
+- KING: the tail WHACK now sends them flying in an arc across the city and they crash down (no flying through buildings, since smashed buildings still showed).
+- The old climb-slam KING he saw was a cached old copy (GitHub Pages takes a few minutes, and browsers keep old copies). The sandbox now shows its build (e.g. "SANDBOX 13f") in the bottom-right corner and the ⚙ menu.
+- Cleanup: the never-used old VALOR ultimate versions and the WORLDROOT leftovers came out of the code into game/archive/ (titan-clash-old-valor-ults-archive.js, titan-clash-worldroot-archive.js). No change to how anything plays.
+
 ### Sandbox 13d (Nov 7, 2026): new KING ultimate
 Status: **testing**. Code: `sandbox/src/09-infernoth-meltdown-ults.js`. Sandbox only.
 - MajorasPride didn't like the skyscraper climb ("looks funny"). New KING: charge, jaw grab and shake, toss them straight up super high, a batter's wind-up while they fall (back turned, tail cocked), then a tail WHACK that sends them tumbling through three buildings (it picks the direction with the most buildings). "THIS IS MY LAND." / "BOW TO YOUR KING."

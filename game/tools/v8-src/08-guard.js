@@ -12,7 +12,7 @@
 const guardMax=f=>{ const s=V8STAT[f.def.id]; return s?24+s.def*7:45; };   // Defense 3 = 45, Defense 8 = 80
 // each titan's guard looks like its own thing: [main color, second color, style]
 const GUARD_LOOK={valor:[0x7fd4ff,0xe9eef4,'shield'],raikou:[0xfff06a,0xffffff,'slash'],ashvin:[0xffc44d,0xd8e4ff,'circles'],
- infernoth:[0xff6a1a,0xffd27a,'heat'],ragnavox:[0xb48cff,0x3c3a4f,'wing'],worldroot:[0x9dffb0,0x3f8a3a,'shield']};
+ infernoth:[0xff6a1a,0xffd27a,'heat'],ragnavox:[0xb48cff,0x3c3a4f,'wing']};
 const G82={disc:null,ringG:null,slash:null};
 function guardInit(f){ f.guardMax=guardMax(f); f.guard=f.guardMax; f.guardBroken=false; f.guardHitT=-9; f.lightN=0; f.lightT=-9; f.stunRun=0; f.freeT=0; f.stunImm=0; }
 

@@ -53,10 +53,9 @@ const V8SAY={
  raikou:['YOU SAW ONE OF ME. THERE WERE A THOUSAND.','THUNDER DOESN\'T ASK PERMISSION.'],
  infernoth:['THE DEEP SENT ME. NOW... YOU BURN.','YOUR CITY IS WARM. I WILL MAKE IT WARMER.'],
  ragnavox:['THREE VOICES. ONE SONG. YOUR LAST.','SLEEP... AND DREAM OF US.'],
- worldroot:['I HAVE SEEN HOW THIS ENDS. LET ME SHOW YOU.','EVERY ROOT REMEMBERS. EVERY ROOT RETURNS.'],
 };
 const V8ROAR={infernoth:['GRRRAAAAHHH!!','HRRRNNN... GRAAAOOOO!!'],ragnavox:['SKREEEE-AAAAHH!!','KRAAA! KRAAA! KREEEEEE!!']};
-function canUnderstand(sp){ if(sp.type!=='kaiju'&&!sp.kaiju||sp.def.id==='worldroot') return {ok:true,tag:''};
+function canUnderstand(sp){ if(sp.type!=='kaiju'&&!sp.kaiju) return {ok:true,tag:''};
  const ears=[game.p].concat(game.vs2?[game.e]:[]).filter(Boolean); // the human players
  if(ears.some(f=>f.kaiju)) return {ok:true,tag:'KAIJU TONGUE (YOU ARE A KAIJU)'};
  if(ears.some(f=>f.def.id==='ashvin')) return {ok:true,tag:'PSYCHIC LINK: ASHVIN TRANSLATES'};
@@ -104,7 +103,7 @@ function renderDossier(){ const story=vsMode==='story', d=getDef(selId); v8tabs.
  <div class="pg">${['1 · FILE','2 · STATS','3 · ABILITIES & LOADOUT'].map((p,i)=>`<button data-pg="${i}" class="${dPage===i?'sel':''}">${p}</button>`).join('')}</div>`;
  if(dPage===0){ h+=`<p>${lore.bio||d.tag}</p><div class="row"><span>${d.type==='mech'?'BUILT BY':'ORIGIN'}</span><b>${d.type==='mech'?d.country:d.origin}</b></div>
   <div class="row"><span>${d.type==='mech'?'BUILT TO COUNTER':'COUNTERED BY'}</span><b>${foe?foe.name:'?'}</b></div><div class="row"><span>STANCES</span><b>${d.stances.map(x=>x.name).join(' / ')}</b></div>
-  <div class="row"><span>SPEECH</span><b>${d.type==='mech'?(d.id==='ashvin'?'HUMAN + READS KAIJU MINDS':'HUMAN'):d.id==='worldroot'?'ANCIENT (EVERYONE UNDERSTANDS)':'KAIJU ONLY (ROARS TO HUMANS)'}</b></div><div class="row"><span>ULTIMATE</span><b>${d.ultName}</b></div>`; }
+  <div class="row"><span>SPEECH</span><b>${d.type==='mech'?(d.id==='ashvin'?'HUMAN + READS KAIJU MINDS':'HUMAN'):'KAIJU ONLY (ROARS TO HUMANS)'}</b></div><div class="row"><span>ULTIMATE</span><b>${d.ultName}</b></div>`; }
  if(dPage===1){ h+=`<div id="radarBox"></div><div class="row"><span>HEALTH</span><b>${d.hp}</b></div><div class="row"><span>ATTACK SPEED</span><b>${s.atk}/10</b></div><div class="row"><span>DEFENSE</span><b>${s.def}/10</b></div><div class="row"><span>MOBILITY</span><b>${s.mob}/10</b></div><div class="row"><span>ENERGY</span><b>${s.en}/10</b></div>`; }
  if(dPage===2){ h+=`<div class="lb">STANCES (FORM BUTTON SWITCHES · SHORT DELAY + 8 ENERGY)</div><div class="ch">${d.stances.map((x,i)=>`<button data-st="${i}" class="${(preview&&preview.stIdx===i)?'sel':''}">${x.name}</button>`).join('')}</div>`;
   const F=d.stances[preview&&preview.def===d?preview.stIdx||0:0], f={def:d}; h+=`<div class="mv"><b>LIGHT</b> ${moveName(f,F.J)}<br><b>MEDIUM</b> ${moveName(f,F.M)} (tap heavy)<br><b>HEAVY</b> ${moveName(f,F.K)} (hold heavy)<br><b>SPECIAL</b> ${moveName(f,F.L)}<br><b>ULTIMATE</b> ${d.ultName} (below 25% health)</div>`;

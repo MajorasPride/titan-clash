@@ -116,8 +116,6 @@ function v8Tick(f,dt){ if(!isCore(f)||f.dead||game.state!=='fight') return;
  for(const e in f.v8cutT){ if(!f.v8cut[e]) continue; f.v8cutT[e]-=dt; if(f.v8cutT[e]<=0){ f.v8cut[e]=false; burst(f.chest().add(V(0,5,0)),V8EL[e],24,12); toast(`RAGNAVOX'S ${e.toUpperCase()} HEAD GREW BACK!`,'#b48cff',900); } }
  // INFERNOTH Burning Rage: lower health = hotter
  if(f.def.id==='infernoth'){ const k=1-f.hp/f.def.hp; f.setGlow(1+k*(up(f,'rage')?2.5:1.8)); }
- // WORLDROOT deep roots
- if(up(f,'roots')&&f.moveAmt<.1&&!f.atk&&f.hp<f.def.hp) f.hp=Math.min(f.def.hp,f.hp+dt*4);
  if(f.load&&f.load.el==='water'&&(f.inRiver==='water'||MAP.weather==='rain')&&f.hp<f.def.hp) f.hp=Math.min(f.def.hp,f.hp+dt*1.2);
  v8Limbs(f,dt); v8Upgrades(f);
 }
@@ -127,9 +125,9 @@ function v8Spd(f){ let m=1; if(f.slowT>0) m*=.88; if(up(f,'speed10')) m*=1.1; fo
 { const o=explodeProj; explodeProj=function(p){ V8.proj=p; try{ o(p); } finally{ V8.proj=null; } }; }
 
 /* ---- limbs: BRUISED -> CRIPPLED -> MISSING, and each core titan regrows them its own way ---- */
-const V8REGROW={valor:[12,'THE ARMY AIR-DROPS A NEW','#7fd4ff'],ashvin:[10,'THE TWINS PSYCHICALLY REBUILD THE','#d58bff'],raikou:[9,'NANOTECH (TAKEN FROM A KAIJU) REGROWS THE','#fff06a'],infernoth:[14,'MAGMA HARDENS INTO A NEW','#ff7a3a'],ragnavox:[11,'RAGNAVOX REGROWS ITS','#b48cff'],worldroot:[8,'NEW WOOD GROWS INTO A','#9dffb0']};
+const V8REGROW={valor:[12,'THE ARMY AIR-DROPS A NEW','#7fd4ff'],ashvin:[10,'THE TWINS PSYCHICALLY REBUILD THE','#d58bff'],raikou:[9,'NANOTECH (TAKEN FROM A KAIJU) REGROWS THE','#fff06a'],infernoth:[14,'MAGMA HARDENS INTO A NEW','#ff7a3a'],ragnavox:[11,'RAGNAVOX REGROWS ITS','#b48cff']};
 function v8Limbs(f,dt){ const R=V8REGROW[f.def.id]; if(!R) return; for(const k in f.limbs){ const L=f.limbs[k]; if(L.state<2){ f.regrow[k]=0; continue; }
-  f.regrow[k]=(f.regrow[k]||0)+dt*(f.def.id==='worldroot'&&f.moveAmt<.1?1.6:1);
+  f.regrow[k]=(f.regrow[k]||0)+dt*1;
   if(f.def.id==='valor'&&f.regrow[k]>R[0]-2&&!L.drop){ L.drop=true; const c=f.pos.clone(); pillar(c.x,c.z,1.2,0x7fd4ff,2,90); ring(c.x,.3,c.z,6,0x7fd4ff,2); }
   if(f.regrow[k]>=R[0]){ f.regrow[k]=0; L.state=0; L.hp=L.max*.6; L.drop=false; L.node.visible=true; f.stumps=f.stumps.filter(s=>s.k!==k); f.kneel=0;
    const wp=V(); L.node.getWorldPosition(wp); burst(wp,parseInt(R[2].slice(1),16),30,16); Snd.mech&&Snd.mech(); if(f.isPlayer||game.vs2) toast(`${R[1]} ${LNAME[k]}!`,R[2],1200); News.add(`${f.def.name}: ${R[1]} ${LNAME[k]}!`,false,'regrow'+f.def.id,6); } } }

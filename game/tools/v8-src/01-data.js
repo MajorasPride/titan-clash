@@ -23,7 +23,6 @@ const V8STAT={
  raikou:{hp:5,atk:9,def:3,mob:9,en:5},
  infernoth:{hp:9,atk:3,def:8,mob:3,en:6},
  ragnavox:{hp:7,atk:5,def:5,mob:7,en:6},
- worldroot:{hp:8,atk:4,def:6,mob:3,en:8},
 };
 const statHp=s=>Math.round(760+s.hp*48), statSpd=s=>10+s.mob*1.25;
 const atkMul=f=>{ const s=f&&f.def&&V8STAT[f.def.id]; return s?1.2-s.atk*.04:1; };       // move time (lower = faster)
@@ -40,7 +39,6 @@ function v8stances(id,s){ const sp=statSpd(s);
   raikou:[ST('IAI',{speed:sp,power:1.1,J:'iaicut',M:'thunderstep',K:'risingthunder',L:'echoshift',iai:true}),ST('STORM',{speed:sp*1.08,power:.92,J:'stormslash',M:'thunderstep',K:'chainblade',L:'echoshift'}),ST('THUNDER GOD',{speed:sp*.9,power:1.2,armor:.92,J:'thunderslash',M:'chainblade',K:'thundercrash',L:'echoshift'})],
   infernoth:[ST('BRAWLER',{speed:sp,power:1.15,grab:false,jump:22,J:'claw',M:'magmatail',K:'infernoslam',L:'heatbeam'}),ST('MELTDOWN',{speed:sp*.88,power:1.3,armor:.9,grab:false,jump:18,J:'claw',M:'dorsalpulse',K:'magmatail',L:'heatbeam',hot:true})],
   ragnavox:['FIRE','STORM','ICE'].map((e,i)=>ST(e+' HEADS',{speed:sp,power:1.05,grab:false,jump:32,el:['fire','storm','ice'][i],J:'triplebite',M:'roarwave',K:'tremorstomp',L:'elementbreath'})),
-  worldroot:[ST('WANDERER',{speed:sp,power:1.05,grab:false,jump:20,J:'branch',M:'rootwhip',K:'rootslam',L:'futureportal'}),ST('ROOTED',{speed:sp*.7,power:1.25,armor:.85,grab:false,jump:0,J:'branch',M:'overgrowth',K:'rootslam',L:'timeskip',rooted:true})],
  }[id]; }
 
 /* ---- the CORE SIX ---- */
@@ -52,7 +50,7 @@ const V8DEFS=[
  {id:'ragnavox',name:'RAGNAVOX',type:'kaiju',kbody:'winged',heads:3,tag:'Three-headed sound dragon on long wings. Each head holds an element.',color:0x3c3a4f,accent:0x241f33,glow:0xb48cff,css:'#b48cff',beam:'Element Breath',superName:'CHORUS OF RUIN',ultName:'CHORUS OF RUIN',altColor:0x3c3a4f,altScale:1,cls:'STRIKER',code:'K-02 "CHOIR"',origin:'NIGHTMARE'},
 ];
 for(const d of V8DEFS){ const s=V8STAT[d.id]; d.core=true; d.hp=statHp(s); d.stances=v8stances(d.id,s); d.forms=[d.stances[0],d.stances[1]];
- d.st=[{valor:3,ashvin:3,raikou:4,infernoth:5,ragnavox:4,worldroot:4}[d.id],Math.max(1,Math.round(s.mob/2)),Math.max(1,Math.round(s.def/2))]; }
+ d.st=[{valor:3,ashvin:3,raikou:4,infernoth:5,ragnavox:4}[d.id],Math.max(1,Math.round(s.mob/2)),Math.max(1,Math.round(s.def/2))]; }
 ROSTER.unshift(...V8DEFS);
 const isCore=f=>!!(f&&f.def&&V8STAT[f.def.id]);
 
@@ -73,9 +71,6 @@ Object.assign(LORE,{
  ragnavox:{org:'',from:'FROM THE STORM CLOUDS OF A NIGHTMARE',bio:'A three-headed dragon people dreamed about for centuries before it was real. Its true weapon is sound. Each head carries an element: fire, storm and ice.',
   lines:['RAGNAVOX\'S ROAR SET OFF EVERY CAR ALARM IN THREE CITIES','PEOPLE REPORT DREAMING ABOUT RAGNAVOX LAST NIGHT. ALL OF THEM','ALL THREE HEADS ARE SINGING. NOBODY LIKES THE SONG'],
   heli:'CHOPPER 7: "ALL THREE HEADS ARE HUMMING THE SAME NOTE. MY TEETH HURT."'},
- worldroot:{org:'',from:'FROM A SEED THAT FELL FROM THE STARS',bio:'An alien seed landed ten thousand years ago and grew into a world tree. It sees the future and can show you the city at its worst. Master of every element, but it loves grass and time.',
-  lines:['WORLDROOT\'S RUNES SPELL OUT TOMORROW\'S WEATHER. IT\'S BAD','GRASS IS GROWING THROUGH THE HIGHWAY WHERE WORLDROOT WALKED','WORLDROOT KNEW WE WOULD REPORT THIS. IT WAVED FIRST'],
-  heli:'CHOPPER 7: "WORLDROOT JUST LOOKED AT US LIKE IT ALREADY KNOWS HOW THIS ENDS."'},
 });
 
 /* ---- new moves (melee: [range, arc, damage, knockback, launch]) ---- */
@@ -141,11 +136,9 @@ const V8TREE={
             B:{n:'NUCLEAR BREATH',nodes:[['Long Fuse','Heat Beam lasts 0.6s longer','beamlong'],['Wide Beam','Heat Beam is wider and burns buildings faster','beamwide'],['Pulse Core','Dorsal Pulse cooldown halved','pulse']]}},
  ragnavox:{A:{n:'SKY TYRANT',nodes:[['Long Wings','Flight stamina drains 35% slower','wings'],['Thunder Dive','Sky Dive hits 30% harder','dive'],['Gale Roar','Roar Shockwave pushes twice as far','roar']]},
            B:{n:'HEAD KEEPER',nodes:[['Hydra Blood','Cut heads grow back in 5s instead of 10s','regrow'],['Elemental Fury','Element Breath hits 20% harder','breath'],['Three Voices','Roar Shockwave uses the head\'s element too','voices']]}},
- worldroot:{A:{n:'TIME KEEPER',nodes:[['Foresight','Future Portal homes in harder','portalhome'],['Long Tomorrow','Rival stays in the future 2s longer','portallong'],['Time Thief','Time Skip also steals 20 energy','thief']]},
-            B:{n:'GREEN WARDEN',nodes:[['Deep Roots','Regrow health while standing still','roots'],['Wild Growth','Overgrowth is bigger and heals more','grow'],['Strangler Vines','Root Whip stuns longer and hurts more','whip']]}},
 };
 const V8LOAD=Object.assign({},load('tc_v8load')||{});
-const V8DEFEL={valor:'water',ashvin:'fire',raikou:'lightning',infernoth:'fire',ragnavox:'lightning',worldroot:'water'};
+const V8DEFEL={valor:'water',ashvin:'fire',raikou:'lightning',infernoth:'fire',ragnavox:'lightning'};
 function loadOf(id){ const L=V8LOAD[id]||(V8LOAD[id]={focus:'hybrid',el:V8DEFEL[id]||'fire',sub:'A'}); if(!V8ELEM[L.el]) L.el=V8DEFEL[id]||'fire'; return L; } // v8.1: saved Steel / Anti-Magic picks switch to the new default
 function saveLoad(){ save('tc_v8load',V8LOAD); }
 const up=(f,flag)=>!!(f&&f.ups&&f.ups.has(flag));

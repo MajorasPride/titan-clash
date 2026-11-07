@@ -5,7 +5,7 @@
    · GRAB shove-off (throws the rival back out to zoning range)
    · 1 Meteor Spit (3 lava balls) · 2 Obsidian Shell (half damage, reflects small shots) · 3 Volcano Core.
    ULTIMATES (announce card on press with the intro line; cutscene + quote only if it lands):
-   - BRAWLER: KING. "THIS IS MY LAND." Charge, jaw grab, toss them straight up, tail WHACK through three buildings. "BOW TO YOUR KING."
+   - BRAWLER: KING. "THIS IS MY LAND." Charge, jaw grab, toss them straight up, tail WHACK sends them flying across the city. "BOW TO YOUR KING."
    - MELTDOWN: LAVA DOMAIN. "KNEEL." Aimed heat beam blasts them away, then he fires it into the sky:
      lava rains for about 15 seconds (glowing shadows first), then the sky clears. Full damage to non-fire titans, less to fire ones,
      none to INFERNOTH. Red-orange sky. "I AM KING OF ALL."
@@ -146,16 +146,14 @@ function ultKing(f,a,dt,pm,o){ const t=a.t;
  if(k<1.35){ const q=ez((k-.55)/.8); o.pos.set(a.up.x,8+H*q,a.up.z); o.vy=0; o.kb.set(0,0,0); o.stun=Math.max(o.stun,.4); o.onGround=false; if(Math.random()<dt*20) burst(o.chest(),0xffffff,2,6); return; }  // straight up
  if(k<1.75){ o.pos.set(a.up.x,8+H,a.up.z); o.vy=0; o.stun=Math.max(o.stun,.4); if(once(a,'apex',a.contact+1.35)) cineFreeze(450,.6); return; }                                          // hang at the top
  if(k<2.25){ const q=(k-1.75)/.5; o.pos.set(a.up.x,8+H*(1-q*q),a.up.z); o.vy=0; o.stun=Math.max(o.stun,.4);                                                                             // falling, he winds up the tail
-  if(!a.dir){ a.dir=kWhackDir(f,o); a.yaw0=f.yaw; } f.yaw=a.yaw0-ez(q)*Math.PI*.8; return; }               // batter's wind-up: turn the back, tail cocked
+  if(!a.dir){ a.yaw0=f.yaw; a.dir=f.yaw; } f.yaw=a.yaw0-ez(q)*Math.PI*.8; return; }               // batter's wind-up: turn the back, tail cocked
  if(once(a,'whack',a.contact+2.25)){ a.fly={x:o.pos.x,z:o.pos.z,n:0,hit:new Set()}; o.pos.y=9; cinePop(cw,'WHACK!'); cw.style.color='#ffb347'; cineFlash(); cineFreeze(380,.6);
   const s0=o.launchImm; o.launchImm=0; ultHit(f,o,54*pm,0,0); o.launchImm=s0; game.shake=Math.max(game.shake,1.6); Snd.boom(); lava(o.chest(),30,24); }
  if(k<2.45&&a.yaw0!=null){ f.yaw=a.yaw0-Math.PI*.8+ez(Math.min(1,(k-2.25)/.2))*Math.PI*1.7; }                    // the swing: tail whips all the way around
- if(a.fly&&!a.flyDone){ const F=a.fly, sx=Math.sin(a.dir), sz=Math.cos(a.dir), sp=170*dt; F.x+=sx*sp; F.z+=sz*sp; o.pos.set(F.x,9,F.z); o.vy=0; o.kb.set(0,0,0); o.stun=Math.max(o.stun,.6); if(o.root) o.root.rotation.x+=dt*22;   // tumbling end over end
+ if(a.fly&&!a.flyDone){ const F=a.fly, sx=Math.sin(a.dir), sz=Math.cos(a.dir), sp=170*dt; F.x+=sx*sp; F.z+=sz*sp; o.pos.set(F.x,9+Math.sin(Math.min(1,(k-2.25)/1)*Math.PI)*25,F.z); o.vy=0; o.kb.set(0,0,0); o.stun=Math.max(o.stun,.6); if(o.root) o.root.rotation.x+=dt*22;   // tumbling end over end
   if(Math.random()<dt*40) dust(F.x,F.z,3,2);
-  for(const B of city){ if(!B.alive||F.hit.has(B)) continue; if(Math.abs(B.x-F.x)<B.w/2+3&&Math.abs(B.z-F.z)<B.d/2+3){ F.hit.add(B); F.n++; bHit(B,(B.hp||400)+80,sx,sz,9,f); dust(B.x,B.z,10,14); Snd.boom();
-    const s0=o.stun; o.takeHit(f,4*pm,0,0,true,{x:sx,z:sz}); o.stun=s0; game.shake=Math.max(game.shake,.9); } }
-  if(F.n>=3||k>3.6||Math.hypot(F.x,F.z)>ARENA){ a.flyDone=true; if(o.root) o.root.rotation.x=0; o.kb.x=sx*30; o.kb.z=sz*30; o.vy=8; a.dur=a.t+.9;
-   News.add(`${o.def.name} FLEW THROUGH ${F.n} BUILDING${F.n===1?'':'S'}!`,true,'iking2',8); } } }
+  if(k>3.25||Math.hypot(F.x,F.z)>ARENA-10){ a.flyDone=true; if(o.root) o.root.rotation.x=0; o.kb.x=sx*30; o.kb.z=sz*30; o.vy=8; a.dur=a.t+.9;
+   o.pos.y=0; dust(F.x,F.z,14,18); ring(F.x,1,F.z,18,INF.ORANGE,.5); game.shake=Math.max(game.shake,1); Snd.boom(); News.add(`${o.def.name} CRASHES DOWN ON THE OTHER SIDE OF THE CITY!`,true,'iking2',8); } } }
 
 /* LAVA DOMAIN: aimed heat beam, then the beam goes into the sky and lava rains for the rest of the round */
 function kBeamMesh(a,from,to,w){ if(!a.bm){ a.bm=new THREE.Mesh(new THREE.CylinderGeometry(1,1,1,10,1,true),new THREE.MeshBasicMaterial({color:0xffd27a,transparent:true,opacity:.9,blending:THREE.AdditiveBlending,depthWrite:false})); scene.add(a.bm); }

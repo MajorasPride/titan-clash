@@ -3609,7 +3609,6 @@ const V8STAT={
  raikou:{hp:5,atk:9,def:3,mob:9,en:5},
  infernoth:{hp:9,atk:3,def:8,mob:3,en:6},
  ragnavox:{hp:7,atk:5,def:5,mob:7,en:6},
- worldroot:{hp:8,atk:4,def:6,mob:3,en:8},
 };
 const statHp=s=>Math.round(760+s.hp*48), statSpd=s=>10+s.mob*1.25;
 const atkMul=f=>{ const s=f&&f.def&&V8STAT[f.def.id]; return s?1.2-s.atk*.04:1; };       // move time (lower = faster)
@@ -3626,7 +3625,6 @@ function v8stances(id,s){ const sp=statSpd(s);
   raikou:[ST('IAI',{speed:sp,power:1.1,J:'iaicut',M:'thunderstep',K:'risingthunder',L:'echoshift',iai:true}),ST('STORM',{speed:sp*1.08,power:.92,J:'stormslash',M:'thunderstep',K:'chainblade',L:'echoshift'}),ST('THUNDER GOD',{speed:sp*.9,power:1.2,armor:.92,J:'thunderslash',M:'chainblade',K:'thundercrash',L:'echoshift'})],
   infernoth:[ST('BRAWLER',{speed:sp,power:1.15,grab:false,jump:22,J:'claw',M:'magmatail',K:'infernoslam',L:'heatbeam'}),ST('MELTDOWN',{speed:sp*.88,power:1.3,armor:.9,grab:false,jump:18,J:'claw',M:'dorsalpulse',K:'magmatail',L:'heatbeam',hot:true})],
   ragnavox:['FIRE','STORM','ICE'].map((e,i)=>ST(e+' HEADS',{speed:sp,power:1.05,grab:false,jump:32,el:['fire','storm','ice'][i],J:'triplebite',M:'roarwave',K:'tremorstomp',L:'elementbreath'})),
-  worldroot:[ST('WANDERER',{speed:sp,power:1.05,grab:false,jump:20,J:'branch',M:'rootwhip',K:'rootslam',L:'futureportal'}),ST('ROOTED',{speed:sp*.7,power:1.25,armor:.85,grab:false,jump:0,J:'branch',M:'overgrowth',K:'rootslam',L:'timeskip',rooted:true})],
  }[id]; }
 
 /* ---- the CORE SIX ---- */
@@ -3638,7 +3636,7 @@ const V8DEFS=[
  {id:'ragnavox',name:'RAGNAVOX',type:'kaiju',kbody:'winged',heads:3,tag:'Three-headed sound dragon on long wings. Each head holds an element.',color:0x3c3a4f,accent:0x241f33,glow:0xb48cff,css:'#b48cff',beam:'Element Breath',superName:'CHORUS OF RUIN',ultName:'CHORUS OF RUIN',altColor:0x3c3a4f,altScale:1,cls:'STRIKER',code:'K-02 "CHOIR"',origin:'NIGHTMARE'},
 ];
 for(const d of V8DEFS){ const s=V8STAT[d.id]; d.core=true; d.hp=statHp(s); d.stances=v8stances(d.id,s); d.forms=[d.stances[0],d.stances[1]];
- d.st=[{valor:3,ashvin:3,raikou:4,infernoth:5,ragnavox:4,worldroot:4}[d.id],Math.max(1,Math.round(s.mob/2)),Math.max(1,Math.round(s.def/2))]; }
+ d.st=[{valor:3,ashvin:3,raikou:4,infernoth:5,ragnavox:4}[d.id],Math.max(1,Math.round(s.mob/2)),Math.max(1,Math.round(s.def/2))]; }
 ROSTER.unshift(...V8DEFS);
 const isCore=f=>!!(f&&f.def&&V8STAT[f.def.id]);
 
@@ -3659,9 +3657,6 @@ Object.assign(LORE,{
  ragnavox:{org:'',from:'FROM THE STORM CLOUDS OF A NIGHTMARE',bio:'A three-headed dragon people dreamed about for centuries before it was real. Its true weapon is sound. Each head carries an element: fire, storm and ice.',
   lines:['RAGNAVOX\'S ROAR SET OFF EVERY CAR ALARM IN THREE CITIES','PEOPLE REPORT DREAMING ABOUT RAGNAVOX LAST NIGHT. ALL OF THEM','ALL THREE HEADS ARE SINGING. NOBODY LIKES THE SONG'],
   heli:'CHOPPER 7: "ALL THREE HEADS ARE HUMMING THE SAME NOTE. MY TEETH HURT."'},
- worldroot:{org:'',from:'FROM A SEED THAT FELL FROM THE STARS',bio:'An alien seed landed ten thousand years ago and grew into a world tree. It sees the future and can show you the city at its worst. Master of every element, but it loves grass and time.',
-  lines:['WORLDROOT\'S RUNES SPELL OUT TOMORROW\'S WEATHER. IT\'S BAD','GRASS IS GROWING THROUGH THE HIGHWAY WHERE WORLDROOT WALKED','WORLDROOT KNEW WE WOULD REPORT THIS. IT WAVED FIRST'],
-  heli:'CHOPPER 7: "WORLDROOT JUST LOOKED AT US LIKE IT ALREADY KNOWS HOW THIS ENDS."'},
 });
 
 /* ---- new moves (melee: [range, arc, damage, knockback, launch]) ---- */
@@ -3727,11 +3722,9 @@ const V8TREE={
             B:{n:'NUCLEAR BREATH',nodes:[['Long Fuse','Heat Beam lasts 0.6s longer','beamlong'],['Wide Beam','Heat Beam is wider and burns buildings faster','beamwide'],['Pulse Core','Dorsal Pulse cooldown halved','pulse']]}},
  ragnavox:{A:{n:'SKY TYRANT',nodes:[['Long Wings','Flight stamina drains 35% slower','wings'],['Thunder Dive','Sky Dive hits 30% harder','dive'],['Gale Roar','Roar Shockwave pushes twice as far','roar']]},
            B:{n:'HEAD KEEPER',nodes:[['Hydra Blood','Cut heads grow back in 5s instead of 10s','regrow'],['Elemental Fury','Element Breath hits 20% harder','breath'],['Three Voices','Roar Shockwave uses the head\'s element too','voices']]}},
- worldroot:{A:{n:'TIME KEEPER',nodes:[['Foresight','Future Portal homes in harder','portalhome'],['Long Tomorrow','Rival stays in the future 2s longer','portallong'],['Time Thief','Time Skip also steals 20 energy','thief']]},
-            B:{n:'GREEN WARDEN',nodes:[['Deep Roots','Regrow health while standing still','roots'],['Wild Growth','Overgrowth is bigger and heals more','grow'],['Strangler Vines','Root Whip stuns longer and hurts more','whip']]}},
 };
 const V8LOAD=Object.assign({},load('tc_v8load')||{});
-const V8DEFEL={valor:'water',ashvin:'fire',raikou:'lightning',infernoth:'fire',ragnavox:'lightning',worldroot:'water'};
+const V8DEFEL={valor:'water',ashvin:'fire',raikou:'lightning',infernoth:'fire',ragnavox:'lightning'};
 function loadOf(id){ const L=V8LOAD[id]||(V8LOAD[id]={focus:'hybrid',el:V8DEFEL[id]||'fire',sub:'A'}); if(!V8ELEM[L.el]) L.el=V8DEFEL[id]||'fire'; return L; } // v8.1: saved Steel / Anti-Magic picks switch to the new default
 function saveLoad(){ save('tc_v8load',V8LOAD); }
 const up=(f,flag)=>!!(f&&f.ups&&f.ups.has(flag));
@@ -3889,8 +3882,6 @@ function v8Tick(f,dt){ if(!isCore(f)||f.dead||game.state!=='fight') return;
  for(const e in f.v8cutT){ if(!f.v8cut[e]) continue; f.v8cutT[e]-=dt; if(f.v8cutT[e]<=0){ f.v8cut[e]=false; burst(f.chest().add(V(0,5,0)),V8EL[e],24,12); toast(`RAGNAVOX'S ${e.toUpperCase()} HEAD GREW BACK!`,'#b48cff',900); } }
  // INFERNOTH Burning Rage: lower health = hotter
  if(f.def.id==='infernoth'){ const k=1-f.hp/f.def.hp; f.setGlow(1+k*(up(f,'rage')?2.5:1.8)); }
- // WORLDROOT deep roots
- if(up(f,'roots')&&f.moveAmt<.1&&!f.atk&&f.hp<f.def.hp) f.hp=Math.min(f.def.hp,f.hp+dt*4);
  if(f.load&&f.load.el==='water'&&(f.inRiver==='water'||MAP.weather==='rain')&&f.hp<f.def.hp) f.hp=Math.min(f.def.hp,f.hp+dt*1.2);
  v8Limbs(f,dt); v8Upgrades(f);
 }
@@ -3900,9 +3891,9 @@ function v8Spd(f){ let m=1; if(f.slowT>0) m*=.88; if(up(f,'speed10')) m*=1.1; fo
 { const o=explodeProj; explodeProj=function(p){ V8.proj=p; try{ o(p); } finally{ V8.proj=null; } }; }
 
 /* ---- limbs: BRUISED -> CRIPPLED -> MISSING, and each core titan regrows them its own way ---- */
-const V8REGROW={valor:[12,'THE ARMY AIR-DROPS A NEW','#7fd4ff'],ashvin:[10,'THE TWINS PSYCHICALLY REBUILD THE','#d58bff'],raikou:[9,'NANOTECH (TAKEN FROM A KAIJU) REGROWS THE','#fff06a'],infernoth:[14,'MAGMA HARDENS INTO A NEW','#ff7a3a'],ragnavox:[11,'RAGNAVOX REGROWS ITS','#b48cff'],worldroot:[8,'NEW WOOD GROWS INTO A','#9dffb0']};
+const V8REGROW={valor:[12,'THE ARMY AIR-DROPS A NEW','#7fd4ff'],ashvin:[10,'THE TWINS PSYCHICALLY REBUILD THE','#d58bff'],raikou:[9,'NANOTECH (TAKEN FROM A KAIJU) REGROWS THE','#fff06a'],infernoth:[14,'MAGMA HARDENS INTO A NEW','#ff7a3a'],ragnavox:[11,'RAGNAVOX REGROWS ITS','#b48cff']};
 function v8Limbs(f,dt){ const R=V8REGROW[f.def.id]; if(!R) return; for(const k in f.limbs){ const L=f.limbs[k]; if(L.state<2){ f.regrow[k]=0; continue; }
-  f.regrow[k]=(f.regrow[k]||0)+dt*(f.def.id==='worldroot'&&f.moveAmt<.1?1.6:1);
+  f.regrow[k]=(f.regrow[k]||0)+dt*1;
   if(f.def.id==='valor'&&f.regrow[k]>R[0]-2&&!L.drop){ L.drop=true; const c=f.pos.clone(); pillar(c.x,c.z,1.2,0x7fd4ff,2,90); ring(c.x,.3,c.z,6,0x7fd4ff,2); }
   if(f.regrow[k]>=R[0]){ f.regrow[k]=0; L.state=0; L.hp=L.max*.6; L.drop=false; L.node.visible=true; f.stumps=f.stumps.filter(s=>s.k!==k); f.kneel=0;
    const wp=V(); L.node.getWorldPosition(wp); burst(wp,parseInt(R[2].slice(1),16),30,16); Snd.mech&&Snd.mech(); if(f.isPlayer||game.vs2) toast(`${R[1]} ${LNAME[k]}!`,R[2],1200); News.add(`${f.def.name}: ${R[1]} ${LNAME[k]}!`,false,'regrow'+f.def.id,6); } } }
@@ -4178,10 +4169,9 @@ const V8SAY={
  raikou:['YOU SAW ONE OF ME. THERE WERE A THOUSAND.','THUNDER DOESN\'T ASK PERMISSION.'],
  infernoth:['THE DEEP SENT ME. NOW... YOU BURN.','YOUR CITY IS WARM. I WILL MAKE IT WARMER.'],
  ragnavox:['THREE VOICES. ONE SONG. YOUR LAST.','SLEEP... AND DREAM OF US.'],
- worldroot:['I HAVE SEEN HOW THIS ENDS. LET ME SHOW YOU.','EVERY ROOT REMEMBERS. EVERY ROOT RETURNS.'],
 };
 const V8ROAR={infernoth:['GRRRAAAAHHH!!','HRRRNNN... GRAAAOOOO!!'],ragnavox:['SKREEEE-AAAAHH!!','KRAAA! KRAAA! KREEEEEE!!']};
-function canUnderstand(sp){ if(sp.type!=='kaiju'&&!sp.kaiju||sp.def.id==='worldroot') return {ok:true,tag:''};
+function canUnderstand(sp){ if(sp.type!=='kaiju'&&!sp.kaiju) return {ok:true,tag:''};
  const ears=[game.p].concat(game.vs2?[game.e]:[]).filter(Boolean); // the human players
  if(ears.some(f=>f.kaiju)) return {ok:true,tag:'KAIJU TONGUE (YOU ARE A KAIJU)'};
  if(ears.some(f=>f.def.id==='ashvin')) return {ok:true,tag:'PSYCHIC LINK: ASHVIN TRANSLATES'};
@@ -4229,7 +4219,7 @@ function renderDossier(){ const story=vsMode==='story', d=getDef(selId); v8tabs.
  <div class="pg">${['1 · FILE','2 · STATS','3 · ABILITIES & LOADOUT'].map((p,i)=>`<button data-pg="${i}" class="${dPage===i?'sel':''}">${p}</button>`).join('')}</div>`;
  if(dPage===0){ h+=`<p>${lore.bio||d.tag}</p><div class="row"><span>${d.type==='mech'?'BUILT BY':'ORIGIN'}</span><b>${d.type==='mech'?d.country:d.origin}</b></div>
   <div class="row"><span>${d.type==='mech'?'BUILT TO COUNTER':'COUNTERED BY'}</span><b>${foe?foe.name:'?'}</b></div><div class="row"><span>STANCES</span><b>${d.stances.map(x=>x.name).join(' / ')}</b></div>
-  <div class="row"><span>SPEECH</span><b>${d.type==='mech'?(d.id==='ashvin'?'HUMAN + READS KAIJU MINDS':'HUMAN'):d.id==='worldroot'?'ANCIENT (EVERYONE UNDERSTANDS)':'KAIJU ONLY (ROARS TO HUMANS)'}</b></div><div class="row"><span>ULTIMATE</span><b>${d.ultName}</b></div>`; }
+  <div class="row"><span>SPEECH</span><b>${d.type==='mech'?(d.id==='ashvin'?'HUMAN + READS KAIJU MINDS':'HUMAN'):'KAIJU ONLY (ROARS TO HUMANS)'}</b></div><div class="row"><span>ULTIMATE</span><b>${d.ultName}</b></div>`; }
  if(dPage===1){ h+=`<div id="radarBox"></div><div class="row"><span>HEALTH</span><b>${d.hp}</b></div><div class="row"><span>ATTACK SPEED</span><b>${s.atk}/10</b></div><div class="row"><span>DEFENSE</span><b>${s.def}/10</b></div><div class="row"><span>MOBILITY</span><b>${s.mob}/10</b></div><div class="row"><span>ENERGY</span><b>${s.en}/10</b></div>`; }
  if(dPage===2){ h+=`<div class="lb">STANCES (FORM BUTTON SWITCHES · SHORT DELAY + 8 ENERGY)</div><div class="ch">${d.stances.map((x,i)=>`<button data-st="${i}" class="${(preview&&preview.stIdx===i)?'sel':''}">${x.name}</button>`).join('')}</div>`;
   const F=d.stances[preview&&preview.def===d?preview.stIdx||0:0], f={def:d}; h+=`<div class="mv"><b>LIGHT</b> ${moveName(f,F.J)}<br><b>MEDIUM</b> ${moveName(f,F.M)} (tap heavy)<br><b>HEAVY</b> ${moveName(f,F.K)} (hold heavy)<br><b>SPECIAL</b> ${moveName(f,F.L)}<br><b>ULTIMATE</b> ${d.ultName} (below 25% health)</div>`;
@@ -4262,7 +4252,7 @@ doss.addEventListener('click',e=>{ const b=e.target.closest('button,[data-sub]')
 const guardMax=f=>{ const s=V8STAT[f.def.id]; return s?24+s.def*7:45; };   // Defense 3 = 45, Defense 8 = 80
 // each titan's guard looks like its own thing: [main color, second color, style]
 const GUARD_LOOK={valor:[0x7fd4ff,0xe9eef4,'shield'],raikou:[0xfff06a,0xffffff,'slash'],ashvin:[0xffc44d,0xd8e4ff,'circles'],
- infernoth:[0xff6a1a,0xffd27a,'heat'],ragnavox:[0xb48cff,0x3c3a4f,'wing'],worldroot:[0x9dffb0,0x3f8a3a,'shield']};
+ infernoth:[0xff6a1a,0xffd27a,'heat'],ragnavox:[0xb48cff,0x3c3a4f,'wing']};
 const G82={disc:null,ringG:null,slash:null};
 function guardInit(f){ f.guardMax=guardMax(f); f.guard=f.guardMax; f.guardBroken=false; f.guardHitT=-9; f.lightN=0; f.lightT=-9; f.stunRun=0; f.freeT=0; f.stunImm=0; }
 
@@ -5137,48 +5127,8 @@ const POW=['POW!','BAM!','WHAM!','KRAK!','THWACK!','BOOM!'];
   f.setGlow&&f.setGlow(2.5+Math.sin(game.time*20));
   return isBrawl(f)||a.brawl?ultBrawl(f,a,dt,pm,o):ultSword(f,a,dt,pm,o); }; }
 
-/* ---------------- SWORD: TIDECREST OATH ---------------- */
-function ultSword(f,a,dt,pm,o){ const t=a.t, c=()=>o.chest();
- if(once(a,'salute',0)){ if(canHit(o)) f.yaw=Math.atan2(o.pos.x-f.pos.x,o.pos.z-f.pos.z); ring(f.pos.x,1,f.pos.z,14,WATER,.5); burst(f.chest(),0xffffff,20,10); Snd.tone('triangle',600,1200,.3,.06); }
- // the flowing strikes: flash through the rival from side to side
- if(a.miss){ return; }
- // lunge in toward the rival first (aimed: no turning once it starts), then check if the first cut reaches
- if(t<.35&&canHit(o)&&dist2(f,o)>f.radius()+o.radius()+8){ f.kb.x=Math.sin(f.yaw)*120; f.kb.z=Math.cos(f.yaw)*120; if(Math.random()<dt*30) wfxSprite(Math.random()<.5?'curl':'curlM',f.pos.clone().add(V(0,5,0)),9,.35,{grow:.4}); }
- if(t>=.35&&!a._chk){ a._chk=1; f.kb.multiplyScalar(.2); const ang=canHit(o)?Math.abs(angDiff(f.yaw,Math.atan2(o.pos.x-f.pos.x,o.pos.z-f.pos.z))):9;
-  if(!(canHit(o)&&dist2(f,o)<f.radius()+o.radius()+16&&ang<1.2)){ ultMiss(f,a,t); return; } }
- const N=6; for(let i=0;i<N;i++) if(once(a,'d'+i,.35+i*.2)&&canHit(o)){
-  if(i===0) ultLanded(f,a);
-  const ang=f.yaw+Math.PI+(i%2?1:-1)*(.6+i*.15), r=14+o.radius(), p0=f.pos.clone();
-  f.pos.set(o.pos.x+Math.sin(ang)*r,o.pos.y>3?o.pos.y:0,o.pos.z+Math.cos(ang)*r); f.yaw=Math.atan2(o.pos.x-f.pos.x,o.pos.z-f.pos.z);
-  a.trail=true; const mid=p0.clone().lerp(f.pos,.5).add(V(0,c().y-o.pos.y,0)); for(let k=0;k<4;k++) wfxSprite(k%2?'curl':'curlM',p0.clone().lerp(f.pos,(k+.5)/4).add(V(0,8,0)),10,.5,{grow:.4,top:1});
-  ultHit(f,o,4*pm,0,0,c()); slashFX(c(),f); Snd.tone('sawtooth',900,200,.12,.06); game.hitStop=Math.max(game.hitStop,.04); }
- if(t>.3&&t<1.6) ultHold(o,8);
- // the water dragon coils around the rival
- if(t>.5&&t<1.7){ a._dr=(a._dr||0)-dt; if(a._dr<=0&&canHit(o)){ a._dr=.05; const k=(t-.5)/1.2, g=k*Math.PI*5; wfxSprite(Math.sin(g)>0?'curl':'curlM',V(o.pos.x+Math.cos(g)*16,o.pos.y+2+k*26,o.pos.z+Math.sin(g)*16),13,.9,{grow:.3,top:1}); } }
- // one huge rising cut splits the dragon
- if(once(a,'rise',1.75)&&canHit(o)){ a.trail=true; f.pos.set(o.pos.x-Math.sin(f.yaw)*10,0,o.pos.z-Math.cos(f.yaw)*10); ultHit(f,o,18*pm,8,30,c()); slashFX(c(),f); wfxColumn(o.pos.x,o.pos.z,40,8); flashScreen('#7fd4ff'); game.hitStop=Math.max(game.hitStop,.15); game.shake=Math.max(game.shake,1); Snd.boom(); banner('TIDECREST OATH!',900); }
- // turn the back, sheathe (click), the wave crashes behind him
- if(once(a,'turn',2.15)){ f.yaw+=Math.PI; a.trail=false; }
- if(once(a,'click',2.45)){ Snd.tone('square',2400,1800,.05,.08); Snd.tone('triangle',1600,1600,.08,.05); toast('*click*','#ffffff',600); }
- if(once(a,'crash',2.6)&&canHit(o)){ const x=o.pos.x,z=o.pos.z; wfxRing(x,z,32,.8); for(let i=0;i<8;i++){ const g=i/8*Math.PI*2; wfxSprite(i%2?'curl':'curlM',V(x+Math.cos(g)*14,6,z+Math.sin(g)*14),18,.7,{grow:.5}); }
-  aoe(f,o,x,z,18,10*pm,40,6,WATER); game.shake=Math.max(game.shake,1.3); Snd.boom(); }
- if(t>2.1) a.trail=false; }
-
-/* ---------------- BRAWLER: ALL DAY STAR RUSH ---------------- */
-function ultBrawl(f,a,dt,pm,o){ const t=a.t; a.brawl=1;
- if(once(a,'s',0)){ if(canHit(o)) f.yaw=Math.atan2(o.pos.x-f.pos.x,o.pos.z-f.pos.z); Snd.mech&&Snd.mech(); }
- // star rush: charge until contact
- if(!a.contact&&t<1){ f.kb.x=Math.sin(f.yaw)*95; f.kb.z=Math.cos(f.yaw)*95; if(Math.random()<dt*30){ burst(f.chest(),0xffd43b,3,8); wfxSprite('splash',f.pos.clone().add(V(0,4,0)),8,.3,{grow:.5}); }
-  if(canHit(o)&&dist2(f,o)<f.radius()+o.radius()+6){ a.contact=t; f.kb.set(0,0,0); ultHit(f,o,8*pm,0,0,o.chest()); ultLanded(f,a); } }
- if(!a.contact&&t>=1){ if(!a.miss) ultMiss(f,a,t); return; }   // missed: short recovery, no cutscene
- if(!a.contact) return; const k=t-a.contact;
- if(k<2) ultHold(o,k<1.4?6:null);
- // comic-panel beatdown
- for(let i=0;i<9;i++) if(once(a,'p'+i,.15+i*.13)&&canHit(o)){ const at=o.chest().add(V(rand(-3,3),rand(-2,4),rand(-3,3))); ultHit(f,o,3.5*pm,0,0,null); punchFX(at,i%3===2); wfxHit(at,9);
-  if(i%2===0) toast(POW[(i/2)%POW.length|0],['#ffd43b','#ff6b6b','#7fd4ff'][i%3],260); game.hitStop=Math.max(game.hitStop,.03); }
- // KO uppercut up a giant water geyser
- if(once(a,'ko',1.45)&&canHit(o)){ const at=o.chest(); ultHit(f,o,20*pm,6,46,at); wfxColumn(o.pos.x,o.pos.z,50,10); wfxRing(o.pos.x,o.pos.z,22,.7); burst(at,0xffd43b,40,30);
-  flashScreen('#ffd43b'); game.hitStop=Math.max(game.hitStop,.18); game.shake=Math.max(game.shake,1.3); Snd.boom(); banner('K.O.!',900); a.dur=Math.min(a.dur,t+.9); } }
+/* The ultimates themselves live in 21-shield-barrage.js (BRAWLER) and 22-sword-flash.js (SWORD). Old versions: archive/titan-clash-old-valor-ults-archive.js */
+function ultSword(){} function ultBrawl(){}
 
 /* =====================================================================
    SANDBOX TEST 9: ULTIMATE = ANNOUNCEMENT CARD, THEN A REAL CUTSCENE IF IT LANDS (Nov 6, 2026)
@@ -5293,33 +5243,6 @@ function vsArt(){ if(vsArt.done) return; vsArt.done=1; try{ const crest=wfxTex('
    (still far away) draws once, sheathes with a click, and the dragon bursts. Dragon misses = it crashes
    into the ground far away, no cutscene. BRAWLER stays the close-range Star Rush.
    ===================================================================== */
-ultSword=function(f,a,dt,pm,o){ const t=a.t;
- if(a.miss) return;
- if(once(a,'plant',0)){ f.kb.set(0,0,0); ring(f.pos.x,1,f.pos.z,14,WATER,.5); burst(f.chest(),0xffffff,20,10); Snd.tone('triangle',600,1200,.3,.06); }
- if(!a.hitT){ f.kb.multiplyScalar(.5);
-  // water gathers into the raised sword
-  if(t<.55&&Math.random()<dt*30){ const g=rand(0,6.28), r=rand(10,18); wfxSprite(Math.random()<.5?'curl':'curlM',f.chest().add(V(Math.cos(g)*r,rand(4,12),Math.sin(g)*r)),6,.3,{grow:.2,vel:V(-Math.cos(g)*r*3,0,-Math.sin(g)*r*3)}); }
-  // the dragon flies straight ahead (aimed, a tiny bit of steering)
-  if(once(a,'launch',.55)){ a.dr={pos:f.chest().add(V(Math.sin(f.yaw)*8,4,Math.cos(f.yaw)*8)),yaw:f.yaw,d:0}; Snd.whoosh(); Snd.tone('sawtooth',150,500,.5,.08); game.shake=Math.max(game.shake,.6); }
-  const D=a.dr; if(D){ const step=110*dt; if(canHit(o)){ const want=Math.atan2(o.pos.x-D.pos.x,o.pos.z-D.pos.z); D.yaw+=clamp(angDiff(want,D.yaw)||0,-.6*dt,.6*dt); }
-   D.pos.x+=Math.sin(D.yaw)*step; D.pos.z+=Math.cos(D.yaw)*step; D.d+=step; D.pos.y=lerp(D.pos.y,(canHit(o)?o.chest().y:10),dt*2);
-   D.tr=(D.tr||0)-dt; if(D.tr<=0){ D.tr=.03; wfxSprite(Math.random()<.5?'curl':'curlM',D.pos.clone(),16,.55,{grow:.3}); wfxSprite('foam',D.pos.clone().add(V(rand(-3,3),rand(-3,3),rand(-3,3))),7,.4,{grow:.3}); }
-   if(canHit(o)&&D.pos.distanceTo(o.chest())<o.radius()+10){ a.hitT=t; a.dr=null; ultHit(f,o,8*pm,0,0,o.chest()); ultLanded(f,a); }
-   else if(D.d>140){ wfxRing(D.pos.x,D.pos.z,20,.6); wfxSprite('splash',D.pos.clone(),20,.5,{grow:.6}); Snd.boom(); a.dr=null; ultMiss(f,a,t); } }
-  if(t>2.2&&!a.hitT&&!a.miss) ultMiss(f,a,t);
-  return; }
- // LANDED: coil, draw-cut from afar, sheathe, burst
- const k=t-a.hitT; f.kb.set(0,0,0); if(k<1.6) ultHold(o,10); a.dur=Math.max(a.dur,a.hitT+2.3);
- if(k<1.05){ a._dr=(a._dr||0)-dt; if(a._dr<=0&&canHit(o)){ a._dr=.04; const q=k/1.05, g=q*Math.PI*6; wfxSprite(Math.sin(g)>0?'curl':'curlM',V(o.pos.x+Math.cos(g)*15,o.pos.y+2+q*26,o.pos.z+Math.sin(g)*15),14,.9,{grow:.3,top:1}); } }
- for(let i=0;i<4;i++) if(once(a,'sq'+i,a.hitT+.2+i*.22)) ultHit(f,o,4*pm,0,0,o.chest());   // the dragon squeezes
- if(once(a,'draw',a.hitT+1.15)){ f.yaw=Math.atan2(o.pos.x-f.pos.x,o.pos.z-f.pos.z); a.trail=true; Snd.tone('sawtooth',1400,200,.18,.08);
-  // one huge painted slash line from VALOR to the rival
-  const n=10; for(let i=0;i<n;i++){ const p=f.chest().lerp(o.chest(),i/(n-1)); wfxSprite('crest',p,18,.6,{grow:.3,top:1}); }
-  ultHit(f,o,20*pm,0,0,o.chest()); slashFX(o.chest(),f); game.hitStop=Math.max(game.hitStop,.15); }
- if(once(a,'turn',a.hitT+1.4)){ a.trail=false; f.yaw+=Math.PI; }
- if(once(a,'click',a.hitT+1.7)){ Snd.tone('square',2400,1800,.05,.08); Snd.tone('triangle',1600,1600,.08,.05); }
- if(once(a,'burst',a.hitT+1.85)&&canHit(o)){ const x=o.pos.x,z=o.pos.z; wfxRing(x,z,32,.8); wfxFlat('whirl',x,z,26,1,0,6); for(let i=0;i<8;i++){ const g=i/8*Math.PI*2; wfxSprite(i%2?'curl':'curlM',V(x+Math.cos(g)*14,8,z+Math.sin(g)*14),18,.7,{grow:.5}); }
-  ultHit(f,o,12*pm,40,20,o.chest()); game.shake=Math.max(game.shake,1.3); Snd.boom(); banner('TIDECREST OATH!',900); } };
 
 /* sword cutscene shots, timed from the moment the dragon hits */
 { const oC=cineCam; cineCam=function(){ const f=CINE.f, o=CINE.o, a=CINE.a; if(!f||!o||CINE.brawl||a.hitT==null) return oC();
@@ -5338,38 +5261,6 @@ ultSword=function(f,a,dt,pm,o){ const t=a.t;
    Shield misses = it ricochets back, no cutscene.
    ===================================================================== */
 VULT.brawl.name='SHIELD PIN';
-ultBrawl=function(f,a,dt,pm,o){ const t=a.t; a.brawl=1; if(a.miss) return;
- if(once(a,'s',0)){ if(canHit(o)) f.yaw=Math.atan2(o.pos.x-f.pos.x,o.pos.z-f.pos.z); f.kb.set(0,0,0); Snd.mech&&Snd.mech(); }
- if(!a.hitT){ f.kb.multiplyScalar(.5);
-  if(once(a,'throw',.3)){ a.sh={pos:f.chest().add(V(Math.sin(f.yaw)*6,0,Math.cos(f.yaw)*6)),yaw:f.yaw,d:0,m:v8DiscMesh()}; if(f.P.v8shield) f.P.v8shield.visible=false; Snd.whoosh(); }
-  const S=a.sh; if(S){ const step=150*dt; if(canHit(o)){ const want=Math.atan2(o.pos.x-S.pos.x,o.pos.z-S.pos.z); S.yaw+=clamp(angDiff(want,S.yaw)||0,-.5*dt,.5*dt); }
-   S.pos.x+=Math.sin(S.yaw)*step; S.pos.z+=Math.cos(S.yaw)*step; S.d+=step; S.pos.y=lerp(S.pos.y,canHit(o)?o.chest().y:10,dt*3); S.m.position.copy(S.pos); S.m.rotation.y+=dt*20;
-   if(Math.random()<dt*25) wfxSprite('spray',S.pos.clone(),7,.3,{grow:.3});
-   if(canHit(o)&&S.pos.distanceTo(o.chest())<o.radius()+6){ a.hitT=t; ultHit(f,o,8*pm,10,0,o.chest()); clangFX(o.chest()); ultLanded(f,a); }
-   else if(S.d>150){ scene.remove(S.m); a.sh=null; if(f.P.v8shield) f.P.v8shield.visible=true; ultMiss(f,a,t); } }
-  if(t>2&&!a.hitT&&!a.miss){ if(a.sh){ scene.remove(a.sh.m); a.sh=null; } if(f.P.v8shield) f.P.v8shield.visible=true; ultMiss(f,a,t); }
-  return; }
- const k=t-a.hitT, S=a.sh; a.dur=Math.max(a.dur,a.hitT+2.5); ultHold(o,null);
- // the shield bounces up off them
- if(S&&k<.55){ S.pos.y+=dt*30; S.m.position.copy(S.pos); S.m.rotation.y+=dt*20; }
- // VALOR leaps after it, catches it, and comes down on the rival
- if(k>=.15&&k<.6){ if(!a.j0) a.j0=f.pos.clone(); const q=(k-.15)/.45, tgt=o.pos.clone().add(V(-Math.sin(f.yaw)*(o.radius()+4),0,-Math.cos(f.yaw)*(o.radius()+4)));
-  f.pos.x=lerp(a.j0.x,tgt.x,q); f.pos.z=lerp(a.j0.z,tgt.z,q); f.pos.y=Math.sin(q*Math.PI)*30; f.vy=0; f.onGround=false; f.kb.set(0,0,0);
-  if(Math.random()<dt*30) wfxSprite('foam',f.pos.clone().add(V(0,4,0)),7,.3,{grow:.4}); }
- if(once(a,'catch',a.hitT+.45)&&S){ scene.remove(S.m); a.sh=null; if(f.P.v8shield) f.P.v8shield.visible=true; Snd.block(); }
- // tackle: the rival goes down flat
- if(once(a,'tackle',a.hitT+.6)){ f.pos.y=0; f.onGround=true; o.pos.y=0; o.vy=0; o.stun=Math.max(o.stun,2); ring(o.pos.x,.5,o.pos.z,24,WATER,.5); dust(o.pos.x,o.pos.z,10,10); wfxFlat('ripple',o.pos.x,o.pos.z,26,.8);
-  ultHit(f,o,6*pm,0,0,o.chest()); game.shake=Math.max(game.shake,1); Snd.boom(); Snd.thud&&Snd.thud(); }
- if(k>.6){ f.kb.set(0,0,0); o.pos.y=Math.max(0,o.pos.y-dt*40); if(o.P&&o.P.root) {} }
- // pinned: shield bashes
- for(let i=0;i<4;i++) if(once(a,'b'+i,a.hitT+.75+i*.17)){ const at=o.chest().add(V(0,-2,0)); ultHit(f,o,4*pm,0,0,null); clangFX(at); wfxHit(at,8); toast(['BAM!','WHAM!','KRAK!','POW!'][i],['#ffd43b','#7fd4ff','#ff6b6b','#ffd43b'][i],260); }
- // raise the shield high...
- if(once(a,'raise',a.hitT+1.5)){ ring(f.pos.x,f.chest().y+10,f.pos.z,10,0xffffff,.4); burst(f.chest().add(V(0,10,0)),0xffffff,20,10); Snd.tone('triangle',500,1500,.3,.08); }
- // ...and SLAM it down
- if(once(a,'slam',a.hitT+1.75)){ const x=o.pos.x,z=o.pos.z; ultHit(f,o,22*pm,30,12,o.chest()); clangFX(o.chest()); wfxRing(x,z,34,.8); wfxFlat('whirl',x,z,28,1,0,8);
-  for(let i=0;i<8;i++){ const g=i/8*Math.PI*2; wfxSprite(i%2?'crest':'foam',V(x+Math.cos(g)*16,4,z+Math.sin(g)*16),16,.7,{grow:.5}); }
-  smash(x,z,10,0,0,0,2,60); dust(x,z,14,14); flashScreen('#ffd43b'); game.hitStop=Math.max(game.hitStop,.2); game.shake=Math.max(game.shake,1.5); Snd.boom(); banner('K.O.!',900); }
-};
 /* brawler cutscene shots, timed from the moment the shield hits */
 { const oC=cineCam; cineCam=function(){ const f=CINE.f, o=CINE.o, a=CINE.a; if(!f||!o||!CINE.brawl||a.hitT==null) return oC();
   const k=a.t-a.hitT, fy=f.yaw, fw=V(Math.sin(fy),0,Math.cos(fy)), side=V(Math.cos(fy),0,-Math.sin(fy)), fc=f.chest(), oc=o.chest(), s=f.scale||1;
@@ -5386,36 +5277,6 @@ ultBrawl=function(f,a,dt,pm,o){ const t=a.t; a.brawl=1; if(a.miss) return;
    like Civil War, where he drops the monster." From the hit: slow-mo impact close-up -> the shield ricochets
    straight back and VALOR catches it -> he charges and takes the monster's legs out (it DROPS) ->
    pinned shield bashes -> raise (top-down freeze) -> SLAM. */
-ultBrawl=function(f,a,dt,pm,o){ const t=a.t; a.brawl=1; if(a.miss) return;
- if(once(a,'s',0)){ if(canHit(o)) f.yaw=Math.atan2(o.pos.x-f.pos.x,o.pos.z-f.pos.z); f.kb.set(0,0,0); Snd.mech&&Snd.mech(); }
- if(!a.hitT){ f.kb.multiplyScalar(.5);
-  if(once(a,'throw',.3)){ a.sh={pos:f.chest().add(V(Math.sin(f.yaw)*6,0,Math.cos(f.yaw)*6)),yaw:f.yaw,d:0,m:v8DiscMesh()}; if(f.P.v8shield) f.P.v8shield.visible=false; Snd.whoosh(); }
-  const S=a.sh; if(S){ const step=150*dt; if(canHit(o)){ const want=Math.atan2(o.pos.x-S.pos.x,o.pos.z-S.pos.z); S.yaw+=clamp(angDiff(want,S.yaw)||0,-.5*dt,.5*dt); }
-   S.pos.x+=Math.sin(S.yaw)*step; S.pos.z+=Math.cos(S.yaw)*step; S.d+=step; S.pos.y=lerp(S.pos.y,canHit(o)?o.chest().y:10,dt*3); S.m.position.copy(S.pos); S.m.rotation.y+=dt*20;
-   if(Math.random()<dt*25) wfxSprite('spray',S.pos.clone(),7,.3,{grow:.3});
-   if(canHit(o)&&S.pos.distanceTo(o.chest())<o.radius()+6){ a.hitT=t; a.hitAt0=S.pos.clone(); ultHit(f,o,8*pm,6,0,o.chest()); clangFX(o.chest()); wfxHit(o.chest(),12); ultLanded(f,a); }
-   else if(S.d>150){ scene.remove(S.m); a.sh=null; if(f.P.v8shield) f.P.v8shield.visible=true; ultMiss(f,a,t); } }
-  if(t>2&&!a.hitT&&!a.miss){ if(a.sh){ scene.remove(a.sh.m); a.sh=null; } if(f.P.v8shield) f.P.v8shield.visible=true; ultMiss(f,a,t); }
-  return; }
- const k=t-a.hitT, S=a.sh; a.dur=Math.max(a.dur,a.hitT+2.6); ultHold(o,null); if(k<.85) f.kb.set(0,0,0);
- // 2. the shield ricochets straight back to VALOR
- if(S&&k<.5){ const hand=f.chest().add(V(Math.sin(f.yaw)*4,0,Math.cos(f.yaw)*4)); S.pos.lerp(hand,Math.min(1,dt*7)); S.m.position.copy(S.pos); S.m.rotation.y-=dt*24; if(Math.random()<dt*30) wfxSprite('spray',S.pos.clone(),6,.3,{grow:.3}); if(Math.random()<dt*18) wfxSprite(Math.random()<.5?'curl':'curlM',S.pos.clone(),9,.45,{grow:.3,spin:rand(-4,4)}); }
- if(once(a,'catch',a.hitT+.48)&&S){ scene.remove(S.m); a.sh=null; if(f.P.v8shield) f.P.v8shield.visible=true; Snd.block(); burst(f.chest(),0xffffff,14,10); }
- // 3. he charges in and takes the legs out: the monster DROPS
- if(k>=.5&&k<.8){ const toO=V(o.pos.x-f.pos.x,0,o.pos.z-f.pos.z), d=toO.length(); if(d>o.radius()+f.radius()+2){ toO.normalize(); f.pos.addScaledVector(toO,Math.min(d-(o.radius()+f.radius()+2),140*dt)); f.yaw=Math.atan2(toO.x,toO.z); }
-  if(Math.random()<dt*30) wfxSprite('foam',f.pos.clone().add(V(0,3,0)),7,.3,{grow:.4}); if(Math.random()<dt*14) wfxSprite('crest',f.pos.clone().add(V(0,2,0)),14,.45,{grow:.3}); if(Math.random()<dt*10) wfxFlat('ripple',f.pos.x,f.pos.z,10,.5); }
- if(once(a,'drop',a.hitT+.8)){ const at=o.pos.clone().add(V(0,4,0)); clangFX(at); wfxHit(at,12); ultHit(f,o,8*pm,0,0,null); o.pos.y=0; o.vy=0; o.stun=Math.max(o.stun,2); a.down=1;
-  ring(o.pos.x,.5,o.pos.z,26,WATER,.5); dust(o.pos.x,o.pos.z,12,12); wfxFlat('ripple',o.pos.x,o.pos.z,28,.8); game.shake=Math.max(game.shake,1.1); game.hitStop=Math.max(game.hitStop,.12); Snd.boom(); Snd.thud&&Snd.thud(); toast('DOWN!','#ffd43b',300); wfxColumn(o.pos.x,o.pos.z,22,5); for(let i=0;i<5;i++){ const g=i/5*Math.PI*2; wfxSprite(i%2?'spray':'sprayM',V(o.pos.x+Math.cos(g)*10,4,o.pos.z+Math.sin(g)*10),13,.5,{grow:.5}); } }
- // the monster lies flat while pinned
- if(a.down&&o.root){ const R=o.root; if(R&&R.rotation){ if(a._rx==null) a._rx=R.rotation.x; R.rotation.x=lerp(R.rotation.x,a._rx-1.3,Math.min(1,dt*10)); a._R=R; } }
- // 4. pinned: shield bashes, raise, SLAM
- for(let i=0;i<4;i++) if(once(a,'b'+i,a.hitT+1+i*.16)){ const at=o.pos.clone().add(V(0,4,0)); ultHit(f,o,4*pm,0,0,null); clangFX(at); wfxHit(at,8); toast(['BAM!','WHAM!','KRAK!','POW!'][i],['#ffd43b','#7fd4ff','#ff6b6b','#ffd43b'][i],260); }
- if(once(a,'raise',a.hitT+1.7)){ ring(f.pos.x,f.chest().y+10,f.pos.z,10,0xffffff,.4); burst(f.chest().add(V(0,10,0)),0xffffff,20,10); Snd.tone('triangle',500,1500,.3,.08); }
- if(once(a,'slam',a.hitT+1.95)){ const x=o.pos.x,z=o.pos.z; ultHit(f,o,22*pm,30,12,o.chest()); clangFX(o.chest()); wfxRing(x,z,34,.8); wfxFlat('whirl',x,z,28,1,0,8);
-  for(let i=0;i<8;i++){ const g=i/8*Math.PI*2; wfxSprite(i%2?'crest':'foam',V(x+Math.cos(g)*16,4,z+Math.sin(g)*16),16,.7,{grow:.5}); }
-  smash(x,z,10,0,0,0,2,60); dust(x,z,14,14); flashScreen('#ffd43b'); game.hitStop=Math.max(game.hitStop,.2); game.shake=Math.max(game.shake,1.5); Snd.boom(); banner('K.O.!',900); }
- if(k>2.3&&a._R){ a._R.rotation.x=a._rx; a._R=null; a.down=0; }
-};
 { const oC=cineCam; cineCam=function(){ const f=CINE.f, o=CINE.o, a=CINE.a; if(!f||!o||!CINE.brawl||a.hitT==null) return oC();
   const k=a.t-a.hitT, fy=f.yaw, fw=V(Math.sin(fy),0,Math.cos(fy)), side=V(Math.cos(fy),0,-Math.sin(fy)), fc=f.chest(), oc=o.chest();
   const toF=V(f.pos.x-o.pos.x,0,f.pos.z-o.pos.z).normalize(), sideO=V(toF.z,0,-toF.x);
@@ -5448,13 +5309,6 @@ function wsKill(a,burstIt){ const W=a.ws; if(!W) return; a.ws=null; if(burstIt){
   for(let i=0;i<12;i++){ const g=i/12*Math.PI*2; wfxSprite(i%3===0?'crest':i%3===1?'curl':'curlM',p.clone().add(V(Math.cos(g)*r*.8,Math.sin(g)*r*.8,0)),14,.6,{grow:.5,vel:V(Math.cos(g)*30,Math.sin(g)*30+10,0)}); }
   wfxSprite('splash',p,r*2.4,.5,{grow:.6}); wfxSprite('foam',p,r*1.8,.5,{grow:.6}); }
  scene.remove(W); W.material.dispose(); W.geometry.dispose(); }
-{ const oB=ultBrawl; ultBrawl=function(f,a,dt,pm,o){ oB(f,a,dt,pm,o); if(!a.hitT||a.miss) return; const k=a.t-a.hitT;
-  if(k>=.48&&k<.8){ if(!a.ws){ a.ws=wsMake(); Snd.tone('sawtooth',120,500,.4,.1); Snd.whoosh(); }
-   const W=a.ws, q=clamp((k-.48)/.25,0,1), r=lerp(8,26,ez(q))*(f.scale||1), fw=V(Math.sin(f.yaw),0,Math.cos(f.yaw));
-   W.position.copy(f.chest()).addScaledVector(fw,f.radius()+5); W.lookAt(W.position.clone().add(fw)); W.rotateZ(a.t*6); W.scale.setScalar(r);
-   if(Math.random()<dt*40){ const g=rand(0,6.28); wfxSprite(Math.random()<.5?'spray':'sprayM',W.position.clone().add(V(Math.cos(g)*r,Math.sin(g)*r,0)),8,.3,{grow:.4}); }
-   if(Math.random()<dt*20) wfxSprite('crest',f.pos.clone().addScaledVector(fw,-6).add(V(0,2,0)),16,.4,{grow:.3}); }
-  if(k>=.8&&a.ws){ wsKill(a,true); ring(o.pos.x,4,o.pos.z,30,WATER,.5); game.shake=Math.max(game.shake,1.3); } }; }
 { const o=cineEnd; cineEnd=function(){ const a=CINE.a; if(a&&a.ws) wsKill(a,false); o(); }; }
 // charge shot: pull the camera back and up so VALOR, the water shield and the monster are all in frame
 { const oC=cineCam; cineCam=function(){ const f=CINE.f, o=CINE.o, a=CINE.a; if(f&&o&&CINE.brawl&&a.hitT!=null){ const k=a.t-a.hitT; if(k>=.5&&k<.8){ cineShot(2);

@@ -33,3 +33,24 @@ V8DEFS.find(d=>d.id==='worldroot').baseScale=1.08;
 /* ---- from 05-systems.js: ultimate RAGNAROK BLOOM ---- */
  if(id==='worldroot'){ if(once(a,'p',.4)&&canHit(o)){ v8FuturePortal(o,f); o.portalT=6; } if(once(a,'g',.6)){ const r=34*f.scale, m=mesh(new THREE.CircleGeometry(r,40),new THREE.MeshBasicMaterial({color:0x4fbf4f,transparent:true,opacity:.42,depthWrite:false}),f.pos.x,.12,f.pos.z,scene,true); m.rotation.x=-Math.PI/2; V8.fields.push({owner:f,x:f.pos.x,z:f.pos.z,r,t:10,heal:10,m}); }
   if(once(a,'r',1.4)){ for(let i=0;i<12;i++) pillar(x()+rand(-9,9),z()+rand(-9,9),rand(1,2),0x7a5a3a,.9,rand(18,32)); strike(x(),z(),13,25*pm,30,f,o,0x9dffb0,0,40); } }
+
+/* ---- leftovers removed Nov 7, 2026 (table entries and small checks keyed 'worldroot') ---- */
+// 01-data.js: worldroot:{hp:8,atk:4,def:6,mob:3,en:8},
+// 01-data.js: worldroot:[ST('WANDERER',{speed:sp,power:1.05,grab:false,jump:20,J:'branch',M:'rootwhip',K:'rootslam',L:'futureportal'}),ST('ROOTED',{speed:sp*.7,power:1.25,armor:.85,grab:false,jump:0,J:'branch',M:'overgrowth',K:'rootslam',L:'timeskip',rooted:true})],
+// 01-data.js: worldroot:{A:{n:'TIME KEEPER',nodes:[['Foresight','Future Portal homes in harder','portalhome'],['Long Tomorrow','Rival stays in the future 2s longer','portallong'],['Time Thief','Time Skip also steals 20 energy','thief']]},
+// 01-data.js lore:
+
+ worldroot:{org:'',from:'FROM A SEED THAT FELL FROM THE STARS',bio:'An alien seed landed ten thousand years ago and grew into a world tree. It sees the future and can show you the city at its worst. Master of every element, but it loves grass and time.',
+  lines:['WORLDROOT\'S RUNES SPELL OUT TOMORROW\'S WEATHER. IT\'S BAD','GRASS IS GROWING THROUGH THE HIGHWAY WHERE WORLDROOT WALKED','WORLDROOT KNEW WE WOULD REPORT THIS. IT WAVED FIRST'],
+  heli:'CHOPPER 7: "WORLDROOT JUST LOOKED AT US LIKE IT ALREADY KNOWS HOW THIS ENDS."'},
+// 01-data.js: removed `,worldroot:4}[d.id]`
+// 01-data.js: removed `,worldroot:'water'};`
+// 07-ui.js: worldroot:['I HAVE SEEN HOW THIS ENDS. LET ME SHOW YOU.','EVERY ROOT REMEMBERS. EVERY ROOT RETURNS.'],
+// 07-ui.js: removed `||sp.def.id==='worldroot') return`
+// 07-ui.js: removed `:d.id==='worldroot'?'ANCIENT (EVERYONE UNDERSTANDS)':`
+// 08-guard.js: removed `,worldroot:[0x9dffb0,0x3f8a3a,'shield']};`
+// 03-fighter.js: removed `(f.def.id==='worldroot'&&f.moveAmt<.1?1.6:1)`
+// 03-fighter.js: // WORLDROOT deep roots
+// 03-fighter.js: if(up(f,'roots')&&f.moveAmt<.1&&!f.atk&&f.hp<f.def.hp) f.hp=Math.min(f.def.hp,f.hp+dt*4);
+// 03-fighter.js V8REGROW: worldroot:[8,'NEW WOOD GROWS INTO A','#9dffb0']
+// 01-data.js V8TREE (second line): B:{n:'GREEN WARDEN',nodes:[['Deep Roots','Regrow health while standing still','roots'],['Wild Growth','Overgrowth is bigger and heals more','grow'],['Strangler Vines','Root Whip stuns longer and hurts more','whip']]}},
