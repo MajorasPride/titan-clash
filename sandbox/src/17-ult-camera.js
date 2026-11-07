@@ -4,7 +4,7 @@
    and a 33% chance of showing it at the angle of a fighting game."
    When an ultimate lands, 1 in 3 times the whole cutscene plays from a flat side-on camera (like MvC / Street Fighter:
    both titans in frame, the camera stays on one side and slides along with them). The rest of the time = the cinematic shots.
-   The sword's final city + dragon shot always plays (it's the payoff).
+   The sword's Akuma stand always plays cinematic.
    ⚙ menu: ULT CAMERA: RANDOM / CINEMATIC / FIGHTING GAME (to test either one).
    ===================================================================== */
 SB.ultCam='random';
