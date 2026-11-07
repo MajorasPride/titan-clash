@@ -26,6 +26,7 @@ Feedback is the most important part. After every sandbox test, Claude asks the f
 Status: **testing**. Feedback: waiting. Code: `sandbox/src/10-valor-ults.js`.
 - **Sword & Shield: TIDECREST OATH.** Line: "IF I DON'T... WHO WILL!" (MajorasPride's pick, a Goku-style hero line). Knight's salute, 6 flash cuts through the rival (each leaves painted water), a water dragon coils around them, one huge rising cut, then he turns his back, sheathes with a *click* and the wave crashes down. Demon Slayer feel, our own moves.
 - **Brawler: ALL DAY STAR RUSH.** Line: "I CAN DO THIS ALL DAY!" Star-rush charge; on contact a comic-panel beatdown (POW! BAM!), then a KO uppercut up a giant water geyser. A miss = short recovery.
+- **Announce first, cutscene only on a hit** (MajorasPride's rule for every ultimate): pressing it shouts the ultimate's name right away with no freeze; the freeze-frame cutscene with the quote plays only when the attack lands (Sword: rival within dash range; Brawler: the charge connects). A miss = no cutscene, short recovery. VALOR only so far; the other titans get it when their ultimates are redone.
 - Ultimates can't be cut short by the Combo Breaker or Break Free. Fire them any time with SUPERS READY.
 
 ### Sandbox 7 (Nov 6, 2026): painted water for VALOR (Okami ink + Demon Slayer flow)
