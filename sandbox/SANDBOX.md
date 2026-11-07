@@ -22,6 +22,16 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 4 (Nov 6, 2026): VALOR's BRAWLER stance + air stun lock fix
+Status: **testing**. Feedback: waiting. Code: `sandbox/src/06-valor-brawler.js`.
+- Why: MajorasPride felt the rifle kit was "meh" and asked for a full brawler stance instead (sword away, shield kept, Captain America style, Water attacks, no beam). He also pulled off a 27+ hit air combo without trying.
+- **The rifle stance is gone from the sandbox.** Its code is kept in `sandbox/archive/valor-rifle-archive.js` (not loaded). The real game still has its old GUN stance until he OKs this.
+- **BRAWLER:** sword on the back, fists + shield. Light = Jab Combo (jab, cross, shield bash; a punch if the shield is out; works in the air). Medium = Tide Hook (water hook, pushes back). Heavy = Shield Throw (ricochets back, 2.5s cooldown); **HEAVY again while it flies = Follow Dash** to the rival. Special = Geyser Uppercut (launcher, JUMP to chase, 15 energy, 3s). Jump + Heavy = Shield Dive (water shockwave). Strings: L L L, L L M, L M, M, M M, air L L L.
+- **Shield out = no blocking and no auto-guard** (both stances) until it comes back.
+- **Stance stats:** SWORD & SHIELD = power +10%, takes 10% less damage. BRAWLER = 10% faster, power -10%, energy refills 15% faster. Swap shows a short "sheathe / draw" pose and a stats toast.
+- **Stun lock fix (everyone):** air light attacks (Air Slash, air jabs) now follow the 5th-hit stun rule; max 3 light attacks per jump (land to attack in the air again); **COMBO BREAKER** after 10 hits in a row, the one getting hit breaks free (pushed out, 1s no stun).
+- Note: INFERNOTH also has a stance called BRAWLER. Might want a different name for one of them.
+
 ### Sandbox 3 (Nov 6, 2026): combat feel (charge, combo strings, wall splat) + new button layout
 Status: **testing**. Feedback: waiting. Code: `sandbox/src/04-combat.js`.
 - **3 attack buttons:** LIGHT, MEDIUM, HEAVY are separate now (PC: J / K / L, Special moved to U). Medium no longer hides in "tap heavy".
@@ -49,7 +59,7 @@ Status: **testing**. Not in the game yet. Feedback: waiting.
 - **Chains:** light → medium → heavy → special or 1/2/3 cancel into each other when a hit lands.
 - **1 / 2 / 3 skills** with their own cooldowns and energy cost. Keys: 1 2 3 (P2: 8 9 0). Phone: three small buttons near your right thumb.
 - **VALOR, Sword & Shield:** Light = 3-hit combo (slash, backhand, shield punch). Medium = Shield Bash (drains guard). Heavy = Rising Slash launcher when standing, Lunging Thrust when moving, Sword Plunge in the air. Special = Shield Throw.
-- **VALOR, Rifle:** Light = Rifle Burst. Medium = Rifle-Butt Smash. Heavy = Charged Shot (breaks through the guard). Special = Grenade Lob.
+- **VALOR, Rifle** (replaced by BRAWLER in Sandbox 4, archived): Light = Rifle Burst. Medium = Rifle-Butt Smash. Heavy = Charged Shot (breaks through the guard). Special = Grenade Lob.
 - **VALOR skills:** 1 Charging Star (shoulder charge, can't be stunned, 6s). 2 Rally Wall (blocks the front and counter-slashes, 10s). 3 Dawn Cannon (beam, 14s).
 - INFERNOTH (FIGHT BACK mode) uses temporary 1/2/3 skills: Dorsal Pulse, Magma Tail, Heat Beam.
 - Not done yet: game controllers can't use 1/2/3 yet; ultimates and their cutscenes are still the old ones.

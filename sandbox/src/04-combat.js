@@ -41,7 +41,6 @@ Object.assign(MOVES,{
  vairslash:{name:'Air Slash',dur:.38,hitAt:.13,moveMul:.6,anim:'vairs',holdP:.25},
 });
 MOVES.risingslash.launcher=1; MOVES.risingslash.holdP=.4; MOVES.vslash.holdP=.27; MOVES.swordthrust.holdP=.3;
-MOVES.vrifle.noCharge=1; MOVES.grenade.noCharge=1;
 
 POSES.vspin=(k,p,e,f)=>{ const w=ez(ph(p,0,.2)), s=ez(ph(p,.2,.68));
  k.twist=lerp(.7*w,.7-Math.PI*2,s); k.armR=-1.45; k.azR=lerp(.2,-1.25,Math.min(1,s*4)); k.elR=-.1; k.armL=-1.2; k.elL=-1.3; k.azL=.5;
@@ -86,8 +85,6 @@ const STRINGS={
   LM:{id:'vbash'}, LMH:{id:'swordthrust',end:1}, LH:{id:'vcleave',end:1},
   M:{id:'vbash'}, MM:{id:'vupper',end:1}, MH:{id:'swordthrust',end:1},
   AL:{id:'vairslash',c:0}, ALL:{id:'vairslash',c:1}, ALLL:{id:'vairslash',c:2,end:1} },
- 'valor:1':{ L:{id:'vrifle'}, LL:{id:'vrifle'}, LLL:{id:'buttstrike',end:1}, LH:{id:'chargeshot',end:1},
-  M:{id:'buttstrike'}, MH:{id:'chargeshot',end:1}, MM:{id:'grenade',end:1} },
  'voidmaw:0':{ L:{id:'vtlash',c:0}, LL:{id:'vtlash',c:1}, LLL:{id:'vtlash',c:2,end:1},
   LLM:{id:'vinesweep',end:1}, LLH:{id:'eyeslam',end:1}, LM:{id:'vinesweep'}, LH:{id:'eyeslam',end:1},
   M:{id:'vinesweep'}, MH:{id:'rootburrow',end:1} },

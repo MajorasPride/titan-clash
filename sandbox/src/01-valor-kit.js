@@ -22,10 +22,6 @@ Object.assign(MOVES,{
  swordplunge:{name:'Sword Plunge',dur:1.6,hitAt:.15,moveMul:.2,anim:'vplunge'},
  vheavy:{name:'Heavy',dur:.6},
  shieldthrow:{name:'Shield Throw',dur:.5,cost:20,cd:4,ranged:1,anim:'vthrowshield'},
- vrifle:{name:'Rifle Burst',dur:.42,ranged:1,anim:'vaim'},
- buttstrike:{name:'Rifle-Butt Smash',dur:.5,hitAt:.22,lunge:12,melee:[11,1.2,11,30,8],anim:'vbutt'},
- chargeshot:{name:'Charged Shot',dur:.8,hitAt:.45,ranged:1,anim:'vcharge'},
- grenade:{name:'Grenade Lob',dur:.7,cost:15,cd:3,ranged:1,anim:'vgrenade'},
  chargingstar:{name:'Charging Star',dur:1,moveMul:0,anim:'vstar'},
  rallywall:{name:'Rally Wall',dur:2.4,moveMul:.25,anim:'vwall'},
  dawncannon:{name:'Dawn Cannon',dur:2.2,moveMul:.05,ranged:1,anim:'beam'},
@@ -36,9 +32,9 @@ const SKILLS={
  infernoth:[{id:'dorsalpulse',cd:6,cost:15,r:22},{id:'magmatail',cd:5,cost:10,r:16},{id:'heatbeam',cd:12,cost:40,r:60}],
 };
 { const V=V8DEFS.find(d=>d.id==='valor'), sp=V.stances[0].speed;
-  V.stances=[ST('SWORD & SHIELD',{speed:sp,J:'vslash',M:'vbash',K:'vheavy',L:'shieldthrow',air:'swordplunge'}),
-             ST('RIFLE',{speed:sp,gun:true,J:'vrifle',M:'buttstrike',K:'chargeshot',L:'grenade'})];
-  V.forms=[V.stances[0],V.stances[1]]; V.tag='The leader. Sword, shield and rifle. Balanced and brave.'; }
+  V.stances=[ST('SWORD & SHIELD',{speed:sp,power:1.1,armor:.9,J:'vslash',M:'vbash',K:'vheavy',L:'shieldthrow',air:'swordplunge'}),
+             ST('BRAWLER',{speed:sp*1.1,power:.9,armor:1,regen:1.15,brawl:true,J:'bjab',M:'thook',K:'bthrow',L:'geyser',air:'bdive'})]; // BRAWLER kit: 06-valor-brawler.js
+  V.forms=[V.stances[0],V.stances[1]]; V.tag='The leader. Sword and shield, or fists and shield. Balanced and brave.'; }
 const rankOf=(f,id)=>{ const F=f.F; if(!F) return 0; if(id===F.J) return 1; if(id===F.M) return 2; if(id===F.K||(HEAVYSET[F.K]&&HEAVYSET[F.K].includes(id))) return 3; if(id===F.L) return 4; return 0; };
 
 /* ---------------- poses: k = joint targets, p = 0..1 through the move ---------------- */
@@ -59,16 +55,12 @@ POSES.vplunge=(k,p,e,f,a)=>{ const land=a.landT!=null?ez(Math.min(1,(a.t-a.landT
  k.armR=lerp(-2.95,-1.0,land); k.elR=-.15; k.armL=-2.3; k.azL=.3; k.lean=lerp(.15,.55,land); k.knL=k.knR=lerp(1.1,.9,land); k.legL=k.legR=lerp(-.5,-.9,land); f.v8.blade=lerp(-3.0,-.15,ez(ph(p,0,.18))); };
 POSES.vthrowshield=(k,p,e)=>{ const w=ez(ph(p,0,.36)), s=ez(ph(p,.36,.55));
  k.armL=-1.4; k.azL=lerp(lerp(.2,1.05,w),-.85,s); k.elL=lerp(lerp(-.6,-1.2,w),0,s); k.twist=lerp(lerp(0,-.7,w),.55,s); k.lean=.15*s; k.armR=-.5; k.elR=-1.1; };
-POSES.vaim=(k,p,e,f)=>{ k.armR=-1.5; k.elR=-.05; k.azR=-.15; k.armL=-1.45; k.azL=.55; k.elL=-.55; k.twist=-.2; k.lean=-.05-(p<.5?.08*Math.sin(p*40):0); };
-POSES.vbutt=(k,p,e)=>{ k.armR=lerp(-.3,-1.85,e); k.elR=lerp(-1.7,-.3,e); k.armL=lerp(-.5,-1.6,e); k.elL=-1; k.azL=.4; k.twist=lerp(.35,-.5,e); k.lean=.35*e; k.legL=-.45*e; };
-POSES.vcharge=(k,p,e)=>{ const w=ph(p,0,.45), r=ez(ph(p,.45,.6)); k.armR=-1.55; k.elR=-.05; k.armL=-1.45; k.azL=.6; k.elL=-.5; k.lean=lerp(-.05*w,-.38,r)+(w<1?Math.sin(p*60)*.02:0); k.legR=.3; k.knL=.4*w; };
-POSES.vgrenade=(k,p,e)=>{ const w=ez(ph(p,0,.4)), s=ez(ph(p,.4,.58)); k.armL=lerp(lerp(-.8,-2.9,w),-1.0,s); k.elL=lerp(-.4,-1.2,w)*(1-s); k.azL=-.15; k.twist=lerp(lerp(0,.45,w),-.35,s); k.lean=lerp(-.15*w,.25,s); k.armR=-1.2; k.elR=-.8; };
 POSES.vstar=(k,p,e,f)=>{ const T=game.time*18; k.lean=.6; k.armL=-1.55; k.elL=-.15; k.azL=.5; k.armR=.45; k.elR=-.4; k.legL=-.9*Math.sin(T); k.legR=.9*Math.sin(T); k.knL=.6+.4*Math.cos(T); k.knR=.6-.4*Math.cos(T); k.headX=.25; };
 POSES.vwall=(k,p,e)=>{ k.armL=-1.58; k.elL=-.25; k.azL=.55; k.armR=-.5; k.elR=-1.45; k.azR=.1; k.legL=-.45; k.knL=.55; k.knR=.3; k.lean=.18; k.twist=.15; };
 
 /* ---------------- sword trail + hit helpers ---------------- */
 { const oD=v8Dress; v8Dress=function(f){ oD(f); const P=f.P; if(f.def.id==='valor'&&P.v8sword){ f.v8.swordBase=grp(0,-.7,0,P.v8sword); f.v8.swordTip=grp(0,-9.4,0,P.v8sword); } }; }
-{ const oS=v8StanceVisual; v8StanceVisual=function(f){ const P=f.P, F=f.F; if(f.def.id==='valor'&&P&&P.v8sword){ const gun=!!F.gun; P.v8sword.visible=!gun; P.v8rifle.visible=gun; P.v8swordBack.visible=gun; P.v8rifleBack.visible=!gun; return; } oS(f); }; }
+{ const oS=v8StanceVisual; v8StanceVisual=function(f){ const P=f.P, F=f.F; if(f.def.id==='valor'&&P&&P.v8sword){ const b=!!F.brawl; P.v8sword.visible=!b; P.v8swordBack.visible=b; P.v8rifle.visible=false; P.v8rifleBack.visible=false; return; } oS(f); }; } // no rifle any more: sword in hand, or sword on the back (Brawler)
 function trailTick(f,dt,on){ const S=f.v8; if(!S||!S.swordTip) return; const T=S.trail||(S.trail={pts:[],m:null});
  if(on){ const b=V(),t=V(); S.swordBase.getWorldPosition(b); S.swordTip.getWorldPosition(t); T.pts.push([b,t]); if(T.pts.length>10) T.pts.shift(); }
  else if(T.pts.length) T.pts.splice(0,Math.max(1,Math.ceil(T.pts.length*dt*14)));
@@ -113,12 +105,6 @@ Object.assign(V8MOVE,{
   if(a.landT==null){ a.act=true; a.trail=true; bladeHit(f,a,o,12*pm,10,0); a.t=Math.min(a.t,.5);
    if(f.onGround){ a.landT=a.t; a.act=false; a.dur=a.t+.4; const fx=Math.sin(f.yaw)*6, fz=Math.cos(f.yaw)*6; aoe(f,o,f.pos.x+fx,f.pos.z+fz,16,14*pm,24,18,0x7fd4ff); pillar(f.pos.x+fx,f.pos.z+fz,1.2,0x7fd4ff,.35,30); game.shake=Math.max(game.shake,.9); Snd.boom(); } }
   else a.trail=false; },
- vrifle(f,a,dt,pm,o){ const close=dist2(f,o)<20; if(close){ if(once(a,'b',.08)){ for(let i=-2;i<=2;i++){ f.shoot(130,0,2.6*pm,1.4,.4,6,0); const q=projs[projs.length-1]; const yy=Math.atan2(q.vel.x,q.vel.z)+i*.09, sp=q.vel.length(); q.vel.x=Math.sin(yy)*sp; q.vel.z=Math.cos(yy)*sp; } Snd.shot(); shells(f,3); } }
-  else if((a.fired||0)<3&&a.t>=(a.fired||0)*.1){ a.fired=(a.fired||0)+1; f.shoot(170,0,3.6*pm,1.4,.38,5,0); shells(f,1); } },
- buttstrike(f,a,dt,pm,o){ const p=a.t/a.dur; a.act=p>.3&&p<.5; if(a.landed&&once(a,'c',0)) clangFX(o.chest().lerp(f.chest(),.4)); },
- chargeshot(f,a,dt,pm,o){ if(a.t<a.hitAt&&Math.random()<dt*40){ const t=V(); f.v8.rifleTip.getWorldPosition(t); burst(t,0x7fd4ff,1,3); }
-  if(once(a,'f',a.hitAt)){ f.shoot(210,0,16*pm,3.6,1.6,40,8); shells(f,1); game.shake=Math.max(game.shake,.4); Snd.boom(); } },
- grenade(f,a,dt,pm,o){ if(once(a,'g',.4*a.dur)){ f.lob(.85,2,16*pm,8,1.3,0x7fd4ff,true); } },
  chargingstar(f,a,dt,pm,o){ const fx=Math.sin(f.yaw), fz=Math.cos(f.yaw);
   if(once(a,'s',0)){ if(canHit(o)) f.yaw=Math.atan2(o.pos.x-f.pos.x,o.pos.z-f.pos.z); Snd.mech&&Snd.mech(); toast(f.isPlayer?'CHARGING STAR!':'VALOR CHARGES!','#7fd4ff',700); }
   f.stunImm=game.time+.12; // can't be stunned while charging
@@ -130,7 +116,6 @@ Object.assign(V8MOVE,{
   if(a.t<a.on){ if(Math.random()<dt*30) burst(f.chest().add(V(Math.sin(f.yaw)*3,0,Math.cos(f.yaw)*3)),0x7fd4ff,2,4); return; }
   const on=a.t>=a.on&&a.t<a.off; if(on&&!f.beamOn){ f.startBeam(); Snd.mech(); } if(!on&&f.beamOn) f.stopBeam(); if(on) f.updateBeam(dt,pm*1.2,a); },
 });
-function shells(f,n){ const t=V(); if(!f.v8.rifleTip) return; f.v8.rifleTip.getWorldPosition(t); for(let i=0;i<n;i++) burst(t.clone().add(V(Math.cos(f.yaw)*1.5,.5,-Math.sin(f.yaw)*1.5)),0xffd43b,1,6); }
 
 /* ---------------- Rally Wall: front hits are blocked and answered with a counter slash ---------------- */
 { const oTH=FP.takeHit; FP.takeHit=function(src,dmg,kb,launch,cont,dir){
