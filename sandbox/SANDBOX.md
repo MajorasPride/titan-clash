@@ -8,7 +8,7 @@
 - `sandbox/titan-clash-sandbox.html` = the game code (`game/`) + the test code in `sandbox/src/`, with three.js and the font packed inside. Rebuild it with `python3 sandbox/build_sandbox.py`. Keep it as its own file, separate from the game zip.
 - The real game file is never changed by the sandbox build. Settings the sandbox turns off (crowds, disasters) are never saved, so the game isn't affected.
 - When a test is approved: move its code from `sandbox/src/` into `game/tools/v8-src/`, run `python3 game/tools/build_v8.py`, then test the game.
-- v8.3 (Nov 7, 2026): Sandbox 1 to 12 (VALOR, combat, 1/2/3, water, ultimates, fonts, ult camera, cutscene view) moved into the game. `sandbox/src/` now holds only sandbox-only code: `02-sandbox.js` (test menu, fills in `sbBase`), `03-voidmaw.js`, `05-fullscreen.js`, `07-speed.js`, `08` to `10` (INFERNOTH rework), `11-version.js` (SB_BUILD), `12-loadout.js` and `13-element-looks.js` (Sandbox 14). v8.4: 08 to 10, 12, 13 and 15 moved into the game (`game/tools/v8-src/32-37`); `sandbox/src/` keeps 02, 03, 05, 07, 11, `12-sandbox-loadout.js` and `14-meters.js`.
+- v8.3 (Nov 7, 2026): Sandbox 1 to 12 (VALOR, combat, 1/2/3, water, ultimates, fonts, ult camera, cutscene view) moved into the game. `sandbox/src/` now holds only sandbox-only code: `02-sandbox.js` (test menu, fills in `sbBase`), `03-voidmaw.js`, `05-fullscreen.js`, `07-speed.js`, `08` to `10` (INFERNOTH rework), `11-version.js` (SB_BUILD), `12-loadout.js` and `13-element-looks.js` (Sandbox 14). v8.4: 08 to 10, 12, 13 and 15 moved into the game (`game/tools/v8-src/32-37`); `sandbox/src/` keeps 02, 03, 05, 07, 11, `12-sandbox-loadout.js`, `14-meters.js` and (Sandbox 15) `16-ashvin-twins.js`.
 
 ## The settings menu (cleaned up Nov 6, 2026)
 On screen during the fight: only the **⚙ SANDBOX** button (top left) and a small damage counter (top right). Tap ⚙ (PC: Tab) to open the settings menu; the fight pauses while it's open.
@@ -23,6 +23,18 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 15 (Nov 7, 2026): ASHVIN, the twins
+Status: **testing**. Code: `sandbox/src/16-ashvin-twins.js`. Sandbox only. Plan: Game Plan > Ideas Inbox > ASHVIN rework (voice call, Nov 7).
+- Pick ASHVIN in ⚙ → TITANS (YOU or DUMMY). Two stances, one twin each: **SUN** (he: fast, fiery, buffs himself) and **MOON** (she: slower, harder hits, waves and curses). One bow-staff, held in the middle; Sun holds it in his right hand, Moon in her left. STANCE swaps twins faster and cheaper than other titans.
+- **Element pairs** (⚙ LOADOUT → ELEMENT): DEFAULT / FIRE + ICE / LIGHTNING + WATER. Same moves, the element changes. Ice (new, ASHVIN only) slows. Water soaks, and a soaked rival takes +25% from Sun's lightning.
+- **Tag-swap strings:** L L H or M H ends with the other twin cutting in. Moon cuts in with a staff spin + cold wave that shoves them back; Sun cuts in with a Dragon Ball style fire burst.
+- **SUN:** L L L staff combo · M spinning staff · H flame slam · SPECIAL sun rune (armed after a moment, big flame blast when stepped on) · 1 Blaze Up (faster attacks 6s) · 2 Flame Dash (fire trail) · 3 Solar Flare (blinds them and knocks off their lock-on) · GRAB pole-vault over them, then a fire blast.
+- **MOON:** L L L heavy staff · M frost wave · H ice spike under them · SPECIAL curse rune (slow + damage over time) · 1 Hex (+25% damage taken, 5s) · 2 Frost Prison (rooted 1.6s) · 3 Drain (steals energy 5s) · GRAB head tap, ice birdcage, wave blast.
+- **SOLAR MANDALA** (Sun ultimate, rush in): launches them sky-high, 8 air strikes draw a giant sun rune behind them, slams them down, then both twins fire one combined beam that blasts them across the city. "THE SUN NEVER SETS ON US!" / "TWO HALVES, ONE SKY!"
+- **TOTAL ECLIPSE** (Moon ultimate, aimed): the world goes pitch black and only her moon rune glows; an ice pillar launches them, Sun leaps up glowing like the sun and spikes them down (leaves the curse). "NIGHT FALLS... FOR YOU." / "SLEEP UNDER OUR ECLIPSE."
+- Damage numbers: orange while Sun is fighting, icy blue for Moon.
+- Numbers are first guesses (to tune from feedback). ASHVIN's old ability tree still shows on the select page; his paths come with the loadout pass.
+
 ### Sandbox 14g (Nov 7, 2026): rebuilt with the game's v8.4.4
 - Phone: the armor/rage and KO meters are one-line rows on the left under the health bars; nothing covers the joystick or buttons.
 
