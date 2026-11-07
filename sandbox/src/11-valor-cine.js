@@ -2,7 +2,7 @@
    SANDBOX TEST 9: ULTIMATE = ANNOUNCEMENT CARD, THEN A REAL CUTSCENE IF IT LANDS (Nov 6, 2026)
    MajorasPride: "Keep the cutscene announcement, then the cutscene shows the ability if landed.
    No voice, just text. Needs to be cool."
-   1. PRESS: a short cutscene card (black bars, his name, the ultimate's name). No quote, no voice.
+   1. PRESS: a short cutscene card (black bars, his name, the ultimate's name, and an announce line if the stance has one). Text only, no voice.
    2. LANDS: a directed cutscene of the ability itself. HUD hidden, black bars, camera shots
       (close-ups, orbits, low angles, freeze frames), the quote as big comic text, ink-wash look.
       SWORD (TIDECREST OATH): quote close-up -> orbit shot through the flash cuts -> low shot of the
@@ -13,6 +13,9 @@
    3. MISSES: no cutscene.
    Voice is off for these (text only).
    ===================================================================== */
+VULT.sword.announce="IF I DON'T... WHO WILL!";   // MajorasPride: said when the ultimate starts (Goku-style line)
+VULT.sword.line="WE ARE HERE. WE ARE HOME.";   // MajorasPride: said in the cutscene when it lands (Optimus Prime nod)
+VULT.brawl.announce="";
 VULT.brawl.line="THIS CITY HAS A SHIELD!";   // MajorasPride picked this one (Nov 6)
 VULT.brawl.name='STAR RUSH';
 const CINE={on:false};
@@ -42,10 +45,10 @@ function cineFreeze(ms,after){ const tok=game.token; game.timeScale=.02; setTime
 /* 1. PRESS: announcement card only (no quote, no voice) */
 { const oS=v8UltStart; v8UltStart=function(f){ if(f.def.id!=='valor') return oS(f); const U=isBrawl(f)?VULT.brawl:VULT.sword; f.def.ultName=U.name;
   const tok=game.token; cutEl.style.setProperty('--c',f.def.css); cutEl.querySelector('.who').textContent=f.def.name; cutEl.querySelector('.ult').textContent='ULTIMATE · '+U.name;
-  const sb=cutEl.querySelector('.say'); sb.className='say'; sb.style.display='none';
+  const sb=cutEl.querySelector('.say'); sb.className='say'; if(U.announce){ sb.textContent=U.announce; sb.style.display=''; } else sb.style.display='none'; cutEl.classList.remove('vs-sword','vs-brawl'); cutEl.classList.add(isBrawl(f)?'vs-brawl':'vs-sword'); vsArt(); cutEl.querySelector('.ult').textContent=(isBrawl(f)?'BRAWLER ULTIMATE · ':'SWORD ULTIMATE · ')+U.name;
   cutEl.classList.remove('on'); void cutEl.offsetWidth; cutEl.classList.add('on'); document.body.classList.add('v8cutting'); game.timeScale=.03; f.setGlow&&f.setGlow(3);
   Snd.tone('sawtooth',90,600,.5,.12); Snd.mech&&Snd.mech(); News.add(`${f.def.name} CALLS OUT ITS ULTIMATE: ${U.name}!`,true);
-  setTimeout(()=>{ cutEl.classList.remove('on'); sb.style.display=''; document.body.classList.remove('v8cutting'); if(tok!==game.token) return; if(!CINE.on&&game.state==='fight') game.timeScale=1; for(const c of cams) c.init=false; },900); }; }
+  setTimeout(()=>{ cutEl.classList.remove('on','vs-sword','vs-brawl'); sb.style.display=''; document.body.classList.remove('v8cutting'); if(tok!==game.token) return; if(!CINE.on&&game.state==='fight') game.timeScale=1; for(const c of cams) c.init=false; },900); }; }
 
 /* 2. LANDS: the directed cutscene */
 ultLanded=function(f,a){ if(a._cut) return; a._cut=1; const brawl=!!a.brawl;
@@ -88,3 +91,15 @@ function cineCam(){ const f=CINE.f, o=CINE.o, a=CINE.a; if(!f||!o) return; const
 { const oC=updateCamera; updateCamera=function(dt){ if(CINE.on&&game.mode==='match'){ try{ cineCam(); }catch(e){ console.error(e); cineEnd(); } return; } return oC(dt); }; }
 // safety: if the ultimate ends some other way, end the cutscene
 { const o=updateHUD; updateHUD=function(dt){ o(dt); if(CINE.on&&(!CINE.f||!CINE.f.atk||CINE.f.atk.id!=='ultimate'||game.state!=='fight')) cineEnd(); }; }
+
+/* each stance gets its own announcement card: SWORD = painted waves on deep blue, BRAWLER = comic halftone with a gold starburst */
+function vsArt(){ if(vsArt.done) return; vsArt.done=1; try{ const crest=wfxTex('crest').image.toDataURL(), whirl=wfxTex('whirl').image.toDataURL(); const s=document.createElement('style'); s.textContent=`
+#v8cut.vs-sword .band{background:url(${crest}) repeat-x left bottom/22vh 22vh,linear-gradient(90deg,#123f9e 0%,#2f8ff0 55%,#0b0f1ecc 85%)!important;box-shadow:0 0 50px #3fa9ff,inset 0 -6px 0 #0b0f1e,inset 0 6px 0 #0b0f1e!important}
+#v8cut.vs-sword .who{color:#e9f6ff;text-shadow:5px 5px 0 #0b0f1e,0 0 24px #3fa9ff}
+#v8cut.vs-sword .ult{color:#bfeeff!important}
+#v8cut.vs-sword:before{content:'';position:absolute;right:4vw;top:14vh;width:30vh;height:30vh;background:url(${whirl}) center/contain no-repeat;animation:vsSpin 1s linear infinite;opacity:.9}
+#v8cut.vs-brawl .band{background:radial-gradient(#0006 1.4px,#0000 1.6px) 0 0/8px 8px,linear-gradient(90deg,#ffd43b 0%,#ff9f43 45%,#c8323c 75%,#000c 92%)!important;box-shadow:0 0 50px #ffd43b,inset 0 -6px 0 #0b0f1e,inset 0 6px 0 #0b0f1e!important;transform:skewY(5deg)!important}
+#v8cut.vs-brawl .who{color:#fff;transform:rotate(5deg)!important;text-shadow:6px 6px 0 #c8323c}
+#v8cut.vs-brawl .ult{color:#fff!important;transform:rotate(5deg)!important;text-shadow:2px 2px 0 #c8323c}
+#v8cut.vs-brawl:before{content:'';position:absolute;right:5vw;top:12vh;width:32vh;height:32vh;background:conic-gradient(from 0deg,#ffd43b 0 10deg,#0000 10deg 20deg,#ffd43b 20deg 30deg,#0000 30deg 40deg,#ffd43b 40deg 50deg,#0000 50deg 60deg,#ffd43b 60deg 70deg,#0000 70deg 80deg,#ffd43b 80deg 90deg,#0000 90deg 100deg,#ffd43b 100deg 110deg,#0000 110deg 120deg,#ffd43b 120deg 130deg,#0000 130deg 140deg,#ffd43b 140deg 150deg,#0000 150deg 160deg,#ffd43b 160deg 170deg,#0000 170deg 180deg,#ffd43b 180deg 190deg,#0000 190deg 200deg,#ffd43b 200deg 210deg,#0000 210deg 220deg,#ffd43b 220deg 230deg,#0000 230deg 240deg,#ffd43b 240deg 250deg,#0000 250deg 260deg,#ffd43b 260deg 270deg,#0000 270deg 280deg,#ffd43b 280deg 290deg,#0000 290deg 300deg,#ffd43b 300deg 310deg,#0000 310deg 320deg,#ffd43b 320deg 330deg,#0000 330deg 340deg,#ffd43b 340deg 350deg,#0000 350deg);border-radius:50%;-webkit-mask:radial-gradient(#000 30%,#0000 70%);mask:radial-gradient(#000 30%,#0000 70%);animation:vsSpin 2s linear infinite}
+@keyframes vsSpin{to{transform:rotate(360deg)}}`; document.head.appendChild(s); }catch(e){ console.error(e); } }

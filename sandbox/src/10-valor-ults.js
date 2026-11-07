@@ -39,7 +39,10 @@ function ultSword(f,a,dt,pm,o){ const t=a.t, c=()=>o.chest();
  if(once(a,'salute',0)){ if(canHit(o)) f.yaw=Math.atan2(o.pos.x-f.pos.x,o.pos.z-f.pos.z); ring(f.pos.x,1,f.pos.z,14,WATER,.5); burst(f.chest(),0xffffff,20,10); Snd.tone('triangle',600,1200,.3,.06); }
  // the flowing strikes: flash through the rival from side to side
  if(a.miss){ return; }
- if(t>=.35&&!a._chk){ a._chk=1; if(!(canHit(o)&&dist2(f,o)<45+o.radius())){ f.kb.x=Math.sin(f.yaw)*70; f.kb.z=Math.cos(f.yaw)*70; ultMiss(f,a,t); return; } }
+ // lunge in toward the rival first (aimed: no turning once it starts), then check if the first cut reaches
+ if(t<.35&&canHit(o)&&dist2(f,o)>f.radius()+o.radius()+8){ f.kb.x=Math.sin(f.yaw)*120; f.kb.z=Math.cos(f.yaw)*120; if(Math.random()<dt*30) wfxSprite(Math.random()<.5?'curl':'curlM',f.pos.clone().add(V(0,5,0)),9,.35,{grow:.4}); }
+ if(t>=.35&&!a._chk){ a._chk=1; f.kb.multiplyScalar(.2); const ang=canHit(o)?Math.abs(angDiff(f.yaw,Math.atan2(o.pos.x-f.pos.x,o.pos.z-f.pos.z))):9;
+  if(!(canHit(o)&&dist2(f,o)<f.radius()+o.radius()+16&&ang<1.2)){ ultMiss(f,a,t); return; } }
  const N=6; for(let i=0;i<N;i++) if(once(a,'d'+i,.35+i*.2)&&canHit(o)){
   if(i===0) ultLanded(f,a);
   const ang=f.yaw+Math.PI+(i%2?1:-1)*(.6+i*.15), r=14+o.radius(), p0=f.pos.clone();
