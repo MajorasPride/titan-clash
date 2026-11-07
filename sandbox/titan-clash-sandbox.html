@@ -32,6 +32,7 @@ Status: **testing**. Feedback: waiting. Code: `sandbox/src/15-shield-barrage.js`
 - **Sword v3, Hibiki's Astral (BlazBlue: Central Fiction) as the reference** (his call, our style on top): the lunge lands, black smoke swallows the monster, VALOR and a **water clone of VALOR** dash through it from opposite sides at once (an X every pass), the last pass is the crossing slash, and the screen cuts to black for a beat. Then the Akuma stand, the dragon and the sky cut.
 - **Final city shot** (his reference: a dragon in a figure-8 coil over a night city in a lightning storm): after the sky cut, a wide shot over Neon City, VALOR in front with his back turned (Akuma stand), the water dragon (our own design, not the reference's dragon) coiled in a figure-8 over the skyline with lightning cracking around it.
 - **Brawler v2:** VALOR runs at the monster while he throws (closing the gap every throw), catches on the run, lunging throws like Cap's MvC shield throw. Some shots from a flat side-on fighting-game angle. More shots on VALOR (the catch, behind him for the chin throw, a longer hero shot at the end) because he said "show VALOR more".
+- **Sword update (Nov 6, late):** shield ultimate approved as is ("perfect"). Sword: buildings hidden for the whole cutscene; the sky dragon, lightning and final city shot are archived in `sandbox/archive/sword-sky-dragon-archive.js` (they didn't show on screen); the stand is now VALOR turning to face the camera with his sword raised, the monster behind him.
 - **Ultimate camera** (`sandbox/src/17-ult-camera.js`): when an ultimate lands, 1 in 3 times the whole cutscene plays from a flat side-on fighting-game camera; the rest are cinematic. The sword's Akuma stand + final dragon shot always stay cinematic. ⚙ menu: ULT CAMERA: RANDOM / CINEMATIC / FIGHTING GAME.
 ### Sandbox 11 (Nov 6, 2026): ultimate body poses (no more stiff "T-pose")
 Status: **testing**. Feedback: waiting. Code: `sandbox/src/14-ult-poses.js`. Sandbox only, not in the game.
@@ -6440,6 +6441,29 @@ function ultCamUI(){ const m=el('sbMenu'); if(!m||m.querySelector('[data-cm]')) 
  b.addEventListener('click',e=>{ e.stopPropagation(); const n=['random','cine','side']; SB.ultCam=n[(n.indexOf(SB.ultCam)+1)%3]; b.textContent=L[SB.ultCam]; }); ref.parentNode.appendChild(b); }
 { const oS=sbStart; sbStart=function(){ oS(); ultCamUI(); }; }
 setTimeout(ultCamUI,800);
+
+/* =====================================================================
+   SANDBOX TEST 15: CUTSCENES ONLY HIDE THE BUILDINGS IN THE WAY (Nov 7, 2026)
+   MajorasPride: "I mean just interactive building, just to show the cutscene." The city stays; every frame of an
+   ultimate cutscene, only the buildings standing between the camera and the two titans are hidden, and they come
+   back as soon as they're out of the way (and when the cutscene ends). Replaces hiding the whole city (Sandbox 12b).
+   ===================================================================== */
+cityHide=function(a,on){};   // the Sandbox 12b "hide the whole city" is switched off
+const VIEW={hid:new Set()};
+function bParts(b){ return [b.mesh,b.hull,b.crk].filter(m=>m&&m.isObject3D); }
+function segHitsBox(x0,z0,x1,z1,b,pad){ const minX=b.x-b.w/2-pad, maxX=b.x+b.w/2+pad, minZ=b.z-b.d/2-pad, maxZ=b.z+b.d/2+pad;
+ let t0=0,t1=1; const dx=x1-x0, dz=z1-z0;
+ for(const [p,d,lo,hi] of [[x0,dx,minX,maxX],[z0,dz,minZ,maxZ]]){ if(Math.abs(d)<1e-6){ if(p<lo||p>hi) return false; continue; }
+  let ta=(lo-p)/d, tb=(hi-p)/d; if(ta>tb){ const t=ta; ta=tb; tb=t; } t0=Math.max(t0,ta); t1=Math.min(t1,tb); if(t0>t1) return false; } return true; }
+function viewClear(){ const f=CINE.f, o=CINE.o; if(!f||!o) return; const c=camera.position, want=new Set();
+ for(const b of city){ if(!b.alive&&!(b.mesh&&b.mesh.visible)) continue;
+  for(const t of [f.pos,o.pos,f.chest(),o.chest()]){ if(segHitsBox(c.x,c.z,t.x,t.z,b,4)){ want.add(b); break; } } }
+ for(const b of VIEW.hid) if(!want.has(b)){ for(const m of bParts(b)) m.visible=true; VIEW.hid.delete(b); }
+ for(const b of want) if(!VIEW.hid.has(b)){ const parts=bParts(b); if(!parts.some(m=>m.visible)) continue; for(const m of parts) m.visible=false; VIEW.hid.add(b); } }
+function viewRestore(){ for(const b of VIEW.hid) for(const m of bParts(b)) m.visible=true; VIEW.hid.clear(); }
+{ const oC=updateCamera; updateCamera=function(dt){ const r=oC(dt); if(CINE.on&&game.mode==='match'){ try{ viewClear(); }catch(e){ console.error(e); } } else if(VIEW.hid.size) viewRestore(); return r; }; }
+{ const o=cineEnd; cineEnd=function(){ o(); viewRestore(); }; }
+{ const oR=sbReset; sbReset=function(){ viewRestore(); oR(); }; }
 
 </script>
 <!-- SANDBOX END -->
