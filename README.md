@@ -2,6 +2,8 @@
 
 A 3D mech vs kaiju brawler for phone and PC, made by MajorasPride with Claude.
 
+**Play it:** https://majoraspride.github.io/titan-clash/ (install it as an app from there: Chrome > Install, or iPhone Safari > Share > Add to Home Screen).
+
 | Folder | What it is | How to play |
 |---|---|---|
 | `game/` | The real game (now v8.2 "No More Stun Lock") | Download the folder, double-click `titan-clash.html` |

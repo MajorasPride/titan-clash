@@ -20,6 +20,12 @@ Hi Claude. This is MajorasPride's game, and we build it together, one chat at a 
 6. I play on PC and on my phone.
 
 =====================================================================
+## v8.2.1 "APP" (Nov 6, 2026)
+=====================================================================
+- The game is a website + installable app (PWA) on GitHub Pages: https://majoraspride.github.io/titan-clash/ . Files: `manifest.webmanifest`, `sw.js` (offline helper, only runs over http/https, so double-click still works), `icons/`, repo-top `index.html` + `.nojekyll`. Notes: `patch-notes/v8.2.1.md`.
+- Every push to main updates the website and the installed app. If you add a new core file the game loads, add it to `CORE` in `sw.js` and bump `CACHE`.
+
+=====================================================================
 ## SANDBOX (Nov 6, 2026) — read SANDBOX.md
 =====================================================================
 - `sandbox/titan-clash-sandbox.html` = training ground, ONE standalone file (kept separate from the game zip) (VALOR vs an INFERNOTH dummy on empty ground). **New mechanics are built and tested there first**; only what MajorasPride OKs moves into `titan-clash.html`. Build: `python3 sandbox/build_sandbox.py` (game + `sandbox/src/`). Log of every sandbox test: `sandbox/SANDBOX.md`. Repo: github.com/MajorasPride/titan-clash (game/ and sandbox/).

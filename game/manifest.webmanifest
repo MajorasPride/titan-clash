@@ -1,0 +1,16 @@
+{
+  "name": "Titan Clash: Mechs vs Kaiju",
+  "short_name": "Titan Clash",
+  "description": "A 3D mech vs kaiju brawler for phone and PC.",
+  "start_url": "titan-clash.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#05080d",
+  "theme_color": "#05080d",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

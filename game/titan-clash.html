@@ -472,6 +472,16 @@ v8.2 NO MORE STUN LOCK (Nov 6, 2026). Fire burn no longer freezes you. Light hit
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>Titan Clash — Mechs vs Kaiju</title>
+<!-- v8.2.1 APP: install as an app from the website (manifest + offline helper sw.js). Double-clicking this file still works as before. -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#05080d">
+<link rel="icon" href="icons/favicon-64.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Titan Clash">
+<script>if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -789,7 +799,7 @@ body.portal>canvas:first-of-type{animation:wavy 1.1s ease-in-out infinite;filter
   </div>
   <div id="tTop"><button data-k="transform" class="tr">⚡ STANCE</button><button data-k="super" class="su">SUPER</button><button data-k="lock" class="lk">LOCK</button></div>
 </div>
-<div id="rotate" class="hidden"><div class="ph">📱</div><div>TURN YOUR PHONE SIDEWAYS</div><small>Titan Clash plays in landscape</small></div>
+<div id="rotate" class="hidden"><div class="ph">📱</div><div>TURN YOUR PHONE SIDEWAYS</div><small>Titan Clash plays in landscape</small><small>iPhone: Rotation Lock on? Turn it off in Control Center.</small></div>
 </div>
 
 <div id="title" class="screen">
