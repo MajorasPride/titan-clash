@@ -25,6 +25,9 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 14g (Nov 7, 2026): rebuilt with the game's v8.4.4
+- Phone: the armor/rage and KO meters are one-line rows on the left under the health bars; nothing covers the joystick or buttons.
+
 ### Sandbox 14f (Nov 7, 2026): rebuilt with the game's v8.4.3
 - Titan Core fires the real ultimate; phone HUD fixes (KO bar, rival armor/rage bars). The KO bar CSS moved from `14-meters.js` into the game.
 
@@ -691,6 +694,9 @@ v8.4.3 TITAN CORE + HUD FIX (Nov 7, 2026). The Titan Core fires the titan's real
     old pre-v8.3 super, so nothing seemed to happen) and doesn't use up the low-health ultimate. Phone HUD: VALOR's
     KO bar is one line under the stance label (it piled up with the combo and Fury text), and the rival's armor/rage
     bars moved off the touch buttons. Code: tools/v8-src/03-fighter.js, 14-valor-boxer.js, 32-infernoth-brawler.js.
+v8.4.4 PHONE HUD ON THE LEFT (Nov 7, 2026). Phone: your meter (INFERNOTH armor/rage or VALOR's KO bar) and the
+    rival's INFERNOTH armor/rage (marked RIVAL) are compact lines on the left under the health bars, so nothing
+    covers the joystick or the buttons. Code: tools/v8-src/40-phone-hud.js.
 
 #####################################################################
 -->
@@ -7203,6 +7209,26 @@ function bldSwing(f,a){ const M=MOVES[a.id]||{}; if(a.id==='ultimate'||M.ranged|
   try{ const a=this.atk; if(a&&isCore(this)&&!a._bld&&a.hitAt!=null&&a.t>=a.hitAt&&game.state==='fight'&&game.mode==='match'){ a._bld=1; bldSwing(this,a); } }catch(e){ console.error(e); }
   return r; }; }
 
+/* =====================================================================
+   v8.4.4 (Nov 7, 2026): PHONE HUD, NOTHING ON TOP OF THE CONTROLS. MajorasPride: "I don't like it sitting on the
+   right, change it to the left for the rage bars. Buttons shouldn't be covered in general."
+   Phone landscape only. The meters go in the free strip on the left under the health bars (right of the little
+   titan icon), each as one compact line, so they never cover the joystick or the buttons:
+   - row 1: your meter (INFERNOTH's ARMOR + RAGE, or VALOR's KO PUNCH)
+   - row 2: the rival's INFERNOTH ARMOR + RAGE, marked RIVAL
+   PC is unchanged.
+   ===================================================================== */
+{ const s=document.createElement('style'); s.textContent=`
+@media (pointer:coarse) and (max-height:520px){
+ .infHud,#koBar{left:90px!important;right:auto!important;width:auto!important;white-space:nowrap;font-size:9px!important}
+ .infHud.l,#koBar{top:84px!important}
+ .infHud.r{top:104px!important;text-align:left!important}
+ .infHud.r::before{content:'RIVAL ';color:#ff8a5a}
+ .infHud span{display:inline-block;vertical-align:middle;margin-right:4px}
+ .infHud .t{display:inline-block;vertical-align:middle;width:58px;height:6px;margin:0 9px 0 0!important}
+ #koBar .t{display:inline-block;vertical-align:middle;width:90px;height:6px;margin:0 0 0 6px!important}
+}`; document.head.appendChild(s); }
+
 </script>
 <!-- V8 END -->
 <!-- SANDBOX START -->
@@ -7531,7 +7557,7 @@ function spdSync(){ document.querySelectorAll('#sbMenu [data-spd]').forEach(b=>b
 
 /* Which sandbox build is this? Shown small in the top-right corner and in the ⚙ menu, so an old (cached) copy is easy to spot.
    Bump SB_BUILD every time the sandbox is pushed. */
-const SB_BUILD='14f · Nov 7';
+const SB_BUILD='14g · Nov 7';
 { const d=document.createElement('div'); d.id='sbVer'; d.textContent='SANDBOX '+SB_BUILD;
   d.style.cssText="position:fixed;right:8px;bottom:6px;z-index:25;font:10px/1 'Russo One',sans-serif;letter-spacing:1px;color:#9fb3c8;opacity:.75;pointer-events:none";
   document.body.appendChild(d); }

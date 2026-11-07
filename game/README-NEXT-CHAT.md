@@ -20,6 +20,11 @@ Hi Claude. This is MajorasPride's game, and we build it together, one chat at a 
 6. I play on PC and on my phone.
 
 =====================================================================
+## v8.4.4 phone HUD on the left (Nov 7, 2026)
+=====================================================================
+- `40-phone-hud.js` (phone landscape only): `.infHud` and `#koBar` become one-line rows at left:90px under the health bars (yours at 84px, the rival's at 104px with a RIVAL tag). Rule from MajorasPride: nothing may cover the joystick or buttons. Notes: `patch-notes/v8.4.4.md`.
+
+=====================================================================
 ## v8.4.3 Titan Core + HUD fix (Nov 7, 2026)
 =====================================================================
 - `03-fighter.js`: a Titan Core (`f.coreReady`) now starts the real ultimate (`startAtk('ultimate')` + `v8UltStart`) for every core titan and leaves `ultUsed` alone. The old pre-v8.3 'super' path is no longer used by the core titans.

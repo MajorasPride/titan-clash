@@ -490,6 +490,9 @@ v8.4.3 TITAN CORE + HUD FIX (Nov 7, 2026). The Titan Core fires the titan's real
     old pre-v8.3 super, so nothing seemed to happen) and doesn't use up the low-health ultimate. Phone HUD: VALOR's
     KO bar is one line under the stance label (it piled up with the combo and Fury text), and the rival's armor/rage
     bars moved off the touch buttons. Code: tools/v8-src/03-fighter.js, 14-valor-boxer.js, 32-infernoth-brawler.js.
+v8.4.4 PHONE HUD ON THE LEFT (Nov 7, 2026). Phone: your meter (INFERNOTH armor/rage or VALOR's KO bar) and the
+    rival's INFERNOTH armor/rage (marked RIVAL) are compact lines on the left under the health bars, so nothing
+    covers the joystick or the buttons. Code: tools/v8-src/40-phone-hud.js.
 
 #####################################################################
 -->
@@ -6993,6 +6996,26 @@ function bldSwing(f,a){ const M=MOVES[a.id]||{}; if(a.id==='ultimate'||M.ranged|
 { const o=FP.update; FP.update=function(dt,inp,opp){ const r=o.call(this,dt,inp,opp);
   try{ const a=this.atk; if(a&&isCore(this)&&!a._bld&&a.hitAt!=null&&a.t>=a.hitAt&&game.state==='fight'&&game.mode==='match'){ a._bld=1; bldSwing(this,a); } }catch(e){ console.error(e); }
   return r; }; }
+
+/* =====================================================================
+   v8.4.4 (Nov 7, 2026): PHONE HUD, NOTHING ON TOP OF THE CONTROLS. MajorasPride: "I don't like it sitting on the
+   right, change it to the left for the rage bars. Buttons shouldn't be covered in general."
+   Phone landscape only. The meters go in the free strip on the left under the health bars (right of the little
+   titan icon), each as one compact line, so they never cover the joystick or the buttons:
+   - row 1: your meter (INFERNOTH's ARMOR + RAGE, or VALOR's KO PUNCH)
+   - row 2: the rival's INFERNOTH ARMOR + RAGE, marked RIVAL
+   PC is unchanged.
+   ===================================================================== */
+{ const s=document.createElement('style'); s.textContent=`
+@media (pointer:coarse) and (max-height:520px){
+ .infHud,#koBar{left:90px!important;right:auto!important;width:auto!important;white-space:nowrap;font-size:9px!important}
+ .infHud.l,#koBar{top:84px!important}
+ .infHud.r{top:104px!important;text-align:left!important}
+ .infHud.r::before{content:'RIVAL ';color:#ff8a5a}
+ .infHud span{display:inline-block;vertical-align:middle;margin-right:4px}
+ .infHud .t{display:inline-block;vertical-align:middle;width:58px;height:6px;margin:0 9px 0 0!important}
+ #koBar .t{display:inline-block;vertical-align:middle;width:90px;height:6px;margin:0 0 0 6px!important}
+}`; document.head.appendChild(s); }
 
 </script>
 <!-- V8 END -->

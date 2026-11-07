@@ -23,6 +23,9 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 14g (Nov 7, 2026): rebuilt with the game's v8.4.4
+- Phone: the armor/rage and KO meters are one-line rows on the left under the health bars; nothing covers the joystick or buttons.
+
 ### Sandbox 14f (Nov 7, 2026): rebuilt with the game's v8.4.3
 - Titan Core fires the real ultimate; phone HUD fixes (KO bar, rival armor/rage bars). The KO bar CSS moved from `14-meters.js` into the game.
 
