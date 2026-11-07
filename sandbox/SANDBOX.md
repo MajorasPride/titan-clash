@@ -23,6 +23,10 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 13d (Nov 7, 2026): new KING ultimate
+Status: **testing**. Code: `sandbox/src/09-infernoth-meltdown-ults.js`. Sandbox only.
+- MajorasPride didn't like the skyscraper climb ("looks funny"). New KING: charge, jaw grab and shake, toss them straight up super high, a batter's wind-up while they fall (back turned, tail cocked), then a tail WHACK that sends them tumbling through three buildings (it picks the direction with the most buildings). "THIS IS MY LAND." / "BOW TO YOUR KING."
+
 ### Sandbox 13c (Nov 7, 2026): lava that looks like lava, no more "same pose"
 Status: **testing**. Code: `sandbox/src/09-infernoth-meltdown-ults.js`, `sandbox/src/10-poses-all.js`. Sandbox only.
 - **Lava:** falling lava is now molten rocks that drop from the sky onto a glowing shadow, splash, and leave a pool that cools from orange to dark red (no more glowing beams). Eruption, burrow and volcano leap are lava fountains. Spit drips.

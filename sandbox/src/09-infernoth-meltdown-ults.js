@@ -5,7 +5,7 @@
    · GRAB shove-off (throws the rival back out to zoning range)
    · 1 Meteor Spit (3 lava balls) · 2 Obsidian Shell (half damage, reflects small shots) · 3 Volcano Core.
    ULTIMATES (announce card on press with the intro line; cutscene + quote only if it lands):
-   - BRAWLER: KING. "THIS IS MY LAND." Charge, grab, climb a skyscraper, pile-drive them off the top. "BOW TO YOUR KING."
+   - BRAWLER: KING. "THIS IS MY LAND." Charge, jaw grab, toss them straight up, tail WHACK through three buildings. "BOW TO YOUR KING."
    - MELTDOWN: LAVA DOMAIN. "KNEEL." Aimed heat beam blasts them away, then he fires it into the sky:
      lava rains for about 15 seconds (glowing shadows first), then the sky clears. Full damage to non-fire titans, less to fire ones,
      none to INFERNOTH. Red-orange sky. "I AM KING OF ALL."
@@ -128,23 +128,34 @@ function drawCracks(){ const W=1000,H=600, cx=rand(380,620), cy=rand(220,380); l
   if(!a._init){ a._init=1; a.dur=6; }
   return k==='king'?ultKing(f,a,dt,pm,o):k==='lava'?ultLava(f,a,dt,pm,o):ultGZ(f,a,dt,pm,o); }; }
 
-/* KING: charge, grab, climb a skyscraper, pile-drive off the top */
+/* KING (redone Nov 7): charge, jaw grab, toss them straight up super high, then as they fall a tail WHACK
+   sends them flying through three buildings. */
+function kWhackDir(f,o){ let best=f.yaw+Math.PI, bn=-1;          // the direction with the most buildings in a line
+ for(let i=0;i<24;i++){ const an=i/24*Math.PI*2, sx=Math.sin(an), sz=Math.cos(an); let n=0;
+  for(const B of city){ if(!B.alive) continue; const dx=B.x-o.pos.x, dz=B.z-o.pos.z, along=dx*sx+dz*sz; if(along<8||along>170) continue; if(Math.abs(dx*sz-dz*sx)<Math.max(B.w,B.d)/2+3) n++; }
+  if(n>bn){ bn=n; best=an; } } return best; }
 function ultKing(f,a,dt,pm,o){ const t=a.t;
  if(!a._cut){ if(t<.35){ f.setGlow(2+t*4); return; } if(a.miss) return;
   f.kb.x=Math.sin(f.yaw)*85; f.kb.z=Math.cos(f.yaw)*85; if(Math.random()<dt*20) dust(f.pos.x,f.pos.z,4,2);
-  if(canHit(o)&&inFront(f,o,13,1)){ f.kb.set(0,0,0); let b=null, bh=0; for(const B of city){ if(!B.alive) continue; const d=Math.hypot(B.x-f.pos.x,B.z-f.pos.z); if(d<90&&B.h>bh){ bh=B.h; b=B; } }
-   a.tower=b?{x:b.x,z:b.z,h:Math.max(30,b.h),b}:{x:f.pos.x+Math.sin(f.yaw)*20,z:f.pos.z+Math.cos(f.yaw)*20,h:40}; a.start=f.pos.clone(); kCineStart(f,a,'king'); }
+  if(canHit(o)&&inFront(f,o,13,1)){ f.kb.set(0,0,0); kCineStart(f,a,'king'); }
   else if(t>1.35) ultMiss(f,a,t); return; }
- const k=t-a.contact, T=a.tower;
- if(k<.6){ holdAt(f,o,8,6); f.setGlow(3); return; }                                                     // grab
- if(k<2.0){ const q=ez((k-.6)/1.4); f.pos.x=lerp(a.start.x,T.x-Math.sin(f.yaw)*4,q); f.pos.z=lerp(a.start.z,T.z-Math.cos(f.yaw)*4,q); f.pos.y=T.h*q; f.vy=0; f.onGround=false; f.kb.set(0,0,0);
-  o.pos.set(f.pos.x,f.pos.y+18*f.scale,f.pos.z); o.vy=0; o.kb.set(0,0,0); o.stun=Math.max(o.stun,.3); if(Math.random()<dt*14) dust(f.pos.x,f.pos.z,3,2); return; }   // climb, rival over his head
- if(k<2.5){ f.pos.y=T.h; f.vy=0; o.pos.set(f.pos.x,f.pos.y+18*f.scale,f.pos.z); o.stun=Math.max(o.stun,.3); if(once(a,'roar',a.contact+2.05)){ Snd.roar&&Snd.roar(); game.shake=Math.max(game.shake,.6); } return; } // roar on top
- if(!a.drop){ a.drop={x:T.x+Math.sin(f.yaw)*26,z:T.z+Math.cos(f.yaw)*26,y0:T.h}; }
- if(k<3.05){ const q=(k-2.5)/.55; f.pos.x=lerp(T.x,a.drop.x,q); f.pos.z=lerp(T.z,a.drop.z,q); f.pos.y=a.drop.y0*(1-q*q)+6*q; f.vy=0; o.pos.set(f.pos.x+Math.sin(f.yaw)*4,f.pos.y-4,f.pos.z+Math.cos(f.yaw)*4); o.stun=Math.max(o.stun,.3); return; }
- if(once(a,'slam',a.contact+3.05)){ f.pos.y=0; f.onGround=true; o.pos.y=0; const s0=o.launchImm; o.launchImm=0; ultHit(f,o,62*pm,30,14); o.launchImm=s0;
-  aoe(f,o,f.pos.x,f.pos.z,26,0,20,0,INF.ORANGE); dust(f.pos.x,f.pos.z,20,26); for(const B of city) if(B.alive&&Math.hypot(B.x-f.pos.x,B.z-f.pos.z)<30) bHit(B,180,0,0,4,f);
-  game.shake=Math.max(game.shake,1.6); Snd.boom(); cineFlash(); News.add(`INFERNOTH PILE-DRIVES ${o.def.name} OFF A SKYSCRAPER!`,true,'iking',8); a.dur=a.t+.8; } }
+ const k=t-a.contact; f.kb.set(0,0,0);
+ if(k<.55){ holdAt(f,o,9,8); o.pos.x+=Math.sin(game.time*40)*1; return; }                                            // in his jaws
+ if(!a.up){ a.up={x:f.pos.x+Math.sin(f.yaw)*7,z:f.pos.z+Math.cos(f.yaw)*7}; Snd.whoosh(); News.add(`INFERNOTH THROWS ${o.def.name} INTO THE CLOUDS!`,true,'iking',8); }
+ const H=120;
+ if(k<1.35){ const q=ez((k-.55)/.8); o.pos.set(a.up.x,8+H*q,a.up.z); o.vy=0; o.kb.set(0,0,0); o.stun=Math.max(o.stun,.4); o.onGround=false; if(Math.random()<dt*20) burst(o.chest(),0xffffff,2,6); return; }  // straight up
+ if(k<1.75){ o.pos.set(a.up.x,8+H,a.up.z); o.vy=0; o.stun=Math.max(o.stun,.4); if(once(a,'apex',a.contact+1.35)) cineFreeze(450,.6); return; }                                          // hang at the top
+ if(k<2.25){ const q=(k-1.75)/.5; o.pos.set(a.up.x,8+H*(1-q*q),a.up.z); o.vy=0; o.stun=Math.max(o.stun,.4);                                                                             // falling, he winds up the tail
+  if(!a.dir){ a.dir=kWhackDir(f,o); a.yaw0=f.yaw; } f.yaw=a.yaw0-ez(q)*Math.PI*.8; return; }               // batter's wind-up: turn the back, tail cocked
+ if(once(a,'whack',a.contact+2.25)){ a.fly={x:o.pos.x,z:o.pos.z,n:0,hit:new Set()}; o.pos.y=9; cinePop(cw,'WHACK!'); cw.style.color='#ffb347'; cineFlash(); cineFreeze(380,.6);
+  const s0=o.launchImm; o.launchImm=0; ultHit(f,o,54*pm,0,0); o.launchImm=s0; game.shake=Math.max(game.shake,1.6); Snd.boom(); lava(o.chest(),30,24); }
+ if(k<2.45&&a.yaw0!=null){ f.yaw=a.yaw0-Math.PI*.8+ez(Math.min(1,(k-2.25)/.2))*Math.PI*1.7; }                    // the swing: tail whips all the way around
+ if(a.fly&&!a.flyDone){ const F=a.fly, sx=Math.sin(a.dir), sz=Math.cos(a.dir), sp=170*dt; F.x+=sx*sp; F.z+=sz*sp; o.pos.set(F.x,9,F.z); o.vy=0; o.kb.set(0,0,0); o.stun=Math.max(o.stun,.6); if(o.root) o.root.rotation.x+=dt*22;   // tumbling end over end
+  if(Math.random()<dt*40) dust(F.x,F.z,3,2);
+  for(const B of city){ if(!B.alive||F.hit.has(B)) continue; if(Math.abs(B.x-F.x)<B.w/2+3&&Math.abs(B.z-F.z)<B.d/2+3){ F.hit.add(B); F.n++; bHit(B,(B.hp||400)+80,sx,sz,9,f); dust(B.x,B.z,10,14); Snd.boom();
+    const s0=o.stun; o.takeHit(f,4*pm,0,0,true,{x:sx,z:sz}); o.stun=s0; game.shake=Math.max(game.shake,.9); } }
+  if(F.n>=3||k>3.6||Math.hypot(F.x,F.z)>ARENA){ a.flyDone=true; if(o.root) o.root.rotation.x=0; o.kb.x=sx*30; o.kb.z=sz*30; o.vy=8; a.dur=a.t+.9;
+   News.add(`${o.def.name} FLEW THROUGH ${F.n} BUILDING${F.n===1?'':'S'}!`,true,'iking2',8); } } }
 
 /* LAVA DOMAIN: aimed heat beam, then the beam goes into the sky and lava rains for the rest of the round */
 function kBeamMesh(a,from,to,w){ if(!a.bm){ a.bm=new THREE.Mesh(new THREE.CylinderGeometry(1,1,1,10,1,true),new THREE.MeshBasicMaterial({color:0xffd27a,transparent:true,opacity:.9,blending:THREE.AdditiveBlending,depthWrite:false})); scene.add(a.bm); }
@@ -189,11 +200,12 @@ function ultGZ(f,a,dt,pm,o){ const t=a.t;
 { const oC=cineCam; cineCam=function(){ if(!CINE.inf) return oC(); const f=CINE.f, o=CINE.o, a=CINE.a; if(!f||!o) return;
   const k=a.t-(a.contact||a.t), fy=f.yaw, fw=V(Math.sin(fy),0,Math.cos(fy)), side=V(Math.cos(fy),0,-Math.sin(fy)), fc=f.chest(), oc=o.chest(), s=f.scale||1;
   if(CINE.inf==='king'){
-   if(k<.6){ camAt(fc.clone().addScaledVector(fw,26*s).addScaledVector(side,8).add(V(0,-4,0)),fc.clone().add(V(0,4,0))); return; }
-   if(k<2.0){ if(cineShot(1)) cq.classList.remove('show'); camAt(V(f.pos.x+side.x*30,Math.max(3,f.pos.y-14),f.pos.z+side.z*30),fc.clone().add(V(0,10,0))); return; }          // looking up as he climbs
-   if(k<2.5){ cineShot(2); camAt(V(f.pos.x+fw.x*40+side.x*20,f.pos.y+30,f.pos.z+fw.z*40+side.z*20),fc); return; }                                                        // on top, the city below
-   if(k<3.1){ cineShot(3); camAt(V(a.drop.x+side.x*45,4,a.drop.z+side.z*45),fc); return; }                                                                                 // the fall
-   cineShot(4); camAt(V(f.pos.x+fw.x*35+side.x*25,12,f.pos.z+fw.z*35+side.z*25),fc); if(k>3.8||!f.atk||f.atk.id!=='ultimate') cineEnd(); return; }
+   if(k<.55){ camAt(fc.clone().addScaledVector(fw,26*s).addScaledVector(side,9).add(V(0,-4,0)),fc.clone().add(V(0,5,0))); return; }                                   // quote close-up, rival in his jaws
+   if(k<1.75){ if(cineShot(1)) cq.classList.remove('show'); camAt(V(f.pos.x-fw.x*22+side.x*14,3,f.pos.z-fw.z*22+side.z*14),V(f.pos.x,fc.y+(oc.y-fc.y)*.55,f.pos.z)); return; }   // low behind him, looking up at them                           // low, looking up as they fly into the sky
+   if(k<2.25){ cineShot(2); camAt(V(f.pos.x-fw.x*30+side.x*26,10,f.pos.z-fw.z*30+side.z*26),fc.clone().lerp(oc,.35)); return; }                                       // they fall, he winds up the tail
+   const d=a.dir||fy, dv=V(Math.sin(d),0,Math.cos(d)), dsd=V(Math.cos(d),0,-Math.sin(d));
+   if(k<2.6){ cineShot(3); camAt(V(f.pos.x+dsd.x*40,8,f.pos.z+dsd.z*40),fc.clone().lerp(oc,.5)); return; }                                                            // WHACK, side on
+   cineShot(4); camAt(V(o.pos.x-dv.x*40+dsd.x*22,16,o.pos.z-dv.z*40+dsd.z*22),oc); if(a.flyDone&&k>3.0||!f.atk||f.atk.id!=='ultimate') cineEnd(); return; }      // chase them through the buildings
   if(CINE.inf==='lava'){
    if(k<.9){ camAt(V(o.pos.x+side.x*50,oc.y+8,o.pos.z+side.z*50),oc); return; }                                                                                             // the rival blasted away
    if(k<2.4){ if(cineShot(1)) cq.classList.remove('show'); camAt(V(f.pos.x+fw.x*28+side.x*10,2,f.pos.z+fw.z*28+side.z*10),fc.clone().add(V(0,40+k*30,0))); return; }    // low, looking up: the beam into the sky
@@ -202,7 +214,7 @@ function ultGZ(f,a,dt,pm,o){ const t=a.t;
   if(k<1.6){ const g=k*.6; camAt(V(f.pos.x+Math.sin(fy+g)*30*s,fc.y+2,f.pos.z+Math.cos(fy+g)*30*s),fc); return; }
   if(cineShot(1)){ cq.classList.remove('show'); }
   camAt(V(f.pos.x+side.x*200,70,f.pos.z+side.z*200),V(f.pos.x,20,f.pos.z)); if(k>3.0||!f.atk||f.atk.id!=='ultimate') cineEnd(); }; }
-{ const o=cineEnd; cineEnd=function(){ if(CINE.inf){ CINE.inf=null; cq.classList.remove('kraged'); } return o(); }; }
+{ const o=cineEnd; cineEnd=function(){ for(const f of [game.p,game.e]) if(f&&f.root) f.root.rotation.x=0; if(CINE.inf){ CINE.inf=null; cq.classList.remove('kraged'); } return o(); }; }
 
 /* ---------- every frame: spit blobs, walls, trail patches, falling rocks, rain, sky ---------- */
 function kxTick(dt){ if(game.mode!=='match') return; const fight=game.state==='fight';
@@ -246,11 +258,11 @@ function kxClear(all){ for(const L of [KX.blobs,KX.walls,KX.patches]){ for(const
   const run=()=>{ const s=Math.sin(T*13); k.legL=s*.8; k.legR=-s*.8; k.knL=Math.max(0,-s)*.9; k.knR=Math.max(0,s)*.9; };
   if(kind==='king'){
    if(ks<0){ if(t<.35){ k.headX=-.45; k.jaw=1.3; k.armL=k.armR=-2.3; k.azL=-.7; k.azR=.7; k.lean=-.15; } else { k.lean=.65; k.armL=k.armR=-1.3; k.azL=-.3; k.azR=.3; k.jaw=.9; run(); } return; }
-   if(ks<.6){ k.armL=k.armR=-1.8; k.elL=k.elR=-.6; k.lean=.3; k.jaw=1.1; return; }
-   if(ks<2.0){ const s=Math.sin(T*9); k.armL=-3+s*.25; k.armR=-3-s*.25; k.azL=-.25; k.azR=.25; k.legL=s*.9; k.legR=-s*.9; k.knL=k.knR=.8; k.lean=.35; k.headX=-.2; return; }
-   if(ks<2.5){ k.armL=k.armR=-3.05; k.azL=-.35; k.azR=.35; k.headX=-.6; k.jaw=1.4; k.lean=-.25; return; }
-   if(ks<3.05){ k.lean=1.05; k.armL=k.armR=-2.7; k.legL=k.legR=-.4; k.headX=.3; return; }
-   k.lean=.75; k.knL=k.knR=1.25; k.legL=k.legR=-.9; k.armL=k.armR=-.5; k.jaw=1.2; k.headX=-.2; return; }
+   if(ks<.55){ k.lean=.45; k.headX=.3; k.jaw=.35+Math.abs(Math.sin(T*30))*.2; k.twist=Math.sin(T*28)*.4; k.armL=k.armR=-1.2; return; }                     // shaking them in his jaws
+   if(ks<.9){ const q=pz(ks,.55,.75); k.headX=lerp(.3,-1.2,q); k.lean=lerp(.45,-.35,q); k.jaw=1.4; k.armL=k.armR=lerp(-1.2,-2.2,q); k.knL=k.knR=.4*(1-q); return; }   // toss straight up
+   if(ks<1.75){ k.headX=-1.1; k.lean=-.3; k.jaw=1.2; k.armL=k.armR=-1.6; k.azL=-.6; k.azR=.6; return; }                                                     // watching them fly
+   if(ks<2.25){ const q=pz(ks,1.75,2.25); k.twist=lerp(0,-1.3,q); k.lean=.15+.25*q; k.knL=k.knR=.7*q; k.legL=-.6*q; k.armL=k.armR=-.9; k.azL=-.4; k.azR=.4; k.headX=-.7+.5*q; return; }  // batter's wind-up
+   const q=pz(ks,2.25,2.5); k.twist=lerp(-1.1,1.7,q); k.lean=.35; k.knL=k.knR=.5; k.legR=-.4; k.armL=k.armR=-.7; k.azL=-.6; k.azR=.6; k.jaw=1.1; return; }   // WHACK follow-through
   if(kind==='lava'){
    if(ks<0){ k.lean=.3; k.knL=k.knR=.45; k.armL=k.armR=-.7; k.azL=-.2; k.azR=.2; k.headX=t<.7?-.2+t*.5:.15; k.jaw=t<.7?.2+t*1.2:1.35; return; }
    if(ks<.9){ k.lean=.3; k.headX=.15; k.jaw=1.35; k.armL=k.armR=-.7; k.knL=k.knR=.45; return; }
