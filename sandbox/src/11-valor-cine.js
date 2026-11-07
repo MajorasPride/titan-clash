@@ -13,7 +13,7 @@
    3. MISSES: no cutscene.
    Voice is off for these (text only).
    ===================================================================== */
-VULT.brawl.line="I DON'T BACK DOWN. EVER!";   // placeholder until MajorasPride picks a Brawler line
+VULT.brawl.line="THIS CITY HAS A SHIELD!";   // MajorasPride picked this one (Nov 6)
 VULT.brawl.name='STAR RUSH';
 const CINE={on:false};
 { const s=document.createElement('style'); s.textContent=`
