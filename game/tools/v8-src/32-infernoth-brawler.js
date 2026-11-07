@@ -191,7 +191,7 @@ function infTick(dt){ if(game.mode!=='match') return;
 .infHud.l{left:24px}.infHud.r{right:24px;text-align:right}.infHud .t{height:7px;background:#0008;border:1px solid #ffffff44;border-radius:4px;margin:3px 0 6px;overflow:hidden}
 .infHud .t div{height:100%;width:0}.infHud .ab div{background:#c9a27a}.infHud .ab.broken div{background:#ff5a3a}.infHud .rg div{background:linear-gradient(90deg,#ff5a1a,#ffd27a)}
 .infHud .rg.on div{background:#fff2d0;box-shadow:0 0 8px #fff2d0}
-@media (pointer:coarse) and (max-height:520px){ .infHud{top:178px;width:110px} }
+@media (pointer:coarse) and (max-height:520px){ .infHud{top:178px;width:110px} .infHud.r{top:118px;right:250px;width:100px} }   /* v8.4.3: the rival's bars sat on the touch buttons */
 body.vcine .infHud{visibility:hidden}`; document.head.appendChild(s); }
 function infHUD(){ for(const [f,side] of [[game.p,'l'],[game.e,'r']]){ const id='infHud'+side; let h=el(id);
   if(!isInf(f)||game.mode!=='match'){ if(h) h.remove(); continue; }

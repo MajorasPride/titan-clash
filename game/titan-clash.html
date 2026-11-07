@@ -486,6 +486,10 @@ v8.4.1 WHO'S NEXT (Nov 7, 2026). Select screen tags: ASHVIN = NEXT UP · IN THE 
 v8.4.2 BUILDINGS BREAK AGAIN (Nov 7, 2026). The new moves (VALOR since v8.3, INFERNOTH since v8.4) only
     checked for the rival, so they never hurt buildings (Destroy the City didn't work). Every close-up move now
     hits the buildings in front of the titan once per swing. Code: tools/v8-src/39-building-hits.js.
+v8.4.3 TITAN CORE + HUD FIX (Nov 7, 2026). The Titan Core fires the titan's real ultimate (it was firing the
+    old pre-v8.3 super, so nothing seemed to happen) and doesn't use up the low-health ultimate. Phone HUD: VALOR's
+    KO bar is one line under the stance label (it piled up with the combo and Fury text), and the rival's armor/rage
+    bars moved off the touch buttons. Code: tools/v8-src/03-fighter.js, 14-valor-boxer.js, 32-infernoth-brawler.js.
 
 #####################################################################
 -->
@@ -4981,7 +4985,9 @@ function koAdd(f,n){ if(!f||f.def.id!=='valor') return; const was=f.ko||0; f.ko=
 { const s=document.createElement('style'); s.textContent=`#koBar{position:fixed;left:46px;top:160px;z-index:20;width:130px;pointer-events:none;font:10px/1 'Russo One',sans-serif;color:#ffd43b;letter-spacing:1px;text-shadow:0 1px 2px #000;display:none}
 #koBar .t{height:7px;margin-top:3px;border-radius:4px;background:#0009;border:1px solid #ffd43b66;overflow:hidden}#koBar .t div{height:100%;width:0;background:linear-gradient(90deg,#ff9f43,#ffd43b)}
 #koBar.full .t div{background:#fff;box-shadow:0 0 10px #ffd43b}#koBar.full{animation:koP .5s infinite alternate}@keyframes koP{to{color:#fff}}
-@media (pointer:coarse){#koBar{left:40px;top:126px;width:110px}}`; document.head.appendChild(s); }
+#koBar{white-space:nowrap}
+@media (pointer:coarse){#koBar{left:40px;top:126px;width:110px}}
+@media (pointer:coarse) and (max-height:520px){#koBar{left:24px;top:178px;width:150px}}   /* v8.4.3: phone landscape, one line under the stance label, clear of the combo / Fury text */`; document.head.appendChild(s); }
 function koTick(){ let b=el('koBar'); const p=game.p; if(!b){ b=document.createElement('div'); b.id='koBar'; b.innerHTML='KO PUNCH<div class="t"><div></div></div>'; document.body.appendChild(b); }
  const on=!!(p&&game.mode==='match'&&p.def.id==='valor'); b.style.display=on?'block':'none';
  if(!on){ const hv=document.querySelector('#tbtns .hv'); if(hv&&hv.textContent!=='HEAVY') hv.textContent='HEAVY'; return; }   // Nov 7 fix: KO! stayed on the heavy button after switching away from VALOR
@@ -6061,7 +6067,7 @@ function infTick(dt){ if(game.mode!=='match') return;
 .infHud.l{left:24px}.infHud.r{right:24px;text-align:right}.infHud .t{height:7px;background:#0008;border:1px solid #ffffff44;border-radius:4px;margin:3px 0 6px;overflow:hidden}
 .infHud .t div{height:100%;width:0}.infHud .ab div{background:#c9a27a}.infHud .ab.broken div{background:#ff5a3a}.infHud .rg div{background:linear-gradient(90deg,#ff5a1a,#ffd27a)}
 .infHud .rg.on div{background:#fff2d0;box-shadow:0 0 8px #fff2d0}
-@media (pointer:coarse) and (max-height:520px){ .infHud{top:178px;width:110px} }
+@media (pointer:coarse) and (max-height:520px){ .infHud{top:178px;width:110px} .infHud.r{top:118px;right:250px;width:100px} }   /* v8.4.3: the rival's bars sat on the touch buttons */
 body.vcine .infHud{visibility:hidden}`; document.head.appendChild(s); }
 function infHUD(){ for(const [f,side] of [[game.p,'l'],[game.e,'r']]){ const id='infHud'+side; let h=el(id);
   if(!isInf(f)||game.mode!=='match'){ if(h) h.remove(); continue; }

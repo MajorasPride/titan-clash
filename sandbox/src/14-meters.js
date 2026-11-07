@@ -28,6 +28,4 @@ function meterUI(){ const m=el('sbMenu'); if(!m||m.querySelector('[data-mt]')) r
 function meterSync(){ document.querySelectorAll('#sbMenu [data-mt]').forEach(b=>b.classList.toggle('on',b.dataset.mt===SB.meter)); }
 { const oS=sbStart; sbStart=function(){ oS(); meterUI(); meterSync(); }; }
 { const oS=sbSync; sbSync=function(){ oS(); meterSync(); }; }
-// phone: the KO bar sat on top of the path card; put it where INFERNOTH's armor/rage bars go, on one line
-{ const s=document.createElement('style'); s.textContent=`#koBar{white-space:nowrap}
-@media (pointer:coarse) and (max-height:520px){ #koBar{left:24px!important;top:178px!important;width:150px!important} }`; document.head.appendChild(s); }
+// (the phone KO bar position moved into the game in v8.4.3)

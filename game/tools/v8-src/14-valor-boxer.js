@@ -67,7 +67,9 @@ function koAdd(f,n){ if(!f||f.def.id!=='valor') return; const was=f.ko||0; f.ko=
 { const s=document.createElement('style'); s.textContent=`#koBar{position:fixed;left:46px;top:160px;z-index:20;width:130px;pointer-events:none;font:10px/1 'Russo One',sans-serif;color:#ffd43b;letter-spacing:1px;text-shadow:0 1px 2px #000;display:none}
 #koBar .t{height:7px;margin-top:3px;border-radius:4px;background:#0009;border:1px solid #ffd43b66;overflow:hidden}#koBar .t div{height:100%;width:0;background:linear-gradient(90deg,#ff9f43,#ffd43b)}
 #koBar.full .t div{background:#fff;box-shadow:0 0 10px #ffd43b}#koBar.full{animation:koP .5s infinite alternate}@keyframes koP{to{color:#fff}}
-@media (pointer:coarse){#koBar{left:40px;top:126px;width:110px}}`; document.head.appendChild(s); }
+#koBar{white-space:nowrap}
+@media (pointer:coarse){#koBar{left:40px;top:126px;width:110px}}
+@media (pointer:coarse) and (max-height:520px){#koBar{left:24px;top:178px;width:150px}}   /* v8.4.3: phone landscape, one line under the stance label, clear of the combo / Fury text */`; document.head.appendChild(s); }
 function koTick(){ let b=el('koBar'); const p=game.p; if(!b){ b=document.createElement('div'); b.id='koBar'; b.innerHTML='KO PUNCH<div class="t"><div></div></div>'; document.body.appendChild(b); }
  const on=!!(p&&game.mode==='match'&&p.def.id==='valor'); b.style.display=on?'block':'none';
  if(!on){ const hv=document.querySelector('#tbtns .hv'); if(hv&&hv.textContent!=='HEAVY') hv.textContent='HEAVY'; return; }   // Nov 7 fix: KO! stayed on the heavy button after switching away from VALOR
