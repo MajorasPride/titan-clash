@@ -11,7 +11,16 @@ assert s.count(a) == 1, 'pose hook anchor not found'
 s = s.replace(a, a + "\n   else if(typeof POSES!=='undefined'&&POSES[id]) POSES[id](k,p,e,this,a); // sandbox: per-move poses")
 
 code = "\n".join(open(f, encoding='utf8').read() for f in sorted(glob.glob(os.path.join(here, 'src', '*.js'))))
-block = "<!-- SANDBOX START -->\n<script>\n'use strict';\n" + code + "\n</script>\n<!-- SANDBOX END -->\n"
+# sandbox fonts (sandbox/fonts/*.woff2, licenses next to them) packed in as @font-face so the file stays standalone
+import base64
+fams = {'press-start-2p': 'Press Start 2P', 'permanent-marker': 'Permanent Marker', 'rubik-dirt': 'Rubik Dirt'}
+faces = ''
+for k, fam in fams.items():
+    fp = os.path.join(here, 'fonts', k + '-latin-400-normal.woff2')
+    if os.path.exists(fp):
+        b64 = base64.b64encode(open(fp, 'rb').read()).decode()
+        faces += "@font-face{font-family:'%s';src:url(data:font/woff2;base64,%s) format('woff2');font-display:swap}\n" % (fam, b64)
+block = "<!-- SANDBOX START -->\n<style>" + faces + "</style>\n<script>\n'use strict';\n" + code + "\n</script>\n<!-- SANDBOX END -->\n"
 anchor = "<!-- V8 END -->\n"
 assert s.count(anchor) == 1
 s = s.replace(anchor, anchor + block)

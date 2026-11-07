@@ -22,6 +22,15 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 9 (Nov 6, 2026): real ultimate cutscenes + new fonts + more kinds of water
+Status: **testing**. Feedback: waiting. Code: `sandbox/src/11-valor-cine.js`, `12-fonts.js`, `13-water-more.js`, fonts in `sandbox/fonts/` (license files next to them).
+- **Ultimate flow:** PRESS = a short announcement card (his name + the ultimate's name, no quote, no voice). LANDS = a directed cutscene of the ability: HUD hidden, black bars, camera shots, freeze frames, the quote as big text. MISS = no cutscene. Voice is off (text only).
+- **TIDECREST OATH shots:** quote close-up ("IF I DON'T... WHO WILL!") → orbit through the flash cuts → low shot of the water dragon → freeze + white flash on the rising cut → "already cut" shot: VALOR faces the camera and sheathes while the wave crashes behind him.
+- **STAR RUSH shots** (renamed from All Day Star Rush): quote close-up → every punch is a new camera angle with a comic word and halftone dots → freeze on the KO uppercut → camera follows them up the geyser. Brawler line is a placeholder ("I DON'T BACK DOWN. EVER!") until MajorasPride picks one.
+- The cutscene camera never ends up inside a building.
+- **Fonts:** Press Start 2P (timer, combo counter, damage counter and numbers, KO meter), Rubik Dirt (big banners like FIGHT! and K.O., ultimate names, cutscene titles, comic words), Permanent Marker (the quote). Packed into the sandbox file by `build_sandbox.py`.
+- **More water:** whirlpools, droplet sprays, foam bursts, breaking wave crests and ground ripples, mixed randomly on every hit.
+
 ### Sandbox 8 (Nov 6, 2026): two ultimates for VALOR, one per stance
 Status: **testing**. Feedback: waiting. Code: `sandbox/src/10-valor-ults.js`.
 - **Sword & Shield: TIDECREST OATH.** Line: "IF I DON'T... WHO WILL!" (MajorasPride's pick, a Goku-style hero line). Knight's salute, 6 flash cuts through the rival (each leaves painted water), a water dragon coils around them, one huge rising cut, then he turns his back, sheathes with a *click* and the wave crashes down. Demon Slayer feel, our own moves.
