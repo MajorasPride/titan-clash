@@ -140,12 +140,12 @@ Object.assign(V8MOVE,{
    a.dir=dir; dust(f.pos.x,f.pos.z,8,8); Snd.thud&&Snd.thud(); }
   if(p<.62){ f.body.position.y=-12*ez(Math.min(1,p/.18)); f.inv=Math.max(f.inv,.12); f.kb.x=Math.sin(a.dir)*70; f.kb.z=Math.cos(a.dir)*70; if(Math.random()<dt*20) dust(f.pos.x,f.pos.z,3,2); }
   else { f.body.position.y*=.55; if(once(a,'u',.62*a.dur)){ f.kb.multiplyScalar(.1); f.body.position.y=0; INF.spouts.push({f,x:f.pos.x,z:f.pos.z,t:1.1,dps:16*pm});
-    lava(V(f.pos.x,2,f.pos.z),30,18); pillar(f.pos.x,f.pos.z,4,INF.ORANGE,1,40); Snd.boom(); } } },
+    lava(V(f.pos.x,2,f.pos.z),30,18); lavaFountain(f.pos.x,f.pos.z,34,8); lavaPool(f.pos.x,f.pos.z,8,null,0,1.4); Snd.boom(); } } },
  // 3: jump high, crash down, eruption ring where he lands
  kleap(f,a,dt,pm,o){ if(once(a,'j',.2)){ const ok=canHit(o)&&dist2(f,o)<75; a.to=ok?V(o.pos.x,0,o.pos.z):fwd(f,38); f.vy=34; f.onGround=false; Snd.roar&&Snd.roar(); }
   if(a.to&&!a.land&&a.t>.2){ const dx=a.to.x-f.pos.x, dz=a.to.z-f.pos.z, d=Math.hypot(dx,dz); f.yaw=Math.atan2(dx,dz); if(d>3){ f.kb.x=dx/d*Math.min(70,d*3); f.kb.z=dz/d*Math.min(70,d*3); } }
   if(!a.land&&a.t>.45&&(f.onGround||f.pos.y<.6||a.t>1.15)){ a.land=true; a.dur=a.t+.35; f.kb.set(0,0,0); f.pos.y=0; const r=20*f.scale;
-   aoe(f,o,f.pos.x,f.pos.z,r,18*pm,26,16,INF.ORANGE); for(let i=0;i<8;i++){ const an=i/8*Math.PI*2, x=f.pos.x+Math.sin(an)*r*.8, z=f.pos.z+Math.cos(an)*r*.8; later(i*.03,()=>{ pillar(x,z,2.4,INF.ORANGE,.9,26); lava(V(x,2,z),8,12); }); }
+   aoe(f,o,f.pos.x,f.pos.z,r,18*pm,26,16,INF.ORANGE); for(let i=0;i<8;i++){ const an=i/8*Math.PI*2, x=f.pos.x+Math.sin(an)*r*.8, z=f.pos.z+Math.cos(an)*r*.8; later(i*.03,()=>{ lavaFountain(x,z,18,5); lavaPool(x,z,4,null,0,2); }); }
    game.shake=Math.max(game.shake,1.4); Snd.boom(); News.add('INFERNOTH CRASHES DOWN AND THE STREET ERUPTS!',false,'ileap',6); } },
 });
 
@@ -183,7 +183,7 @@ function infTick(dt){ if(game.mode!=='match') return;
   L.forEach((m,i)=>{ const lit=fr>=(i+1)/n-.001; m.material.color.setHex(raged?INF.WHITE:lit?INF.ORANGE:0x40160a); if(raged) m.material.color.multiplyScalar(pulse); });
   if(raged&&Math.random()<dt*20) burst(f.chest().add(V(rand(-3,3),rand(0,6),rand(-4,-1))),Math.random()<.5?INF.WHITE:INF.ORANGE,2,8); }
  for(let i=INF.spouts.length-1;i>=0;i--){ const S=INF.spouts[i], o=S.f.opp; S.t-=dt;
-  if(Math.random()<dt*24) lava(V(S.x+rand(-2,2),rand(2,10),S.z+rand(-2,2)),3,14);
+  if(Math.random()<dt*30) burst(V(S.x+rand(-2,2),rand(2,16),S.z+rand(-2,2)),Math.random()<.5?0xffd27a:INF.ORANGE,3,14);
   if(o&&canHit(o)&&Math.hypot(o.pos.x-S.x,o.pos.z-S.z)<9+o.radius()*.5&&o.pos.y<8){ const s0=o.stun; o.takeHit(S.f,S.dps*dt,0,0,true,{x:o.pos.x-S.x,z:o.pos.z-S.z}); o.stun=s0; }
   if(S.t<=0) INF.spouts.splice(i,1); }
  infHUD(); }

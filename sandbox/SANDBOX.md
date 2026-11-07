@@ -23,6 +23,13 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 13c (Nov 7, 2026): lava that looks like lava, no more "same pose"
+Status: **testing**. Code: `sandbox/src/09-infernoth-meltdown-ults.js`, `sandbox/src/10-poses-all.js`. Sandbox only.
+- **Lava:** falling lava is now molten rocks that drop from the sky onto a glowing shadow, splash, and leave a pool that cools from orange to dark red (no more glowing beams). Eruption, burrow and volcano leap are lava fountains. Spit drips.
+- **LAVA DOMAIN:** the beam comes out of his mouth; lava rain lasts about 15 seconds, then the sky clears.
+- **GROUND ZERO:** the cracked screen only lasts the round it happened (the orange sky stays for the match).
+- **Poses:** INFERNOTH has a pose for every step of all three ultimates. Every other titan's ultimate and the old arms-up specials (ASHVIN's psychic moves, RAGNAVOX's roar, dorsal pulse) now have their own motion.
+
 ### Sandbox 13b (Nov 7, 2026): INFERNOTH MELTDOWN kit + all three ultimates
 Status: **testing**. Feedback: waiting. Code: `sandbox/src/09-infernoth-meltdown-ults.js` (+ the BRAWLER heavy fix in 08). Sandbox only.
 - **Fix:** BRAWLER's heavy (jaw grab) slid forward fast while you held it to charge. Now he only lunges after you let go. Its damage is a little lower (it beats blocks).
