@@ -23,6 +23,15 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 13b (Nov 7, 2026): INFERNOTH MELTDOWN kit + all three ultimates
+Status: **testing**. Feedback: waiting. Code: `sandbox/src/09-infernoth-meltdown-ults.js` (+ the BRAWLER heavy fix in 08). Sandbox only.
+- **Fix:** BRAWLER's heavy (jaw grab) slid forward fast while you held it to charge. Now he only lunges after you let go. Its damage is a little lower (it beats blocks).
+- **MELTDOWN:** L L L lava spit (3rd one burns) · M magma wall (blocks shots, burns on touch, one at a time) · H eruption (geyser under the rival; hold = farther) · Special heat beam that leaves burning ground · GRAB shove-off · 1 Meteor Spit · 2 Obsidian Shell (half damage 4s, small shots bounce back) · 3 Volcano Core (lava bombs all around for ~3s).
+- **KING** (BRAWLER ultimate): charge, grab, climb the tallest building nearby, pile-drive off the top. "THIS IS MY LAND." / "BOW TO YOUR KING."
+- **LAVA DOMAIN** (MELTDOWN ultimate): aimed beam blasts them away, then into the sky: lava rains for the rest of the round (glowing shadows first; half damage to fire titans, none to INFERNOTH), red-orange sky. "KNEEL." / "I AM KING OF ALL."
+- **GROUND ZERO** (secret: ultimate ready + in rage): grab, detonate. Levels the area, 75% of the rival's max health, INFERNOTH drops to 1 HP. "YOU CANNOT HIDE." / "FATE WILL DECIDE NOW!" cracking into a roar. Cracked screen + orange-red sky for the rest of the match; round 2 or 3 = fireball rain that hurts him too. A miss uses it up.
+- Tip: turn off ∞ HEALTH in ⚙ to see GROUND ZERO leave him at 1 HP.
+
 ### Sandbox 13 (Nov 7, 2026): INFERNOTH rework part 1 (armor, rage, BRAWLER kit)
 Status: **testing**. Feedback: waiting. Code: `sandbox/src/08-infernoth-brawler.js`. Sandbox only, not in the game. The sandbox now starts as INFERNOTH vs a VALOR dummy (switch in ⚙).
 - **Armor:** light hits and small shots never stun him. **Armor bar** (left/right under the HUD): each shrugged-off light hit drains it; 8 hits = ARMOR BROKEN for 3s (he flinches like everyone). Refills after 2s without hits.

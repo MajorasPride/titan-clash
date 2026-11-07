@@ -31,7 +31,7 @@ Object.assign(MOVES,{
  kclaw:{name:'Claw',dur:.5,hitAt:.26,moveMul:.35,anim:'kclaw'},
  kbite:{name:'Crushing Bite',dur:.66,hitAt:.36,moveMul:.2,anim:'kbite'},
  ktailwhip:{name:'Tail Whip (knocks down)',dur:.78,hitAt:.42,moveMul:.15,anim:'ktail'},
- kjaw:{name:'Jaw Grab & Toss',dur:.95,hitAt:.42,moveMul:0,anim:'kjaw',holdP:.3},
+ kjaw:{name:'Jaw Grab & Toss',dur:.95,hitAt:.42,moveMul:0,anim:'kjaw',holdP:.2},
  kstomp:{name:'Seismic Stomp',dur:.9,hitAt:.52,cost:25,cd:6,moveMul:0,anim:'kstomp'},
  kgrab:{name:'Building Smash / Tail Throw',dur:.6,hitAt:.25,moveMul:0,anim:'kgrabp',noCharge:true},
  kpounce:{name:'Pounce',dur:.8,ranged:1,moveMul:0,anim:'kpounce',noCharge:true},
@@ -105,13 +105,14 @@ Object.assign(V8MOVE,{
    if(o.isPlayer||f.isPlayer) toast(o.isPlayer?'KNOCKED DOWN!':`${o.def.name} IS KNOCKED DOWN!`,'#ffb36b',600); } },
  // heavy: slow lunge, bite, shake, fling. Charged (a.chg) = longer shake, farther throw.
  kjaw(f,a,dt,pm,o){ const c=a.chg||0;
-  if(!a.held&&!a.miss){ if(a.t<a.hitAt){ if(a.t>a.hitAt*.4){ f.kb.x=Math.sin(f.yaw)*38; f.kb.z=Math.cos(f.yaw)*38; } return; }
+  if(!a.held&&!a.miss){ if(a.t<a.hitAt){ const charging=f.cg&&f.cg.a===a&&a.t<=f.cg.hp+.001; // no sliding while he holds the charge
+    if(!charging&&a.t>a.hitAt*.55){ f.kb.x=Math.sin(f.yaw)*24; f.kb.z=Math.cos(f.yaw)*24; } return; }
    if(once(a,'g',a.hitAt)){ if(inFront(f,o,14,.85)){ a.held=true; a.gT=a.t; a.hold=.45+c*.6; a.dur=a.t+a.hold+.4; Snd.crunch&&Snd.crunch(); lava(o.chest(),12,12);
      if(o.isPlayer||f.isPlayer) toast(o.isPlayer?'CAUGHT IN HIS JAWS!':'GOT \'EM!','#ffb36b',700); }
     else whiff(f,a,.5); } return; }
   if(a.held){ const ht=a.t-a.gT;
    if(ht<a.hold){ holdAt(f,o,10,5); o.pos.x+=Math.sin(game.time*40)*1.2; if(Math.random()<dt*10){ const s0=o.stun; o.takeHit(f,1.6*pm,0,0,true,{x:0,z:1}); o.stun=Math.max(s0,.25); } }
-   else if(once(a,'t',a.gT+a.hold)){ const dir={x:Math.sin(f.yaw),z:Math.cos(f.yaw)}; grabHit(f,o,(15+11*c)*pm,55+35*c,16+6*c,dir); Snd.boom(); game.shake=Math.max(game.shake,.6); } } },
+   else if(once(a,'t',a.gT+a.hold)){ const dir={x:Math.sin(f.yaw),z:Math.cos(f.yaw)}; grabHit(f,o,(13+9*c)*pm,55+35*c,16+6*c,dir); Snd.boom(); game.shake=Math.max(game.shake,.6); } } },
  kstomp(f,a,dt,pm,o){ if(once(a,'s',a.hitAt)){ const r=22*f.scale; aoe(f,o,f.pos.x,f.pos.z,r,12*pm,18,10,INF.ORANGE); dust(f.pos.x,f.pos.z,r*.8,14);
    game.shake=Math.max(game.shake,1.1); Snd.boom(); if(canHit(o)&&Math.hypot(o.pos.x-f.pos.x,o.pos.z-f.pos.z)<r+o.radius()&&o.pos.y<6) o.stun=Math.max(o.stun,.7); } },
  // GRAB button: near a building = smash them through it, otherwise wrap the tail and hurl them
