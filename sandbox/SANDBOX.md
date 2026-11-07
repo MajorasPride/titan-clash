@@ -1,6 +1,6 @@
 # Titan Clash Sandbox
 
-`titan-clash-sandbox.html` is the training ground: **one file that runs on its own** (no game folder needed). Double-click it. Pick who you play (YOU: VALOR / VOIDMAW) and the dummy (INFERNOTH / VOIDMAW / VALOR). Neon City buildings are on (turn them off in ⚙ for empty ground); no people/cars unless you turn them on; no disasters, news or timer.
+`titan-clash-sandbox.html` is the training ground: **one file that runs on its own** (no game folder needed). Double-click it. It starts as INFERNOTH vs a VALOR dummy; switch who you play (VALOR / VOIDMAW / INFERNOTH) and the dummy in the ⚙ menu, plus each one's loadout (Sandbox 14). Neon City buildings are on (turn them off in ⚙ for empty ground); no people/cars unless you turn them on; no disasters, news or timer.
 
 **Rule:** new moves and mechanics get built and played here first. Only what MajorasPride OKs moves into the real game (`titan-clash.html`). Anything he doesn't like gets thrown out, and the game never had it.
 
@@ -8,7 +8,7 @@
 - `sandbox/titan-clash-sandbox.html` = the game code (`game/`) + the test code in `sandbox/src/`, with three.js and the font packed inside. Rebuild it with `python3 sandbox/build_sandbox.py`. Keep it as its own file, separate from the game zip.
 - The real game file is never changed by the sandbox build. Settings the sandbox turns off (crowds, disasters) are never saved, so the game isn't affected.
 - When a test is approved: move its code from `sandbox/src/` into `game/tools/v8-src/`, run `python3 game/tools/build_v8.py`, then test the game.
-- v8.3 (Nov 7, 2026): Sandbox 1 to 12 (VALOR, combat, 1/2/3, water, ultimates, fonts, ult camera, cutscene view) moved into the game. `sandbox/src/` now holds only sandbox-only code: `02-sandbox.js` (test menu, fills in `sbBase`), `03-voidmaw.js`, `05-fullscreen.js`, `07-speed.js`.
+- v8.3 (Nov 7, 2026): Sandbox 1 to 12 (VALOR, combat, 1/2/3, water, ultimates, fonts, ult camera, cutscene view) moved into the game. `sandbox/src/` now holds only sandbox-only code: `02-sandbox.js` (test menu, fills in `sbBase`), `03-voidmaw.js`, `05-fullscreen.js`, `07-speed.js`, `08` to `10` (INFERNOTH rework), `11-version.js` (SB_BUILD), `12-loadout.js` and `13-element-looks.js` (Sandbox 14).
 
 ## The settings menu (cleaned up Nov 6, 2026)
 On screen during the fight: only the **⚙ SANDBOX** button (top left) and a small damage counter (top right). Tap ⚙ (PC: Tab) to open the settings menu; the fight pauses while it's open.
@@ -23,6 +23,15 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 14 (Nov 7, 2026): loadout rework for VALOR and INFERNOTH
+Status: **testing**. Code: `sandbox/src/12-loadout.js`, `sandbox/src/13-element-looks.js`. Sandbox only. Plan: Game Plan > Ideas Inbox > Loadout rethink.
+- **⚙ menu → LOADOUT:** PATH, FOCUS and ELEMENT for you and the dummy. Every pick starts on **DEFAULT** (the titan's normal setup), so players don't see which one was the original. Changing a pick restarts the fight. New test tool: **ALL UPGRADES** (all 3 at once).
+- **Paths:** VALOR = SENTINEL / COMMANDER, INFERNOTH = MAGMA HEART / NUCLEAR BREATH. Every upgrade works in both stances, on a different move in each (full list in the Game Plan). The 1st upgrade is there from the start; the 2nd and 3rd unlock from goals (VALOR: blocks/slips, big hit on the shield, combos, people saved; INFERNOTH: armor shrugs, rages, big hits taken, buildings destroyed, burn time). From round 2 on everyone has all 3. Card top right (phone: one line at the bottom) shows the path, the upgrades and the next goal.
+- **Focus = move swaps:** HYBRID = the kit as it is. VALOR MELEE: Shield Rush (Sword & Shield special), Tidebreaker (3). VALOR RANGED: Water Cannon Punch (Brawler special), Tide Lance (1). INFERNOTH MELEE: Searing Jaws (MELTDOWN special), Lava Charge (MELTDOWN 1). INFERNOTH RANGED: Fault Line (BRAWLER special), Boulder Toss (BRAWLER 1).
+- **Elements:** Fire = 3 heat then a 3s burn (never a stun). Water = 2s slow, heals only standing in a river. Lightning = every 5th hit in a row shocks and zaps the nearest building. Matchups: Water burns for half as long and clears the Fire titan's heat; a burning Lightning titan loses its shock count; Lightning shocks Water every 4th hit.
+- **Element looks (full swap):** VALOR in Fire = painted flame curls, ember bursts, fire rings, flame ribbon; Lightning = painted bolts, spark stars, jagged purple-edged ribbon. INFERNOTH in Water = blue to cyan rage glow, water splashes and rings instead of lava; Lightning = purple to white glow, plasma, zaps, lightning strikes in LAVA DOMAIN. Ultimate names stay the same.
+- **Fixes:** Fury maxes out at +10% (was +30%). The CPU always gets a real element. Water no longer heals in rain.
+- Not in the game's select screen yet; that comes when it moves into the game (with the DEFAULT option there too).
 ### Sandbox 13g (Nov 7, 2026): LAVA DOMAIN as one continuous beam, longer cutscenes
 - LAVA DOMAIN: one continuous high-heat beam from his mouth (white-hot core, blue-white plasma glow, hotter than his orange special beam). It pins them and pushes them back, slowly tilts up carrying them, flings them off the top, and keeps going into the sky. Then 15s of lava rain.
 - INFERNOTH's cutscenes are longer (slower slow-motion, more time for the beam pin and rise and for GROUND ZERO's build-up).
