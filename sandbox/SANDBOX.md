@@ -23,6 +23,14 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 13 (Nov 7, 2026): INFERNOTH rework part 1 (armor, rage, BRAWLER kit)
+Status: **testing**. Feedback: waiting. Code: `sandbox/src/08-infernoth-brawler.js`. Sandbox only, not in the game. The sandbox now starts as INFERNOTH vs a VALOR dummy (switch in ⚙).
+- **Armor:** light hits and small shots never stun him. **Armor bar** (left/right under the HUD): each shrugged-off light hit drains it; 8 hits = ARMOR BROKEN for 3s (he flinches like everyone). Refills after 2s without hits.
+- **Rage:** fills as he takes damage (BRAWLER slower, 6s rage; MELTDOWN faster, 4s). Full = nothing staggers him. No stance switching in rage. **Rage glow:** plates light up from the tail tip to his head; white-hot in rage.
+- **BRAWLER:** L L L claw, claw, bite · M tail whip (knocks down) · H jaw grab-and-toss (beats block, slow lunge, a miss leaves him open; hold to charge = longer shake, farther throw) · Special seismic stomp · GRAB (F / phone GRAB): building smash if a building is close, otherwise tail throw · 1 Pounce · 2 Burrow (lava spout at the exit for 1s) · 3 Volcano Leap.
+- Every stance has its own 1/2/3 now (MELTDOWN keeps its old set until Sandbox 14).
+- Balance tweaks: BRAWLER power 1.15 -> 1.1, long recovery on missed grabs. Numbers to tune from feedback.
+
 ### Sandbox 12 (Nov 6, 2026): both ultimates redone (Shield Barrage + flash-step Tidecrest Oath)
 Status: **testing**. Feedback: waiting. Code: `sandbox/src/15-shield-barrage.js`, `sandbox/src/16-sword-flash.js`. Sandbox only, not in the game.
 - **Brawler: SHIELD BARRAGE** (MajorasPride: "forget the ground thing", 4 throws that bounce back, dynamic, cinematic). Aimed throw (a miss = no cutscene), then SPIN TOSS, JUMP SPIN TOSS, a throw off the CHIN (slow-mo, head snaps back), catch, charge behind the giant water shield (kept, his pick), ULTIMATE SHIELD BASH (freeze), and the monster flies off in a straight line like a beam with a water trail and crashes far away. New camera angle every throw. The Sandbox 10 tackle / pin / slam code is still in 11-valor-cine.js but no longer used.
