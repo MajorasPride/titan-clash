@@ -23,6 +23,9 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 15d (Nov 7, 2026): sun symbol polish
+- The sun's flame rays are smooth, tapering flames (they looked zigzag), the symbol sits higher so its face shows above the rival, and the glow behind it is softer (it read as a brown disc).
+
 ### Sandbox 15c (Nov 7, 2026): the twins' look
 Code: `sandbox/src/17-ashvin-look.js`.
 - **Swings:** painted staff ribbons from both ends of the bow-staff, in the fighting twin's element, with VALOR's ink outline (FIRE gold to red, ICE white to icy blue, LIGHTNING yellow with a flickering violet edge, WATER VALOR's blue). Hits, spins, slams, waves, spikes, tag cut-ins and the Flame Dash use the same painted splashes and curls (new ICE textures with frost sparkles).

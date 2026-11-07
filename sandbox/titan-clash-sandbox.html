@@ -25,6 +25,13 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 15c (Nov 7, 2026): the twins' look
+Code: `sandbox/src/17-ashvin-look.js`.
+- **Swings:** painted staff ribbons from both ends of the bow-staff, in the fighting twin's element, with VALOR's ink outline (FIRE gold to red, ICE white to icy blue, LIGHTNING yellow with a flickering violet edge, WATER VALOR's blue). Hits, spins, slams, waves, spikes, tag cut-ins and the Flame Dash use the same painted splashes and curls (new ICE textures with frost sparkles).
+- **SOLAR MANDALA:** the rune is now a sun (MajorasPride's reference: a sun with flame rays and a face; ours is our own drawing): wavy flame rays that appear with each air strike, then a ring with a triangle border and a calm face (closed eyes, tilak mark, curled mustache).
+- **TOTAL ECLIPSE:** the camera pulls way back, and a black moon with a glowing blue corona hangs in the sky.
+- Light and spin reach fixed (they missed at normal range).
+
 ### Sandbox 15b (Nov 7, 2026): twin ultimate colors
 - Ice is a real icy blue now (it read as white). Runes, beams and the ice pillar keep their colors instead of washing out to white. Sun's aura in TOTAL ECLIPSE is a smaller glow (it was a big tan ball), the combined beam is wider, and the crash dust is smaller.
 
@@ -7572,7 +7579,7 @@ function spdSync(){ document.querySelectorAll('#sbMenu [data-spd]').forEach(b=>b
 
 /* Which sandbox build is this? Shown small in the top-right corner and in the ⚙ menu, so an old (cached) copy is easy to spot.
    Bump SB_BUILD every time the sandbox is pushed. */
-const SB_BUILD='15c · Nov 7';
+const SB_BUILD='15d · Nov 7';
 { const d=document.createElement('div'); d.id='sbVer'; d.textContent='SANDBOX '+SB_BUILD;
   d.style.cssText="position:fixed;right:8px;bottom:6px;z-index:25;font:10px/1 'Russo One',sans-serif;letter-spacing:1px;color:#9fb3c8;opacity:.75;pointer-events:none";
   document.body.appendChild(d); }
@@ -8076,8 +8083,9 @@ function sunCanvasDraw(x,W,prog,el){ const c=W/2, R=W*.5, gold=el==='lightning'?
  x.clearRect(0,0,W,W); x.save(); x.translate(c,c); const N=28, shown=Math.round(N*Math.min(1,prog));
  for(let i=0;i<shown;i++){ const a=i/N*Math.PI*2, long=i%2===0, L=R*(long?.96:.78), w=R*(long?.075:.06);    // wavy flame rays
   x.save(); x.rotate(a); x.beginPath(); x.moveTo(-w,-R*.36);
-  for(let s=0;s<=10;s++){ const y=-R*.36-(L-R*.36)*s/10, ww=w*(1-s/10), wv=Math.sin(s*1.1+i)*w*.9; x.lineTo(-ww+wv,y); }
-  for(let s=10;s>=0;s--){ const y=-R*.36-(L-R*.36)*s/10, ww=w*(1-s/10), wv=Math.sin(s*1.1+i)*w*.9; x.lineTo(ww+wv,y); }
+  const S=40, wave=q=>Math.sin(q*Math.PI*2.3+i*1.7)*w*1.3*Math.sin(q*Math.PI*.9+.3), width=q=>w*Math.pow(1-q,.8)*(1+.25*Math.sin(q*Math.PI));   // smooth, tapering flame
+  for(let s2=0;s2<=S;s2++){ const q=s2/S, y=-R*.36-(L-R*.36)*q; x.lineTo(-width(q)+wave(q),y); }
+  for(let s2=S;s2>=0;s2--){ const q=s2/S, y=-R*.36-(L-R*.36)*q; x.lineTo(width(q)+wave(q),y); }
   x.closePath(); const g=x.createLinearGradient(0,-R*.36,0,-L); g.addColorStop(0,gold[0]); g.addColorStop(.5,gold[1]); g.addColorStop(1,gold[2]); x.fillStyle=g; x.fill(); x.lineWidth=W*.006; x.strokeStyle=INK; x.stroke(); x.restore(); }
  if(prog>=.999){ const rr=R*.36;                                                                                   // the ring with a triangle border
   x.beginPath(); x.arc(0,0,rr,0,7); x.fillStyle=gold[1]; x.fill(); x.lineWidth=W*.012; x.strokeStyle=INK; x.stroke();
@@ -8095,16 +8103,16 @@ function sunCanvasDraw(x,W,prog,el){ const c=W/2, R=W*.5, gold=el==='lightning'?
  x.restore(); }
 function sunSymbol(el){ const c=document.createElement('canvas'); c.width=c.height=1024; const t=new THREE.CanvasTexture(c);
  const m=new THREE.Mesh(new THREE.PlaneGeometry(76,76),new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false,side:THREE.DoubleSide,toneMapped:false,fog:false}));
- const glow=new THREE.Mesh(new THREE.CircleGeometry(40,48),new THREE.MeshBasicMaterial({color:el==='lightning'?0xffe45a:0xffa63a,transparent:true,opacity:.22,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false,fog:false,side:THREE.DoubleSide}));
+ const glow=new THREE.Mesh(new THREE.CircleGeometry(40,48),new THREE.MeshBasicMaterial({color:el==='lightning'?0xffe45a:0xffa63a,transparent:true,opacity:.1,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false,fog:false,side:THREE.DoubleSide}));
  glow.position.z=-.5; const g=new THREE.Group(); g.add(glow); g.add(m); g.userData={c,t,el,prog:-1,parts:[],mat:m.material,glow}; return g; }
 function sunDraw(g,prog){ const U=g.userData; if(Math.abs(U.prog-prog)<.001) return; U.prog=prog; sunCanvasDraw(U.c.getContext('2d'),1024,prog,U.el); U.t.needsUpdate=true; }
 bigRune=(function(o){ return function(kind,col,R){ if(kind!=='sun') return o(kind,col,R); const f=CINE.f; return sunSymbol(f&&isAsh(f)?ashEl(f,0):'fire'); }; })(bigRune);
 runeShow=(function(o){ return function(g,n){ if(!g.userData.c) return o(g,n); if(n>=99) sunDraw(g,1); }; })(runeShow);   // the sun symbol's progress is drawn by the ultMandala wrapper below
 runeKill=(function(o){ return function(a,key){ const g=a[key]; if(g&&g.userData.c){ scene.remove(g); g.traverse(m=>{ if(m.geometry) m.geometry.dispose(); if(m.material) m.material.dispose(); }); g.userData.t.dispose(); a[key]=null; return; } return o(a,key); }; })(runeKill);
 // the Mandala calls runeShow(rune, partsShown) with parts = strokes; for the sun symbol, map the 8 strikes onto the rays
-{ const oM=ultMandala; ultMandala=function(f,a,dt,pm,o){ const r=oM(f,a,dt,pm,o); const g=a.rune; if(g&&g.userData.c){
+{ const oM=ultMandala; ultMandala=function(f,a,dt,pm,o){ const r=oM(f,a,dt,pm,o); const g=a.rune; if(g&&g.userData.c){ if(!g.userData.lifted){ g.userData.lifted=1; g.position.y+=30; }   // lift the sun so its face shows above the rival
    const k=a.t-(a.contact||a.t), k1=k-.45, i=Math.floor(k1/.24); if(k1>=0&&k1<8*.24) sunDraw(g,Math.min(1,(i+1)/8)*.999); else if(k1>=8*.24) sunDraw(g,1);
-   g.userData.glow.material.opacity=.22+Math.sin(game.time*8)*.06; }
+   g.userData.glow.material.opacity=.1+Math.sin(game.time*8)*.04; }
   return r; }; }
 
 /* TOTAL ECLIPSE: a black moon with a glowing corona in the sky, and a camera that pulls way back */
