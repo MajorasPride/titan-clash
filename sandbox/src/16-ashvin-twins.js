@@ -18,7 +18,7 @@
    - Ultimates: SOLAR MANDALA (Sun) and TOTAL ECLIPSE (Moon). Damage numbers: orange for Sun, icy blue for Moon.
    ===================================================================== */
 const ASH={runes:[],patches:[],cages:[],PAIRS:{fireice:['fire','ice'],lightwater:['lightning','water']},
- COL:{fire:0xff7a2a,ice:0xbfefff,lightning:0xfff06a,water:0x3fa9ff}, SUN:0xffc44d, MOON:0x9fd8ff};
+ COL:{fire:0xff7a2a,ice:0x5fc8ff,lightning:0xfff06a,water:0x3fa9ff}, SUN:0xffc44d, MOON:0x9fd8ff};
 const isAsh=f=>!!(f&&f.def&&f.def.id==='ashvin'&&isCore(f));
 const ashPair=f=>ASH.PAIRS[(f&&f.load&&f.load.pair)||'fireice']||ASH.PAIRS.fireice;
 const ashEl=(f,tw)=>ashPair(f)[tw==null?(f.stIdx||0):tw];
@@ -112,7 +112,7 @@ function runeTex(kind){ if(ASHTEX[kind]) return ASHTEX[kind]; const c=document.c
   g.beginPath(); g.arc(0,0,40,0,7); g.fill(); g.globalCompositeOperation='destination-out'; g.beginPath(); g.arc(14,-8,36,0,7); g.fill(); g.globalCompositeOperation='source-over';   // crescent moon
   g.lineWidth=2; g.beginPath(); g.arc(0,0,58,0,7); g.stroke(); }
  const t=new THREE.CanvasTexture(c); ASHTEX[kind]=t; return t; }
-function runeMesh(kind,col,r){ const m=new THREE.Mesh(new THREE.PlaneGeometry(r*2,r*2),new THREE.MeshBasicMaterial({map:runeTex(kind),color:col,transparent:true,opacity:.95,depthWrite:false,blending:THREE.AdditiveBlending,fog:false,side:THREE.DoubleSide}));
+function runeMesh(kind,col,r){ const m=new THREE.Mesh(new THREE.PlaneGeometry(r*2,r*2),new THREE.MeshBasicMaterial({map:runeTex(kind),color:col,transparent:true,opacity:.95,depthWrite:false,blending:THREE.AdditiveBlending,fog:false,toneMapped:false,side:THREE.DoubleSide}));
  m.rotation.x=-Math.PI/2; return m; }
 function runePlace(f,kind,at){ for(let i=ASH.runes.length-1;i>=0;i--){ const R=ASH.runes[i]; if(R.f===f&&R.kind===kind){ scene.remove(R.m); ASH.runes.splice(i,1); } }   // one rune per twin
  const col=kind==='sun'?ashCol(f,0):ashCol(f,1), m=runeMesh(kind,col,10); m.position.set(at.x,.3,at.z); scene.add(m);
@@ -235,7 +235,7 @@ function aCineStart(f,a,kind){ if(a._cut) return; a._cut=1; a.contact=a.t;
  CINE.on=true; CINE.side=false; CINE.f=f; CINE.o=f.opp; CINE.a=a; CINE.inf=null; CINE.ash=kind; CINE.t0=a.t; CINE.shot=-1; CINE.brawl=false;
  cineEl.classList.add('on'); cineEl.classList.remove('comic'); document.body.classList.add('vcine'); cinePop(cq,AULT[kind].quote); cineFreeze(1000,ASLOW); Snd.tone('triangle',300,900,.4,.08); }
 // a giant rune drawn stroke by stroke (each strike of the Mandala adds one stroke)
-function bigRune(kind,col,R){ const g=new THREE.Group(), mat=new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.95,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,side:THREE.DoubleSide}), parts=[];
+function bigRune(kind,col,R){ const g=new THREE.Group(), mat=new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.95,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,toneMapped:false,side:THREE.DoubleSide}), parts=[];
  const tube=(pts,r)=>{ const c=new THREE.CatmullRomCurve3(pts); const m=new THREE.Mesh(new THREE.TubeGeometry(c,Math.max(8,pts.length*4),r,5,false),mat); g.add(m); parts.push(m); m.visible=false; return m; };
  const circ=(rad,n)=>{ const p=[]; for(let i=0;i<=n;i++){ const a=i/n*Math.PI*2; p.push(V(Math.cos(a)*rad,Math.sin(a)*rad,0)); } return p; };
  tube(circ(R,48),.7); tube(circ(R*.82,48),.45);
@@ -245,7 +245,7 @@ function bigRune(kind,col,R){ const g=new THREE.Group(), mat=new THREE.MeshBasic
  g.userData={parts,mat}; return g; }
 function runeShow(g,n){ g.userData.parts.forEach((m,i)=>m.visible=i<n); }
 function runeKill(a,key){ const g=a[key]; if(!g) return; scene.remove(g); g.traverse(o=>{ if(o.geometry) o.geometry.dispose(); }); g.userData.mat.dispose(); a[key]=null; }
-function aBeam(a,key,from,to,w,col){ let m=a[key]; if(!m){ m=a[key]=new THREE.Mesh(new THREE.CylinderGeometry(1,1,1,10,1,true),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false})); scene.add(m); }
+function aBeam(a,key,from,to,w,col){ let m=a[key]; if(!m){ m=a[key]=new THREE.Mesh(new THREE.CylinderGeometry(1,1,1,10,1,true),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.9,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false})); scene.add(m); }
  const len=from.distanceTo(to); m.scale.set(w,len,w); m.position.copy(from).lerp(to,.5); m.lookAt(to); m.rotateX(Math.PI/2); }
 function aBeamOff(a,key){ const m=a[key]; if(m){ scene.remove(m); m.geometry.dispose(); m.material.dispose(); a[key]=null; } }
 function aTwin(a,f,col){ if(a.tw) return a.tw; const g=f.root.clone(true), mat=new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.75,fog:false});
@@ -277,12 +277,12 @@ function ultMandala(f,a,dt,pm,o){ const t=a.t; aGhostTick(a,dt);
  const kS=k-(.45+N*SEG);
  if(kS<.4){ const q=ez(Math.min(1,kS/.35)); o.pos.set(C0.x,H*(1-q),C0.z); f.pos.set(C0.x-dv.x*4,H*(1-q)+10,C0.z-dv.z*4); return; }                  // the slam down
  if(once(a,'slam',a.contact+.45+N*SEG+.4)){ o.pos.set(C0.x,0,C0.z); f.pos.set(C0.x-dv.x*26,0,C0.z-dv.z*26); f.onGround=true; o.onGround=true; f.yaw=Math.atan2(dv.x,dv.z);
-  ultHit(f,o,14*pm,0,0); dust(C0.x,C0.z,18,18); ring(C0.x,1,C0.z,26,col,.6); game.shake=Math.max(game.shake,1.4); Snd.boom(); cineFlash();
+  ultHit(f,o,14*pm,0,0); dust(C0.x,C0.z,10,10); ring(C0.x,1,C0.z,26,col,.6); game.shake=Math.max(game.shake,1.4); Snd.boom(); cineFlash();
   for(const B of city) if(B.alive&&Math.hypot(B.x-C0.x,B.z-C0.z)<26) bHit(B,60,B.x-C0.x,B.z-C0.z,B.h*.4,f); }
  const kB=kS-.4, BEAM=1.5;
  if(kB<BEAM){ const tw=aTwin(a,f,ashCol(f,1)), tp=f.pos.clone().addScaledVector(ds,11); aTwinSync(a,f,tp,f.yaw+.15);                // both twins fire one beam
   const fc=f.chest().addScaledVector(dv,4), tc=tp.clone().add(V(0,fc.y-f.pos.y,0)).addScaledVector(dv,4), oc=o.chest(), mid=fc.clone().lerp(tc,.5);
-  aBeam(a,'b1',fc,oc,1.6+Math.sin(game.time*40)*.2,col); aBeam(a,'b2',tc,oc,1.6+Math.cos(game.time*40)*.2,ashCol(f,1)); aBeam(a,'b3',mid,oc,2.6,0xffffff);
+  aBeam(a,'b1',fc,oc,2.6+Math.sin(game.time*40)*.3,col); aBeam(a,'b2',tc,oc,2.6+Math.cos(game.time*40)*.3,ashCol(f,1)); aBeam(a,'b3',mid,oc,1.6,0xffffff);
   o.pos.set(C0.x+dv.x*Math.min(kB,1)*14,0,C0.z+dv.z*Math.min(kB,1)*14); if(Math.random()<dt*20){ const s0=o.stun; o.takeHit(f,(18*pm)*.07,0,0,true,{x:dv.x,z:dv.z}); o.stun=s0; }
   if(Math.random()<dt*30) burst(oc,Math.random()<.5?col:ashCol(f,1),3,14); if(a.rune&&kB>.3) a.rune.userData.mat.opacity=Math.max(0,.95-(kB-.3)); return; }
  if(once(a,'fly',a.contact+.45+N*SEG+.4+BEAM)){ aBeamOff(a,'b1'); aBeamOff(a,'b2'); aBeamOff(a,'b3'); aTwinKill(a); runeKill(a,'rune'); const s0=o.launchImm; o.launchImm=0; ultHit(f,o,12*pm,0,0); o.launchImm=s0;
@@ -311,19 +311,19 @@ function ultEclipse(f,a,dt,pm,o){ const t=a.t, col=ashCol(f,1), scol=ashCol(f,0)
  a.rune2.rotation.z-=dt*.4; a.rune2.material.opacity=.7+Math.sin(game.time*5)*.25;
  if(k<.9){ o.pos.set(O.x,0,O.z); o.stun=Math.max(o.stun,.6); f.pos.y=0; return; }                                          // the eclipse: only the rune glows
  const PH=78;
- if(k<1.5){ const q=ez((k-.9)/.5); if(!a.pil){ a.pil=new THREE.Mesh(new THREE.CylinderGeometry(6,9,1,8),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.75,blending:THREE.AdditiveBlending,depthWrite:false,fog:false})); a.pil.position.set(O.x,0,O.z); scene.add(a.pil);
+ if(k<1.5){ const q=ez((k-.9)/.5); if(!a.pil){ a.pil=new THREE.Mesh(new THREE.CylinderGeometry(6,9,1,8),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.75,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,toneMapped:false})); a.pil.position.set(O.x,0,O.z); scene.add(a.pil);
    ultHit(f,o,20*pm,0,0); Snd.boom(); cineFlash(); if(ashEl(f,1)==='water') wfxColumn(O.x,O.z,40,8); }
   a.pil.scale.y=PH*q; a.pil.position.y=PH*q/2; o.pos.set(O.x,PH*q,O.z); o.vy=0; o.onGround=false; o.stun=Math.max(o.stun,.6); if(Math.random()<dt*30) burst(o.chest(),Math.random()<.5?col:0xffffff,3,12); return; }
  o.pos.set(O.x,PH+4,O.z); o.vy=0; o.onGround=false; o.stun=Math.max(o.stun,.6);
- if(k<2.3){ const q=ez((k-1.5)/.8); if(once(a,'leap',a.contact+1.5)){ ashSwap(f); a.f0=f.pos.clone(); a.aura=new THREE.Mesh(new THREE.SphereGeometry(1,20,14),new THREE.MeshBasicMaterial({color:scol,transparent:true,opacity:.55,blending:THREE.AdditiveBlending,depthWrite:false,fog:false})); scene.add(a.aura); Snd.whoosh(); }  // Sun leaps up glowing like the sun
+ if(k<2.3){ const q=ez((k-1.5)/.8); if(once(a,'leap',a.contact+1.5)){ ashSwap(f); a.f0=f.pos.clone(); a.aura=new THREE.Mesh(new THREE.SphereGeometry(1,20,14),new THREE.MeshBasicMaterial({color:scol,transparent:true,opacity:.32,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,toneMapped:false})); scene.add(a.aura); Snd.whoosh(); }  // Sun leaps up glowing like the sun
   f.pos.set(lerp(a.f0.x,O.x-a.dv.x*6,q),lerp(0,PH+22,q),lerp(a.f0.z,O.z-a.dv.z*6,q)); f.vy=0; f.onGround=false; f.yaw=Math.atan2(O.x-f.pos.x,O.z-f.pos.z);
-  a.aura.position.copy(f.chest()); a.aura.scale.setScalar(10+q*6+Math.sin(game.time*20)); return; }
+  a.aura.position.copy(f.chest()); a.aura.scale.setScalar(6+q*2+Math.sin(game.time*20)*.5); if(Math.random()<dt*40) burst(f.chest().add(V(rand(-5,5),rand(-5,5),rand(-5,5))),scol,2,10); return; }
  if(k<2.65){ const q=ez((k-2.3)/.35); if(once(a,'spike',a.contact+2.3)){ cinePop(cw,'SPIKE!'); cw.style.color='#ffc44d'; cineFreeze(300,ASLOW); }
   o.pos.set(O.x,(PH+4)*(1-q),O.z); f.pos.set(O.x-a.dv.x*5,(PH+14)*(1-q)+8*(1-q),O.z-a.dv.z*5); if(a.aura){ a.aura.position.copy(f.chest()); } if(a.pil) a.pil.material.opacity=.75*(1-q); return; }
  if(once(a,'crash',a.contact+2.65)){ o.pos.set(O.x,0,O.z); o.onGround=true; f.pos.y=0; f.onGround=true; ultHit(f,o,52*pm,0,0); o.curse={by:f,t:4,dps:5*pm}; o.ashSlowT=3;
   if(a.pil){ for(let i=0;i<10;i++) burst(V(O.x+rand(-6,6),rand(4,60),O.z+rand(-6,6)),col,6,20); scene.remove(a.pil); a.pil.geometry.dispose(); a.pil.material.dispose(); a.pil=null; }
   if(a.aura){ scene.remove(a.aura); a.aura.geometry.dispose(); a.aura.material.dispose(); a.aura=null; }
-  dust(O.x,O.z,20,20); ring(O.x,1,O.z,30,scol,.6); ring(O.x,1,O.z,20,col,.6); game.shake=Math.max(game.shake,1.6); Snd.boom(); cineFlash();
+  dust(O.x,O.z,10,10); ring(O.x,1,O.z,30,scol,.6); ring(O.x,1,O.z,20,col,.6); game.shake=Math.max(game.shake,1.6); Snd.boom(); cineFlash();
   News.add('TOTAL ECLIPSE! ASHVIN SPIKES '+o.def.name+' INTO THE GROUND!',true,'aecl',8); a.dur=a.t+1.1; }
  if(k>3.15&&a.env){ envShow(a); if(a.rune2){ scene.remove(a.rune2); a.rune2.geometry.dispose(); a.rune2.material.dispose(); a.rune2=null; } } }
 function ashUltCleanup(a){ if(!a) return; aBeamOff(a,'b1'); aBeamOff(a,'b2'); aBeamOff(a,'b3'); aTwinKill(a); runeKill(a,'rune'); envShow(a);

@@ -23,6 +23,9 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 15b (Nov 7, 2026): twin ultimate colors
+- Ice is a real icy blue now (it read as white). Runes, beams and the ice pillar keep their colors instead of washing out to white. Sun's aura in TOTAL ECLIPSE is a smaller glow (it was a big tan ball), the combined beam is wider, and the crash dust is smaller.
+
 ### Sandbox 15 (Nov 7, 2026): ASHVIN, the twins
 Status: **testing**. Code: `sandbox/src/16-ashvin-twins.js`. Sandbox only. Plan: Game Plan > Ideas Inbox > ASHVIN rework (voice call, Nov 7).
 - Pick ASHVIN in ⚙ → TITANS (YOU or DUMMY). Two stances, one twin each: **SUN** (he: fast, fiery, buffs himself) and **MOON** (she: slower, harder hits, waves and curses). One bow-staff, held in the middle; Sun holds it in his right hand, Moon in her left. STANCE swaps twins faster and cheaper than other titans.
