@@ -1,5 +1,5 @@
 /* =====================================================================
-   SANDBOX 13c (Nov 7, 2026): NO MORE "SAME POSE". Sandbox only.
+   SANDBOX 13c (Nov 7, 2026): NO MORE "SAME POSE". In the game since v8.4 (moved from the sandbox).
    MajorasPride: "every character has that stupid same pose. Fix that."
    Every ultimate (for titans without their own cutscene poses) and every special/skill that used the
    generic arms-up roar ('roar' / 'roar2') now has its own motion with a wind-up, a release and a recovery.

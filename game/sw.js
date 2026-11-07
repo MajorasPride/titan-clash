@@ -5,7 +5,7 @@
      and fall back to the saved copy when offline.
    - Fonts and three.js from other sites: saved the first time, then used offline.
    Bump CACHE when the list of core files changes. */
-const CACHE = 'titan-clash-v8.3.1';
+const CACHE = 'titan-clash-v8.4';
 const CORE = [
   './titan-clash.html',
   './three.min.js',

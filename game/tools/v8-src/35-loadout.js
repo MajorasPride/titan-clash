@@ -1,5 +1,5 @@
 /* =====================================================================
-   SANDBOX 14: LOADOUT REWORK for VALOR and INFERNOTH (Nov 7, 2026). Sandbox only, not in the game.
+   SANDBOX 14: LOADOUT REWORK for VALOR and INFERNOTH (Nov 7, 2026). In the game since v8.4 (moved from the sandbox).
    MajorasPride's plan: Game Plan > Ideas Inbox > Loadout rethink. All three picks stay, all redone:
    - PATH (ability tree): 2 paths per titan, 3 upgrades each. Every upgrade works in both stances,
      on a different move in each. Upgrades unlock by playing the path's way (goals below);
@@ -297,45 +297,23 @@ function upTick(dt){ if(game.mode!=='match') return; let tm=false;
  swSet(tm); }
 { const o=updateHUD; updateHUD=function(dt){ o(dt); try{ upTick(dt); upHUD(); }catch(e){ console.error(e); } }; }
 
-/* ---------- loadouts in the sandbox: DEFAULT first, then every choice ---------- */
-SB.lo=SB.lo||{};
-const loKey=side=>side+':'+(side==='me'?SB.me:SB.opp);
-const loGet=side=>SB.lo[loKey(side)]||(SB.lo[loKey(side)]={sub:'default',focus:'default',el:'default'});
+/* ---------- loadouts: DEFAULT resolves to the titan's normal setup (game select screen + sandbox menu) ---------- */
 function loResolve(L,id){ return {sub:L.sub==='default'?'A':L.sub, focus:L.focus==='default'?'hybrid':L.focus, el:L.el==='default'?(({valor:'water',infernoth:'fire'})[id]||V8DEFEL[id]||'fire'):L.el}; }
-function loApply(){ for(const [f,side] of [[game.p,'me'],[game.e,'opp']]){ if(!f||!isCore(f)) continue; f.load=loResolve(loGet(side),f.def.id); lxResetFighter(f); }
- lxClear(); if(typeof lookApply==='function') lookApply(); }
 { const o=startMatch; startMatch=function(...a){ const r=o.apply(this,a);
-  for(const f of [game.p,game.e]) if(f&&f.load&&!V8ELEM[f.load.el]) f.load.el=Object.keys(V8ELEM)[(Math.random()*3)|0];   // the CPU always gets a real element
+  for(const f of [game.p,game.e]) if(f&&f.load&&f.load.el!=='default'&&!V8ELEM[f.load.el]) f.load.el=Object.keys(V8ELEM)[(Math.random()*3)|0];   // the CPU always gets a real element
   for(const f of [game.p,game.e]) lxResetFighter(f); return r; }; }
-{ const o=sbStart; sbStart=function(){ o(); loApply(); loUI(); loSync(); }; }
 { const o=sbReset; sbReset=function(){ o(); if(SB._round) return; for(const f of [game.p,game.e]) lxResetFighter(f); lxClear(); swSet(false); }; }
 SB.allUp=false;
-function loUI(){ const m=el('sbMenu'); if(!m||m.querySelector('[data-lo]')) return; const box=m.querySelector('.box'), secs=box.querySelectorAll('.sec');
- const d=document.createElement('div'); d.className='sec'; d.innerHTML='<div class="lbl">LOADOUT (picked before the fight · every pick starts on DEFAULT)</div><div id="sbLo"></div>';
- box.insertBefore(d,secs[2]); d.dataset.lo=1;
- const tools=m.querySelector('[data-t=slow]').parentNode, b=document.createElement('button'); b.dataset.allup='1'; b.textContent='ALL UPGRADES'; tools.appendChild(b);
- b.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); SB.allUp=!SB.allUp; if(!SB.allUp){ for(const f of [game.p,game.e]) lxResetFighter(f); } loSync(); });
- d.addEventListener('pointerdown',e=>{ const bt=e.target.closest('button'); if(!bt) return; e.preventDefault(); e.stopPropagation();
-  const L=loGet(bt.dataset.side); L[bt.dataset.k]=bt.dataset.v; sbStart(); sbMenuOpen(true); }); }
-function loRow(side,id,k,label,opts){ const L=loGet(side); return `<div class="row" style="align-items:center;margin:3px 0"><span style="font-size:10px;letter-spacing:1px;color:#9fb3c8;min-width:64px">${label}</span>${opts.map(([v,n])=>`<button data-side="${side}" data-k="${k}" data-v="${v}" class="${L[k]===v?'on':''}">${n}</button>`).join('')}</div>`; }
-function loSync(){ const box=el('sbLo'); if(!box) return; let h='';
- for(const [side,f,who] of [['me',game.p,'YOU'],['opp',game.e,'DUMMY']]){ if(!f||!isCore(f)) continue; const id=f.def.id, T=V8TREE[id];
-  h+=`<div style="margin:6px 0 2px;font-size:11px;color:#7fd4ff">${who}: ${f.def.name}</div>`;
-  if(T) h+=loRow(side,id,'sub','PATH',[['default','DEFAULT'],['A',T.A.n],['B',T.B.n]]);
-  h+=loRow(side,id,'focus','FOCUS',[['default','DEFAULT'],['melee','MELEE'],['hybrid','HYBRID'],['ranged','RANGED']]);
-  h+=loRow(side,id,'el','ELEMENT',[['default','DEFAULT'],['fire','FIRE'],['water','WATER'],['lightning','LIGHTNING']]); }
- box.innerHTML=h; const b=document.querySelector('#sbMenu [data-allup]'); if(b) b.classList.toggle('on',!!SB.allUp); }
-{ const o=sbBase.sync; sbBase.sync=function(){ o(); loSync(); }; }
 
 /* the upgrade card (top right): path, the 3 upgrades, and how close the next one is */
 { const s=document.createElement('style'); s.textContent=`#sbUp{position:fixed;right:10px;top:292px;z-index:20;background:#05080dcc;border:1px solid #ffffff22;border-radius:10px;padding:5px 10px;font:11px/1.35 Rajdhani,sans-serif;color:#cfe3f5;pointer-events:none;text-align:right;max-width:250px}
 #sbUp b{font-family:'Russo One';font-size:10px;letter-spacing:1px;color:#ffd43b}#sbUp .ok{color:#7dff9a}#sbUp .lk{color:#8899aa}#sbUp .pg{color:#ff9f43}
 #sbUp .mini{display:none}
 @media (pointer:coarse) and (max-height:520px){ #sbUp{top:auto;bottom:6px;right:auto;left:50%;transform:translateX(-50%);font-size:10px;max-width:300px;padding:2px 8px;text-align:center;white-space:nowrap} #sbUp .full{display:none} #sbUp .mini{display:inline} }
-body.vcine #sbUp{visibility:hidden} #p2ord{display:none!important}`; document.head.appendChild(s); }
+body.vcine #sbUp{visibility:hidden}`; document.head.appendChild(s); }
 function upHUD(){ const p=game.p; let h=el('sbUp'); if(!p||game.mode!=='match'||!LGOAL[p.def.id]||!p.load){ if(h) h.style.display='none'; return; }
  if(!h){ h=document.createElement('div'); h.id='sbUp'; document.body.appendChild(h); } h.style.display='';
- const L=loGet('me'), br=V8TREE[p.def.id][p.load.sub||'A'], G=LGOAL[p.def.id][p.load.sub||'A'];
+ const L=p.loadRaw||{}, br=V8TREE[p.def.id][p.load.sub||'A'], G=LGOAL[p.def.id][p.load.sub||'A'];
  const tag=(k,v)=>L[k]==='default'?'DEFAULT':v.toUpperCase();
  let s=`<b>${br.n}</b> · ${tag('focus',p.load.focus)} · ${tag('el',p.load.el)}`;
  br.nodes.forEach((n,i)=>{ const got=p.upTier>i; let line=`${i+1} ${n[0]}`;

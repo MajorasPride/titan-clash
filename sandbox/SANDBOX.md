@@ -8,7 +8,7 @@
 - `sandbox/titan-clash-sandbox.html` = the game code (`game/`) + the test code in `sandbox/src/`, with three.js and the font packed inside. Rebuild it with `python3 sandbox/build_sandbox.py`. Keep it as its own file, separate from the game zip.
 - The real game file is never changed by the sandbox build. Settings the sandbox turns off (crowds, disasters) are never saved, so the game isn't affected.
 - When a test is approved: move its code from `sandbox/src/` into `game/tools/v8-src/`, run `python3 game/tools/build_v8.py`, then test the game.
-- v8.3 (Nov 7, 2026): Sandbox 1 to 12 (VALOR, combat, 1/2/3, water, ultimates, fonts, ult camera, cutscene view) moved into the game. `sandbox/src/` now holds only sandbox-only code: `02-sandbox.js` (test menu, fills in `sbBase`), `03-voidmaw.js`, `05-fullscreen.js`, `07-speed.js`, `08` to `10` (INFERNOTH rework), `11-version.js` (SB_BUILD), `12-loadout.js` and `13-element-looks.js` (Sandbox 14).
+- v8.3 (Nov 7, 2026): Sandbox 1 to 12 (VALOR, combat, 1/2/3, water, ultimates, fonts, ult camera, cutscene view) moved into the game. `sandbox/src/` now holds only sandbox-only code: `02-sandbox.js` (test menu, fills in `sbBase`), `03-voidmaw.js`, `05-fullscreen.js`, `07-speed.js`, `08` to `10` (INFERNOTH rework), `11-version.js` (SB_BUILD), `12-loadout.js` and `13-element-looks.js` (Sandbox 14). v8.4: 08 to 10, 12, 13 and 15 moved into the game (`game/tools/v8-src/32-37`); `sandbox/src/` keeps 02, 03, 05, 07, 11, `12-sandbox-loadout.js` and `14-meters.js`.
 
 ## The settings menu (cleaned up Nov 6, 2026)
 On screen during the fight: only the **⚙ SANDBOX** button (top left) and a small damage counter (top right). Tap ⚙ (PC: Tab) to open the settings menu; the fight pauses while it's open.
@@ -23,6 +23,10 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 14c (Nov 7, 2026): VALOR's and INFERNOTH's work moved into the game (v8.4)
+- The INFERNOTH rework (Sandbox 13 to 13g) and the loadout rework (Sandbox 14, 14b) are in the real game now. They're still in the sandbox too (it's built from the game), so VALOR and INFERNOTH stay as test titans and dummies.
+- `sandbox/src/` keeps only sandbox things: the ⚙ menu, VOIDMAW, fullscreen, speed, the build tag, the ⚙ LOADOUT picks (`12-sandbox-loadout.js`) and METERS (`14-meters.js`).
+
 ### Sandbox 14b (Nov 7, 2026): bug fixes, METERS tool, loadout page follows the element
 Status: **testing**. Code: `sandbox/src/14-meters.js`, `sandbox/src/15-loadout-page.js` (+ two game fixes, v8.3.1).
 - **Fixed (also in the game, v8.3.1):** the heavy button stayed "KO!" after switching away from VALOR; buildings smashed while a cutscene hid them came back as ghosts.

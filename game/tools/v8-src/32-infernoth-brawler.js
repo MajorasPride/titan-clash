@@ -1,5 +1,5 @@
 /* =====================================================================
-   SANDBOX 13: INFERNOTH REWORK, PART 1 (Nov 7, 2026). Sandbox only, not in the game.
+   SANDBOX 13: INFERNOTH REWORK, PART 1 (Nov 7, 2026). In the game since v8.4 (moved from the sandbox).
    MajorasPride's plan (Game Plan > Ideas Inbox > INFERNOTH rework). Godzilla-inspired, our own design.
    - ARMOR: light hits and small shots never stun him. He takes the damage and keeps walking.
      Heavies, charged hits and ultimates still stagger him (outside rage).
@@ -192,7 +192,6 @@ function infTick(dt){ if(game.mode!=='match') return;
 .infHud .t div{height:100%;width:0}.infHud .ab div{background:#c9a27a}.infHud .ab.broken div{background:#ff5a3a}.infHud .rg div{background:linear-gradient(90deg,#ff5a1a,#ffd27a)}
 .infHud .rg.on div{background:#fff2d0;box-shadow:0 0 8px #fff2d0}
 @media (pointer:coarse) and (max-height:520px){ .infHud{top:178px;width:110px} }
-#sbSk{bottom:14px!important} /* sandbox has no news ticker */
 body.vcine .infHud{visibility:hidden}`; document.head.appendChild(s); }
 function infHUD(){ for(const [f,side] of [[game.p,'l'],[game.e,'r']]){ const id='infHud'+side; let h=el(id);
   if(!isInf(f)||game.mode!=='match'){ if(h) h.remove(); continue; }
@@ -203,6 +202,3 @@ function infHUD(){ for(const [f,side] of [[game.p,'l'],[game.e,'r']]){ const id=
 { const o=updateHUD; updateHUD=function(dt){ o(dt); try{ infTick(dt); }catch(e){ console.error(e); } }; }
 { const oR=sbReset; sbReset=function(){ INF.spouts.length=0; for(const f of [game.p,game.e]) if(isInf(f)){ f._inf=0; infInit(f); f.body&&(f.body.position.y=0); } oR(); }; }
 
-/* ---------- sandbox: play INFERNOTH (vs a VALOR dummy) by default for this test ---------- */
-if(!SB_PLAY.includes('infernoth')) SB_PLAY.push('infernoth');
-SB.me='infernoth'; SB.opp='valor';

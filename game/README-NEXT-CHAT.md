@@ -20,6 +20,13 @@ Hi Claude. This is MajorasPride's game, and we build it together, one chat at a 
 6. I play on PC and on my phone.
 
 =====================================================================
+## v8.4 "NEW INFERNOTH + LOADOUT" (Nov 7, 2026)
+=====================================================================
+- Moved from `sandbox/src/` into `tools/v8-src/`: `32-infernoth-brawler.js` (armor, rage, BRAWLER), `33-infernoth-meltdown-ults.js` (MELTDOWN, KING, LAVA DOMAIN, GROUND ZERO), `34-poses-all.js`, `35-loadout.js` (paths, goals, Focus swaps, elements, upgrade card), `36-element-looks.js`, `37-loadout-page.js` (titan file page follows the element + DEFAULT picks on the select screen).
+- DEFAULT: `loadOf()` now starts every pick on `'default'`; `loResolve()` turns it into the real pick when the fight starts (`f.loadRaw` keeps the raw picks for the upgrade card). Saved picks from before v8.4 were reset once (`tc_v84load`).
+- Sandbox-only parts stayed in `sandbox/src/`: `12-sandbox-loadout.js` (⚙ LOADOUT picks, starts as INFERNOTH vs VALOR), `14-meters.js`. VOIDMAW is still sandbox-only. Notes: `patch-notes/v8.4.md`.
+
+=====================================================================
 ## v8.3.1 bug fixes (Nov 7, 2026)
 =====================================================================
 - `14-valor-boxer.js`: the heavy button label goes back to HEAVY when the player isn't VALOR. SUPERS READY leaves the KO meter alone when `SB.meterCtl` is set (the sandbox's METERS tool).

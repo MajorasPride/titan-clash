@@ -1,5 +1,5 @@
 /* =====================================================================
-   SANDBOX 13 (part 2, Nov 7, 2026): INFERNOTH's MELTDOWN kit + all three ultimates. Sandbox only.
+   SANDBOX 13 (part 2, Nov 7, 2026): INFERNOTH's MELTDOWN kit + all three ultimates. In the game since v8.4 (moved from the sandbox).
    MELTDOWN (Stone Wall + Zoner): L L L lava spit · M magma wall (blocks shots, burns on touch; one at a time)
    · H eruption (lava geyser under the rival; charge = reaches farther) · Special heat beam with a lava trail
    · GRAB shove-off (throws the rival back out to zoning range)

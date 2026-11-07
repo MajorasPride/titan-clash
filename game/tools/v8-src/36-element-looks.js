@@ -1,5 +1,5 @@
 /* =====================================================================
-   SANDBOX 14: ELEMENT LOOKS (Nov 7, 2026). Sandbox only, not in the game.
+   SANDBOX 14: ELEMENT LOOKS (Nov 7, 2026). In the game since v8.4 (moved from the sandbox).
    Picking an element changes the look AND the effect of every move (MajorasPride: "full swap").
    Every element is painted and cel-shaded with ink outlines, like the Demon Slayer game (our own designs).
    - VALOR (home: Water). Fire = flame ribbons with a yellow core, ember bursts, flame curls, fire rings.
