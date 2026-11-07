@@ -23,6 +23,10 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 13g (Nov 7, 2026): LAVA DOMAIN as one continuous beam, longer cutscenes
+- LAVA DOMAIN: one continuous high-heat beam from his mouth (white-hot core, blue-white plasma glow, hotter than his orange special beam). It pins them and pushes them back, slowly tilts up carrying them, flings them off the top, and keeps going into the sky. Then 15s of lava rain.
+- INFERNOTH's cutscenes are longer (slower slow-motion, more time for the beam pin and rise and for GROUND ZERO's build-up).
+
 ### Sandbox 13f (Nov 7, 2026): KING without buildings, cleanup, build tag
 - KING: the tail WHACK now sends them flying in an arc across the city and they crash down (no flying through buildings, since smashed buildings still showed).
 - The old climb-slam KING he saw was a cached old copy (GitHub Pages takes a few minutes, and browsers keep old copies). The sandbox now shows its build (e.g. "SANDBOX 13f") in the bottom-right corner and the ⚙ menu.

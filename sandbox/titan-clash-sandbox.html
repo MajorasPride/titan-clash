@@ -25,6 +25,10 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 13g (Nov 7, 2026): LAVA DOMAIN as one continuous beam, longer cutscenes
+- LAVA DOMAIN: one continuous high-heat beam from his mouth (white-hot core, blue-white plasma glow, hotter than his orange special beam). It pins them and pushes them back, slowly tilts up carrying them, flings them off the top, and keeps going into the sky. Then 15s of lava rain.
+- INFERNOTH's cutscenes are longer (slower slow-motion, more time for the beam pin and rise and for GROUND ZERO's build-up).
+
 ### Sandbox 13f (Nov 7, 2026): KING without buildings, cleanup, build tag
 - KING: the tail WHACK now sends them flying in an arc across the city and they crash down (no flying through buildings, since smashed buildings still showed).
 - The old climb-slam KING he saw was a cached old copy (GitHub Pages takes a few minutes, and browsers keep old copies). The sandbox now shows its build (e.g. "SANDBOX 13f") in the bottom-right corner and the ⚙ menu.
@@ -6567,7 +6571,7 @@ SB.me='infernoth'; SB.opp='valor';
    · 1 Meteor Spit (3 lava balls) · 2 Obsidian Shell (half damage, reflects small shots) · 3 Volcano Core.
    ULTIMATES (announce card on press with the intro line; cutscene + quote only if it lands):
    - BRAWLER: KING. "THIS IS MY LAND." Charge, jaw grab, toss them straight up, tail WHACK sends them flying across the city. "BOW TO YOUR KING."
-   - MELTDOWN: LAVA DOMAIN. "KNEEL." Aimed heat beam blasts them away, then he fires it into the sky:
+   - MELTDOWN: LAVA DOMAIN. "KNEEL." One continuous beam from his mouth pins them, pushes them back, tilts up carrying them, flings them, and keeps going into the sky:
      lava rains for about 15 seconds (glowing shadows first), then the sky clears. Full damage to non-fire titans, less to fire ones,
      none to INFERNOTH. Red-orange sky. "I AM KING OF ALL."
    - SECRET: GROUND ZERO (ultimate ready AND in rage; not in the move list). "YOU CANNOT HIDE." Grab, then his whole
@@ -6662,6 +6666,7 @@ POSES.mshellp=(k,p,e)=>{ k.armL=k.armR=-1.2*e; k.azL=.5*e; k.azR=-.5*e; k.lean=.
 POSES.mcorep=(k,p,e)=>{ k.armL=k.armR=-2.7; k.azL=-.8; k.azR=.8; k.headX=-.5; k.jaw=1.2; k.lean=-.25; k.knL=k.knR=.4; };
 
 /* ---------- ULTIMATES ---------- */
+const KSLOW=.44;   // INFERNOTH cutscenes play slower = longer (MajorasPride: "a little longer")
 const KULT={ king:{name:'KING',intro:'THIS IS MY LAND.',quote:'BOW TO YOUR KING.'},
  lava:{name:'LAVA DOMAIN',intro:'KNEEL.',quote:'I AM KING OF ALL.'},
  gz:{name:'GROUND ZERO',intro:'YOU CANNOT HIDE.',quote:'FATE WILL DECIDE NOW!'} };
@@ -6673,7 +6678,7 @@ const kSay=(f,txt)=>canUnderstand(f).ok?txt:'GRRRAAAAAAHHH!!!';
 function kCineStart(f,a,kind){ if(a._cut) return; a._cut=1; a.contact=a.t;
  CINE.on=true; CINE.side=false; CINE.f=f; CINE.o=f.opp; CINE.a=a; CINE.inf=kind; CINE.t0=a.t; CINE.shot=-1; CINE.brawl=false;
  cineEl.classList.add('on'); cineEl.classList.remove('comic'); document.body.classList.add('vcine');
- const q=kSay(f,KULT[kind].quote); cq.classList.toggle('kraged',kind==='gz'); cinePop(cq,q); cineFreeze(1100,.6);
+ const q=kSay(f,KULT[kind].quote); cq.classList.toggle('kraged',kind==='gz'); cinePop(cq,q); cineFreeze(1100,KSLOW);
  if(kind==='gz'){ const tok=game.token; setTimeout(()=>{ if(tok!==game.token||!CINE.on) return; cq.textContent='FATE WILL DECI—'; setTimeout(()=>{ if(tok!==game.token||!CINE.on) return; cinePop(cq,'GRRRAAAAAAAHHHH!!!'); Snd.roar&&Snd.roar(); },350); },1100); } Snd.roar&&Snd.roar(); }
 { const s=document.createElement('style'); s.textContent=`#vcine .q.kraged{color:#fff2d0;-webkit-text-stroke:3px #7a1a00;text-shadow:0 0 18px #ff5a1a,0 0 40px #ff2a00;animation:kshake .08s infinite,vq .35s forwards}
 @keyframes kshake{0%{translate:-3px 2px}50%{translate:3px -2px}100%{translate:-2px -3px}}
@@ -6705,10 +6710,10 @@ function ultKing(f,a,dt,pm,o){ const t=a.t;
  if(!a.up){ a.up={x:f.pos.x+Math.sin(f.yaw)*7,z:f.pos.z+Math.cos(f.yaw)*7}; Snd.whoosh(); News.add(`INFERNOTH THROWS ${o.def.name} INTO THE CLOUDS!`,true,'iking',8); }
  const H=120;
  if(k<1.35){ const q=ez((k-.55)/.8); o.pos.set(a.up.x,8+H*q,a.up.z); o.vy=0; o.kb.set(0,0,0); o.stun=Math.max(o.stun,.4); o.onGround=false; if(Math.random()<dt*20) burst(o.chest(),0xffffff,2,6); return; }  // straight up
- if(k<1.75){ o.pos.set(a.up.x,8+H,a.up.z); o.vy=0; o.stun=Math.max(o.stun,.4); if(once(a,'apex',a.contact+1.35)) cineFreeze(450,.6); return; }                                          // hang at the top
+ if(k<1.75){ o.pos.set(a.up.x,8+H,a.up.z); o.vy=0; o.stun=Math.max(o.stun,.4); if(once(a,'apex',a.contact+1.35)) cineFreeze(450,KSLOW); return; }                                          // hang at the top
  if(k<2.25){ const q=(k-1.75)/.5; o.pos.set(a.up.x,8+H*(1-q*q),a.up.z); o.vy=0; o.stun=Math.max(o.stun,.4);                                                                             // falling, he winds up the tail
   if(!a.dir){ a.yaw0=f.yaw; a.dir=f.yaw; } f.yaw=a.yaw0-ez(q)*Math.PI*.8; return; }               // batter's wind-up: turn the back, tail cocked
- if(once(a,'whack',a.contact+2.25)){ a.fly={x:o.pos.x,z:o.pos.z,n:0,hit:new Set()}; o.pos.y=9; cinePop(cw,'WHACK!'); cw.style.color='#ffb347'; cineFlash(); cineFreeze(380,.6);
+ if(once(a,'whack',a.contact+2.25)){ a.fly={x:o.pos.x,z:o.pos.z,n:0,hit:new Set()}; o.pos.y=9; cinePop(cw,'WHACK!'); cw.style.color='#ffb347'; cineFlash(); cineFreeze(380,KSLOW);
   const s0=o.launchImm; o.launchImm=0; ultHit(f,o,54*pm,0,0); o.launchImm=s0; game.shake=Math.max(game.shake,1.6); Snd.boom(); lava(o.chest(),30,24); }
  if(k<2.45&&a.yaw0!=null){ f.yaw=a.yaw0-Math.PI*.8+ez(Math.min(1,(k-2.25)/.2))*Math.PI*1.7; }                    // the swing: tail whips all the way around
  if(a.fly&&!a.flyDone){ const F=a.fly, sx=Math.sin(a.dir), sz=Math.cos(a.dir), sp=170*dt; F.x+=sx*sp; F.z+=sz*sp; o.pos.set(F.x,9+Math.sin(Math.min(1,(k-2.25)/1)*Math.PI)*25,F.z); o.vy=0; o.kb.set(0,0,0); o.stun=Math.max(o.stun,.6); if(o.root) o.root.rotation.x+=dt*22;   // tumbling end over end
@@ -6717,21 +6722,33 @@ function ultKing(f,a,dt,pm,o){ const t=a.t;
    o.pos.y=0; dust(F.x,F.z,14,18); ring(F.x,1,F.z,18,INF.ORANGE,.5); game.shake=Math.max(game.shake,1); Snd.boom(); News.add(`${o.def.name} CRASHES DOWN ON THE OTHER SIDE OF THE CITY!`,true,'iking2',8); } } }
 
 /* LAVA DOMAIN: aimed heat beam, then the beam goes into the sky and lava rains for the rest of the round */
-function kBeamMesh(a,from,to,w){ if(!a.bm){ a.bm=new THREE.Mesh(new THREE.CylinderGeometry(1,1,1,10,1,true),new THREE.MeshBasicMaterial({color:0xffd27a,transparent:true,opacity:.9,blending:THREE.AdditiveBlending,depthWrite:false})); scene.add(a.bm); }
+function kBeamMesh(a,from,to,w){ if(!a.bm){ a.bm=new THREE.Mesh(new THREE.CylinderGeometry(1,1,1,10,1,true),new THREE.MeshBasicMaterial({color:0xf4fbff,transparent:true,opacity:.95,blending:THREE.AdditiveBlending,depthWrite:false})); scene.add(a.bm); }   // white-hot core
  const len=from.distanceTo(to); a.bm.scale.set(w,len,w); a.bm.position.copy(from).lerp(to,.5); a.bm.lookAt(to); a.bm.rotateX(Math.PI/2); }
-function kBeamOff(a){ if(a.bm){ scene.remove(a.bm); a.bm.geometry.dispose(); a.bm.material.dispose(); a.bm=null; } }
+function kBeamOff(a){ if(a.bm){ scene.remove(a.bm); a.bm.geometry.dispose(); a.bm.material.dispose(); a.bm=null; } if(a.bo){ scene.remove(a.bo); a.bo.geometry.dispose(); a.bo.material.dispose(); a.bo=null; } }
+{ const o=kBeamMesh; kBeamMesh=function(a,from,to,w){ o(a,from,to,w); if(!a.bo){ a.bo=new THREE.Mesh(new THREE.CylinderGeometry(1,1,1,12,1,true),new THREE.MeshBasicMaterial({color:0x4aa8ff,transparent:true,opacity:.5,blending:THREE.AdditiveBlending,depthWrite:false})); scene.add(a.bo); }   // blue-white plasma glow (hotter than his orange beam)
+  a.bo.position.copy(a.bm.position); a.bo.quaternion.copy(a.bm.quaternion); a.bo.scale.set(w*1.9,a.bm.scale.y,w*1.9); }; }
 const kMouth=f=>{ const p=V(); f.emitObj().getWorldPosition(p); return p; };
 function ultLava(f,a,dt,pm,o){ const t=a.t, mouth=kMouth(f);
- if(!a._cut){ f.kb.set(0,0,0); if(t<.7){ f.setGlow(1+t*5); if(Math.random()<dt*30) burst(mouth,INF.ORANGE,2,4); return; }
+ // one continuous beam out of his mouth: it pins them, pushes them back, tilts up carrying them, flings them, and ends in the sky
+ const beamTo=(pitch,len)=>mouth.clone().add(V(Math.sin(f.yaw)*Math.cos(pitch)*len,Math.sin(pitch)*len,Math.cos(f.yaw)*Math.cos(pitch)*len));
+ if(!a._cut){ f.kb.set(0,0,0); if(t<.7){ f.setGlow(1+t*5); if(Math.random()<dt*30) burst(mouth,Math.random()<.5?0xffffff:0x7cc4ff,2,4); return; }
   if(a.miss){ kBeamOff(a); return; }
-  const end=mouth.clone().add(V(Math.sin(f.yaw)*120,-mouth.y*.6,Math.cos(f.yaw)*120)); kBeamMesh(a,mouth,end,2.4);
+  if(once(a,'fire',.7)){ Snd.roar&&Snd.roar(); game.shake=Math.max(game.shake,.5); }
+  kBeamMesh(a,mouth,beamTo(-.05,120),2.4); if(Math.random()<dt*30) burst(mouth,Math.random()<.5?0xffffff:0x7cc4ff,2,6);
   if(canHit(o)){ const dx=o.pos.x-f.pos.x, dz=o.pos.z-f.pos.z, d=Math.hypot(dx,dz); if(d<125&&Math.abs(angDiff(f.yaw,Math.atan2(dx,dz)))<Math.atan2(6+o.radius(),d)+.06){
-    kBeamOff(a); const s0=o.launchImm; o.launchImm=0; ultHit(f,o,40*pm,120,26); o.launchImm=s0; lava(o.chest(),40,26); kCineStart(f,a,'lava'); a.skyT=null; return; } }
-  if(t>1.7){ kBeamOff(a); ultMiss(f,a,t); } return; }
- const k=t-a.contact;
- if(k<.9) return;                                                                         // watch them fly
- if(k<2.4){ if(!a.skyT){ a.skyT=1; Snd.roar&&Snd.roar(); } const top=mouth.clone().add(V(0,400,0)); kBeamMesh(a,mouth,top,3+Math.sin(game.time*40)*.4); f.setGlow(4); game.shake=Math.max(game.shake,.5); return; }
- if(once(a,'rain',a.contact+2.4)){ kBeamOff(a); cineFlash(); KX.round.sky=0xff4a14; KX.round.until=game.time+15; KX.round.rain={owner:f,immune:f,fireHalf:true,dmg:7*pm,every:.3,col:INF.ORANGE};
+    a.d0=Math.max(18,o.chest().distanceTo(mouth)); kCineStart(f,a,'lava'); return; } }
+  if(t>1.9){ kBeamOff(a); ultMiss(f,a,t); } return; }
+ const k=t-a.contact, PIN=1.4, RISE=1.8, H=Math.PI*.47;
+ f.setGlow(4); f.kb.set(0,0,0); game.shake=Math.max(game.shake,.35);
+ if(k<PIN+RISE){ // pinned on the beam: pushed back, then carried up as the beam tilts toward the sky
+  const q=k<PIN?0:ez((k-PIN)/RISE), pitch=-.03+q*H, d=a.d0+Math.min(k,PIN)/PIN*22+q*10;
+  const end=beamTo(pitch,d); kBeamMesh(a,mouth,end,2.6+Math.sin(game.time*40)*.3);
+  o.pos.set(end.x,Math.max(0,end.y-(o.chest().y-o.pos.y)),end.z); o.vy=0; o.kb.set(0,0,0); o.stun=Math.max(o.stun,.5); o.onGround=false;
+  if(Math.random()<dt*14){ const s0=o.stun; o.takeHit(f,(28*pm)*.08,0,0,true,{x:Math.sin(f.yaw),z:Math.cos(f.yaw)}); o.stun=s0; }
+  if(Math.random()<dt*30){ burst(o.chest(),0xffffff,2,12); burst(o.chest(),0x7cc4ff,2,10); } return; }
+ if(once(a,'fling',a.contact+PIN+RISE)){ const s0=o.launchImm; o.launchImm=0; ultHit(f,o,22*pm,95,34); o.launchImm=s0; lava(o.chest(),40,26); cineFlash(); Snd.boom(); } // flung off the top of the beam
+ if(k<PIN+RISE+1.1){ kBeamMesh(a,mouth,beamTo(H,400),3+Math.sin(game.time*40)*.4); return; }                                           // the beam keeps going into the sky
+ if(once(a,'rain',a.contact+PIN+RISE+1.1)){ kBeamOff(a); cineFlash(); KX.round.sky=0xff4a14; KX.round.until=game.time+15; KX.round.rain={owner:f,immune:f,fireHalf:true,dmg:7*pm,every:.3,col:INF.ORANGE};
   News.add('THE SKY IS RAINING LAVA OVER NEON CITY!',true,'ilava',10); a.dur=a.t+.5; } }
 
 /* GROUND ZERO: grab, then he detonates. 75% of the rival's max health, he drops to 1 HP. */
@@ -6741,8 +6758,8 @@ function ultGZ(f,a,dt,pm,o){ const t=a.t;
   if(canHit(o)&&inFront(f,o,15,1.1)){ f.kb.set(0,0,0); kCineStart(f,a,'gz'); }
   else if(t>1.1){ ultMiss(f,a,t); if(f.isPlayer) toast('GROUND ZERO MISSED. IT\'S GONE.','#ff6b6b',1100); } return; }
  const k=t-a.contact;
- if(k<1.6){ holdAt(f,o,7,3); f.setGlow(4+k*4); f.kRageT=Math.max(f.kRageT,1); if(Math.random()<dt*40) burst(f.chest().add(V(rand(-6,6),rand(-4,8),rand(-6,6))),Math.random()<.5?INF.WHITE:INF.ORANGE,3,12); game.shake=Math.max(game.shake,k*.5); return; }
- if(once(a,'boom',a.contact+1.6)){ const R=95, x=f.pos.x, z=f.pos.z;
+ if(k<2.2){ holdAt(f,o,7,3); f.setGlow(4+k*3); f.kRageT=Math.max(f.kRageT,1); if(Math.random()<dt*40) burst(f.chest().add(V(rand(-6,6),rand(-4,8),rand(-6,6))),Math.random()<.5?INF.WHITE:INF.ORANGE,3,12); game.shake=Math.max(game.shake,k*.5); return; }
+ if(once(a,'boom',a.contact+2.2)){ const R=95, x=f.pos.x, z=f.pos.z;
   const ball=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),new THREE.MeshBasicMaterial({color:INF.WHITE,transparent:true,opacity:.95,blending:THREE.AdditiveBlending,depthWrite:false})); ball.position.set(x,8,z); scene.add(ball); a.ball=ball;
   for(const B of city) if(B.alive&&Math.hypot(B.x-x,B.z-z)<R) bHit(B,(B.hp||400)+100,B.x-x,B.z-z,B.h*.5,f);
   propsBlast&&propsBlast(x,0,z,R); peopleBlast&&peopleBlast(x,z,R);
@@ -6753,7 +6770,7 @@ function ultGZ(f,a,dt,pm,o){ const t=a.t;
   KX.match.sky=0xff5a1a; KX.round.crack=true; drawCracks(); crackEl.classList.add('on');
   if(game.round>=2) KX.match.rain={owner:null,immune:null,fireHalf:false,dmg:6,every:.45,col:0xff3a10,hurtAll:true};
   game.shake=3; Snd.boom(); Snd.boom(); cineFlash(); News.add('GROUND ZERO. INFERNOTH HAS LEVELED THE DISTRICT.',true,'igz2',12); a.dur=a.t+1.6; }
- if(a.ball){ const q=Math.min(1,(k-1.6)/.9); a.ball.scale.setScalar(5+q*90); a.ball.material.opacity=.95*(1-q*.85); if(q>=1){ scene.remove(a.ball); a.ball=null; } } }
+ if(a.ball){ const q=Math.min(1,(k-2.2)/1.2); a.ball.scale.setScalar(5+q*90); a.ball.material.opacity=.95*(1-q*.85); if(q>=1){ scene.remove(a.ball); a.ball=null; } } }
 
 // the INFERNOTH cutscene camera (uses the same cutscene frame as VALOR's)
 { const oC=cineCam; cineCam=function(){ if(!CINE.inf) return oC(); const f=CINE.f, o=CINE.o, a=CINE.a; if(!f||!o) return;
@@ -6766,13 +6783,14 @@ function ultGZ(f,a,dt,pm,o){ const t=a.t;
    if(k<2.6){ cineShot(3); camAt(V(f.pos.x+dsd.x*40,8,f.pos.z+dsd.z*40),fc.clone().lerp(oc,.5)); return; }                                                            // WHACK, side on
    cineShot(4); camAt(V(o.pos.x-dv.x*40+dsd.x*22,16,o.pos.z-dv.z*40+dsd.z*22),oc); if(a.flyDone&&k>3.0||!f.atk||f.atk.id!=='ultimate') cineEnd(); return; }      // chase them through the buildings
   if(CINE.inf==='lava'){
-   if(k<.9){ camAt(V(o.pos.x+side.x*50,oc.y+8,o.pos.z+side.z*50),oc); return; }                                                                                             // the rival blasted away
-   if(k<2.4){ if(cineShot(1)) cq.classList.remove('show'); camAt(V(f.pos.x+fw.x*28+side.x*10,2,f.pos.z+fw.z*28+side.z*10),fc.clone().add(V(0,40+k*30,0))); return; }    // low, looking up: the beam into the sky
-   cineShot(2); camAt(V(f.pos.x+side.x*90,60,f.pos.z+side.z*90),V(f.pos.x,30,f.pos.z)); if(k>2.9||!f.atk||f.atk.id!=='ultimate') cineEnd(); return; }                     // wide: the sky breaks
+   if(k<1.4){ camAt(V(f.pos.x+side.x*55+fw.x*20,10,f.pos.z+side.z*55+fw.z*20),fc.clone().lerp(oc,.55)); return; }                                        // side on: pinned and pushed back by the beam
+   if(k<3.2){ if(cineShot(1)) cq.classList.remove('show'); camAt(V(f.pos.x-fw.x*30+side.x*30,4,f.pos.z-fw.z*30+side.z*30),fc.clone().lerp(oc,.6)); return; }   // low behind him: the beam tilts up, carrying them
+   if(k<4.3){ cineShot(2); camAt(V(f.pos.x+side.x*80,12,f.pos.z+side.z*80),V(f.pos.x,60,f.pos.z)); return; }                                           // the beam into the sky
+   cineShot(3); camAt(V(f.pos.x+side.x*90,60,f.pos.z+side.z*90),V(f.pos.x,30,f.pos.z)); if(k>4.8||!f.atk||f.atk.id!=='ultimate') cineEnd(); return; }
   // GROUND ZERO
-  if(k<1.6){ const g=k*.6; camAt(V(f.pos.x+Math.sin(fy+g)*30*s,fc.y+2,f.pos.z+Math.cos(fy+g)*30*s),fc); return; }
+  if(k<2.2){ const g=k*.5; camAt(V(f.pos.x+Math.sin(fy+g)*30*s,fc.y+2,f.pos.z+Math.cos(fy+g)*30*s),fc); return; }
   if(cineShot(1)){ cq.classList.remove('show'); }
-  camAt(V(f.pos.x+side.x*200,70,f.pos.z+side.z*200),V(f.pos.x,20,f.pos.z)); if(k>3.0||!f.atk||f.atk.id!=='ultimate') cineEnd(); }; }
+  camAt(V(f.pos.x+side.x*200,70,f.pos.z+side.z*200),V(f.pos.x,20,f.pos.z)); if(k>4.0||!f.atk||f.atk.id!=='ultimate') cineEnd(); }; }
 { const o=cineEnd; cineEnd=function(){ for(const f of [game.p,game.e]) if(f&&f.root) f.root.rotation.x=0; if(CINE.inf){ CINE.inf=null; cq.classList.remove('kraged'); } return o(); }; }
 
 /* ---------- every frame: spit blobs, walls, trail patches, falling rocks, rain, sky ---------- */
@@ -6824,12 +6842,11 @@ function kxClear(all){ for(const L of [KX.blobs,KX.walls,KX.patches]){ for(const
    const q=pz(ks,2.25,2.5); k.twist=lerp(-1.1,1.7,q); k.lean=.35; k.knL=k.knR=.5; k.legR=-.4; k.armL=k.armR=-.7; k.azL=-.6; k.azR=.6; k.jaw=1.1; return; }   // WHACK follow-through
   if(kind==='lava'){
    if(ks<0){ k.lean=.3; k.knL=k.knR=.45; k.armL=k.armR=-.7; k.azL=-.2; k.azR=.2; k.headX=t<.7?-.2+t*.5:.15; k.jaw=t<.7?.2+t*1.2:1.35; return; }
-   if(ks<.9){ k.lean=.3; k.headX=.15; k.jaw=1.35; k.armL=k.armR=-.7; k.knL=k.knR=.45; return; }
-   if(ks<2.4){ const q=Math.min(1,(ks-.9)/.35); k.headX=lerp(.15,-1.15,q); k.lean=lerp(.3,-.5,q); k.jaw=1.45; k.armL=k.armR=-.5; k.azL=-.5; k.azR=.5; k.knL=k.knR=.55; k.twist=Math.sin(T*40)*.03; return; }
-   k.headX=-.45; k.jaw=.7; k.lean=-.1; return; }
+   const q=ks<1.4?0:Math.min(1,ez((ks-1.4)/1.8));                                          // the head tilts up with the beam
+   k.headX=lerp(.15,-1.15,q); k.lean=lerp(.3,-.5,q); k.jaw=1.45; k.armL=k.armR=-.6; k.azL=-.4*q; k.azR=.4*q; k.knL=k.knR=.5; k.twist=Math.sin(T*40)*.03; return; }
   // GROUND ZERO
   if(ks<0){ k.lean=.6; k.armL=k.armR=-1.6; k.azL=-.4; k.azR=.4; k.jaw=1.1; run(); return; }
-  if(ks<1.6){ const q=Math.min(1,ks/1.2); k.armL=k.armR=-1.5; k.elL=k.elR=-1.4; k.azL=.55; k.azR=-.55; k.headX=-.7*q; k.jaw=1.4*q; k.lean=-.25*q; k.knL=k.knR=.5*q; k.twist=Math.sin(T*55)*.06*q; return; }
+  if(ks<2.2){ const q=Math.min(1,ks/1.6); k.armL=k.armR=-1.5; k.elL=k.elR=-1.4; k.azL=.55; k.azR=-.55; k.headX=-.7*q; k.jaw=1.4*q; k.lean=-.25*q; k.knL=k.knR=.5*q; k.twist=Math.sin(T*55)*.06*q; return; }
   k.armL=k.armR=-3; k.azL=-1.1; k.azR=1.1; k.headX=-.9; k.jaw=1.5; k.lean=-.3; }; }
 
 /* =====================================================================
@@ -6876,7 +6893,7 @@ const ULTP={
 
 /* Which sandbox build is this? Shown small in the top-right corner and in the ⚙ menu, so an old (cached) copy is easy to spot.
    Bump SB_BUILD every time the sandbox is pushed. */
-const SB_BUILD='13f · Nov 7';
+const SB_BUILD='13g · Nov 7';
 { const d=document.createElement('div'); d.id='sbVer'; d.textContent='SANDBOX '+SB_BUILD;
   d.style.cssText="position:fixed;right:8px;bottom:6px;z-index:25;font:10px/1 'Russo One',sans-serif;letter-spacing:1px;color:#9fb3c8;opacity:.75;pointer-events:none";
   document.body.appendChild(d); }
