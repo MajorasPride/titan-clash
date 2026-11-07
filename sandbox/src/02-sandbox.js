@@ -7,12 +7,8 @@ const SBORIG={life:SET.life,disasters:SET.disasters};
 { const oSave=save; save=function(k,v){ if(k==='tc_set') v=Object.assign({},v,SBORIG); return oSave(k,v); }; }
 SET.life=false; SET.disasters=false;
 
-/* keys for 1 / 2 / 3 (solo: 1 2 3 · 2-player P1: 1 2 3 · P2: 8 9 0) */
-BUFF.push('sk1','sk2','sk3');
-ACTIONS.splice(ACTIONS.findIndex(a=>a[0]==='super')+1,0,['sk1','Skill 1'],['sk2','Skill 2'],['sk3','Skill 3']);
-Object.assign(DEF_SETS.solo,{sk1:['Digit1',''],sk2:['Digit2',''],sk3:['Digit3','']}); Object.assign(DEF_SETS.p1,{sk1:['Digit1',''],sk2:['Digit2',''],sk3:['Digit3','']}); Object.assign(DEF_SETS.p2,{sk1:['Digit8',''],sk2:['Digit9',''],sk3:['Digit0','']});
-for(const st in BS) for(const k of ['sk1','sk2','sk3']) if(!BS[st][k]) BS[st][k]=DEF_SETS[st][k].slice();
-rebuildCodeMap(); for(const I of inps) I.sk1=I.sk2=I.sk3=0;
+/* v8.3: the 1 / 2 / 3 keys, the hooks (sbStart, sbSync, sbReset ...) and keyName now live in the game
+   (game/tools/v8-src/11-skill-keys.js). This file fills in sbBase with the test-menu versions. */
 
 /* empty ground: build the city like normal (so everything is reset properly), then take it all away */
 { const oMC=makeCity; makeCity=function(){ oMC();
@@ -62,8 +58,8 @@ const SBCSS=`#sbGear{position:fixed;left:10px;top:70px;z-index:20;background:#0e
 @media (pointer:coarse) and (max-height:520px){ #sbGear{top:58px;padding:4px 10px;font-size:11px} #sbInfo{top:58px;font-size:11px} #sbInfo .big{font-size:15px} #sbMenu .box{padding:10px 12px} #sbMenu button{padding:6px 10px;font-size:10px} }`;
 { const s=document.createElement('style'); s.textContent=SBCSS; document.head.appendChild(s); }
 SB.showDmg=true;
-function sbMenuOpen(on){ const m=el('sbMenu'); if(!m) return; m.classList.toggle('hide',!on); SB.menu=on; if(game.mode==='match'&&game.state!=='over') game.paused=on; if(on) sbSync(); }
-function sbSync(){ const m=el('sbMenu'); if(!m) return;
+function sbBase_menuOpen(on){ const m=el('sbMenu'); if(!m) return; m.classList.toggle('hide',!on); SB.menu=on; if(game.mode==='match'&&game.state!=='over') game.paused=on; if(on) sbSync(); }
+function sbBase_sync(){ const m=el('sbMenu'); if(!m) return;
  m.querySelector('[data-a=me]').textContent='YOU: '+getDef(SB.me).name; m.querySelector('[data-a=opp]').textContent='DUMMY: '+getDef(SB.opp).name;
  m.querySelectorAll('[data-d]').forEach(b=>b.classList.toggle('on',b.dataset.d===SB.dummy));
  m.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',!!SB[b.dataset.t]));
@@ -95,9 +91,8 @@ function sbUI(){ if(el('sbGear')) return;
   bt.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); bt.classList.add('on'); inps[0]['sk'+n]=.25; if(navigator.vibrate) try{ navigator.vibrate(12); }catch(_){} });
   const rel=()=>bt.classList.remove('on'); bt.addEventListener('pointerup',rel); bt.addEventListener('pointercancel',rel); }
 }
-function sbReset(){ const p=game.p,e=game.e; if(!p) return; p.reset(0,-30,0); e.reset(0,30,Math.PI); p.energy=e.energy=100; for(const f of [p,e]){ f.cds={}; f.stun=0; f.hp=f.def.hp; } SB.combo={n:0,dmg:0,t:0}; SB.last=null; for(const c of cams){ c.init=false; } toast('RESET','#7fd4ff',600); }
-const keyName=a=>{ try{ return bindLabel(a,0); }catch(e){ return a; } };
-function sbKitRender(){ const p=game.p, kit=el('sbKit'); if(!p||!kit) return; const L=SKILLS[p.def.id]||[], F=p.F, nm=id=>MOVES[id]?MOVES[id].name:id, H=HEAVYSET[F.K];
+function sbBase_reset(){ if(SB._round) return; const p=game.p,e=game.e; if(!p) return; p.reset(0,-30,0); e.reset(0,30,Math.PI); p.energy=e.energy=100; for(const f of [p,e]){ f.cds={}; f.stun=0; f.hp=f.def.hp; } SB.combo={n:0,dmg:0,t:0}; SB.last=null; for(const c of cams){ c.init=false; } toast('RESET','#7fd4ff',600); }
+function sbBase_kit(){ const p=game.p, kit=el('sbKit'); if(!p||!kit) return; const L=SKILLS[p.def.id]||[], F=p.F, nm=id=>MOVES[id]?MOVES[id].name:id, H=HEAVYSET[F.K];
  const cdTxt=n=>{ const c=p.cds['sk'+n]||0; return c>0?`<span class="cd">${Math.ceil(c)}s</span>`:'<span class="ok">READY</span>'; };
  kit.innerHTML=`<h4>${p.def.name} · ${F.name} · ⚡${Math.round(p.energy)}</h4>
   <div><span class="k">${keyName('punch')}</span>Light: ${nm(F.J)} (×3 combo)</div>
@@ -120,6 +115,9 @@ function sbTick(dt){ const p=game.p; if(!p||game.mode!=='match') return; if(game
 
 /* start straight into the training ground */
 const SB_PLAY=['valor','voidmaw'], SB_DUMMIES=['infernoth','voidmaw','valor']; SB.me='valor'; SB.opp='infernoth';
-function sbStart(){ selId=SB.me; oppId=SB.opp; vsMode='cpu'; mapSel='city'; try{ diff='normal'; }catch(e){} sbUI(); startMatch(); el('p2n').textContent=getDef(SB.opp).name+' (DUMMY)'; sbSync(); }
+function sbBase_start(){ selId=SB.me; oppId=SB.opp; vsMode='cpu'; mapSel='city'; try{ diff='normal'; }catch(e){} sbUI(); startMatch(); el('p2n').textContent=getDef(SB.opp).name+' (DUMMY)'; sbSync(); }
+Object.assign(sbBase,{start:sbBase_start,sync:sbBase_sync,menuOpen:sbBase_menuOpen,kit:sbBase_kit,reset:sbBase_reset});
+// sandbox test defaults (the game sets these to normal play in game/tools/v8-src/30-game-settings.js)
+Object.assign(SB,{dummy:'stand',infHp:true,ultRdy:true,ultCam:'random'});
 if(document.readyState==='complete') setTimeout(sbStart,300); else addEventListener('load',()=>setTimeout(sbStart,300));
 document.title='Titan Clash · SANDBOX';

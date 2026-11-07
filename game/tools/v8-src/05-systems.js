@@ -14,8 +14,6 @@ function v8UltUpdate(f,a,dt,pm,o){ const id=f.def.id, x=()=>o.pos.x, z=()=>o.pos
  if(id==='ragnavox'){ if(a.t<1.6){ f.pos.y=lerp(f.pos.y,22,dt*3); f.vy=0; }
   ['fire','storm','ice'].forEach((e,i)=>{ if(once(a,e,.5+i*.35)){ const xx=x()+rand(-4,4), zz=z()+rand(-4,4); if(e==='storm') zapBolt(V(xx,120,zz),V(xx,0,zz)); strike(xx,zz,9,12*pm,10,f,o,V8EL[e],0,20); if(e==='fire'&&canHit(o)){ o.burnT=3; o.burnBy=f; } if(e==='ice') o.slowT=3; } });
   if(once(a,'r',1.9)){ f.pos.y=0; ring(f.pos.x,4,f.pos.z,60,0xb48cff,.8); Snd.roar(); Snd.noise(1,150,.6,'lowpass',60); for(const b of city) if(b.alive&&Math.hypot(b.x-f.pos.x,b.z-f.pos.z)<60) bHit(b,40,0,0,b.h*.6,f); if(canHit(o)&&dist2(f,o)<60) o.takeHit(f,20*pm,80,18,false); game.shake=1.6; } }
- if(id==='worldroot'){ if(once(a,'p',.4)&&canHit(o)){ v8FuturePortal(o,f); o.portalT=6; } if(once(a,'g',.6)){ const r=34*f.scale, m=mesh(new THREE.CircleGeometry(r,40),new THREE.MeshBasicMaterial({color:0x4fbf4f,transparent:true,opacity:.42,depthWrite:false}),f.pos.x,.12,f.pos.z,scene,true); m.rotation.x=-Math.PI/2; V8.fields.push({owner:f,x:f.pos.x,z:f.pos.z,r,t:10,heal:10,m}); }
-  if(once(a,'r',1.4)){ for(let i=0;i<12;i++) pillar(x()+rand(-9,9),z()+rand(-9,9),rand(1,2),0x7a5a3a,.9,rand(18,32)); strike(x(),z(),13,25*pm,30,f,o,0x9dffb0,0,40); } }
 }
 
 /* ---- update hooks ---- */

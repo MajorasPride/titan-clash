@@ -1,6 +1,5 @@
 /* ---- V8 BODIES: extra parts on top of the existing builders (real 3D models come later from the model chat) ---- */
 V8DEFS.find(d=>d.id==='infernoth').baseScale=1.12;
-V8DEFS.find(d=>d.id==='worldroot').baseScale=1.08;
 const V8EL={fire:0xff6a1a,storm:0x9ff3ff,ice:0xcfefff,sound:0xb48cff};
 function v8Dress(f){ const d=f.def, P=f.P, id=d.id; f.v8={};
  if(id==='valor'){ const mS=std(0xe9eef4,.35,.7), mR=std(0xc8323c,.4,.5), mG=glowM(0x7fd4ff,2.4), mD=std(0x1c2026,.5,.7);
@@ -20,7 +19,6 @@ function v8Dress(f){ const d=f.def, P=f.P, id=d.id; f.v8={};
  if(id==='ragnavox'){ const heads=[P.head].concat(P.extraHeads||[]), els=['storm','fire','ice'];
   heads.forEach((h,i)=>{ h.userData.el=els[i]; h.traverse(o=>{ if(o.isMesh&&o.material&&o.material.emissive&&o.material.emissiveIntensity>.5){ o.material=o.material.clone(); o.material.color.setHex(V8EL[els[i]]); o.material.emissive.setHex(V8EL[els[i]]); } }); });
   P.v8heads=heads; if(P.wings) P.wings.forEach(w=>w.scale.set(1.45,1.1,1.25)); }
- if(id==='worldroot'){ P.v8motes=[0xff6a1a,0x5fd0ff,0xfff06a,0xcfefff].map(c=>mesh(S(.7,10,8),glowM(c,3),0,0,0,f.root,true)); }
  v8StanceVisual(f);
 }
 function v8StanceVisual(f){ const P=f.P, F=f.F; if(!P) return;

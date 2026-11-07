@@ -50,7 +50,6 @@ const V8DEFS=[
  {id:'raikou',name:'RAIKOU',type:'mech',chassis:'samurai',vehicle:'jet',tag:'Lightning samurai. Three stances, blinding speed, Echo Shift.',color:0x1b1a24,accent:0x6b3fd1,trim:0xffd43b,glow:0xfff06a,css:'#fff06a',beam:'Echo Shift',superName:'THOUSAND ECHOES',ultName:'THOUSAND ECHOES',cls:'STRIKER',code:'RJ-07 "FLASH"',country:'JAPAN'},
  {id:'infernoth',name:'INFERNOTH',type:'kaiju',kbody:'volcano',tag:'Heavy fire titan from the deep. Heat beam, dorsal blasts, magma tail.',color:0x24201f,accent:0x3a2a24,glow:0xff5a1a,css:'#ff7a3a',beam:'Heat Beam',superName:'CORE MELTDOWN',ultName:'CORE MELTDOWN',altColor:0x2a1610,altScale:1,cls:'COLOSSUS',code:'K-01 "FURNACE"',origin:'NATURAL DISASTER'},
  {id:'ragnavox',name:'RAGNAVOX',type:'kaiju',kbody:'winged',heads:3,tag:'Three-headed sound dragon on long wings. Each head holds an element.',color:0x3c3a4f,accent:0x241f33,glow:0xb48cff,css:'#b48cff',beam:'Element Breath',superName:'CHORUS OF RUIN',ultName:'CHORUS OF RUIN',altColor:0x3c3a4f,altScale:1,cls:'STRIKER',code:'K-02 "CHOIR"',origin:'NIGHTMARE'},
- {id:'worldroot',name:'WORLDROOT',type:'kaiju',kbody:'tree',tag:'Elder world-tree titan from the stars. Grass and time magic. Sees the future.',color:0x6b5a48,accent:0x3f8a3a,glow:0x9dffb0,css:'#9dffb0',beam:'Future Portal',superName:'RAGNAROK BLOOM',ultName:'RAGNAROK BLOOM',altColor:0x6b5a48,altScale:1,cls:'MYSTIC',code:'K-03 "ORACLE"',origin:'ALIEN'},
 ];
 for(const d of V8DEFS){ const s=V8STAT[d.id]; d.core=true; d.hp=statHp(s); d.stances=v8stances(d.id,s); d.forms=[d.stances[0],d.stances[1]];
  d.st=[{valor:3,ashvin:3,raikou:4,infernoth:5,ragnavox:4,worldroot:4}[d.id],Math.max(1,Math.round(s.mob/2)),Math.max(1,Math.round(s.def/2))]; }
@@ -65,7 +64,7 @@ Object.assign(LORE,{
  ashvin:{org:'INDIA\'S TWIN-MIND PROGRAM',from:'',bio:'Built by India to fight RAGNAVOX. Twin pilots share one mind, so the dragon\'s roar can\'t scare both of them at once. They can lift a bus with a thought.',
   lines:['ASHVIN\'S TWIN PILOTS FINISH EACH OTHER\'S... SENTENCES','A CAR JUST FLOATED PAST OUR NEWS VAN. ASHVIN SAYS SORRY','SCIENTISTS: THE TWINS\' MINDS ARE "LOUDER THAN THE DRAGON"'],
   heli:'CHOPPER 7: "ASHVIN IS LOOKING AT US. I CAN HEAR IT IN MY HEAD. IT SAYS HELLO."'},
- raikou:{org:'JAPAN\'S RAIJIN PROJECT',from:'',bio:'Built by Japan to cut down WORLDROOT. Lightning splits even the oldest tree. Its pilot trained 20 years with a real sword before touching the controls.',
+ raikou:{org:'JAPAN\'S RAIJIN PROJECT',from:'',bio:'Built by Japan to cut down RAGNAVOX, one lightning blade for every head. Its pilot trained 20 years with a real sword before touching the controls.',
   lines:['RAIKOU MOVED SO FAST OUR CAMERA ONLY CAUGHT ITS ECHOES','RAIJIN PROJECT: "RAIKOU IS FASTER THAN LIGHTNING. TECHNICALLY IT IS LIGHTNING."','EVERY STREET LIGHT IN THE CITY FLICKERS WHEN RAIKOU DRAWS ITS SWORD'],
   heli:'CHOPPER 7: "I BLINKED AND THERE WERE THREE RAIKOUS. NOW THERE\'S ONE. I NEED A NAP."'},
  infernoth:{org:'',from:'FROM THE BURNING VENTS UNDER THE PACIFIC',bio:'A natural disaster with legs. It slept in the boiling vents of the Ring of Fire until the ocean got too warm. It glows hotter the more it gets hurt.',

@@ -73,18 +73,6 @@ const V8MOVE={
   if(on){ const hp0=o.hp; f.updateBeam(dt,pm*(up(f,'breath')?1.2:1),a); if(o.hp<hp0){ if(e==='fire'){ o.burnT=3; o.burnBy=f; } else if(e==='ice'){ o.slowT=2; if(Math.random()<dt*2) o.stun=Math.max(o.stun,.5); } else if(Math.random()<dt*3){ zapBolt(f.chest(),o.chest()); o.stun=Math.max(o.stun,.25); } } } },
  skydive(f,a,dt,pm,o){ if(!a.hit){ const dx=o.pos.x-f.pos.x, dz=o.pos.z-f.pos.z, d=Math.hypot(dx,dz)||1; f.yaw=Math.atan2(dx,dz); f.pos.x+=dx/d*95*dt; f.pos.z+=dz/d*95*dt; f.pos.y=Math.max(0,f.pos.y-45*dt); f.vy=0; burst(f.chest(),0xb48cff,2,6);
    if(f.pos.y<=.5||d<7||a.t>.8){ a.hit=true; a.dur=a.t+.35; f.pos.y=0; aoe(f,o,f.pos.x,f.pos.z,14*f.scale,22*pm*(up(f,'dive')?1.3:1),30,20,0xb48cff,20); game.shake=Math.max(game.shake,1); Snd.thud(); } } },
- /* WORLDROOT */
- rootwhip(f,a,dt,pm,o){ if(once(a,'w',.25)){ if(dist2(f,o)<70&&canHit(o)){ const x=o.pos.x, z=o.pos.z; for(let i=0;i<5;i++) later(i*.04,()=>pillar(x+rand(-3,3),z+rand(-3,3),.7,0x6bd06b,.6,14));
-    const dx=f.pos.x-o.pos.x, dz=f.pos.z-o.pos.z, d=Math.hypot(dx,dz)||1; o.takeHit(f,9*pm*(up(f,'whip')?1.4:1),0,0,false,{x:-dx,z:-dz}); o.kb.x+=dx/d*45; o.kb.z+=dz/d*45; o.stun=Math.max(o.stun,up(f,'whip')?1:.5); burst(o.pos.clone().setY(2),0x6bd06b,20,12); Snd.crumble(); }
-   else if(f.isPlayer) toast('TOO FAR FOR ROOT WHIP','#cbd5e1',700); } },
- rootslam(f,a,dt,pm,o){ if(once(a,'r',a.hitAt||.45)){ const near=dist2(f,o)<60; const x=near?o.pos.x:f.pos.x+Math.sin(f.yaw)*14, z=near?o.pos.z:f.pos.z+Math.cos(f.yaw)*14; for(let i=0;i<7;i++) pillar(x+rand(-5,5),z+rand(-5,5),rand(.8,1.6),0x7a5a3a,.7,rand(10,20)); aoe(f,o,x,z,10,17*pm,16,28,0x6bd06b); Snd.crumble(); } },
- futureportal(f,a,dt,pm,o){ if(once(a,'p',.3)){ const p=V(); f.emitObj().getWorldPosition(p); const disc=mesh(new THREE.TorusGeometry(2.4,.5,10,28),glowM(0x9dffb0,2.5),p.x,p.y,p.z,scene,true);
-   V8.discs.push({kind:'portal',f,o,pos:p.clone(),vel:o.chest().sub(p).normalize().multiplyScalar(55),t:0,m:disc,dmg:0}); Snd.tone('sine',200,700,.6,.1); News.add('WORLDROOT SHOOTS A PORTAL TO THE FUTURE!',false,'fport',8); } },
- overgrowth(f,a,dt,pm,o){ if(once(a,'g',.3)){ const r=(up(f,'grow')?30:22)*f.scale; const m=mesh(new THREE.CircleGeometry(r,40),new THREE.MeshBasicMaterial({color:0x4fbf4f,transparent:true,opacity:.42,depthWrite:false}),f.pos.x,.12,f.pos.z,scene,true); m.rotation.x=-Math.PI/2;
-   V8.fields.push({owner:f,x:f.pos.x,z:f.pos.z,r,t:9,heal:up(f,'grow')?9:6,m}); burst(f.pos.clone().setY(1),0x6bd06b,40,16); toast(f.isPlayer?'OVERGROWTH! STAND IN IT TO HEAL':'GRASS IS SPREADING AROUND WORLDROOT!','#9dffb0',900); } },
- timeskip(f,a,dt,pm,o){ if(once(a,'t',.3)){ if(dist2(f,o)<85&&canHit(o)){ const from=o.pos.clone(); ring(from.x,1,from.z,12,0x9dffb0,.7); let best=null, bd=-1; for(let i=0;i<12;i++){ const ang=rand(0,6.28), r=rand(60,ARENA-15), x=Math.cos(ang)*r, z=Math.sin(ang)*r; const d=Math.hypot(x-f.pos.x,z-f.pos.z); if(!inBuilding(x,z,3)&&d>bd){ bd=d; best=[x,z]; } }
-    if(best){ o.pos.x=best[0]; o.pos.z=best[1]; o.kb.set(0,0,0); pillar(best[0],best[1],5,0x9dffb0,1,90); daze(o,.9,'TIME SKIP'); if(up(f,'thief')){ const s=Math.min(20,o.energy); o.energy-=s; f.energy=Math.min(100,f.energy+s); } News.add(`WORLDROOT SKIPS ${o.def.name} ACROSS TIME AND SPACE!`,true,'tskip',8); Snd.tone('sine',900,150,.8,.12); } }
-   else if(f.isPlayer) toast('TOO FAR FOR TIME SKIP','#cbd5e1',700); } },
  ultimate(f,a,dt,pm,o){ v8UltUpdate(f,a,dt,pm,o); },
 };
 

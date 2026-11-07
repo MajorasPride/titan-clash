@@ -8,6 +8,7 @@
 - `sandbox/titan-clash-sandbox.html` = the game code (`game/`) + the test code in `sandbox/src/`, with three.js and the font packed inside. Rebuild it with `python3 sandbox/build_sandbox.py`. Keep it as its own file, separate from the game zip.
 - The real game file is never changed by the sandbox build. Settings the sandbox turns off (crowds, disasters) are never saved, so the game isn't affected.
 - When a test is approved: move its code from `sandbox/src/` into `game/tools/v8-src/`, run `python3 game/tools/build_v8.py`, then test the game.
+- v8.3 (Nov 7, 2026): Sandbox 1 to 12 (VALOR, combat, 1/2/3, water, ultimates, fonts, ult camera, cutscene view) moved into the game. `sandbox/src/` now holds only sandbox-only code: `02-sandbox.js` (test menu, fills in `sbBase`), `03-voidmaw.js`, `05-fullscreen.js`, `07-speed.js`.
 
 ## The settings menu (cleaned up Nov 6, 2026)
 On screen during the fight: only the **⚙ SANDBOX** button (top left) and a small damage counter (top right). Tap ⚙ (PC: Tab) to open the settings menu; the fight pauses while it's open.

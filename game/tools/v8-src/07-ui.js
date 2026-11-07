@@ -88,7 +88,7 @@ function v8HudSetup(){ for(const [pre,side] of [['p1','left'],['p2','right']]){ 
 /* ---- SELECT SCREEN: 007-style dossiers ---- */
 const doss=document.createElement('div'); doss.id='dossier'; el('grid').before(doss); let dPage=0;
 const v8tabs=document.createElement('div'); v8tabs.className='ftabs'; doss.before(v8tabs); el('grid').style.marginTop='10px';
-const COUNTER={valor:'infernoth',ashvin:'ragnavox',raikou:'worldroot'}, COUNTERED={infernoth:'valor',ragnavox:'ashvin',worldroot:'raikou'};
+const COUNTER={valor:'infernoth',ashvin:'ragnavox',raikou:'ragnavox'}, COUNTERED={infernoth:'valor',ragnavox:'raikou'}; // v8.3: RAIKOU was always built for the three-headed dragon
 function radar(d){ const s=V8STAT[d.id], keys=[['hp','HEALTH'],['atk','ATK SPEED'],['def','DEFENSE'],['mob','MOBILITY'],['en','ENERGY']], c=document.createElement('canvas'), W=270, H=220; c.width=W*2; c.height=H*2; c.style.width=W+'px'; c.style.height=H+'px'; const g=c.getContext('2d'); g.scale(2,2);
  const cx=W/2, cy=H/2+6, R=70, pt=(i,r)=>[cx+Math.sin(i/5*Math.PI*2)*r,cy-Math.cos(i/5*Math.PI*2)*r]; g.strokeStyle='#8a7550'; g.lineWidth=1;
  for(let k=1;k<=5;k++){ g.beginPath(); for(let i=0;i<=5;i++){ const [x,y]=pt(i%5,R*k/5); i?g.lineTo(x,y):g.moveTo(x,y); } g.stroke(); }
@@ -99,7 +99,7 @@ function renderDossier(){ const story=vsMode==='story', d=getDef(selId); v8tabs.
  v8tabs.innerHTML=V8DEFS.map(t=>`<div class="ftab ${t.type==='kaiju'?'k':''} ${t.id===selId?'sel':''}" style="--c:${t.css}" data-t="${t.id}">${t.name}<small>${t.type==='mech'?'MECH · '+t.country:'KAIJU · '+t.origin}</small></div>`).join('');
  if(!story) el('grid').querySelectorAll('.card').forEach(cd=>{ const t=cd.dataset.id&&getDef(cd.dataset.id); if(t&&t.core) cd.style.display='none'; });
  if(story||!d.core){ doss.style.display='none'; return; }
- const L=loadOf(d.id), T=V8TREE[d.id], s=V8STAT[d.id], lore=LORE[d.id]||{}, foe=getDef(COUNTER[d.id]||COUNTERED[d.id]);
+ const L=loadOf(d.id), T=V8TREE[d.id], s=V8STAT[d.id], lore=LORE[d.id]||{}, foe=allDefs().find(x=>x.id===(COUNTER[d.id]||COUNTERED[d.id]));
  let h=`<div class="stamp">${d.type==='mech'?'TOP SECRET':'THREAT FILE'}</div><h3 style="color:${d.css};-webkit-text-stroke:.5px #2a2010">${d.name}</h3><div class="cn">CODE NAME: ${d.code} · CLASS: ${d.cls}</div>
  <div class="pg">${['1 · FILE','2 · STATS','3 · ABILITIES & LOADOUT'].map((p,i)=>`<button data-pg="${i}" class="${dPage===i?'sel':''}">${p}</button>`).join('')}</div>`;
  if(dPage===0){ h+=`<p>${lore.bio||d.tag}</p><div class="row"><span>${d.type==='mech'?'BUILT BY':'ORIGIN'}</span><b>${d.type==='mech'?d.country:d.origin}</b></div>

@@ -20,6 +20,13 @@ Hi Claude. This is MajorasPride's game, and we build it together, one chat at a 
 6. I play on PC and on my phone.
 
 =====================================================================
+## v8.3 "NEW VALOR" (Nov 7, 2026)
+=====================================================================
+- The sandbox VALOR (both stances, combat, 1/2/3, water, both ultimates + cutscenes, fonts) is in the game: `tools/v8-src/10-...31-...js` (moved from `sandbox/src/`). `11-skill-keys.js` holds the 1/2/3 keys and the sandbox hooks (sbStart, sbSync, sbReset... call `sbBase`, which only the sandbox fills in). `30-game-settings.js` sets the sandbox test switches to normal play.
+- WORLDROOT is off the roster (`archive/titan-clash-worldroot-archive.js`); Titan Lab code is out (`archive/titan-clash-titan-lab-archive.js`). Notes: `patch-notes/v8.3.md`.
+- The sandbox is built from the game, so code that moves into the game must be taken out of `sandbox/src/` (or it loads twice).
+
+=====================================================================
 ## v8.2.1 "APP" (Nov 6, 2026)
 =====================================================================
 - The game is a website + installable app (PWA) on GitHub Pages: https://majoraspride.github.io/titan-clash/ . Files: `manifest.webmanifest`, `sw.js` (offline helper, only runs over http/https, so double-click still works), `icons/`, repo-top `index.html` + `.nojekyll`. Notes: `patch-notes/v8.2.1.md`.

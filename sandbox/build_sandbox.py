@@ -8,7 +8,8 @@ s = open(os.path.join(root, 'titan-clash.html'), encoding='utf8').read()
 # small hook in the old animation code so new moves can have their own poses (POSES in the sandbox code)
 a = "else if(id==='throw'){ const q=Math.min(1,p/.4); k.armR=lerp(-2.9,-1.2,q); k.elR=-.2; k.lean=.2*q; k.twist=-.3*q; }"
 assert s.count(a) == 1, 'pose hook anchor not found'
-s = s.replace(a, a + "\n   else if(typeof POSES!=='undefined'&&POSES[id]) POSES[id](k,p,e,this,a); // sandbox: per-move poses")
+if 'POSES[id](k,p,e,this,a)' not in s:  # v8.3: the game has this hook itself now
+    s = s.replace(a, a + "\n   else if(typeof POSES!=='undefined'&&POSES[id]) POSES[id](k,p,e,this,a); // sandbox: per-move poses")
 
 code = "\n".join(open(f, encoding='utf8').read() for f in sorted(glob.glob(os.path.join(here, 'src', '*.js'))))
 # sandbox fonts (sandbox/fonts/*.woff2, licenses next to them) packed in as @font-face so the file stays standalone
@@ -32,6 +33,7 @@ for tag, rep in [('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/
                  ('<script src="fonts/bangers-font.js"></script>', '<script>' + rd('fonts/bangers-font.js') + '</script>')]:
     assert s.count(tag) == 1, tag
     s = s.replace(tag, rep)
+s = s.replace('<script src="fonts/ui-fonts.js"></script>', '')  # v8.3: the game's font file; the sandbox packs its own fonts below
 fb = """<script>window.THREE||document.write('<script src="three.min.js"><\\/script>')</script>"""
 s = s.replace(fb, '')
 notes = open(os.path.join(here, 'SANDBOX.md'), encoding='utf8').read().replace('--', '- -')
