@@ -22,6 +22,11 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 5 (Nov 6, 2026): TITAN SPEED test
+Status: **testing**. Feedback: waiting. Code: `sandbox/src/07-speed.js`.
+- ⚙ menu → TITAN SPEED: 100% (now) · 115% · 130%. Speeds up both titans' movement and every attack (wind-up, swing, recovery). Cooldowns, energy and damage stay the same. To help decide if the titans should be faster.
+- Decided Nov 6: 1/2/3 stay their own abilities (not combo enders).
+
 ### Sandbox 4 (Nov 6, 2026): VALOR's BRAWLER stance + air stun lock fix
 Status: **testing**. Feedback: waiting. Code: `sandbox/src/06-valor-brawler.js`.
 - Why: MajorasPride felt the rifle kit was "meh" and asked for a full brawler stance instead (sword away, shield kept, Captain America style, Water attacks, no beam). He also pulled off a 27+ hit air combo without trying.
