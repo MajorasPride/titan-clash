@@ -1,6 +1,6 @@
 # Titan Clash Sandbox
 
-`titan-clash-sandbox.html` is the training ground: **one file that runs on its own** (no game folder needed). Double-click it. It's VALOR and an INFERNOTH dummy on empty ground: no buildings, cars, people, disasters, news or timer.
+`titan-clash-sandbox.html` is the training ground: **one file that runs on its own** (no game folder needed). Double-click it. Pick who you play (YOU: VALOR / VOIDMAW) and the dummy (INFERNOTH / VOIDMAW / VALOR) on empty ground: no buildings, cars, people, disasters, news or timer.
 
 **Rule:** new moves and mechanics get built and played here first. Only what MajorasPride OKs moves into the real game (`titan-clash.html`). Anything he doesn't like gets thrown out, and the game never had it.
 
@@ -10,16 +10,28 @@
 - When a test is approved: move its code from `sandbox/src/` into `game/tools/v8-src/`, run `python3 game/tools/build_v8.py`, then test the game.
 
 ## The panel
-- **DUMMY: STAND / BLOCK / FIGHT BACK**: what INFERNOTH does.
+- **YOU / DUMMY**: tap to switch who you play and who the dummy is.
+- **STAND / BLOCK / FIGHT BACK**: what the dummy does.
 - **SLOW-MO**: 30% speed, to watch a move frame by frame.
 - **∞ ENERGY / ∞ HEALTH**: test without running out. Health refills when it drops low.
 - **RESET**: both titans back to the start, cooldowns cleared.
 - **MOVES**: VALOR's move list with live cooldowns (PC).
 - Damage readout: combo damage, number of hits, the last move and how much it did, plus floating damage numbers.
 
+## Feedback (every test)
+Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
+
 ## Sandbox log (newest first)
+### Sandbox 2 (Nov 6, 2026): VOIDMAW, the dark-magic kaiju
+Status: **testing**. Feedback: waiting.
+- One giant eye on a body of roots and tentacles, purple rune ring, back tentacles that sway, an eye that follows the rival. Inspired by Shuma-Gorath and Biollante, our own design.
+- Light = Tentacle Lash (3-hit combo, long reach). Medium = Vine Sweep (trips). Heavy = Eye Slam when standing, Root Burrow (dives underground and bursts up) when moving. Special = Eye Ring (sticks to the rival, pops after 1.2s; blocking stops it).
+- 1 Vine Grab (pulls the rival in from far away). 2 Spore Cloud (turns into spores, can't be hit, reforms away). 3 Dark Rift (spinning purple spell circle that drains health and energy and slows; never stuns).
+- One form for now (no stance switch). Ultimate (eye gate, black hands, blood red sky) comes with the cutscene work.
+- New panel buttons: YOU (VALOR / VOIDMAW) and DUMMY (INFERNOTH / VOIDMAW / VALOR).
+
 ### Sandbox 1 (Nov 6, 2026): fight feel + VALOR's full kit
-Status: **testing**. Not in the game yet.
+Status: **testing**. Not in the game yet. Feedback: waiting.
 - Every VALOR move has its own pose (wind-up, swing, follow-through) instead of the generic punch.
 - The sword hits along its real path, with a slash trail, a "shing" and slash sparks. Shield hits clang.
 - **Clash:** if both titans' attacks land at the same moment, sparks fly and both get pushed back.

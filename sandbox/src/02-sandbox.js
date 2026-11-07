@@ -57,15 +57,17 @@ const SBCSS=`#sb{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-in
 { const s=document.createElement('style'); s.textContent=SBCSS; document.head.appendChild(s); }
 function sbUI(){ if(el('sb')) return;
  const bar=document.createElement('div'); bar.id='sb'; bar.innerHTML=`<span class="tag">SANDBOX</span>
-  <button data-d="stand">DUMMY: STAND</button><button data-d="block">BLOCK</button><button data-d="fight">FIGHT BACK</button>
+  <button data-a="me">YOU: VALOR</button><button data-a="opp">DUMMY: INFERNOTH</button>
+  <button data-d="stand">STAND</button><button data-d="block">BLOCK</button><button data-d="fight">FIGHT BACK</button>
   <button data-t="slow">SLOW-MO</button><button data-t="infEn">∞ ENERGY</button><button data-t="infHp">∞ HEALTH</button><button data-a="reset">RESET</button><button data-a="kit">MOVES</button>`;
  document.body.appendChild(bar);
  const info=document.createElement('div'); info.id='sbInfo'; document.body.appendChild(info);
  const kit=document.createElement('div'); kit.id='sbKit'; document.body.appendChild(kit);
  const sync=()=>{ bar.querySelectorAll('[data-d]').forEach(b=>b.classList.toggle('on',b.dataset.d===SB.dummy)); bar.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',!!SB[b.dataset.t])); };
  bar.addEventListener('pointerdown',e=>{ const b=e.target.closest('button'); if(!b) return; e.preventDefault(); e.stopPropagation();
-  if(b.dataset.d){ SB.dummy=b.dataset.d; toast('DUMMY: '+b.textContent.replace('DUMMY: ',''),'#7fd4ff',700); }
+  if(b.dataset.d){ SB.dummy=b.dataset.d; toast('DUMMY: '+b.textContent,'#7fd4ff',700); }
   if(b.dataset.t){ SB[b.dataset.t]=!SB[b.dataset.t]; }
+  if(b.dataset.a==='me'||b.dataset.a==='opp'){ const L=b.dataset.a==='me'?SB_PLAY:SB_DUMMIES, k=b.dataset.a==='me'?'me':'opp'; SB[k]=L[(L.indexOf(SB[k])+1)%L.length]; sbStart(); }
   if(b.dataset.a==='reset') sbReset(); if(b.dataset.a==='kit') kit.classList.toggle('hide'); 
   sync(); });
  sync();
@@ -81,21 +83,22 @@ function sbTick(dt){ const p=game.p; if(!p||game.mode!=='match') return; if(game
  if(SB.infEn){ p.energy=100; } if(SB.infHp){ for(const f of [p,game.e]) if(f.hp<f.def.hp*.25&&!f.dead) f.hp=f.def.hp; }
  const C=SB.combo, L=SKILLS[p.def.id]||[], cdTxt=n=>{ const c=p.cds['sk'+n]||0; return c>0?`<span class="cd">${Math.ceil(c)}s</span>`:'<span class="ok">READY</span>'; };
  const info=el('sbInfo'); if(info) info.innerHTML=`<b>DAMAGE</b><div class="big">${C.n&&game.time-C.t<1.6?Math.round(C.dmg):0}</div>${C.n&&game.time-C.t<1.6?C.n+' hit combo':'—'}<br>${SB.last?`last: ${SB.last.name} <b>${Math.round(SB.last.dmg)}</b>`:''}<br><b>ENERGY</b> ${Math.round(p.energy)} · <b>STANCE</b> ${p.F.name}<br><b>1</b> ${cdTxt(1)} <b>2</b> ${cdTxt(2)} <b>3</b> ${cdTxt(3)}`;
- const kit=el('sbKit'); if(kit&&!kit.classList.contains('hide')){ const F=p.F, sw=!F.gun, nm=id=>MOVES[id]?MOVES[id].name:id;
-  kit.innerHTML=`<h4>VALOR · ${F.name}</h4>
-  <div><span class="k">${keyName('punch')}</span>Light: ${sw?'Sword Combo (slash, backhand, shield punch)':nm(F.J)}</div>
+ const kit=el('sbKit'); if(kit&&!kit.classList.contains('hide')){ const F=p.F, nm=id=>MOVES[id]?MOVES[id].name:id, H=HEAVYSET[F.K];
+  kit.innerHTML=`<h4>${p.def.name} · ${F.name}</h4>
+  <div><span class="k">${keyName('punch')}</span>Light: ${nm(F.J)} (×3 combo)</div>
   <div><span class="k">${keyName('heavy')}</span>tap Medium: ${nm(F.M)}</div>
-  <div><span class="k">${keyName('heavy')}</span>hold Heavy: ${sw?'standing = Rising Slash · moving = Lunging Thrust':nm(F.K)}</div>
-  ${sw?`<div><span class="k">${keyName('jump')}</span>+ <span class="k">${keyName('heavy')}</span>in the air: Sword Plunge</div>`:''}
+  <div><span class="k">${keyName('heavy')}</span>hold Heavy: ${H?`standing = ${nm(H[0])} · moving = ${nm(H[1])}`:nm(F.K)}</div>
+  ${F.air?`<div><span class="k">${keyName('jump')}</span>+ <span class="k">${keyName('heavy')}</span>in the air: ${nm(F.air)}</div>`:''}
   <div><span class="k">${keyName('special')}</span>Special: ${nm(F.L)}</div>
   ${L.map((S,i)=>`<div><span class="k">${keyName('sk'+(i+1))}</span>${MOVES[S.id].name} · ${S.cd}s · ⚡${S.cost} ${cdTxt(i+1)}</div>`).join('')}
-  <div><span class="k">${keyName('transform')}</span>Stance: ${p.def.stances[((p.stIdx||0)+1)%p.def.stances.length].name}</div>
+  ${p.def.stances.length>1?`<div><span class="k">${keyName('transform')}</span>Stance: ${p.def.stances[((p.stIdx||0)+1)%p.def.stances.length].name}</div>`:''}
   <div style="margin-top:4px;color:#9fb3c8">Chains: Light → Medium → Heavy → Special or 1/2/3 when a hit lands.</div>`; }
  document.querySelectorAll('#tbtns .sk').forEach((b,i)=>{ const c=p.cds['sk'+(i+1)]||0, s=b.querySelector('.c'); s.style.display=c>0?'flex':'none'; if(c>0) s.textContent=Math.ceil(c); });
 }
 { const o=updateHUD; updateHUD=function(dt){ o(dt); try{ sbTick(dt); }catch(e){ console.error(e); } }; }
 
 /* start straight into the training ground */
-function sbStart(){ selId='valor'; oppId='infernoth'; vsMode='cpu'; mapSel='city'; try{ diff='normal'; }catch(e){} sbUI(); startMatch(); el('p2n').textContent='INFERNOTH (DUMMY)'; }
+const SB_PLAY=['valor','voidmaw'], SB_DUMMIES=['infernoth','voidmaw','valor']; SB.me='valor'; SB.opp='infernoth';
+function sbStart(){ selId=SB.me; oppId=SB.opp; vsMode='cpu'; mapSel='city'; try{ diff='normal'; }catch(e){} sbUI(); startMatch(); el('p2n').textContent=getDef(SB.opp).name+' (DUMMY)'; const bar=el('sb'); if(bar){ bar.querySelector('[data-a=me]').textContent='YOU: '+getDef(SB.me).name; bar.querySelector('[data-a=opp]').textContent='DUMMY: '+getDef(SB.opp).name; } }
 if(document.readyState==='complete') setTimeout(sbStart,300); else addEventListener('load',()=>setTimeout(sbStart,300));
 document.title='Titan Clash · SANDBOX';

@@ -39,7 +39,7 @@ const SKILLS={
   V.stances=[ST('SWORD & SHIELD',{speed:sp,J:'vslash',M:'vbash',K:'vheavy',L:'shieldthrow',air:'swordplunge'}),
              ST('RIFLE',{speed:sp,gun:true,J:'vrifle',M:'buttstrike',K:'chargeshot',L:'grenade'})];
   V.forms=[V.stances[0],V.stances[1]]; V.tag='The leader. Sword, shield and rifle. Balanced and brave.'; }
-const rankOf=(f,id)=>{ const F=f.F; if(!F) return 0; if(id===F.J) return 1; if(id===F.M) return 2; if(id===F.K||id==='risingslash'||id==='swordthrust') return 3; if(id===F.L) return 4; return 0; };
+const rankOf=(f,id)=>{ const F=f.F; if(!F) return 0; if(id===F.J) return 1; if(id===F.M) return 2; if(id===F.K||(HEAVYSET[F.K]&&HEAVYSET[F.K].includes(id))) return 3; if(id===F.L) return 4; return 0; };
 
 /* ---------------- poses: k = joint targets, p = 0..1 through the move ---------------- */
 POSES.vslash=(k,p,e,f,a)=>{ const c=a.chain||0;
@@ -147,7 +147,8 @@ function useSkill(f,n){ const L=SKILLS[f.def.id]; if(!L||!L[n-1]) return false; 
  if(cd>0){ if(f.isPlayer) toast(MOVES[S.id].name.toUpperCase()+' READY IN '+Math.ceil(cd)+'s','#88ccff',600); return false; }
  const c=Math.round(S.cost*costMul(f)); if(f.energy<c&&!SB.infEn){ if(f.isPlayer) toast('NEED MORE ENERGY ('+c+')','#88ccff',700); return false; }
  if(!SB.infEn) f.energy-=c; f.cds['sk'+n]=S.cd; f.dropHeld&&f.dropHeld(); if(f.beamOn) f.stopBeam(); f.atk=null; f.startAtk(S.id); if(f.atk) f.atk.skill=n; return true; }
-{ const oF=v8Fire; v8Fire=function(f,id,quiet){ if(id==='vheavy'){ const I=f.inp||{}, moving=f.isPlayer&&!f.pilot?Math.hypot(I.mx||0,I.mz||0)>.45:Math.random()<.45; id=moving?'swordthrust':'risingslash'; }
+const HEAVYSET={vheavy:['risingslash','swordthrust']}; // heavy button: [standing, moving]
+{ const oF=v8Fire; v8Fire=function(f,id,quiet){ if(HEAVYSET[id]){ const I=f.inp||{}, moving=f.isPlayer&&!f.pilot?Math.hypot(I.mx||0,I.mz||0)>.45:Math.random()<.45; id=HEAVYSET[id][moving?1:0]; }
   if(SB.infEn&&MOVES[id]&&MOVES[id].cost) f.energy=100; return oF(f,id,quiet); }; }
 { const oI=v8Input; v8Input=function(f,inp,dt){ const A=f.atk, canAct=!f.dead&&f.stun<=0&&game.state==='fight'&&f.rollT<=0&&!f.grabbedBy;
   const cancelOK=A&&A.landed&&A.t>=(A.hitAt||0)+.03;
