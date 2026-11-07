@@ -9,14 +9,14 @@
 - The real game file is never changed by the sandbox build. Settings the sandbox turns off (crowds, disasters) are never saved, so the game isn't affected.
 - When a test is approved: move its code from `sandbox/src/` into `game/tools/v8-src/`, run `python3 game/tools/build_v8.py`, then test the game.
 
-## The panel
-- **YOU / DUMMY**: tap to switch who you play and who the dummy is.
-- **STAND / BLOCK / FIGHT BACK**: what the dummy does.
-- **SLOW-MO**: 30% speed, to watch a move frame by frame.
-- **∞ ENERGY / ∞ HEALTH**: test without running out. Health refills when it drops low.
-- **RESET**: both titans back to the start, cooldowns cleared.
-- **MOVES**: VALOR's move list with live cooldowns (PC).
-- Damage readout: combo damage, number of hits, the last move and how much it did, plus floating damage numbers.
+## The settings menu (cleaned up Nov 6, 2026)
+On screen during the fight: only the **⚙ SANDBOX** button (top left) and a small damage counter (top right). Tap ⚙ (PC: Tab) to open the settings menu; the fight pauses while it's open.
+- **Titans:** YOU and DUMMY, tap to switch who you play and who the dummy is.
+- **The dummy:** STAND / BLOCK / FIGHT BACK.
+- **Test tools:** SLOW-MO (30% speed), ∞ ENERGY, ∞ HEALTH (refills when it drops low), DAMAGE NUMBERS on/off.
+- **Moves:** the move list for whoever you play, with live cooldowns.
+- **↺ RESET FIGHT** (both titans back to the start, cooldowns cleared) and **✕ CLOSE** (or tap outside the box).
+- Damage counter: combo damage, number of hits and the last move, plus floating damage numbers.
 
 ## Feedback (every test)
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.

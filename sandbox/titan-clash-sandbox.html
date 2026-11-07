@@ -11,14 +11,14 @@
 - The real game file is never changed by the sandbox build. Settings the sandbox turns off (crowds, disasters) are never saved, so the game isn't affected.
 - When a test is approved: move its code from `sandbox/src/` into `game/tools/v8-src/`, run `python3 game/tools/build_v8.py`, then test the game.
 
-## The panel
-- **YOU / DUMMY**: tap to switch who you play and who the dummy is.
-- **STAND / BLOCK / FIGHT BACK**: what the dummy does.
-- **SLOW-MO**: 30% speed, to watch a move frame by frame.
-- **∞ ENERGY / ∞ HEALTH**: test without running out. Health refills when it drops low.
-- **RESET**: both titans back to the start, cooldowns cleared.
-- **MOVES**: VALOR's move list with live cooldowns (PC).
-- Damage readout: combo damage, number of hits, the last move and how much it did, plus floating damage numbers.
+## The settings menu (cleaned up Nov 6, 2026)
+On screen during the fight: only the **⚙ SANDBOX** button (top left) and a small damage counter (top right). Tap ⚙ (PC: Tab) to open the settings menu; the fight pauses while it's open.
+- **Titans:** YOU and DUMMY, tap to switch who you play and who the dummy is.
+- **The dummy:** STAND / BLOCK / FIGHT BACK.
+- **Test tools:** SLOW-MO (30% speed), ∞ ENERGY, ∞ HEALTH (refills when it drops low), DAMAGE NUMBERS on/off.
+- **Moves:** the move list for whoever you play, with live cooldowns.
+- **↺ RESET FIGHT** (both titans back to the start, cooldowns cleared) and **✕ CLOSE** (or tap outside the box).
+- Damage counter: combo damage, number of hits and the last move, plus floating damage numbers.
 
 ## Feedback (every test)
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
@@ -519,6 +519,16 @@ v8.2 NO MORE STUN LOCK (Nov 6, 2026). Fire burn no longer freezes you. Light hit
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>SANDBOX · Titan Clash — Mechs vs Kaiju</title>
+<!-- v8.2.1 APP: install as an app from the website (manifest + offline helper sw.js). Double-clicking this file still works as before. -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#05080d">
+<link rel="icon" href="icons/favicon-64.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Titan Clash">
+<script>if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -836,7 +846,7 @@ body.portal>canvas:first-of-type{animation:wavy 1.1s ease-in-out infinite;filter
   </div>
   <div id="tTop"><button data-k="transform" class="tr">⚡ STANCE</button><button data-k="super" class="su">SUPER</button><button data-k="lock" class="lk">LOCK</button></div>
 </div>
-<div id="rotate" class="hidden"><div class="ph">📱</div><div>TURN YOUR PHONE SIDEWAYS</div><small>Titan Clash plays in landscape</small></div>
+<div id="rotate" class="hidden"><div class="ph">📱</div><div>TURN YOUR PHONE SIDEWAYS</div><small>Titan Clash plays in landscape</small><small>iPhone: Rotation Lock on? Turn it off in Control Center.</small></div>
 </div>
 
 <div id="title" class="screen">
@@ -4665,39 +4675,58 @@ function dmgNum(f,n,cont){ const d=document.createElement('div'); d.className='s
  const p=f.chest().add(V(rand(-2,2),4,rand(-2,2))); let t=0; const tick=()=>{ t+=.016; const q=p.clone().add(V(0,t*8,0)).project(camera); d.style.left=((q.x+1)/2*innerWidth)+'px'; d.style.top=((1-q.y)/2*innerHeight)+'px'; d.style.opacity=Math.max(0,1-t*1.4);
   if(t<.75&&q.z<1) requestAnimationFrame(tick); else d.remove(); }; tick(); }
 
-/* ---------------- panel ---------------- */
-const SBCSS=`#sb{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:6px;flex-wrap:wrap;justify-content:center;font-family:'Russo One',sans-serif;pointer-events:auto}
-#sb button{background:#0e1621dd;border:2px solid #ffffff33;color:#cfe3f5;border-radius:14px;padding:5px 10px;font-family:inherit;font-size:11px;letter-spacing:1px;cursor:pointer}
-#sb button.on{border-color:#7fd4ff;color:#fff;background:#163654ee;box-shadow:0 0 8px #7fd4ff88}
-#sb .tag{background:#7fd4ff;color:#04121f;border-radius:14px;padding:5px 10px;font-size:11px;letter-spacing:2px}
-#sbInfo{position:fixed;right:10px;top:178px;z-index:20;background:#05080dcc;border:1px solid #ffffff22;border-radius:10px;padding:8px 10px;font:12px/1.5 Rajdhani,sans-serif;color:#cfe3f5;min-width:170px;pointer-events:none}
-#sbInfo b{color:#fff;font-family:'Russo One';font-size:11px;letter-spacing:1px}#sbInfo .big{font-family:'Russo One';font-size:20px;color:#ffd43b}
-#sbKit{position:fixed;left:10px;bottom:10px;z-index:20;background:#05080ddd;border:1px solid #ffffff22;border-radius:10px;padding:8px 10px;font:12px/1.45 Rajdhani,sans-serif;color:#cfe3f5;max-width:330px;pointer-events:none}
+/* ---------------- panel: one ⚙ SANDBOX button, everything else in a settings menu ---------------- */
+const SBCSS=`#sbGear{position:fixed;left:10px;top:70px;z-index:20;background:#0e1621dd;border:2px solid #7fd4ff99;color:#cfe3f5;border-radius:14px;padding:6px 12px;font-family:'Russo One',sans-serif;font-size:12px;letter-spacing:2px;cursor:pointer;pointer-events:auto}
+#sbMenu{position:fixed;inset:0;z-index:40;background:#02050acc;display:flex;align-items:center;justify-content:center;pointer-events:auto}
+#sbMenu.hide{display:none}
+#sbMenu .box{background:#08111c;border:2px solid #7fd4ff66;border-radius:16px;padding:14px 16px;width:min(560px,94vw);max-height:92vh;overflow:auto;font-family:'Russo One',sans-serif;color:#cfe3f5;box-shadow:0 0 24px #7fd4ff33}
+#sbMenu h3{margin:0 0 8px;font-size:15px;letter-spacing:3px;color:#7fd4ff;display:flex;justify-content:space-between;align-items:center}
+#sbMenu .sec{margin:8px 0}#sbMenu .lbl{font-size:10px;letter-spacing:2px;color:#9fb3c8;margin-bottom:4px}
+#sbMenu .row{display:flex;gap:6px;flex-wrap:wrap}
+#sbMenu button{background:#0e1621;border:2px solid #ffffff33;color:#cfe3f5;border-radius:12px;padding:7px 12px;font-family:inherit;font-size:11px;letter-spacing:1px;cursor:pointer}
+#sbMenu button.on{border-color:#7fd4ff;color:#fff;background:#163654;box-shadow:0 0 8px #7fd4ff88}
+#sbMenu button.big{border-color:#7fd4ff99}
+#sbKit{font:12px/1.5 Rajdhani,sans-serif;color:#cfe3f5;background:#05080d;border:1px solid #ffffff22;border-radius:10px;padding:8px 10px}
 #sbKit h4{margin:0 0 4px;font-family:'Russo One';font-size:12px;letter-spacing:2px;color:#7fd4ff}#sbKit .k{display:inline-block;min-width:16px;padding:0 4px;border:1px solid #ffffff55;border-radius:4px;color:#fff;font-family:'Russo One';font-size:10px;text-align:center;margin-right:4px}
-#sbKit .cd{color:#ff9f43}#sbKit .ok{color:#7dff9a}#sbKit.hide{display:none}
+#sbKit .cd{color:#ff9f43}#sbKit .ok{color:#7dff9a}
+#sbInfo{position:fixed;right:10px;top:70px;z-index:20;background:#05080dcc;border:1px solid #ffffff22;border-radius:10px;padding:4px 10px;font:12px/1.4 Rajdhani,sans-serif;color:#cfe3f5;pointer-events:none;text-align:right}
+#sbInfo b{color:#fff;font-family:'Russo One';font-size:10px;letter-spacing:1px}#sbInfo .big{font-family:'Russo One';font-size:18px;color:#ffd43b}#sbInfo.hide{display:none}
 .sbnum{position:fixed;z-index:19;pointer-events:none;font-family:'Russo One';font-size:22px;color:#ffd43b;text-shadow:0 2px 0 #000,0 0 8px #000;transform:translate(-50%,-50%)}.sbnum.small{font-size:12px;color:#ff9f43}
 #moves,#moves2,#news,#pipBox,#dis,#dmg{display:none!important}
 #tbtns .sk{width:44px!important;height:44px!important;font-size:15px!important;background:#163654dd!important;border-color:#7fd4ff99!important}
 #tbtns .sk1{right:150px;bottom:150px}#tbtns .sk2{right:200px;bottom:120px}#tbtns .sk3{right:140px;bottom:200px}
 #tbtns .sk .c{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#ff9f43;background:#000a;border-radius:50%}
-@media (pointer:coarse) and (max-height:520px){ #sbKit{display:none} #sbInfo{top:auto;bottom:8px;right:auto;left:50%;transform:translateX(-50%);min-width:0;font-size:11px;padding:4px 8px} #sb{top:auto;bottom:auto;top:62px} #sb button{padding:3px 7px;font-size:9px} }`;
+@media (pointer:coarse) and (max-height:520px){ #sbGear{top:58px;padding:4px 10px;font-size:11px} #sbInfo{top:58px;font-size:11px} #sbInfo .big{font-size:15px} #sbMenu .box{padding:10px 12px} #sbMenu button{padding:6px 10px;font-size:10px} }`;
 { const s=document.createElement('style'); s.textContent=SBCSS; document.head.appendChild(s); }
-function sbUI(){ if(el('sb')) return;
- const bar=document.createElement('div'); bar.id='sb'; bar.innerHTML=`<span class="tag">SANDBOX</span>
-  <button data-a="me">YOU: VALOR</button><button data-a="opp">DUMMY: INFERNOTH</button>
-  <button data-d="stand">STAND</button><button data-d="block">BLOCK</button><button data-d="fight">FIGHT BACK</button>
-  <button data-t="slow">SLOW-MO</button><button data-t="infEn">∞ ENERGY</button><button data-t="infHp">∞ HEALTH</button><button data-a="reset">RESET</button><button data-a="kit">MOVES</button>`;
- document.body.appendChild(bar);
+SB.showDmg=true;
+function sbMenuOpen(on){ const m=el('sbMenu'); if(!m) return; m.classList.toggle('hide',!on); SB.menu=on; if(game.mode==='match'&&game.state!=='over') game.paused=on; if(on) sbSync(); }
+function sbSync(){ const m=el('sbMenu'); if(!m) return;
+ m.querySelector('[data-a=me]').textContent='YOU: '+getDef(SB.me).name; m.querySelector('[data-a=opp]').textContent='DUMMY: '+getDef(SB.opp).name;
+ m.querySelectorAll('[data-d]').forEach(b=>b.classList.toggle('on',b.dataset.d===SB.dummy));
+ m.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',!!SB[b.dataset.t]));
+ const i=el('sbInfo'); if(i) i.classList.toggle('hide',!SB.showDmg);
+ sbKitRender(); }
+function sbUI(){ if(el('sbGear')) return;
+ const g=document.createElement('button'); g.id='sbGear'; g.textContent='⚙ SANDBOX'; document.body.appendChild(g);
+ g.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); sbMenuOpen(true); });
+ const m=document.createElement('div'); m.id='sbMenu'; m.className='hide'; m.innerHTML=`<div class="box">
+  <h3>SANDBOX SETTINGS <button class="big" data-a="close">✕ CLOSE</button></h3>
+  <div class="sec"><div class="lbl">TITANS (tap to switch)</div><div class="row"><button data-a="me">YOU</button><button data-a="opp">DUMMY</button></div></div>
+  <div class="sec"><div class="lbl">THE DUMMY</div><div class="row"><button data-d="stand">STAND</button><button data-d="block">BLOCK</button><button data-d="fight">FIGHT BACK</button></div></div>
+  <div class="sec"><div class="lbl">TEST TOOLS</div><div class="row"><button data-t="slow">SLOW-MO</button><button data-t="infEn">∞ ENERGY</button><button data-t="infHp">∞ HEALTH</button><button data-t="showDmg">DAMAGE NUMBERS</button></div></div>
+  <div class="sec"><div class="lbl">MOVES</div><div id="sbKit"></div></div>
+  <div class="sec"><div class="row"><button class="big" data-a="reset">↺ RESET FIGHT</button><button class="big" data-a="close">✕ CLOSE</button></div></div>
+ </div>`;
+ document.body.appendChild(m);
  const info=document.createElement('div'); info.id='sbInfo'; document.body.appendChild(info);
- const kit=document.createElement('div'); kit.id='sbKit'; document.body.appendChild(kit);
- const sync=()=>{ bar.querySelectorAll('[data-d]').forEach(b=>b.classList.toggle('on',b.dataset.d===SB.dummy)); bar.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',!!SB[b.dataset.t])); };
- bar.addEventListener('pointerdown',e=>{ const b=e.target.closest('button'); if(!b) return; e.preventDefault(); e.stopPropagation();
-  if(b.dataset.d){ SB.dummy=b.dataset.d; toast('DUMMY: '+b.textContent,'#7fd4ff',700); }
-  if(b.dataset.t){ SB[b.dataset.t]=!SB[b.dataset.t]; }
-  if(b.dataset.a==='me'||b.dataset.a==='opp'){ const L=b.dataset.a==='me'?SB_PLAY:SB_DUMMIES, k=b.dataset.a==='me'?'me':'opp'; SB[k]=L[(L.indexOf(SB[k])+1)%L.length]; sbStart(); }
-  if(b.dataset.a==='reset') sbReset(); if(b.dataset.a==='kit') kit.classList.toggle('hide'); 
-  sync(); });
- sync();
+ m.addEventListener('pointerdown',e=>{ if(e.target===m){ e.preventDefault(); sbMenuOpen(false); return; } const b=e.target.closest('button'); if(!b) return; e.preventDefault(); e.stopPropagation();
+  if(b.dataset.d) SB.dummy=b.dataset.d;
+  if(b.dataset.t) SB[b.dataset.t]=!SB[b.dataset.t];
+  if(b.dataset.a==='me'||b.dataset.a==='opp'){ const L=b.dataset.a==='me'?SB_PLAY:SB_DUMMIES, k=b.dataset.a==='me'?'me':'opp'; SB[k]=L[(L.indexOf(SB[k])+1)%L.length]; sbStart(); sbMenuOpen(true); return; }
+  if(b.dataset.a==='reset'){ sbMenuOpen(false); sbReset(); return; }
+  if(b.dataset.a==='close'){ sbMenuOpen(false); return; }
+  sbSync(); });
+ addEventListener('keydown',e=>{ if(e.code==='Tab'){ e.preventDefault(); sbMenuOpen(!SB.menu); } else if(e.code==='Escape'&&SB.menu){ e.preventDefault(); e.stopImmediatePropagation(); sbMenuOpen(false); } },true);
  // phone: 1 / 2 / 3 buttons
  const tb=el('tbtns'); if(tb) for(const n of [1,2,3]){ const bt=document.createElement('button'); bt.className='sk sk'+n; bt.dataset.k='sk'+n; bt.innerHTML=n+'<span class="c" style="display:none"></span>'; tb.appendChild(bt);
   bt.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); bt.classList.add('on'); inps[0]['sk'+n]=.25; if(navigator.vibrate) try{ navigator.vibrate(12); }catch(_){} });
@@ -4705,13 +4734,9 @@ function sbUI(){ if(el('sb')) return;
 }
 function sbReset(){ const p=game.p,e=game.e; if(!p) return; p.reset(0,-30,0); e.reset(0,30,Math.PI); p.energy=e.energy=100; for(const f of [p,e]){ f.cds={}; f.stun=0; f.hp=f.def.hp; } SB.combo={n:0,dmg:0,t:0}; SB.last=null; for(const c of cams){ c.init=false; } toast('RESET','#7fd4ff',600); }
 const keyName=a=>{ try{ return bindLabel(a,0); }catch(e){ return a; } };
-function sbTick(dt){ const p=game.p; if(!p||game.mode!=='match') return; if(game.state==='fight'||game.state==='intro'){ game.timer=Infinity; }
- if(SB.slow&&game.state==='fight') game.timeScale=.3; else if(!SB.slow&&game.timeScale===.3) game.timeScale=1;
- if(SB.infEn){ p.energy=100; } if(SB.infHp){ for(const f of [p,game.e]) if(f.hp<f.def.hp*.25&&!f.dead) f.hp=f.def.hp; }
- const C=SB.combo, L=SKILLS[p.def.id]||[], cdTxt=n=>{ const c=p.cds['sk'+n]||0; return c>0?`<span class="cd">${Math.ceil(c)}s</span>`:'<span class="ok">READY</span>'; };
- const info=el('sbInfo'); if(info) info.innerHTML=`<b>DAMAGE</b><div class="big">${C.n&&game.time-C.t<1.6?Math.round(C.dmg):0}</div>${C.n&&game.time-C.t<1.6?C.n+' hit combo':'—'}<br>${SB.last?`last: ${SB.last.name} <b>${Math.round(SB.last.dmg)}</b>`:''}<br><b>ENERGY</b> ${Math.round(p.energy)} · <b>STANCE</b> ${p.F.name}<br><b>1</b> ${cdTxt(1)} <b>2</b> ${cdTxt(2)} <b>3</b> ${cdTxt(3)}`;
- const kit=el('sbKit'); if(kit&&!kit.classList.contains('hide')){ const F=p.F, nm=id=>MOVES[id]?MOVES[id].name:id, H=HEAVYSET[F.K];
-  kit.innerHTML=`<h4>${p.def.name} · ${F.name}</h4>
+function sbKitRender(){ const p=game.p, kit=el('sbKit'); if(!p||!kit) return; const L=SKILLS[p.def.id]||[], F=p.F, nm=id=>MOVES[id]?MOVES[id].name:id, H=HEAVYSET[F.K];
+ const cdTxt=n=>{ const c=p.cds['sk'+n]||0; return c>0?`<span class="cd">${Math.ceil(c)}s</span>`:'<span class="ok">READY</span>'; };
+ kit.innerHTML=`<h4>${p.def.name} · ${F.name} · ⚡${Math.round(p.energy)}</h4>
   <div><span class="k">${keyName('punch')}</span>Light: ${nm(F.J)} (×3 combo)</div>
   <div><span class="k">${keyName('heavy')}</span>tap Medium: ${nm(F.M)}</div>
   <div><span class="k">${keyName('heavy')}</span>hold Heavy: ${H?`standing = ${nm(H[0])} · moving = ${nm(H[1])}`:nm(F.K)}</div>
@@ -4719,14 +4744,20 @@ function sbTick(dt){ const p=game.p; if(!p||game.mode!=='match') return; if(game
   <div><span class="k">${keyName('special')}</span>Special: ${nm(F.L)}</div>
   ${L.map((S,i)=>`<div><span class="k">${keyName('sk'+(i+1))}</span>${MOVES[S.id].name} · ${S.cd}s · ⚡${S.cost} ${cdTxt(i+1)}</div>`).join('')}
   ${p.def.stances.length>1?`<div><span class="k">${keyName('transform')}</span>Stance: ${p.def.stances[((p.stIdx||0)+1)%p.def.stances.length].name}</div>`:''}
-  <div style="margin-top:4px;color:#9fb3c8">Chains: Light → Medium → Heavy → Special or 1/2/3 when a hit lands.</div>`; }
+  <div style="margin-top:4px;color:#9fb3c8">Chains: Light → Medium → Heavy → Special or 1/2/3 when a hit lands. PC: Tab opens this menu.</div>`; }
+function sbTick(dt){ const p=game.p; if(!p||game.mode!=='match') return; if(game.state==='fight'||game.state==='intro'){ game.timer=Infinity; }
+ if(SB.slow&&game.state==='fight') game.timeScale=.3; else if(!SB.slow&&game.timeScale===.3) game.timeScale=1;
+ if(SB.infEn){ p.energy=100; } if(SB.infHp){ for(const f of [p,game.e]) if(f.hp<f.def.hp*.25&&!f.dead) f.hp=f.def.hp; }
+ const C=SB.combo, cdTxt=n=>{ const c=p.cds['sk'+n]||0; return c>0?`<span class="cd">${Math.ceil(c)}s</span>`:'<span class="ok">READY</span>'; };
+ const info=el('sbInfo'); if(info&&SB.showDmg){ const live=C.n&&game.time-C.t<1.6; info.innerHTML=`<b>DAMAGE</b> <span class="big">${live?Math.round(C.dmg):0}</span>${live?' · '+C.n+' hits':''}${SB.last?`<br>${SB.last.name} <b>${Math.round(SB.last.dmg)}</b>`:''}`; }
+ if(SB.menu) sbKitRender();
  document.querySelectorAll('#tbtns .sk').forEach((b,i)=>{ const c=p.cds['sk'+(i+1)]||0, s=b.querySelector('.c'); s.style.display=c>0?'flex':'none'; if(c>0) s.textContent=Math.ceil(c); });
 }
 { const o=updateHUD; updateHUD=function(dt){ o(dt); try{ sbTick(dt); }catch(e){ console.error(e); } }; }
 
 /* start straight into the training ground */
 const SB_PLAY=['valor','voidmaw'], SB_DUMMIES=['infernoth','voidmaw','valor']; SB.me='valor'; SB.opp='infernoth';
-function sbStart(){ selId=SB.me; oppId=SB.opp; vsMode='cpu'; mapSel='city'; try{ diff='normal'; }catch(e){} sbUI(); startMatch(); el('p2n').textContent=getDef(SB.opp).name+' (DUMMY)'; const bar=el('sb'); if(bar){ bar.querySelector('[data-a=me]').textContent='YOU: '+getDef(SB.me).name; bar.querySelector('[data-a=opp]').textContent='DUMMY: '+getDef(SB.opp).name; } }
+function sbStart(){ selId=SB.me; oppId=SB.opp; vsMode='cpu'; mapSel='city'; try{ diff='normal'; }catch(e){} sbUI(); startMatch(); el('p2n').textContent=getDef(SB.opp).name+' (DUMMY)'; sbSync(); }
 if(document.readyState==='complete') setTimeout(sbStart,300); else addEventListener('load',()=>setTimeout(sbStart,300));
 document.title='Titan Clash · SANDBOX';
 
