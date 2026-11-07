@@ -16,12 +16,12 @@ rebuildCodeMap(); for(const I of inps) I.sk1=I.sk2=I.sk3=0;
 
 /* empty ground: build the city like normal (so everything is reset properly), then take it all away */
 { const oMC=makeCity; makeCity=function(){ oMC();
-  for(const b of city){ scene.remove(b.mesh); if(b.crk) scene.remove(b.crk); }
-  city.length=0; for(const pr of props){ pr.state='gone'; if(pr.obj){ pr.obj.visible=false; } }
-  for(const p of people){ p.gone=true; p.respawn=null; }
-  if(typeof decor!=='undefined') decor.visible=false;
-  if(!SB.grid){ SB.grid=new THREE.GridHelper(400,40,0x7fd4ff,0x24364a); SB.grid.position.y=.06; SB.grid.material.transparent=true; SB.grid.material.opacity=.55; scene.add(SB.grid);
-   const ring2=new THREE.Mesh(new THREE.RingGeometry(59,60,64),new THREE.MeshBasicMaterial({color:0x7fd4ff,transparent:true,opacity:.5,side:THREE.DoubleSide})); ring2.rotation.x=-Math.PI/2; ring2.position.y=.08; scene.add(ring2); } }; }
+  if(!SB.city){ for(const b of city){ scene.remove(b.mesh); if(b.crk) scene.remove(b.crk); } city.length=0; }
+  if(typeof decor!=='undefined') decor.visible=!!SB.city;
+  if(!SB.pop){ for(const pr of props){ pr.state='gone'; if(pr.obj){ pr.obj.visible=false; } } for(const p of people){ p.gone=true; p.respawn=null; } }
+  if(SB.grid){ SB.grid.visible=SB.ring.visible=!SB.city; }
+  if(!SB.grid&&!SB.city){ SB.grid=new THREE.GridHelper(400,40,0x7fd4ff,0x24364a); SB.grid.position.y=.06; SB.grid.material.transparent=true; SB.grid.material.opacity=.55; scene.add(SB.grid);
+   const ring2=new THREE.Mesh(new THREE.RingGeometry(59,60,64),new THREE.MeshBasicMaterial({color:0x7fd4ff,transparent:true,opacity:.5,side:THREE.DoubleSide})); ring2.rotation.x=-Math.PI/2; ring2.position.y=.08; scene.add(ring2); SB.ring=ring2; } }; }
 { const oSR=startRound; startRound=function(){ oSR(); game.timer=Infinity; if(typeof heli!=='undefined') heli.at=1e9; game.heliDone=true; game.hzT=1e9; game.dropT=1e9; game.coreT=1e9; }; }
 
 /* the dummy: STAND (does nothing), BLOCK (holds block), FIGHT (normal CPU) */
