@@ -22,6 +22,12 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 11 (Nov 6, 2026): ultimate body poses (no more stiff "T-pose")
+Status: **testing**. Feedback: waiting. Code: `sandbox/src/14-ult-poses.js`. Sandbox only, not in the game.
+- Why: MajorasPride: "Why is the model just staying there when doing the ultimate?" The ultimate used one fixed pose (arms up) the whole time while the code slid VALOR around.
+- **Tidecrest Oath (sword):** plants his feet and raises the sword while the water gathers, thrusts forward to launch the dragon, holds his guard while it coils, winds back and does one huge draw-cut, turns away and sheathes on the click, then stands tall.
+- **Shield Pin (brawler):** wind-up and shield throw, reaches out and catches the ricochet, sprints behind the water shield (running legs), low tackle, down on one knee with alternating shield bash / right punch, stands with the shield raised in both hands, then slams it down.
+- Misses get their own stumble pose. Other titans keep the old ultimate pose until they get their own.
 ### Sandbox 10 (Nov 6, 2026): the two ultimates rebuilt to play completely differently
 Status: **testing**. Feedback: waiting. Code: end of `sandbox/src/11-valor-cine.js`.
 - Why: MajorasPride said both ultimates were "literally the same" (both rushed in and punched).
