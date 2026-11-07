@@ -22,6 +22,13 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 10 (Nov 6, 2026): the two ultimates rebuilt to play completely differently
+Status: **testing**. Feedback: waiting. Code: end of `sandbox/src/11-valor-cine.js`.
+- Why: MajorasPride said both ultimates were "literally the same" (both rushed in and punched).
+- **Sword: TIDECREST OATH = long range.** He plants his feet, water gathers into the raised sword, and he launches a giant painted water dragon straight ahead (aimed, steers a little). Dragon hits = cutscene ("LET THEM COME."): the dragon coils and squeezes, VALOR (still far away) does one draw-cut that paints a slash line across the gap, turns his back, sheathes with a *click*, and the dragon bursts. Dragon misses = it crashes far away, no cutscene.
+- **Brawler: SHIELD PIN = up close** (inspired by Captain America pinning Iron Man in Civil War, our own moves). He throws the shield (aimed). Shield hits = cutscene ("THIS CITY HAS A SHIELD!"): the rival staggers, VALOR leaps after the shield and catches it mid-air, tackles the rival flat, pins them with 4 shield bashes, raises the shield (top-down freeze) and slams it down. Shield misses = it flies off and comes back, no cutscene.
+- Intro lines on the announcement card stay: "IF I DON'T... WHO WILL!" (Sword) and "FEAR NOT! I'M HERE NOW!" (Brawler).
+
 ### Sandbox 9 (Nov 6, 2026): real ultimate cutscenes + new fonts + more kinds of water
 Status: **testing**. Feedback: waiting. Code: `sandbox/src/11-valor-cine.js`, `12-fonts.js`, `13-water-more.js`, fonts in `sandbox/fonts/` (license files next to them).
 - **Ultimate flow:** PRESS = a short announcement card (his name + the ultimate's name, no quote, no voice). LANDS = a directed cutscene of the ability: HUD hidden, black bars, camera shots, freeze frames, the quote as big text. MISS = no cutscene. Voice is off (text only).

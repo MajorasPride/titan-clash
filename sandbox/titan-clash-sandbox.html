@@ -24,6 +24,13 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 10 (Nov 6, 2026): the two ultimates rebuilt to play completely differently
+Status: **testing**. Feedback: waiting. Code: end of `sandbox/src/11-valor-cine.js`.
+- Why: MajorasPride said both ultimates were "literally the same" (both rushed in and punched).
+- **Sword: TIDECREST OATH = long range.** He plants his feet, water gathers into the raised sword, and he launches a giant painted water dragon straight ahead (aimed, steers a little). Dragon hits = cutscene ("LET THEM COME."): the dragon coils and squeezes, VALOR (still far away) does one draw-cut that paints a slash line across the gap, turns his back, sheathes with a *click*, and the dragon bursts. Dragon misses = it crashes far away, no cutscene.
+- **Brawler: SHIELD PIN = up close** (inspired by Captain America pinning Iron Man in Civil War, our own moves). He throws the shield (aimed). Shield hits = cutscene ("THIS CITY HAS A SHIELD!"): the rival staggers, VALOR leaps after the shield and catches it mid-air, tackles the rival flat, pins them with 4 shield bashes, raises the shield (top-down freeze) and slams it down. Shield misses = it flies off and comes back, no cutscene.
+- Intro lines on the announcement card stay: "IF I DON'T... WHO WILL!" (Sword) and "FEAR NOT! I'M HERE NOW!" (Brawler).
+
 ### Sandbox 9 (Nov 6, 2026): real ultimate cutscenes + new fonts + more kinds of water
 Status: **testing**. Feedback: waiting. Code: `sandbox/src/11-valor-cine.js`, `12-fonts.js`, `13-water-more.js`, fonts in `sandbox/fonts/` (license files next to them).
 - **Ultimate flow:** PRESS = a short announcement card (his name + the ultimate's name, no quote, no voice). LANDS = a directed cutscene of the ability: HUD hidden, black bars, camera shots, freeze frames, the quote as big text. MISS = no cutscene. Voice is off (text only).
@@ -5770,6 +5777,102 @@ function vsArt(){ if(vsArt.done) return; vsArt.done=1; try{ const crest=wfxTex('
 #v8cut.vs-brawl .ult{color:#fff!important;transform:rotate(5deg)!important;text-shadow:2px 2px 0 #c8323c}
 #v8cut.vs-brawl:before{content:'';position:absolute;right:5vw;top:12vh;width:32vh;height:32vh;background:conic-gradient(from 0deg,#ffd43b 0 10deg,#0000 10deg 20deg,#ffd43b 20deg 30deg,#0000 30deg 40deg,#ffd43b 40deg 50deg,#0000 50deg 60deg,#ffd43b 60deg 70deg,#0000 70deg 80deg,#ffd43b 80deg 90deg,#0000 90deg 100deg,#ffd43b 100deg 110deg,#0000 110deg 120deg,#ffd43b 120deg 130deg,#0000 130deg 140deg,#ffd43b 140deg 150deg,#0000 150deg 160deg,#ffd43b 160deg 170deg,#0000 170deg 180deg,#ffd43b 180deg 190deg,#0000 190deg 200deg,#ffd43b 200deg 210deg,#0000 210deg 220deg,#ffd43b 220deg 230deg,#0000 230deg 240deg,#ffd43b 240deg 250deg,#0000 250deg 260deg,#ffd43b 260deg 270deg,#0000 270deg 280deg,#ffd43b 280deg 290deg,#0000 290deg 300deg,#ffd43b 300deg 310deg,#0000 310deg 320deg,#ffd43b 320deg 330deg,#0000 330deg 340deg,#ffd43b 340deg 350deg,#0000 350deg);border-radius:50%;-webkit-mask:radial-gradient(#000 30%,#0000 70%);mask:radial-gradient(#000 30%,#0000 70%);animation:vsSpin 2s linear infinite}
 @keyframes vsSpin{to{transform:rotate(360deg)}}`; document.head.appendChild(s); }catch(e){ console.error(e); } }
+
+/* =====================================================================
+   v2 SWORD ULTIMATE (Nov 6): MajorasPride said both ultimates felt "literally the same" (both rushed in).
+   TIDECREST OATH is now LONG RANGE and aimed: VALOR plants his feet, raises the sword, and launches a
+   giant painted WATER DRAGON straight ahead. Dragon hits = cutscene: it coils around the rival, VALOR
+   (still far away) draws once, sheathes with a click, and the dragon bursts. Dragon misses = it crashes
+   into the ground far away, no cutscene. BRAWLER stays the close-range Star Rush.
+   ===================================================================== */
+ultSword=function(f,a,dt,pm,o){ const t=a.t;
+ if(a.miss) return;
+ if(once(a,'plant',0)){ f.kb.set(0,0,0); ring(f.pos.x,1,f.pos.z,14,WATER,.5); burst(f.chest(),0xffffff,20,10); Snd.tone('triangle',600,1200,.3,.06); }
+ if(!a.hitT){ f.kb.multiplyScalar(.5);
+  // water gathers into the raised sword
+  if(t<.55&&Math.random()<dt*30){ const g=rand(0,6.28), r=rand(10,18); wfxSprite(Math.random()<.5?'curl':'curlM',f.chest().add(V(Math.cos(g)*r,rand(4,12),Math.sin(g)*r)),6,.3,{grow:.2,vel:V(-Math.cos(g)*r*3,0,-Math.sin(g)*r*3)}); }
+  // the dragon flies straight ahead (aimed, a tiny bit of steering)
+  if(once(a,'launch',.55)){ a.dr={pos:f.chest().add(V(Math.sin(f.yaw)*8,4,Math.cos(f.yaw)*8)),yaw:f.yaw,d:0}; Snd.whoosh(); Snd.tone('sawtooth',150,500,.5,.08); game.shake=Math.max(game.shake,.6); }
+  const D=a.dr; if(D){ const step=110*dt; if(canHit(o)){ const want=Math.atan2(o.pos.x-D.pos.x,o.pos.z-D.pos.z); D.yaw+=clamp(angDiff(want,D.yaw)||0,-.6*dt,.6*dt); }
+   D.pos.x+=Math.sin(D.yaw)*step; D.pos.z+=Math.cos(D.yaw)*step; D.d+=step; D.pos.y=lerp(D.pos.y,(canHit(o)?o.chest().y:10),dt*2);
+   D.tr=(D.tr||0)-dt; if(D.tr<=0){ D.tr=.03; wfxSprite(Math.random()<.5?'curl':'curlM',D.pos.clone(),16,.55,{grow:.3}); wfxSprite('foam',D.pos.clone().add(V(rand(-3,3),rand(-3,3),rand(-3,3))),7,.4,{grow:.3}); }
+   if(canHit(o)&&D.pos.distanceTo(o.chest())<o.radius()+10){ a.hitT=t; a.dr=null; ultHit(f,o,8*pm,0,0,o.chest()); ultLanded(f,a); }
+   else if(D.d>140){ wfxRing(D.pos.x,D.pos.z,20,.6); wfxSprite('splash',D.pos.clone(),20,.5,{grow:.6}); Snd.boom(); a.dr=null; ultMiss(f,a,t); } }
+  if(t>2.2&&!a.hitT&&!a.miss) ultMiss(f,a,t);
+  return; }
+ // LANDED: coil, draw-cut from afar, sheathe, burst
+ const k=t-a.hitT; f.kb.set(0,0,0); if(k<1.6) ultHold(o,10); a.dur=Math.max(a.dur,a.hitT+2.3);
+ if(k<1.05){ a._dr=(a._dr||0)-dt; if(a._dr<=0&&canHit(o)){ a._dr=.04; const q=k/1.05, g=q*Math.PI*6; wfxSprite(Math.sin(g)>0?'curl':'curlM',V(o.pos.x+Math.cos(g)*15,o.pos.y+2+q*26,o.pos.z+Math.sin(g)*15),14,.9,{grow:.3,top:1}); } }
+ for(let i=0;i<4;i++) if(once(a,'sq'+i,a.hitT+.2+i*.22)) ultHit(f,o,4*pm,0,0,o.chest());   // the dragon squeezes
+ if(once(a,'draw',a.hitT+1.15)){ f.yaw=Math.atan2(o.pos.x-f.pos.x,o.pos.z-f.pos.z); a.trail=true; Snd.tone('sawtooth',1400,200,.18,.08);
+  // one huge painted slash line from VALOR to the rival
+  const n=10; for(let i=0;i<n;i++){ const p=f.chest().lerp(o.chest(),i/(n-1)); wfxSprite('crest',p,18,.6,{grow:.3,top:1}); }
+  ultHit(f,o,20*pm,0,0,o.chest()); slashFX(o.chest(),f); game.hitStop=Math.max(game.hitStop,.15); }
+ if(once(a,'turn',a.hitT+1.4)){ a.trail=false; f.yaw+=Math.PI; }
+ if(once(a,'click',a.hitT+1.7)){ Snd.tone('square',2400,1800,.05,.08); Snd.tone('triangle',1600,1600,.08,.05); }
+ if(once(a,'burst',a.hitT+1.85)&&canHit(o)){ const x=o.pos.x,z=o.pos.z; wfxRing(x,z,32,.8); wfxFlat('whirl',x,z,26,1,0,6); for(let i=0;i<8;i++){ const g=i/8*Math.PI*2; wfxSprite(i%2?'curl':'curlM',V(x+Math.cos(g)*14,8,z+Math.sin(g)*14),18,.7,{grow:.5}); }
+  ultHit(f,o,12*pm,40,20,o.chest()); game.shake=Math.max(game.shake,1.3); Snd.boom(); banner('TIDECREST OATH!',900); } };
+
+/* sword cutscene shots, timed from the moment the dragon hits */
+{ const oC=cineCam; cineCam=function(){ const f=CINE.f, o=CINE.o, a=CINE.a; if(!f||!o||CINE.brawl||a.hitT==null) return oC();
+  const k=a.t-a.hitT, fy=f.yaw, fw=V(Math.sin(fy),0,Math.cos(fy)), side=V(Math.cos(fy),0,-Math.sin(fy)), fc=f.chest(), oc=o.chest(), s=f.scale||1;
+  if(k<.12){ cineShot(0); camAt(fc.clone().addScaledVector(fw,22*s).add(V(0,-3,0)).addScaledVector(side,6),fc.clone().add(V(0,4,0))); return; }                       // quote close-up on VALOR
+  if(k<1.05){ if(cineShot(1)) cq.classList.remove('show'); const g=k*1.8; camAt(V(o.pos.x+Math.sin(g)*42,oc.y+8,o.pos.z+Math.cos(g)*42),oc.clone().add(V(0,6,0))); return; } // orbit: the dragon coils
+  if(k<1.4){ if(cineShot(2)){ cineFlash(); cineFreeze(380,.55); } const toO=oc.clone().sub(fc).setY(0).normalize(); camAt(fc.clone().addScaledVector(toO,-18).add(V(0,6,0)).addScaledVector(V(toO.z,0,-toO.x),7),oc); return; } // over the shoulder: the draw-cut
+  if(cineShot(3)){} const back=f.pos.clone().addScaledVector(fw,30*s).addScaledVector(side,7).add(V(0,fc.y-f.pos.y-2,0)); camAt(back,fc.clone().lerp(oc,.3).add(V(0,2,0)));  // he faces us, the dragon bursts far behind
+  if(k>2.25||!f.atk||f.atk.id!=='ultimate') cineEnd(); }; }
+
+/* =====================================================================
+   v2 BRAWLER ULTIMATE (Nov 6): MajorasPride: "copy Captain America's thrown shield where he pins Iron Man".
+   STAR RUSH is now SHIELD PIN (inspired by that fight, our own moves): VALOR throws the shield (aimed).
+   Shield hits = cutscene: the rival staggers, VALOR leaps after the shield and catches it mid-air,
+   tackles the rival flat, pins them with shield bashes, raises the shield high... and slams it down.
+   Shield misses = it ricochets back, no cutscene.
+   ===================================================================== */
+VULT.brawl.name='SHIELD PIN';
+ultBrawl=function(f,a,dt,pm,o){ const t=a.t; a.brawl=1; if(a.miss) return;
+ if(once(a,'s',0)){ if(canHit(o)) f.yaw=Math.atan2(o.pos.x-f.pos.x,o.pos.z-f.pos.z); f.kb.set(0,0,0); Snd.mech&&Snd.mech(); }
+ if(!a.hitT){ f.kb.multiplyScalar(.5);
+  if(once(a,'throw',.3)){ a.sh={pos:f.chest().add(V(Math.sin(f.yaw)*6,0,Math.cos(f.yaw)*6)),yaw:f.yaw,d:0,m:v8DiscMesh()}; if(f.P.v8shield) f.P.v8shield.visible=false; Snd.whoosh(); }
+  const S=a.sh; if(S){ const step=150*dt; if(canHit(o)){ const want=Math.atan2(o.pos.x-S.pos.x,o.pos.z-S.pos.z); S.yaw+=clamp(angDiff(want,S.yaw)||0,-.5*dt,.5*dt); }
+   S.pos.x+=Math.sin(S.yaw)*step; S.pos.z+=Math.cos(S.yaw)*step; S.d+=step; S.pos.y=lerp(S.pos.y,canHit(o)?o.chest().y:10,dt*3); S.m.position.copy(S.pos); S.m.rotation.y+=dt*20;
+   if(Math.random()<dt*25) wfxSprite('spray',S.pos.clone(),7,.3,{grow:.3});
+   if(canHit(o)&&S.pos.distanceTo(o.chest())<o.radius()+6){ a.hitT=t; ultHit(f,o,8*pm,10,0,o.chest()); clangFX(o.chest()); ultLanded(f,a); }
+   else if(S.d>150){ scene.remove(S.m); a.sh=null; if(f.P.v8shield) f.P.v8shield.visible=true; ultMiss(f,a,t); } }
+  if(t>2&&!a.hitT&&!a.miss){ if(a.sh){ scene.remove(a.sh.m); a.sh=null; } if(f.P.v8shield) f.P.v8shield.visible=true; ultMiss(f,a,t); }
+  return; }
+ const k=t-a.hitT, S=a.sh; a.dur=Math.max(a.dur,a.hitT+2.5); ultHold(o,null);
+ // the shield bounces up off them
+ if(S&&k<.55){ S.pos.y+=dt*30; S.m.position.copy(S.pos); S.m.rotation.y+=dt*20; }
+ // VALOR leaps after it, catches it, and comes down on the rival
+ if(k>=.15&&k<.6){ if(!a.j0) a.j0=f.pos.clone(); const q=(k-.15)/.45, tgt=o.pos.clone().add(V(-Math.sin(f.yaw)*(o.radius()+4),0,-Math.cos(f.yaw)*(o.radius()+4)));
+  f.pos.x=lerp(a.j0.x,tgt.x,q); f.pos.z=lerp(a.j0.z,tgt.z,q); f.pos.y=Math.sin(q*Math.PI)*30; f.vy=0; f.onGround=false; f.kb.set(0,0,0);
+  if(Math.random()<dt*30) wfxSprite('foam',f.pos.clone().add(V(0,4,0)),7,.3,{grow:.4}); }
+ if(once(a,'catch',a.hitT+.45)&&S){ scene.remove(S.m); a.sh=null; if(f.P.v8shield) f.P.v8shield.visible=true; Snd.block(); }
+ // tackle: the rival goes down flat
+ if(once(a,'tackle',a.hitT+.6)){ f.pos.y=0; f.onGround=true; o.pos.y=0; o.vy=0; o.stun=Math.max(o.stun,2); ring(o.pos.x,.5,o.pos.z,24,WATER,.5); dust(o.pos.x,o.pos.z,10,10); wfxFlat('ripple',o.pos.x,o.pos.z,26,.8);
+  ultHit(f,o,6*pm,0,0,o.chest()); game.shake=Math.max(game.shake,1); Snd.boom(); Snd.thud&&Snd.thud(); }
+ if(k>.6){ f.kb.set(0,0,0); o.pos.y=Math.max(0,o.pos.y-dt*40); if(o.P&&o.P.root) {} }
+ // pinned: shield bashes
+ for(let i=0;i<4;i++) if(once(a,'b'+i,a.hitT+.75+i*.17)){ const at=o.chest().add(V(0,-2,0)); ultHit(f,o,4*pm,0,0,null); clangFX(at); wfxHit(at,8); toast(['BAM!','WHAM!','KRAK!','POW!'][i],['#ffd43b','#7fd4ff','#ff6b6b','#ffd43b'][i],260); }
+ // raise the shield high...
+ if(once(a,'raise',a.hitT+1.5)){ ring(f.pos.x,f.chest().y+10,f.pos.z,10,0xffffff,.4); burst(f.chest().add(V(0,10,0)),0xffffff,20,10); Snd.tone('triangle',500,1500,.3,.08); }
+ // ...and SLAM it down
+ if(once(a,'slam',a.hitT+1.75)){ const x=o.pos.x,z=o.pos.z; ultHit(f,o,22*pm,30,12,o.chest()); clangFX(o.chest()); wfxRing(x,z,34,.8); wfxFlat('whirl',x,z,28,1,0,8);
+  for(let i=0;i<8;i++){ const g=i/8*Math.PI*2; wfxSprite(i%2?'crest':'foam',V(x+Math.cos(g)*16,4,z+Math.sin(g)*16),16,.7,{grow:.5}); }
+  smash(x,z,10,0,0,0,2,60); dust(x,z,14,14); flashScreen('#ffd43b'); game.hitStop=Math.max(game.hitStop,.2); game.shake=Math.max(game.shake,1.5); Snd.boom(); banner('K.O.!',900); }
+};
+/* brawler cutscene shots, timed from the moment the shield hits */
+{ const oC=cineCam; cineCam=function(){ const f=CINE.f, o=CINE.o, a=CINE.a; if(!f||!o||!CINE.brawl||a.hitT==null) return oC();
+  const k=a.t-a.hitT, fy=f.yaw, fw=V(Math.sin(fy),0,Math.cos(fy)), side=V(Math.cos(fy),0,-Math.sin(fy)), fc=f.chest(), oc=o.chest(), s=f.scale||1;
+  if(k<.12){ cineShot(0); camAt(fc.clone().addScaledVector(fw,20*s).addScaledVector(side,-8).add(V(0,-2,0)),fc.clone().add(V(0,3,0))); return; }      // quote close-up
+  if(k<.6){ if(cineShot(1)) cq.classList.remove('show'); camAt(o.pos.clone().addScaledVector(side,48).add(V(0,18,0)),f.pos.clone().lerp(o.pos,.6).add(V(0,14,0))); return; } // side shot: the leap
+  if(k<1.45){ if(cineShot(2)) cineEl.classList.add('comic'); camAt(o.pos.clone().addScaledVector(side,22).addScaledVector(fw,-6).add(V(0,2.5,0)),oc.clone().lerp(fc,.5)); return; } // ground level: the pin
+  if(k<1.75){ if(cineShot(3)){ cineEl.classList.remove('comic'); cineFreeze(380,.7); } camAt(f.pos.clone().add(V(4,60,4)),f.pos.clone().add(V(0,8,0))); return; } // top-down: shield raised
+  if(cineShot(4)){ cineFlash(); } camAt(o.pos.clone().addScaledVector(side,26).addScaledVector(fw,10).add(V(0,1.5,0)),oc.clone().add(V(0,4,0)));              // low angle: the slam
+  if(k>2.45||!f.atk||f.atk.id!=='ultimate') cineEnd(); }; }
+// clean up a flying shield if the fight resets
+{ const oR=sbReset; sbReset=function(){ const a=game.p&&game.p.atk; if(a&&a.sh){ scene.remove(a.sh.m); a.sh=null; } if(game.p&&game.p.P&&game.p.P.v8shield) game.p.P.v8shield.visible=true; oR(); }; }
 
 /* =====================================================================
    SANDBOX TEST 10: NEW UI FONTS (picked Nov 6, 2026; files + licenses in sandbox/fonts/)
