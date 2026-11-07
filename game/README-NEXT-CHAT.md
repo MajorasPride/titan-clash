@@ -6,7 +6,7 @@ Hi Claude. This is MajorasPride's game, and we build it together, one chat at a 
 - `models/kenney-models.js`: Kenney buildings and cars (CC0), baked so they load when the game is double-clicked.
 - `titan-clash-mcp/`: the agent-pilot server that lets Claude fly a titan. It hasn't changed since v5.
 - `tools/bake_kenney.py`: the script that made `kenney-models.js`. Use it to add more Kenney pieces.
-- **The main plan: the "Titan Clash Ideas" Google Doc** (https://docs.google.com/document/d/1McUnH3mbJuEy1T-i3bgr0xVrWU1NY_WrAHA1JVfoiYk/edit). **Start here.** Read it at the start of every chat and update it at the end (add a new section, keep the old content).
+- **Start here: the "Titan Clash Handoff" Google Doc** (https://docs.google.com/document/d/1ZDMJVD08-JryRpFCsbLu4nV6pJUnmr5wOweyt11vHEw/edit), then the **"Titan Clash Game Plan"** (https://docs.google.com/document/d/1khXHE0--eEL4q5ewzN0EIQ273F98RB2JmtLHHxX30uY/edit) and the **"Titan Clash Dev Notes"** (https://docs.google.com/document/d/18GEBbO3RVWz87MaFAsQy0DsTLH3H0G9lFfMhYZOs8SE/edit). The old "Titan Clash Ideas" doc is retired (kept in Drive).
 - `THINK-TANK-PLAN.md`: the older plan from the Nov 5 think tank.
 
 `three.min.js` (three.js r128) is in this folder, so you can run the game headless and take screenshots.
