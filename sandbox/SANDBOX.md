@@ -23,13 +23,16 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 15e (Nov 7, 2026): an angry sun god
+- MajorasPride: the sun face looked too happy, make it god anger. Now a wrathful sun god: furrowed brows, glowing white eyes, an open third eye, a stern mouth with clenched teeth, a sweeping mustache and a beard of flames; darker red-orange colors (Lightning pair: gold and violet).
+
 ### Sandbox 15d (Nov 7, 2026): sun symbol polish
 - The sun's flame rays are smooth, tapering flames (they looked zigzag), the symbol sits higher so its face shows above the rival, and the glow behind it is softer (it read as a brown disc).
 
 ### Sandbox 15c (Nov 7, 2026): the twins' look
 Code: `sandbox/src/17-ashvin-look.js`.
 - **Swings:** painted staff ribbons from both ends of the bow-staff, in the fighting twin's element, with VALOR's ink outline (FIRE gold to red, ICE white to icy blue, LIGHTNING yellow with a flickering violet edge, WATER VALOR's blue). Hits, spins, slams, waves, spikes, tag cut-ins and the Flame Dash use the same painted splashes and curls (new ICE textures with frost sparkles).
-- **SOLAR MANDALA:** the rune is now a sun (MajorasPride's reference: a sun with flame rays and a face; ours is our own drawing): wavy flame rays that appear with each air strike, then a ring with a triangle border and a calm face (closed eyes, tilak mark, curled mustache).
+- **SOLAR MANDALA:** the rune is now a sun (MajorasPride's reference: a sun with flame rays and a face; ours is our own drawing): wavy flame rays that appear with each air strike, then a ring with a triangle border and a face (15e: an angry sun god).
 - **TOTAL ECLIPSE:** the camera pulls way back, and a black moon with a glowing blue corona hangs in the sky.
 - Light and spin reach fixed (they missed at normal range).
 

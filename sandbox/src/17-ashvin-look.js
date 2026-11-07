@@ -64,7 +64,7 @@ const APAINT={
 { const oUA=FP.updateAtk; FP.updateAtk=function(dt){ const a=this.atk; oUA.call(this,dt); if(!a||this.atk!==a||!isAsh(this)) return; const h=APAINT[a.id]; if(h) try{ h(this,a,dt); }catch(e){ console.error(e); } }; }
 
 /* SOLAR MANDALA: the sun symbol (our own drawing), drawn ray by ray */
-function sunCanvasDraw(x,W,prog,el){ const c=W/2, R=W*.5, gold=el==='lightning'?['#fffbe0','#ffe45a','#8a4cff']:['#fff3c4','#ffb347','#c0400e'];
+function sunCanvasDraw(x,W,prog,el){ const c=W/2, R=W*.5, gold=el==='lightning'?['#fffbe0','#ffd23a','#4a1a9a']:['#ffd27a','#ff6a1a','#6a0c04'];
  x.clearRect(0,0,W,W); x.save(); x.translate(c,c); const N=28, shown=Math.round(N*Math.min(1,prog));
  for(let i=0;i<shown;i++){ const a=i/N*Math.PI*2, long=i%2===0, L=R*(long?.96:.78), w=R*(long?.075:.06);    // wavy flame rays
   x.save(); x.rotate(a); x.beginPath(); x.moveTo(-w,-R*.36);
@@ -76,15 +76,25 @@ function sunCanvasDraw(x,W,prog,el){ const c=W/2, R=W*.5, gold=el==='lightning'?
   x.beginPath(); x.arc(0,0,rr,0,7); x.fillStyle=gold[1]; x.fill(); x.lineWidth=W*.012; x.strokeStyle=INK; x.stroke();
   x.beginPath(); x.arc(0,0,rr*.8,0,7); x.fillStyle='#2a1406'; x.fill(); x.lineWidth=W*.006; x.stroke();
   for(let i=0;i<30;i++){ const a=i/30*Math.PI*2; x.save(); x.rotate(a); x.beginPath(); x.moveTo(-rr*.06,-rr*.8); x.lineTo(rr*.06,-rr*.8); x.lineTo(0,-rr*.97); x.closePath(); x.fillStyle=gold[0]; x.fill(); x.restore(); }
-  const fr=rr*.74; x.beginPath(); x.arc(0,0,fr,0,7); const fg=x.createRadialGradient(0,-fr*.2,fr*.1,0,0,fr); fg.addColorStop(0,'#ffe9b0'); fg.addColorStop(1,gold[1]); x.fillStyle=fg; x.fill();   // the face
-  x.strokeStyle=INK; x.lineWidth=W*.007;
-  for(const s of [-1,1]){ x.beginPath(); x.arc(s*fr*.34,-fr*.08,fr*.17,.15*Math.PI,.85*Math.PI); x.stroke();              // calm closed eyes
-   x.beginPath(); x.moveTo(s*fr*.16,-fr*.32); x.quadraticCurveTo(s*fr*.34,-fr*.42,s*fr*.54,-fr*.3); x.stroke();          // brows
-   x.beginPath(); x.moveTo(0,fr*.3); x.bezierCurveTo(s*fr*.22,fr*.18,s*fr*.42,fr*.34,s*fr*.5,fr*.16); x.bezierCurveTo(s*fr*.56,fr*.08,s*fr*.66,fr*.2,s*fr*.58,fr*.28); x.stroke(); }   // curled mustache
-  x.beginPath(); x.moveTo(0,-fr*.12); x.quadraticCurveTo(-fr*.1,fr*.12,0,fr*.18); x.stroke();                            // nose
-  x.beginPath(); x.arc(0,fr*.42,fr*.12,.2*Math.PI,.8*Math.PI); x.stroke();                                               // small smile
-  x.beginPath(); x.moveTo(0,-fr*.86); x.bezierCurveTo(-fr*.1,-fr*.68,-fr*.06,-fr*.56,0,-fr*.5); x.bezierCurveTo(fr*.06,-fr*.56,fr*.1,-fr*.68,0,-fr*.86);   // tilak mark (flame)
-  x.fillStyle='#c0200e'; x.fill(); x.stroke(); x.beginPath(); x.arc(0,-fr*.44,fr*.05,0,7); x.fillStyle='#fff'; x.fill(); }
+  const fr=rr*.74; x.beginPath(); x.arc(0,0,fr,0,7); const fg=x.createRadialGradient(0,-fr*.15,fr*.1,0,0,fr); fg.addColorStop(0,gold[1]); fg.addColorStop(1,gold[2]); x.fillStyle=fg; x.fill();   // the face: a wrathful sun god
+  x.strokeStyle=INK; x.lineJoin='round';
+  for(let i=0;i<7;i++){ const bx=(i-3)*fr*.13, L=fr*(.28+(i%2)*.12); x.beginPath(); x.moveTo(bx-fr*.06,fr*.42); x.quadraticCurveTo(bx+Math.sin(i)*fr*.1,fr*.42+L*.6,bx+Math.sin(i*1.7)*fr*.05,fr*.42+L);   // beard of flames
+   x.quadraticCurveTo(bx+fr*.05,fr*.42+L*.5,bx+fr*.06,fr*.42); x.closePath(); x.fillStyle=i%2?gold[0]:'#ff8a2a'; x.fill(); x.lineWidth=W*.004; x.stroke(); }
+  for(const s of [-1,1]){
+   x.beginPath(); x.moveTo(s*fr*.08,-fr*.12); x.lineTo(s*fr*.62,-fr*.38); x.lineTo(s*fr*.6,-fr*.27); x.lineTo(s*fr*.1,-fr*.04); x.closePath(); x.fillStyle=INK; x.fill();   // furrowed brows, slanting down to the middle
+   x.beginPath(); x.moveTo(s*fr*.14,-fr*.02); x.quadraticCurveTo(s*fr*.34,-fr*.18,s*fr*.54,-fr*.1); x.quadraticCurveTo(s*fr*.36,fr*.06,s*fr*.14,-fr*.02); x.closePath();   // glaring eyes
+   x.save(); x.shadowColor='#ffffff'; x.shadowBlur=W*.03; x.fillStyle='#ffffff'; x.fill(); x.restore(); x.lineWidth=W*.006; x.stroke();
+   x.beginPath(); x.moveTo(s*fr*.18,fr*.08); x.quadraticCurveTo(s*fr*.3,fr*.16,s*fr*.4,fr*.12); x.lineWidth=W*.004; x.stroke();                                     // hard lines under the eyes
+   x.beginPath(); x.moveTo(s*fr*.05,fr*.3); x.bezierCurveTo(s*fr*.3,fr*.26,s*fr*.52,fr*.34,s*fr*.66,fr*.62); x.bezierCurveTo(s*fr*.5,fr*.46,s*fr*.3,fr*.4,s*fr*.05,fr*.38); x.closePath();   // mustache sweeping down
+   x.fillStyle='#2a1406'; x.fill(); x.lineWidth=W*.004; x.stroke(); }
+  x.beginPath(); x.moveTo(-fr*.06,-fr*.06); x.lineTo(-fr*.09,fr*.2); x.lineTo(0,fr*.25); x.lineTo(fr*.09,fr*.2); x.lineTo(fr*.06,-fr*.06); x.lineWidth=W*.005; x.stroke();   // nose
+  x.beginPath(); x.moveTo(-fr*.22,fr*.5); x.quadraticCurveTo(0,fr*.38,fr*.22,fr*.5); x.lineTo(fr*.18,fr*.56); x.quadraticCurveTo(0,fr*.47,-fr*.18,fr*.56); x.closePath();   // stern mouth, teeth clenched
+  x.fillStyle='#fff3c4'; x.fill(); x.lineWidth=W*.005; x.stroke(); for(let t=-2;t<=2;t++){ x.beginPath(); x.moveTo(t*fr*.07,fr*.44); x.lineTo(t*fr*.07,fr*.53); x.lineWidth=W*.003; x.stroke(); }
+  x.beginPath(); x.moveTo(-fr*.3,-fr*.5); x.quadraticCurveTo(0,-fr*.56,fr*.3,-fr*.5); x.lineWidth=W*.004; x.stroke();                                                    // forehead creases
+  x.beginPath(); x.moveTo(-fr*.22,-fr*.6); x.quadraticCurveTo(0,-fr*.65,fr*.22,-fr*.6); x.stroke();
+  x.beginPath(); x.moveTo(0,-fr*.42); x.quadraticCurveTo(fr*.1,-fr*.3,0,-fr*.2); x.quadraticCurveTo(-fr*.1,-fr*.3,0,-fr*.42); x.closePath();                              // the open third eye
+  x.save(); x.shadowColor='#ffffff'; x.shadowBlur=W*.035; x.fillStyle='#ffffff'; x.fill(); x.restore(); x.lineWidth=W*.005; x.stroke();
+  x.beginPath(); x.arc(0,-fr*.31,fr*.035,0,7); x.fillStyle='#c0200e'; x.fill(); }
  x.restore(); }
 function sunSymbol(el){ const c=document.createElement('canvas'); c.width=c.height=1024; const t=new THREE.CanvasTexture(c);
  const m=new THREE.Mesh(new THREE.PlaneGeometry(76,76),new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false,side:THREE.DoubleSide,toneMapped:false,fog:false}));
