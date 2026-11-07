@@ -85,8 +85,8 @@ function ashSwapFX(f){ const c=isSun(f)?ASH.SUN:ASH.MOON; burst(f.chest(),c,26,1
 function ashElTick(f){ if(!isAsh(f)||!f.load) return; const e=ashEl(f); f.load.el=e==='ice'?'none':e; }
 
 /* ---------- little helpers ---------- */
-const ashFx=(f,at,n,sp,tw)=>{ const e=ashEl(f,tw), c=ASH.COL[e]; burst(at,c,n,sp); burst(at,0xffffff,Math.ceil(n/3),sp*.7);
- if(e==='lightning'&&Math.random()<.5) zapBolt(at.clone().add(V(rand(-4,4),rand(4,9),rand(-4,4))),at); if(e==='water'||e==='ice') wfxSprite('splash',at.clone(),7+n*.15,.35,{grow:.5}); };
+function ashFx(f,at,n,sp,tw){ const e=ashEl(f,tw), c=ASH.COL[e]; burst(at,c,n,sp); burst(at,0xffffff,Math.ceil(n/3),sp*.7);
+ if(e==='lightning'&&Math.random()<.5) zapBolt(at.clone().add(V(rand(-4,4),rand(4,9),rand(-4,4))),at); if(e==='water'||e==='ice') wfxSprite('splash',at.clone(),7+n*.15,.35,{grow:.5}); }
 function ashOnHit(f,o,tw){ if(!o||o.dead) return; const e=ashEl(f,tw);
  if(e==='ice') o.ashSlowT=Math.max(o.ashSlowT||0,1.5);
  if(e==='water') o.soakT=4; }

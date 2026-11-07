@@ -23,6 +23,13 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 15c (Nov 7, 2026): the twins' look
+Code: `sandbox/src/17-ashvin-look.js`.
+- **Swings:** painted staff ribbons from both ends of the bow-staff, in the fighting twin's element, with VALOR's ink outline (FIRE gold to red, ICE white to icy blue, LIGHTNING yellow with a flickering violet edge, WATER VALOR's blue). Hits, spins, slams, waves, spikes, tag cut-ins and the Flame Dash use the same painted splashes and curls (new ICE textures with frost sparkles).
+- **SOLAR MANDALA:** the rune is now a sun (MajorasPride's reference: a sun with flame rays and a face; ours is our own drawing): wavy flame rays that appear with each air strike, then a ring with a triangle border and a calm face (closed eyes, tilak mark, curled mustache).
+- **TOTAL ECLIPSE:** the camera pulls way back, and a black moon with a glowing blue corona hangs in the sky.
+- Light and spin reach fixed (they missed at normal range).
+
 ### Sandbox 15b (Nov 7, 2026): twin ultimate colors
 - Ice is a real icy blue now (it read as white). Runes, beams and the ice pillar keep their colors instead of washing out to white. Sun's aura in TOTAL ECLIPSE is a smaller glow (it was a big tan ball), the combined beam is wider, and the crash dust is smaller.
 
