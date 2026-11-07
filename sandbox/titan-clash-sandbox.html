@@ -25,6 +25,9 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 14d (Nov 7, 2026): rebuilt with the game's v8.4.1
+- Same sandbox, rebuilt from v8.4.1 (the select screen's who's-next tags and the VOIDMAW coming-soon card). VOIDMAW is still playable here from ⚙ → TITANS.
+
 ### Sandbox 14c (Nov 7, 2026): VALOR's and INFERNOTH's work moved into the game (v8.4)
 - The INFERNOTH rework (Sandbox 13 to 13g) and the loadout rework (Sandbox 14, 14b) are in the real game now. They're still in the sandbox too (it's built from the game), so VALOR and INFERNOTH stay as test titans and dummies.
 - `sandbox/src/` keeps only sandbox things: the ⚙ menu, VOIDMAW, fullscreen, speed, the build tag, the ⚙ LOADOUT picks (`12-sandbox-loadout.js`) and METERS (`14-meters.js`).
@@ -7486,7 +7489,7 @@ function spdSync(){ document.querySelectorAll('#sbMenu [data-spd]').forEach(b=>b
 
 /* Which sandbox build is this? Shown small in the top-right corner and in the ⚙ menu, so an old (cached) copy is easy to spot.
    Bump SB_BUILD every time the sandbox is pushed. */
-const SB_BUILD='14c · Nov 7';
+const SB_BUILD='14d · Nov 7';
 { const d=document.createElement('div'); d.id='sbVer'; d.textContent='SANDBOX '+SB_BUILD;
   d.style.cssText="position:fixed;right:8px;bottom:6px;z-index:25;font:10px/1 'Russo One',sans-serif;letter-spacing:1px;color:#9fb3c8;opacity:.75;pointer-events:none";
   document.body.appendChild(d); }

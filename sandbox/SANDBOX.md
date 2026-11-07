@@ -23,6 +23,9 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 14d (Nov 7, 2026): rebuilt with the game's v8.4.1
+- Same sandbox, rebuilt from v8.4.1 (the select screen's who's-next tags and the VOIDMAW coming-soon card). VOIDMAW is still playable here from ⚙ → TITANS.
+
 ### Sandbox 14c (Nov 7, 2026): VALOR's and INFERNOTH's work moved into the game (v8.4)
 - The INFERNOTH rework (Sandbox 13 to 13g) and the loadout rework (Sandbox 14, 14b) are in the real game now. They're still in the sandbox too (it's built from the game), so VALOR and INFERNOTH stay as test titans and dummies.
 - `sandbox/src/` keeps only sandbox things: the ⚙ menu, VOIDMAW, fullscreen, speed, the build tag, the ⚙ LOADOUT picks (`12-sandbox-loadout.js`) and METERS (`14-meters.js`).
