@@ -23,6 +23,9 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 17c (Nov 8, 2026): camera button = just the emoji
+- MajorasPride: just the emoji, to the left (his pick: left of ⚙ SANDBOX). The 🎥 has no circle or background now and sits first in the top-left row; ⚙ SANDBOX and FULLSCREEN slide right to make room.
+
 ### Sandbox 17b (Nov 8, 2026): small camera button
 - MajorasPride: the camera angles are great, the button was massive on phone. Now a small round 🎥 icon right next to FULLSCREEN (no name on it); the view's name still shows for 1 second when you tap it.
 

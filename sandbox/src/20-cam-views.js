@@ -2,7 +2,7 @@
    SANDBOX 17 (Nov 8, 2026): CAMERA VIEWS YOU CAN FLIP IN THE FIGHT + ACTION CAM.
    MajorasPride: "we need different toggled camera views" (his brother asked for a third-person
    shooter style view). Named ACTION CAM (MajorasPride: don't name it after the game).
-   - small round 🎥 button (next to FULLSCREEN; PC: C key; Sandbox 17b: icon only, the view's name shows for 1s when you tap it) flips through the views in the middle of a fight,
+   - small round 🎥 button (next to FULLSCREEN; PC: C key; Sandbox 17c: just the emoji, first in the top-left row; the view's name shows for 1s when you tap it) flips through the views in the middle of a fight,
      with a 1-second name tag:
      TITAN CAM (default) → ACTION CAM → OVER THE SHOULDER (close) → FREE BEHIND → FIXED → NEWS CAM (once unlocked)
    - ACTION CAM (third-person shooter style): the camera rides above and behind your
@@ -42,12 +42,13 @@ function actionCam(dt){ const A=game.p, B=game.e, c=cams[0], C=camera, Pd=pads[0
 // the crosshair shows in ACTION CAM (phone too) while you're not locked on
 { const o=indicators; indicators=function(i,x0,w,showIt){ o(i,x0,w,showIt); if(i===0&&showIt&&SET.cam==='action'&&!game.vs2){ const xh=el('xhair'); xh.classList.toggle('hidden',!!cams[0].lock); xh.style.left=(x0+w/2)+'px'; } }; }
 // 🎥 button + C key
-{ const s=document.createElement('style'); s.textContent=`#sbCam{position:fixed;left:292px;top:70px;z-index:20;width:34px;height:34px;padding:0;background:#0e1621dd;border:2px solid #7fd4ff99;color:#cfe3f5;border-radius:50%;font-size:16px;line-height:30px;text-align:center;cursor:pointer;pointer-events:auto}
+{ const s=document.createElement('style'); s.textContent=`#sbCam{position:fixed;left:10px;top:70px;z-index:20;width:26px;height:26px;padding:0;margin:0;background:none;border:none;box-shadow:none;font-size:20px;line-height:26px;text-align:center;cursor:pointer;pointer-events:auto;filter:drop-shadow(0 0 3px #000)}
 body.vcine #sbCam{visibility:hidden!important}`; document.head.appendChild(s);
   const b=document.createElement('button'); b.id='sbCam'; b.textContent='🎥'; b.title='Camera: '+camViewName(); document.body.appendChild(b);
   b.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); camCycle(); });
   addEventListener('keydown',e=>{ if(e.code==='KeyC'&&!e.repeat&&game.mode==='match') camCycle(); }); }
-// keep the 🎥 button lined up just right of FULLSCREEN on any screen
-function camBtnPlace(){ const f=el('sbFull'), b=el('sbCam'); if(!f||!b) return; const r=f.getBoundingClientRect(); if(!r.width) return;
- b.style.left=(r.right+6)+'px'; b.style.top=(r.top+(r.height-34)/2)+'px'; }
+// Sandbox 17c: just the 🎥 emoji, first in the top-left row; ⚙ SANDBOX and FULLSCREEN slide right to make room
+function camBtnPlace(){ const g=el('sbGear'), f=el('sbFull'), b=el('sbCam'); if(!g||!f||!b) return; const W=26;
+ g.style.left=''; f.style.left=''; const gr=g.getBoundingClientRect(), fr=f.getBoundingClientRect(); if(!gr.width) return;
+ b.style.left=gr.left+'px'; b.style.top=(gr.top+(gr.height-W)/2)+'px'; g.style.left=(gr.left+W+4)+'px'; f.style.left=(fr.left+W+4)+'px'; }
 addEventListener('resize',()=>setTimeout(camBtnPlace,60)); setInterval(camBtnPlace,1000); setTimeout(camBtnPlace,300);
