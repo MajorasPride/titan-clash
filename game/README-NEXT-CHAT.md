@@ -20,6 +20,12 @@ Hi Claude. This is MajorasPride's game, and we build it together, one chat at a 
 6. I play on PC and on my phone.
 
 =====================================================================
+## Sandbox 19 FIGHT LAB (Nov 8, 2026, sandbox only)
+=====================================================================
+- `sandbox/src/23-fight-lab.js`: LIMB HITS (body-part hit points with swept checks, wraps `coneHit` and `FP.melee`; move-to-part list `LAB_LIMB`), HITBOXES view, live FRAME DATA cards, MOVE MAP of cancels. All toggles in the ⚙ menu. Details and next steps: `sandbox/SANDBOX.md` → Sandbox 19.
+- From a study of Fray, Mugen3D, ThirdPersonSmashDemo (all MIT) and fighting-game-prototype (no license, ideas only). Credit the MIT ones if this moves into the game.
+
+=====================================================================
 ## v8.4.7 unfinished titans hidden (Nov 8, 2026)
 =====================================================================
 - `38-titan-status.js`: `TITAN_HIDDEN=['raikou','ragnavox']` takes them out of `V8DEFS`/`ROSTER` (kept in `HIDDEN_DEFS`). `TITAN_STATUS` is empty for now. makeCity: `MAP.bGap` switch (off in the game). Notes: `patch-notes/v8.4.7.md`.
