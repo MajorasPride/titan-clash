@@ -3,53 +3,79 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>INFERNOTH — Parts Editor</title>
+<title>INFERNOTH — Model Editor</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rubik:wght@500;700&display=swap" rel="stylesheet">
 <style>
-  html,body{margin:0;height:100%;overflow:hidden;background:#141418;font-family:Rubik,sans-serif;color:#ffeee0}
+  html,body{margin:0;height:100%;overflow:hidden;background:#232327;font-family:Rubik,sans-serif;color:#e8e8ee;user-select:none;-webkit-user-select:none}
   #c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
-  .hud{position:fixed;left:10px;top:8px;pointer-events:none}
-  .hud h1{font-family:'Press Start 2P',monospace;font-size:13px;margin:0;color:#ffad5c}
-  #tip{position:fixed;left:0;right:0;top:30px;text-align:center;font:700 13px Rubik;color:#ffd166;pointer-events:none;text-shadow:0 0 6px #000}
-  #slots{position:fixed;left:6px;top:52px;width:128px;max-height:calc(100% - 330px);overflow:auto;background:rgba(14,10,10,.85);border:2px solid #ff7a2a;border-radius:10px;padding:4px}
-  #slots h3{margin:6px 2px 2px;font:700 9px 'Press Start 2P',monospace;color:#ffad5c}
-  #slots div{padding:5px 6px;border-radius:6px;font-size:12px;display:flex;align-items:center;gap:5px}
-  #slots div.sel{background:#ff7a2a;color:#1a0d06}
-  #slots .sw{width:10px;height:10px;border-radius:2px;flex:none}
-  #slots .src{margin-left:auto;font-size:10px;opacity:.7}
-  #edit{position:fixed;left:0;right:0;bottom:0;background:rgba(0,0,0,.84);padding:6px 8px calc(6px + env(safe-area-inset-bottom));font-size:12px}
-  .btns{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:4px}
-  button{font:700 12px Rubik,sans-serif;color:#ffeee0;background:rgba(90,30,10,.8);border:2px solid #ff7a2a;border-radius:9px;padding:7px 8px}
-  button.on{background:#ff7a2a;color:#1a0d06}
-  .grid{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:3px 6px;align-items:center}
-  .grid input{width:100%;accent-color:#ff7a2a}
-  #title{font:700 12px Rubik;color:#ffd166;text-align:center;margin:2px 0 4px}
-  #out{position:fixed;left:8px;right:8px;top:60px;height:100px;display:none;background:#000;color:#ffd9b0;border:1px solid #ff7a2a;border-radius:8px;font-size:10px}
-  #ring{position:fixed;border:2px solid #ff3b3b;border-radius:50%;pointer-events:none;display:none;transform:translate(-50%,-50%)}
+  .top{position:fixed;left:0;right:0;top:0;display:flex;align-items:center;gap:6px;padding:6px 8px;background:rgba(30,30,34,.94);border-bottom:1px solid #3a3a42;font-size:12px;z-index:3}
+  .top h1{font:700 11px 'Press Start 2P',monospace;color:#ffad5c;margin:0 6px 0 0}
+  #tip{position:fixed;left:0;right:0;top:44px;text-align:center;font:700 13px Rubik;color:#ffd166;pointer-events:none;text-shadow:0 0 6px #000;z-index:2}
+  #outliner{position:fixed;left:6px;top:44px;width:140px;max-height:calc(100% - 330px);overflow:auto;background:rgba(30,30,34,.92);border:1px solid #4a4a55;border-radius:8px;padding:4px;z-index:2}
+  #outliner h3{margin:6px 2px 2px;font:700 9px 'Press Start 2P',monospace;color:#ffad5c}
+  #outliner div{padding:4px 6px;border-radius:5px;font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer}
+  #outliner div.sel{background:#e0782a;color:#111}
+  #outliner .sw{width:9px;height:9px;border-radius:2px;flex:none}
+  #outliner .src{margin-left:auto;font-size:10px;opacity:.7}
+  #outliner .eye{opacity:.8;font-size:11px}
+  #panel{position:fixed;left:0;right:0;bottom:0;background:rgba(30,30,34,.96);border-top:1px solid #3a3a42;padding:5px 8px calc(6px + env(safe-area-inset-bottom));font-size:12px;z-index:3}
+  .tabs{display:flex;gap:4px;margin-bottom:5px}
+  .tabs button{flex:1;padding:6px 2px;font-size:11px;border-radius:7px}
+  .btns{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin:3px 0}
+  button{font:700 12px Rubik,sans-serif;color:#e8e8ee;background:#3a3a44;border:1px solid #55555f;border-radius:8px;padding:7px 8px}
+  button.on{background:#e0782a;border-color:#ff9a4a;color:#111}
+  .grid{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:4px 6px;align-items:center}
+  .grid input[type=range]{width:100%;accent-color:#e0782a}
+  .pane{display:none}.pane.on{display:block}
+  #title{font:700 12px Rubik;color:#ffd166;text-align:center;margin-bottom:3px}
+  .sw2{width:26px;height:26px;border-radius:6px;border:2px solid #555;padding:0}
+  #out{position:fixed;left:8px;right:8px;top:60px;height:100px;display:none;background:#000;color:#ffd9b0;border:1px solid #e0782a;border-radius:8px;font-size:10px;z-index:5}
+  #ring{position:fixed;border:2px solid #ff4b4b;border-radius:50%;pointer-events:none;display:none;transform:translate(-50%,-50%);z-index:2}
+  .hint{opacity:.6;font-size:10px;text-align:center}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <div id="ring"></div>
-<div class="hud"><h1>PARTS EDITOR</h1></div>
+<div class="top"><h1>INFERNOTH EDITOR</h1>
+  <button id="bUndo">↶ Undo</button><button id="bRedo">↷ Redo</button><button id="bList" class="on">Outliner</button><button id="bCopy">Copy settings</button></div>
 <div id="tip"></div>
-<div id="slots"></div>
+<div id="outliner"></div>
 <textarea id="out" readonly></textarea>
-<div id="edit">
-  <div id="title">Pick a part on the left</div>
-  <div class="btns">
-    <button data-src="A">Use Model 1</button><button data-src="B">Use Model 2</button><button data-src="C">Use v0.3</button><button data-src="off">Remove part</button>
-    <button id="bResetPart">Reset part</button>
+<div id="panel">
+  <div id="title">Tap a part</div>
+  <div class="tabs"><button data-tab="parts" class="on">Parts</button><button data-tab="move">Move</button><button data-tab="sculpt">Sculpt</button><button data-tab="paint">Paint</button><button data-tab="view">View</button></div>
+
+  <div class="pane on" id="t-parts">
+    <div class="btns"><button data-src="A">Model 1</button><button data-src="B">Model 2</button><button data-src="C">v0.3</button><button data-src="off">Remove</button></div>
+    <div class="btns"><button id="bDup">Duplicate</button><button id="bDel">Delete copy</button><button id="bFlip">Flip (mirror)</button><button id="bSym">Copy to other side</button><button id="bResetPart">Reset part</button></div>
   </div>
-  <div class="grid">
-    <span>Move ↔</span><input id="px" type="range" min="-4" max="4" step=".02"><span>Turn ↔</span><input id="ry" type="range" min="-180" max="180" step="1">
-    <span>Move ↕</span><input id="py" type="range" min="-4" max="4" step=".02"><span>Tilt</span><input id="rx" type="range" min="-180" max="180" step="1">
-    <span>Move ⇵</span><input id="pz" type="range" min="-4" max="4" step=".02"><span>Roll</span><input id="rz" type="range" min="-180" max="180" step="1">
-    <span>Size</span><input id="sc" type="range" min=".3" max="2.5" step=".01"><span>Brush</span><input id="brush" type="range" min=".15" max="2.5" step=".05" value=".6">
+
+  <div class="pane" id="t-move">
+    <div class="btns"><button data-gz="translate" class="on">Move (G)</button><button data-gz="rotate">Rotate (R)</button><button data-gz="scale">Scale (S)</button><button id="bSpace">Space: World</button><button id="bSnap">Snap: off</button></div>
+    <div class="grid"><span>Size</span><input id="sc" type="range" min=".2" max="3" step=".01"><span></span><span></span></div>
+    <div class="hint">Drag the arrows / rings on the selected part. Drag empty space to orbit.</div>
   </div>
-  <div class="btns" style="margin-top:5px">
-    <button id="bMove" class="on">Move view</button><button id="bErase">Erase (this part)</button><button id="bUndo">Undo</button>
-    <button id="bBase">Base: Model 2</button><button id="bColor" class="on">Part colors</button><button id="bCopy">Copy settings</button><button id="bList" class="on">Parts list</button>
+
+  <div class="pane" id="t-sculpt">
+    <div class="btns"><button data-br="inflate" class="on">Inflate</button><button data-br="deflate">Deflate</button><button data-br="smooth">Smooth</button><button data-br="flatten">Flatten</button><button data-br="grab">Grab</button><button data-br="erase">Erase</button></div>
+    <div class="grid"><span>Size</span><input id="brush" type="range" min=".15" max="3" step=".05" value=".7"><span>Strength</span><input id="str" type="range" min=".05" max="1" step=".05" value=".4"></div>
+    <div class="btns"><button id="bMirrorX" class="on">X-mirror</button><button id="bOrbit">Orbit (hold view)</button></div>
+    <div class="hint">Sculpt / erase only touch the selected part. Sculpting works on Model 1 and Model 2 parts.</div>
+  </div>
+
+  <div class="pane" id="t-paint">
+    <div class="btns"><input type="color" id="tint" class="sw2" value="#ffffff">
+      <button class="sw2" data-c="#ffffff" style="background:#fff"></button><button class="sw2" data-c="#ff9a5a" style="background:#ff9a5a"></button>
+      <button class="sw2" data-c="#ff5a3a" style="background:#ff5a3a"></button><button class="sw2" data-c="#8fd4ff" style="background:#8fd4ff"></button>
+      <button class="sw2" data-c="#e8dcc0" style="background:#e8dcc0"></button><button class="sw2" data-c="#5a5a66" style="background:#5a5a66"></button>
+      <button class="sw2" data-c="#9a6aff" style="background:#9a6aff"></button><button id="bAllTint">Tint all parts</button></div>
+    <div class="hint">Tints the selected part (white = original colors). Turn off View → Part colors to see it.</div>
+  </div>
+
+  <div class="pane" id="t-view">
+    <div class="btns"><button data-cam="front">Front (1)</button><button data-cam="side">Side (3)</button><button data-cam="top">Top (7)</button><button data-cam="reset">Reset</button></div>
+    <div class="btns"><button id="bColor">Part colors</button><button id="bWire">Wireframe</button><button id="bXray">X-ray</button><button id="bIso">Isolate (H)</button><button id="bBase">Base: Model 2</button></div>
   </div>
 </div>
 
@@ -70,181 +96,264 @@ const LABELS={"parts": ["Head", "Neck", "Torso", "Sail / back", "Arm L", "Arm R"
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-const canvas = document.getElementById('c');
+const $ = id => document.getElementById(id);
+const canvas = $('c');
 const renderer = new THREE.WebGLRenderer({canvas, antialias: true});
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace;
-const scene = new THREE.Scene(); scene.background = new THREE.Color(0x1b1b22);
-const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 500); camera.position.set(30, 10, 30);
-const controls = new OrbitControls(camera, canvas); controls.target.set(-2, 4, 0); controls.enableDamping = true;
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a2a30);
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 500);
+const controls = new OrbitControls(camera, canvas); controls.enableDamping = true;
+const CAM0 = () => { camera.position.set(-30, 13, 34); controls.target.set(-3, 5, 1); };
+CAM0();
 scene.add(new THREE.AmbientLight(0xffffff, 1.1));
 const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(15, 25, 20); scene.add(key);
 const bk = new THREE.DirectionalLight(0xffc8a0, 1.2); bk.position.set(-15, 10, -20); scene.add(bk);
-scene.add(new THREE.GridHelper(44, 22, 0x444450, 0x2a2a32));
-const tipEl = document.getElementById('tip');
-const tip = (t, ms = 2000) => { tipEl.textContent = t; clearTimeout(tipEl._t); tipEl._t = setTimeout(() => tipEl.textContent = '', ms); };
+scene.add(new THREE.GridHelper(44, 22, 0x55555f, 0x3a3a42));
+const tip = (t, ms = 1800) => { $('tip').textContent = t; clearTimeout($('tip')._t); $('tip')._t = setTimeout(() => $('tip').textContent = '', ms); };
 
 const PARTS = LABELS.parts;
 const CATS = [['HEAD', [0, 1]], ['BODY', [2, 3]], ['ARMS', [4, 5]], ['LEGS', [6, 7]], ['TAIL', [8, 9, 10]]];
+const MIRROR = {4: 5, 5: 4, 6: 7, 7: 6};
 const COLS = [0xff5a5a, 0xff9a5a, 0xc8c8c8, 0xffd25a, 0x5ab4ff, 0x3a7aff, 0x6ad66a, 0x2fa04a, 0xc77aff, 0xa45aff, 0x8040e0];
 const H = 11, tl = new THREE.TextureLoader();
 const loadT = (src, srgb) => { const t = tl.load(src); t.flipY = false; if (srgb) t.colorSpace = THREE.SRGBColorSpace; return t; };
 const SRC = {A: {glb: GLB_A, tex: TEX_A, mask: MASK_A, labels: LABELS.A, name: 'Model 1'}, B: {glb: GLB_B, tex: TEX_B, mask: MASK_B, labels: LABELS.B, name: 'Model 2'}, C: {glb: GLB_C, name: 'v0.3', code: true}};
+const parse = b64 => new Promise(res => new GLTFLoader().parse(Uint8Array.from(atob(b64), c => c.charCodeAt(0)).buffer, '', res));
 
-// ---------- load both models and cut them into parts ----------
-function prepC() {                                 // the code-built v0.3: already split into parts (one node per part)
-  return new Promise(res => new GLTFLoader().parse(Uint8Array.from(atob(SRC.C.glb), c => c.charCodeAt(0)).buffer, '', gl => {
-    const S = SRC.C, bb = new THREE.Box3().setFromObject(gl.scene);
-    S.k = H / (bb.max.y - bb.min.y); S.shift = new THREE.Vector3(-(bb.min.x + bb.max.x) / 2, -bb.min.y, -(bb.min.z + bb.max.z) / 2);
-    S.meshes = PARTS.map((_, k) => { const n = gl.scene.getObjectByName('part' + k), list = [];
-      if (n) n.traverse(o => { if (o.isMesh) { o.updateMatrixWorld(true); const g = o.geometry.clone(); g.applyMatrix4(o.matrixWorld);
-        if (!g.index) g.setIndex([...Array(g.attributes.position.count).keys()]);
-        g.userData.full = Array.from(g.index.array); list.push({geo: g, mat: o.material}); } });
-      return list; });
-    S.info = S.meshes.map(list => { if (!list.length) return null; const b = new THREE.Box3();
-      for (const m of list) { m.geo.computeBoundingBox(); b.union(m.geo.boundingBox); }
-      const c = b.getCenter(new THREE.Vector3()), sz = b.getSize(new THREE.Vector3());
-      return {c, world: c.clone().add(S.shift).multiplyScalar(S.k), size: Math.max(sz.x, sz.y, sz.z) * S.k, box: b}; });
-    res();
-  }));
+// ================= sources =================
+async function prepAI(key) {
+  const gl = await parse(SRC[key].glb); let g; gl.scene.traverse(o => { if (o.isMesh && !g) g = o.geometry; });
+  const S = SRC[key]; g = g.clone(); g.computeVertexNormals();
+  const p = g.attributes.position, I = g.index ? Array.from(g.index.array) : [...Array(p.count).keys()];
+  const bb = new THREE.Box3().setFromBufferAttribute(p);
+  Object.assign(S, {geo: g, I, k: H / (bb.max.y - bb.min.y), cx: (bb.min.x + bb.max.x) / 2,
+    shift: new THREE.Vector3(-(bb.min.x + bb.max.x) / 2, -bb.min.y, -(bb.min.z + bb.max.z) / 2), orig: Float32Array.from(p.array)});
+  S.cent = new Float32Array(I.length);
+  for (let t = 0; t < I.length / 3; t++) for (let j = 0; j < 3; j++) { const v = I[t * 3 + j]; S.cent[t * 3] += p.getX(v) / 3; S.cent[t * 3 + 1] += p.getY(v) / 3; S.cent[t * 3 + 2] += p.getZ(v) / 3; }
+  S.tris = PARTS.map((_, k) => { const a = []; S.labels.forEach((l, t) => { if (l === k) a.push(t); }); return a; });
+  S.verts = S.tris.map(tr => { const s = new Set(); for (const t of tr) for (let j = 0; j < 3; j++) s.add(I[t * 3 + j]); return [...s]; });
+  S.nb = Array.from({length: p.count}, () => new Set());                                  // neighbours (for smoothing), seams welded by position
+  const weld = new Map(), wid = new Int32Array(p.count);
+  for (let i = 0; i < p.count; i++) { const kk = Math.round(p.getX(i) * 2e4) + ',' + Math.round(p.getY(i) * 2e4) + ',' + Math.round(p.getZ(i) * 2e4); if (!weld.has(kk)) weld.set(kk, []); weld.get(kk).push(i); wid[i] = weld.size; }
+  S.twins = new Map(); for (const list of weld.values()) if (list.length > 1) for (const v of list) S.twins.set(v, list);
+  for (let t = 0; t < I.length / 3; t++) for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) if (a !== b) S.nb[I[t * 3 + a]].add(I[t * 3 + b]);
+  S.info = infoFromTris(S);
+  S.texMat = new THREE.MeshStandardMaterial({map: loadT(S.tex, true), emissiveMap: loadT(S.mask), emissive: 0xff4a10, emissiveIntensity: 1, roughness: .7, side: THREE.DoubleSide});
 }
-function prep(key) {
-  return new Promise(res => new GLTFLoader().parse(Uint8Array.from(atob(SRC[key].glb), c => c.charCodeAt(0)).buffer, '', gl => {
-    let g; gl.scene.traverse(o => { if (o.isMesh && !g) g = o.geometry; });
-    const S = SRC[key]; g = g.clone(); g.computeVertexNormals();
-    const p = g.attributes.position, I = g.index ? Array.from(g.index.array) : [...Array(p.count).keys()];
-    const bb = new THREE.Box3().setFromBufferAttribute(p);
-    S.geo = g; S.I = I; S.k = H / (bb.max.y - bb.min.y);
-    S.shift = new THREE.Vector3(-(bb.min.x + bb.max.x) / 2, -bb.min.y, -(bb.min.z + bb.max.z) / 2);      // raw -> standing on the floor, centred
-    S.cent = new Float32Array(I.length);                                                                   // triangle centres (raw)
-    for (let t = 0; t < I.length / 3; t++) for (let j = 0; j < 3; j++) { const v = I[t * 3 + j]; S.cent[t * 3] += p.getX(v) / 3; S.cent[t * 3 + 1] += p.getY(v) / 3; S.cent[t * 3 + 2] += p.getZ(v) / 3; }
-    S.tris = PARTS.map((_, k) => { const a = []; S.labels.forEach((l, t) => { if (l === k) a.push(t); }); return a; });
-    S.info = S.tris.map(tr => {                                                                              // each part's centre + size (world units)
-      if (!tr.length) return null; const b = new THREE.Box3(), v = new THREE.Vector3();
-      for (const t of tr) b.expandByPoint(v.set(S.cent[t * 3], S.cent[t * 3 + 1], S.cent[t * 3 + 2]));
-      const c = b.getCenter(new THREE.Vector3()), sz = b.getSize(new THREE.Vector3());
-      return {c, world: c.clone().add(S.shift).multiplyScalar(S.k), size: Math.max(sz.x, sz.y, sz.z) * S.k};
-    });
-    S.texMat = new THREE.MeshStandardMaterial({map: loadT(S.tex, true), emissiveMap: loadT(S.mask), emissive: 0xff4a10, emissiveIntensity: 1, roughness: .7, side: THREE.DoubleSide});
-    res();
-  }));
+function infoFromTris(S) {
+  return S.tris.map(tr => { if (!tr.length) return null; const b = new THREE.Box3(), v = new THREE.Vector3();
+    for (const t of tr) b.expandByPoint(v.set(S.cent[t * 3], S.cent[t * 3 + 1], S.cent[t * 3 + 2]));
+    const c = b.getCenter(new THREE.Vector3()), sz = b.getSize(new THREE.Vector3());
+    return {c, box: b, world: c.clone().add(S.shift).multiplyScalar(S.k), size: Math.max(sz.x, sz.y, sz.z) * S.k}; });
+}
+async function prepC() {
+  const gl = await parse(SRC.C.glb), S = SRC.C, bb = new THREE.Box3().setFromObject(gl.scene);
+  S.k = H / (bb.max.y - bb.min.y); S.shift = new THREE.Vector3(-(bb.min.x + bb.max.x) / 2, -bb.min.y, -(bb.min.z + bb.max.z) / 2);
+  S.meshes = PARTS.map((_, k) => { const n = gl.scene.getObjectByName('part' + k), list = [];
+    if (n) n.traverse(o => { if (o.isMesh) { o.updateMatrixWorld(true); const g = o.geometry.clone(); g.applyMatrix4(o.matrixWorld);
+      if (!g.index) g.setIndex([...Array(g.attributes.position.count).keys()]); g.userData.full = Array.from(g.index.array); list.push({geo: g, mat: o.material}); } });
+    return list; });
+  S.info = S.meshes.map(list => { if (!list.length) return null; const b = new THREE.Box3();
+    for (const m of list) { m.geo.computeBoundingBox(); b.union(m.geo.boundingBox); }
+    const c = b.getCenter(new THREE.Vector3()), sz = b.getSize(new THREE.Vector3());
+    return {c, box: b, world: c.clone().add(S.shift).multiplyScalar(S.k), size: Math.max(sz.x, sz.y, sz.z) * S.k}; });
 }
 
-// ---------- editor state ----------
-const fresh = (k, base) => ({src: base, p: [0, 0, 0], r: [0, 0, 0], s: 1, cut: {A: [], B: [], C: []}});
-let ST = {base: 'B', slots: PARTS.map((_, k) => fresh(k, 'B'))};
-try { const s = JSON.parse(localStorage.getItem('inf-kitbash') || 'null'); if (s && s.slots && s.slots.length === PARTS.length) { ST = s; ST.slots.forEach(x => x.cut.C = x.cut.C || []); } } catch (e) {}
-const save = () => { try { localStorage.setItem('inf-kitbash', JSON.stringify(ST)); } catch (e) {} };
-let sel = 0, colorMode = true, mode = 'move', undo = [];
+// ================= state (saved) =================
+const newSlot = (k, src) => ({k, src, p: [0, 0, 0], r: [0, 0, 0], s: 1, flip: false, tint: '#ffffff', cut: {A: [], B: [], C: []}, copy: 0});
+let ST = {base: 'C', slots: PARTS.map((_, k) => newSlot(k, 'C')), sculpt: {A: {}, B: {}}};
+try { const s = JSON.parse(localStorage.getItem('inf-editor2') || 'null'); if (s && s.slots) ST = s; } catch (e) {}
+const save = () => { try { localStorage.setItem('inf-editor2', JSON.stringify(ST)); } catch (e) { tip('Too big to save in the browser — use Copy settings'); } };
+const hist = [], fut = [];
+function snap() { hist.push(JSON.stringify(ST)); if (hist.length > 40) hist.shift(); fut.length = 0; }
+function restore(json) { ST = JSON.parse(json); applySculpt('A'); applySculpt('B'); if (sel >= ST.slots.length) sel = 0; rebuildAll(); outliner(); syncUI(); save(); }
+$('bUndo').onclick = () => { if (!hist.length) return tip('Nothing to undo'); fut.push(JSON.stringify(ST)); restore(hist.pop()); };
+$('bRedo').onclick = () => { if (!fut.length) return tip('Nothing to redo'); hist.push(JSON.stringify(ST)); restore(fut.pop()); };
+
+// ================= scene from state =================
+let sel = 0, colorMode = false, wire = false, xray = false, iso = false;
 const root = new THREE.Group(); scene.add(root);
-const slotG = [], slotMesh = [];
-
-function partGeo(S, k, cutList) {
-  const cut = new Set(cutList), idx = [];
-  for (const t of S.tris[k]) if (!cut.has(t)) idx.push(S.I[t * 3], S.I[t * 3 + 1], S.I[t * 3 + 2]);
-  const g = new THREE.BufferGeometry(); for (const a in S.geo.attributes) g.setAttribute(a, S.geo.attributes[a]); g.setIndex(idx); return g;
+let views = [];                                           // per slot: {G, m}
+function aiGeo(S, k, cut) { const c = new Set(cut), idx = [];
+  for (const t of S.tris[k]) if (!c.has(t)) idx.push(S.I[t * 3], S.I[t * 3 + 1], S.I[t * 3 + 2]);
+  const g = new THREE.BufferGeometry(); for (const a in S.geo.attributes) g.setAttribute(a, S.geo.attributes[a]); g.setIndex(idx); return g; }
+function matFor(base, st, k) {
+  const m = colorMode ? new THREE.MeshStandardMaterial({color: COLS[k], roughness: .6}) : base.clone();
+  m.side = THREE.DoubleSide; m.wireframe = wire; if (xray) { m.transparent = true; m.opacity = .45; m.depthWrite = false; }
+  if (!colorMode && m.color) m.color.multiply(new THREE.Color(st.tint)); return m;
 }
-function buildSlot(k) {
-  if (slotG[k]) root.remove(slotG[k]);
-  const st = ST.slots[k], G = new THREE.Group(); root.add(G); slotG[k] = G; slotMesh[k] = null;
+function buildSlot(i) {
+  if (views[i]) root.remove(views[i].G);
+  const st = ST.slots[i], G = new THREE.Group(); root.add(G); views[i] = {G, m: null};
   if (st.src === 'off') return;
-  const S = SRC[st.src], inf = S.info[k]; if (!inf) return;
-  const anchor = (SRC[ST.base].info[k] || inf);
-  const auto = st.src === ST.base ? 1 : anchor.size / inf.size;
-  if (S.code) {                                      // v0.3 part: several meshes with their own materials
-    const m = new THREE.Group(), cut = new Set(st.cut.C), colMat = new THREE.MeshStandardMaterial({color: COLS[k], roughness: .6, side: THREE.DoubleSide});
+  const S = SRC[st.src], k = st.k, inf = S.info[k]; if (!inf) return;
+  const anchor = SRC[ST.base].info[k] || inf, auto = st.src === ST.base ? 1 : anchor.size / inf.size;
+  let m;
+  if (S.code) { m = new THREE.Group(); const cut = new Set(st.cut.C);
     S.meshes[k].forEach((pm, mi) => { const idx = [], F = pm.geo.userData.full;
       for (let t = 0; t < F.length / 3; t++) if (!cut.has(mi + ':' + t)) idx.push(F[t * 3], F[t * 3 + 1], F[t * 3 + 2]);
       const g = new THREE.BufferGeometry(); for (const a in pm.geo.attributes) g.setAttribute(a, pm.geo.attributes[a]); g.setIndex(idx);
-      const mesh = new THREE.Mesh(g, colorMode ? colMat : pm.mat); mesh.userData = {k, mi}; m.add(mesh); });
-    m.scale.setScalar(S.k); m.position.copy(inf.c).multiplyScalar(-S.k); m.userData.k = k; G.add(m); slotMesh[k] = m;
-    G.position.copy(anchor.world).add(new THREE.Vector3(...st.p)); G.rotation.set(...st.r.map(d => d * Math.PI / 180)); G.scale.setScalar(auto * st.s);
-    if (k === sel) { const bx = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({color: 0xffd166}));
-      inf.box.getSize(bx.scale); inf.box.getCenter(bx.position); m.add(bx); }
-    return;
-  }
-  const m = new THREE.Mesh(partGeo(S, k, st.cut[st.src]), colorMode ? new THREE.MeshStandardMaterial({color: COLS[k], roughness: .6, side: THREE.DoubleSide}) : S.texMat);
-  m.scale.setScalar(S.k); m.position.copy(inf.c).multiplyScalar(-S.k);                 // part centred on its own middle
-  m.userData.k = k; G.add(m); slotMesh[k] = m;
+      const mesh = new THREE.Mesh(g, matFor(pm.mat, st, k)); mesh.userData.slot = i; m.add(mesh); }); }
+  else { m = new THREE.Mesh(aiGeo(S, k, st.cut[st.src]), matFor(S.texMat, st, k)); m.userData.slot = i; }
+  m.scale.set(S.k * (st.flip ? -1 : 1), S.k, S.k); m.position.set(-inf.c.x * S.k * (st.flip ? -1 : 1), -inf.c.y * S.k, -inf.c.z * S.k);
+  G.add(m); views[i].m = m;
   G.position.copy(anchor.world).add(new THREE.Vector3(...st.p));
-  G.rotation.set(...st.r.map(d => d * Math.PI / 180));
-  G.scale.setScalar(auto * st.s);
-  if (k === sel) m.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({color: 0xffd166})));
-  if (k === sel) { const box = m.children[0], b = new THREE.Box3(); const v = new THREE.Vector3();
-    for (const t of S.tris[k]) b.expandByPoint(v.set(S.cent[t * 3], S.cent[t * 3 + 1], S.cent[t * 3 + 2]));
-    b.getSize(box.scale); b.getCenter(box.position); }
+  G.rotation.set(...st.r.map(d => d * Math.PI / 180)); G.scale.setScalar(auto * st.s); G.userData = {anchor: anchor.world.clone(), auto};
+  G.visible = !iso || i === sel;
 }
-const buildAll = () => PARTS.forEach((_, k) => buildSlot(k));
+function rebuildAll() { views.forEach(v => v && root.remove(v.G)); views = []; ST.slots.forEach((_, i) => buildSlot(i)); attachGizmo(); }
 
-// ---------- UI ----------
-function slotList() {
-  const el = document.getElementById('slots'); el.innerHTML = '';
-  for (const [cat, ids] of CATS) {
-    const h = document.createElement('h3'); h.textContent = cat; el.append(h);
-    for (const k of ids) { const d = document.createElement('div'); if (k === sel) d.className = 'sel';
-      const s = ST.slots[k].src; d.innerHTML = `<span class="sw" style="background:#${COLS[k].toString(16).padStart(6, '0')}"></span>${PARTS[k]}<span class="src">${s === 'off' ? '–' : s === 'A' ? 'M1' : s === 'B' ? 'M2' : 'v0.3'}</span>`;
-      d.onclick = () => select(k); el.append(d); }
-  }
+// ================= outliner + panels =================
+const slotName = st => PARTS[st.k] + (st.copy ? ' copy ' + st.copy : '');
+function outliner() {
+  const el = $('outliner'); el.innerHTML = '';
+  for (const [cat, ids] of CATS) { const h = document.createElement('h3'); h.textContent = cat; el.append(h);
+    ST.slots.forEach((st, i) => { if (!ids.includes(st.k)) return; const d = document.createElement('div'); if (i === sel) d.className = 'sel';
+      d.innerHTML = `<span class="sw" style="background:#${COLS[st.k].toString(16).padStart(6, '0')}"></span>${slotName(st)}<span class="src">${{A: 'M1', B: 'M2', C: 'v0.3', off: '–'}[st.src]}</span>`;
+      d.onclick = () => select(i); el.append(d); }); }
 }
-const ids = ['px', 'py', 'pz', 'rx', 'ry', 'rz', 'sc'];
-function syncSliders() { const st = ST.slots[sel];
-  document.getElementById('title').textContent = `${PARTS[sel]} — from ${st.src === 'off' ? 'nothing (removed)' : SRC[st.src].name}`;
-  const v = [st.p[0], st.p[1], st.p[2], st.r[0], st.r[1], st.r[2], st.s]; ids.forEach((id, i) => document.getElementById(id).value = v[i]);
-  document.querySelectorAll('[data-src]').forEach(b => b.classList.toggle('on', b.dataset.src === st.src)); }
-function select(k) { const old = sel; sel = k; buildSlot(old); buildSlot(k); slotList(); syncSliders(); }
-ids.forEach((id, i) => document.getElementById(id).oninput = e => { const st = ST.slots[sel], v = +e.target.value;
-  if (i < 3) st.p[i] = v; else if (i < 6) st.r[i - 3] = v; else st.s = v; buildSlot(sel); save(); });
-document.querySelectorAll('[data-src]').forEach(b => b.onclick = () => { ST.slots[sel].src = b.dataset.src; ST.slots[sel].p = [0, 0, 0]; ST.slots[sel].r = [0, 0, 0]; ST.slots[sel].s = 1; buildSlot(sel); slotList(); syncSliders(); save(); });
-document.getElementById('bResetPart').onclick = () => { const st = ST.slots[sel]; undo.push({k: sel, src: st.src, cut: st.cut[st.src]}); ST.slots[sel] = {...fresh(sel, ST.base), src: st.src}; buildSlot(sel); syncSliders(); save(); tip('Part reset (cuts restored)'); };
-document.getElementById('bBase').onclick = e => { ST.base = {A: 'B', B: 'C', C: 'A'}[ST.base]; e.target.textContent = 'Base: ' + SRC[ST.base].name; buildAll(); save(); tip('Parts now line up to ' + SRC[ST.base].name + "'s body"); };
-document.getElementById('bColor').onclick = e => { colorMode = !colorMode; e.target.classList.toggle('on', colorMode); buildAll(); };
-function setMode(m) { mode = m; controls.enabled = m === 'move'; document.getElementById('bMove').classList.toggle('on', m === 'move'); document.getElementById('bErase').classList.toggle('on', m === 'erase'); if (m === 'move') ring.style.display = 'none'; }
-document.getElementById('bMove').onclick = () => setMode('move');
-document.getElementById('bErase').onclick = () => setMode('erase');
-document.getElementById('bUndo').onclick = () => { const u = undo.pop(); if (!u) return tip('Nothing to undo'); ST.slots[u.k].cut[u.src] = u.cut; buildSlot(u.k); save(); };
-document.getElementById('bList').onclick = e => { const s = document.getElementById('slots'); s.style.display = s.style.display === 'none' ? '' : 'none'; e.target.classList.toggle('on', s.style.display !== 'none'); };
-document.getElementById('bCopy').onclick = () => { const txt = 'INFERNOTH parts: ' + JSON.stringify(ST), out = document.getElementById('out');
-  out.value = txt; out.style.display = 'block'; out.select(); setTimeout(() => out.style.display = 'none', 6000);
+function syncUI() { const st = ST.slots[sel]; if (!st) return;
+  $('title').textContent = `${slotName(st)} — ${st.src === 'off' ? 'removed' : SRC[st.src].name}${st.flip ? ' (flipped)' : ''}`;
+  document.querySelectorAll('[data-src]').forEach(b => b.classList.toggle('on', b.dataset.src === st.src));
+  $('sc').value = st.s; $('tint').value = st.tint; $('bBase').textContent = 'Base: ' + SRC[ST.base].name;
+  $('bDel').style.display = st.copy ? '' : 'none'; $('bSym').style.display = MIRROR[st.k] != null ? '' : 'none'; }
+function select(i) { sel = i; if (iso) rebuildAll(); else attachGizmo(); outliner(); syncUI(); }
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.id === 't-' + b.dataset.tab));
+  tab = b.dataset.tab; attachGizmo(); updateOrbit(); });
+let tab = 'parts';
+
+// parts tab
+document.querySelectorAll('[data-src]').forEach(b => b.onclick = () => { snap(); const st = ST.slots[sel]; st.src = b.dataset.src; st.p = [0, 0, 0]; st.r = [0, 0, 0]; st.s = 1; buildSlot(sel); attachGizmo(); outliner(); syncUI(); save(); });
+$('bDup').onclick = () => { snap(); const st = ST.slots[sel], n = JSON.parse(JSON.stringify(st)); n.copy = Math.max(0, ...ST.slots.filter(s => s.k === st.k).map(s => s.copy)) + 1; n.p[0] += 1.5;
+  ST.slots.push(n); sel = ST.slots.length - 1; buildSlot(sel); attachGizmo(); outliner(); syncUI(); save(); tip('Duplicated — move it with the Move tab'); };
+$('bDel').onclick = () => { if (!ST.slots[sel].copy) return; snap(); ST.slots.splice(sel, 1); sel = 0; rebuildAll(); outliner(); syncUI(); save(); };
+$('bFlip').onclick = () => { snap(); ST.slots[sel].flip = !ST.slots[sel].flip; buildSlot(sel); attachGizmo(); syncUI(); save(); };
+$('bSym').onclick = () => { const st = ST.slots[sel], o = ST.slots.findIndex(s => s.k === MIRROR[st.k] && !s.copy); if (o < 0) return; snap();
+  const t = ST.slots[o]; t.src = st.src; t.p = [-st.p[0], st.p[1], st.p[2]]; t.r = [st.r[0], -st.r[1], -st.r[2]]; t.s = st.s; t.tint = st.tint;
+  buildSlot(o); save(); tip('Copied to ' + PARTS[t.k]); };
+$('bResetPart').onclick = () => { snap(); const st = ST.slots[sel]; ST.slots[sel] = {...newSlot(st.k, st.src), copy: st.copy}; buildSlot(sel); attachGizmo(); syncUI(); save(); };
+
+// move tab: gizmo
+const gizmo = new TransformControls(camera, canvas); scene.add(gizmo); gizmo.setSize(.9);
+gizmo.addEventListener('dragging-changed', e => { controls.enabled = !e.value; if (e.value) snap(); else { writeBack(); save(); } });
+gizmo.addEventListener('objectChange', writeBack);
+function writeBack() { const v = views[sel]; if (!v) return; const st = ST.slots[sel], G = v.G;
+  st.p = G.position.clone().sub(G.userData.anchor).toArray().map(x => +x.toFixed(3));
+  st.r = [G.rotation.x, G.rotation.y, G.rotation.z].map(x => +(x * 180 / Math.PI).toFixed(1));
+  st.s = +(G.scale.x / G.userData.auto).toFixed(3); $('sc').value = st.s; }
+function attachGizmo() { gizmo.detach(); if (tab === 'move' && views[sel] && views[sel].m) gizmo.attach(views[sel].G); }
+const setGz = m => { gizmo.setMode(m); document.querySelectorAll('[data-gz]').forEach(b => b.classList.toggle('on', b.dataset.gz === m)); };
+document.querySelectorAll('[data-gz]').forEach(b => b.onclick = () => setGz(b.dataset.gz));
+$('bSpace').onclick = e => { gizmo.setSpace(gizmo.space === 'world' ? 'local' : 'world'); e.target.textContent = 'Space: ' + (gizmo.space === 'world' ? 'World' : 'Local'); };
+$('bSnap').onclick = e => { const on = gizmo.translationSnap == null; gizmo.setTranslationSnap(on ? .25 : null); gizmo.setRotationSnap(on ? Math.PI / 12 : null); gizmo.setScaleSnap(on ? .1 : null); e.target.textContent = 'Snap: ' + (on ? 'on' : 'off'); e.target.classList.toggle('on', on); };
+$('sc').oninput = e => { const st = ST.slots[sel]; st.s = +e.target.value; const G = views[sel].G; G.scale.setScalar(G.userData.auto * st.s); save(); };
+$('sc').onpointerdown = () => snap();
+
+// paint tab
+const setTint = c => { snap(); ST.slots[sel].tint = c; $('tint').value = c; buildSlot(sel); attachGizmo(); save(); if (colorMode) tip('Turn off View → Part colors to see paint'); };
+$('tint').onchange = e => setTint(e.target.value);
+document.querySelectorAll('[data-c]').forEach(b => b.onclick = () => setTint(b.dataset.c));
+$('bAllTint').onclick = () => { snap(); const c = ST.slots[sel].tint; ST.slots.forEach(s => s.tint = c); rebuildAll(); save(); };
+
+// view tab
+const camTo = (pos) => { const t = controls.target; camera.position.set(t.x + pos[0], t.y + pos[1], t.z + pos[2]); };
+document.querySelectorAll('[data-cam]').forEach(b => b.onclick = () => ({front: () => camTo([0, 2, 38]), side: () => camTo([38, 2, 0]), top: () => camTo([0, 40, .01]), reset: CAM0})[b.dataset.cam]());
+$('bColor').onclick = e => { colorMode = !colorMode; e.target.classList.toggle('on', colorMode); rebuildAll(); };
+$('bWire').onclick = e => { wire = !wire; e.target.classList.toggle('on', wire); rebuildAll(); };
+$('bXray').onclick = e => { xray = !xray; e.target.classList.toggle('on', xray); rebuildAll(); };
+$('bIso').onclick = e => { iso = !iso; e.target.classList.toggle('on', iso); rebuildAll(); };
+$('bBase').onclick = () => { snap(); ST.base = {A: 'B', B: 'C', C: 'A'}[ST.base]; rebuildAll(); syncUI(); save(); tip('Parts line up to ' + SRC[ST.base].name); };
+$('bList').onclick = e => { const o = $('outliner'); o.style.display = o.style.display === 'none' ? '' : 'none'; e.target.classList.toggle('on', o.style.display !== 'none'); };
+$('bCopy').onclick = () => { const txt = 'INFERNOTH editor: ' + JSON.stringify(ST), out = $('out'); out.value = txt; out.style.display = 'block'; out.select(); setTimeout(() => out.style.display = 'none', 6000);
   try { navigator.clipboard.writeText(txt).then(() => tip('Copied! Paste it to Claude.'), () => tip('Select the text and copy it.')); } catch (e) {} };
 
-// ---------- tap to pick a part / eraser for the selected part ----------
-const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), ring = document.getElementById('ring');
-let down = null, stroke = null;
-const castTo = (x, y, list) => { ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); return ray.intersectObjects(list.filter(Boolean), true)[0]; };
-function eraseAt(x, y) {
-  const m = slotMesh[sel]; if (!m) return; const hit = castTo(x, y, [m]); if (!hit) return;
-  const st = ST.slots[sel], S = SRC[st.src], local = m.worldToLocal(hit.point.clone());
-  if (S.code) {
-    const r = (+document.getElementById('brush').value) / (S.k * slotG[sel].scale.x), r2 = r * r, cut = new Set(st.cut.C); let n = 0;
-    S.meshes[sel].forEach((pm, mi) => { const F = pm.geo.userData.full, P = pm.geo.attributes.position;
-      for (let t = 0; t < F.length / 3; t++) { const key = mi + ':' + t; if (cut.has(key)) continue;
-        let cx = 0, cy = 0, cz = 0; for (let j = 0; j < 3; j++) { const v = F[t * 3 + j]; cx += P.getX(v) / 3; cy += P.getY(v) / 3; cz += P.getZ(v) / 3; }
-        if ((cx - local.x) ** 2 + (cy - local.y) ** 2 + (cz - local.z) ** 2 < r2) { cut.add(key); n++; } } });
-    if (n) { st.cut.C = [...cut]; buildSlot(sel); } return;
-  }
-  const r = (+document.getElementById('brush').value) / (S.k * slotG[sel].scale.x), r2 = r * r, cut = new Set(st.cut[st.src]); let n = 0;
-  for (const t of S.tris[sel]) { if (cut.has(t)) continue; const dx = S.cent[t * 3] - local.x, dy = S.cent[t * 3 + 1] - local.y, dz = S.cent[t * 3 + 2] - local.z;
-    if (dx * dx + dy * dy + dz * dz < r2) { cut.add(t); n++; } }
-  if (n) { st.cut[st.src] = [...cut]; m.geometry = partGeo(S, sel, st.cut[st.src]); }
+// ================= sculpt + erase =================
+let brush = 'inflate', mirrorX = true, holdOrbit = false;
+document.querySelectorAll('[data-br]').forEach(b => b.onclick = () => { brush = b.dataset.br; document.querySelectorAll('[data-br]').forEach(x => x.classList.toggle('on', x === b)); });
+$('bMirrorX').onclick = e => { mirrorX = !mirrorX; e.target.classList.toggle('on', mirrorX); };
+$('bOrbit').onclick = e => { holdOrbit = !holdOrbit; e.target.classList.toggle('on', holdOrbit); updateOrbit(); };
+const brushing = () => tab === 'sculpt' && !holdOrbit;
+function updateOrbit() { controls.enabled = !brushing(); if (!brushing()) ring.style.display = 'none'; }
+function applySculpt(key) {                                   // rebuild positions = original + saved sculpt offsets
+  const S = SRC[key]; if (!S.geo) return; const p = S.geo.attributes.position; p.array.set(S.orig);
+  for (const v in ST.sculpt[key]) { const d = ST.sculpt[key][v]; p.setXYZ(+v, S.orig[v * 3] + d[0], S.orig[v * 3 + 1] + d[1], S.orig[v * 3 + 2] + d[2]); }
+  p.needsUpdate = true; S.geo.computeVertexNormals();
 }
-function showRing(x, y) { const px = (+document.getElementById('brush').value) * innerHeight / (camera.position.distanceTo(controls.target) * Math.tan(camera.fov * Math.PI / 360) * 2);
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), ring = $('ring');
+const cast = (x, y, objs) => { ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); return ray.intersectObjects(objs.filter(Boolean), true)[0]; };
+let stroking = false, grabLast = null;
+function stroke(x, y) {
+  const v = views[sel]; if (!v || !v.m) return; const hit = cast(x, y, [v.m]); if (!hit) return;
+  const st = ST.slots[sel], S = SRC[st.src], local = v.m.worldToLocal(hit.point.clone());
+  const R = (+$('brush').value) / (S.k * v.G.scale.x), R2 = R * R, power = +$('str').value;
+  if (brush === 'erase') return eraseAt(st, S, local, R2);
+  if (S.code) return tip('Sculpt works on Model 1 / Model 2 parts');
+  const p = S.geo.attributes.position, n = S.geo.attributes.normal, D = ST.sculpt[st.src];
+  const centers = [local]; if (mirrorX) centers.push(new THREE.Vector3(2 * S.cx - local.x, local.y, local.z));
+  let hitN = null; if (brush === 'flatten') { hitN = hit.face.normal.clone(); }
+  let drag = null; if (brush === 'grab') { if (grabLast) drag = local.clone().sub(grabLast); grabLast = local.clone(); if (!drag) return; }
+  const verts = new Set(); for (const s of ST.slots) if (s.src === st.src && s.k === st.k) for (const vv of S.verts[s.k]) verts.add(vv);
+  const moved = new Map();
+  for (const [ci, c] of centers.entries()) for (const vi of verts) {
+    const dx = p.getX(vi) - c.x, dy = p.getY(vi) - c.y, dz = p.getZ(vi) - c.z, d2 = dx * dx + dy * dy + dz * dz; if (d2 > R2) continue;
+    const f = (1 - d2 / R2) ** 2 * power, mv = new THREE.Vector3();
+    if (brush === 'inflate' || brush === 'deflate') mv.set(n.getX(vi), n.getY(vi), n.getZ(vi)).multiplyScalar(f * R * .12 * (brush === 'inflate' ? 1 : -1));
+    else if (brush === 'smooth') { const a = new THREE.Vector3(); let k = 0; for (const nb of S.nb[vi]) { a.x += p.getX(nb); a.y += p.getY(nb); a.z += p.getZ(nb); k++; }
+      if (!k) continue; a.divideScalar(k); mv.set(a.x - p.getX(vi), a.y - p.getY(vi), a.z - p.getZ(vi)).multiplyScalar(Math.min(1, f * 1.5)); }
+    else if (brush === 'flatten') { const N = hitN.clone(); if (ci === 1) N.x = -N.x; const dist = dx * N.x + dy * N.y + dz * N.z; mv.copy(N).multiplyScalar(-dist * f); }
+    else if (brush === 'grab') { mv.copy(drag).multiplyScalar(f / power); if (ci === 1) mv.x = -mv.x; }
+    moved.set(vi, mv);
+  }
+  for (const [vi, mv] of moved) for (const t of (S.twins.get(vi) || [vi])) {          // keep seams closed
+    p.setXYZ(t, p.getX(t) + mv.x, p.getY(t) + mv.y, p.getZ(t) + mv.z);
+    D[t] = [p.getX(t) - S.orig[t * 3], p.getY(t) - S.orig[t * 3 + 1], p.getZ(t) - S.orig[t * 3 + 2]].map(x => +x.toFixed(5)); }
+  if (moved.size) { p.needsUpdate = true; S.geo.computeVertexNormals(); }
+}
+function eraseAt(st, S, local, R2) {
+  const cut = new Set(st.cut[st.src]); let n = 0;
+  if (S.code) S.meshes[st.k].forEach((pm, mi) => { const F = pm.geo.userData.full, P = pm.geo.attributes.position;
+    for (let t = 0; t < F.length / 3; t++) { const key = mi + ':' + t; if (cut.has(key)) continue; let cx = 0, cy = 0, cz = 0;
+      for (let j = 0; j < 3; j++) { const v = F[t * 3 + j]; cx += P.getX(v) / 3; cy += P.getY(v) / 3; cz += P.getZ(v) / 3; }
+      if ((cx - local.x) ** 2 + (cy - local.y) ** 2 + (cz - local.z) ** 2 < R2) { cut.add(key); n++; } } });
+  else for (const t of S.tris[st.k]) { if (cut.has(t)) continue; const dx = S.cent[t * 3] - local.x, dy = S.cent[t * 3 + 1] - local.y, dz = S.cent[t * 3 + 2] - local.z;
+    if (dx * dx + dy * dy + dz * dz < R2) { cut.add(t); n++; } }
+  if (n) { st.cut[st.src] = [...cut]; buildSlot(sel); }
+}
+function showRing(x, y) { const px = (+$('brush').value) * innerHeight / (camera.position.distanceTo(controls.target) * Math.tan(camera.fov * Math.PI / 360) * 2);
   ring.style.display = 'block'; ring.style.left = x + 'px'; ring.style.top = y + 'px'; ring.style.width = ring.style.height = px * 2 + 'px'; }
+let down = null;
 canvas.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY];
-  if (mode === 'erase') { const st = ST.slots[sel]; stroke = {k: sel, src: st.src, cut: [...st.cut[st.src] || []]}; eraseAt(e.clientX, e.clientY); showRing(e.clientX, e.clientY); } });
-canvas.addEventListener('pointermove', e => { if (mode !== 'erase') return; showRing(e.clientX, e.clientY); if (stroke) eraseAt(e.clientX, e.clientY); });
+  if (brushing()) { snap(); stroking = true; grabLast = null; stroke(e.clientX, e.clientY); showRing(e.clientX, e.clientY); } });
+canvas.addEventListener('pointermove', e => { if (!brushing()) return; showRing(e.clientX, e.clientY); if (stroking) stroke(e.clientX, e.clientY); });
 addEventListener('pointerup', e => {
-  if (stroke) { undo.push(stroke); stroke = null; save(); }
-  if (mode === 'move' && down && Math.hypot(e.clientX - down[0], e.clientY - down[1]) < 6) {
-    const hit = castTo(e.clientX, e.clientY, slotMesh); if (hit && hit.object.userData.k != null) { select(hit.object.userData.k); tip(PARTS[hit.object.userData.k] + ' selected'); } }
+  if (stroking) { stroking = false; save(); }
+  else if (down && !gizmo.dragging && Math.hypot(e.clientX - down[0], e.clientY - down[1]) < 6) {
+    const hit = cast(e.clientX, e.clientY, views.map(v => v && v.m)); if (hit) { let o = hit.object; while (o && o.userData.slot == null) o = o.parent; if (o) { select(o.userData.slot); tip(slotName(ST.slots[o.userData.slot]) + ' selected'); } } }
   down = null;
+});
+
+// ================= keyboard (PC, Blender style) =================
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return; const k = e.key.toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && k === 'z') { e.preventDefault(); (e.shiftKey ? $('bRedo') : $('bUndo')).click(); return; }
+  if (e.shiftKey && k === 'd') return $('bDup').click();
+  const go = t => document.querySelector(`.tabs [data-tab="${t}"]`).click();
+  if (k === 'g') { go('move'); setGz('translate'); } else if (k === 'r') { go('move'); setGz('rotate'); } else if (k === 's') { go('move'); setGz('scale'); }
+  else if (k === 'h') $('bIso').click(); else if (k === 'x' && ST.slots[sel].copy) $('bDel').click();
+  else if (k === '1') document.querySelector('[data-cam=front]').click(); else if (k === '3') document.querySelector('[data-cam=side]').click(); else if (k === '7') document.querySelector('[data-cam=top]').click();
 });
 
 function resize() { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
-Promise.all([prep('A'), prep('B'), prepC()]).then(() => {
-  document.getElementById('bBase').textContent = 'Base: ' + SRC[ST.base].name;
-  buildAll(); slotList(); syncSliders(); tip('Tap a part to pick it', 3000);
+tip('Loading models…', 8000);
+Promise.all([prepAI('A'), prepAI('B'), prepC()]).then(() => {
+  ST.sculpt = ST.sculpt || {A: {}, B: {}}; ST.slots.forEach(s => s.cut.C = s.cut.C || []);
+  applySculpt('A'); applySculpt('B'); rebuildAll(); outliner(); syncUI(); tip('Tap a part to select it', 2500);
 });
 renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
 </script>
