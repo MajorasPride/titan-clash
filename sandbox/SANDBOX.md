@@ -23,6 +23,14 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 18 (Nov 8, 2026): new VALOR model, Gunpla-kit style
+Status: **testing**. Feedback: MajorasPride loved the test page ("perfect, marvelous"); in-fight feedback waiting. Code: `sandbox/src/22-valor-kit.js`. Sandbox only, the game keeps the old VALOR.
+- VALOR's body is rebuilt like a Gundam model kit: dark metal inner frame (joints, bones, pistons) with white / blue / gold armor plates on top, vents, bolts, ear sensors, V-crest, curled fingers, back thrusters. Regular shading (no cel shade on the test page).
+- Same joints as before (torso, head, arms, elbows, hands, legs, knees), so every move, pose, ultimate and the fluid motion still work; only the joint spots moved to fit the new body.
+- New sword (wrapped grip, winged gold guard, water glow) and kite shield (gold rim, rivets, wave emblem) on a forearm mount; the thrown shield is the kite shield too.
+- Test page (spin, T-pose, Build it! kit animation, frame/exploded views): https://claude.ai/artifact/GiEm3sGoyS6YuFcNMio8AC
+- Next idea (asked, not built): INFERNOTH gets the same treatment with a marine iguana look (so he isn't a Godzilla copy).
+
 ### Sandbox 17c (Nov 8, 2026): camera button = just the emoji
 - MajorasPride: just the emoji, to the left (his pick: left of ⚙ SANDBOX). The 🎥 has no circle or background now and sits first in the top-left row; ⚙ SANDBOX and FULLSCREEN slide right to make room.
 

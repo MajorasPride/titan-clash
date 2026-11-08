@@ -23,6 +23,7 @@ Hi Claude. This is MajorasPride's game, and we build it together, one chat at a 
 ## v8.4.7 unfinished titans hidden (Nov 8, 2026)
 =====================================================================
 - `38-titan-status.js`: `TITAN_HIDDEN=['raikou','ragnavox']` takes them out of `V8DEFS`/`ROSTER` (kept in `HIDDEN_DEFS`). `TITAN_STATUS` is empty for now. makeCity: `MAP.bGap` switch (off in the game). Notes: `patch-notes/v8.4.7.md`.
+- Sandbox 18 (testing, Nov 8): new Gunpla-kit VALOR body + kite shield + sword (`sandbox/src/22-valor-kit.js`). Wraps `buildMech` (removes the old VALOR body meshes, keeps every joint, moves the joint spots), `v8Dress` (restyles sword/shield) and `v8DiscMesh` (thrown kite shield). Model built in test-page units, scaled x3 (`VK.S`). `VK.on=false` turns it off. Next idea: INFERNOTH as a marine iguana (not a Godzilla copy).
 - Sandbox 17 (testing): fluid motion (`sandbox/src/17-motion.js`), lock-on flash + roomier city (`18`), MAGMA SURGE (`19`), camera views + ACTION CAM (`20`), hit-pause fix + no auto Combo Breaker (`21`).
 - Balance test tool: `tools/balance_test.py` (CPU vs CPU, no screen, fake clock for the game's timers).
 
