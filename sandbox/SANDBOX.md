@@ -23,6 +23,17 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 17 (Nov 8, 2026): fluid motion, MAGMA SURGE, camera views, roomier city, lock-on flash
+Status: **testing**. Feedback: waiting. Code: `sandbox/src/17-motion.js`, `18-lock-flash.js`, `19-magma-surge.js`, `20-cam-views.js`, `21-flow.js`. Sandbox only (except the two game changes in v8.4.7 below).
+- **Fluid motion (Soul Calibur style)** for every titan: joints are springs (hips and legs lead, arms and head follow a beat behind and settle), every move is retimed into wind-up, snap, impact hold and ease-out (the hit still lands at the same moment), a living fighting stance (bent knees, breathing, weight shift), walk sway and lean into turns, tails drag behind turns, and real body hit reactions. ⚙ → MOTION: NEW / OLD to compare. Cutscenes keep their own poses.
+- **Less hit-pause pile-up:** the balance test found the game frozen in hit-pause 12% to 55% of busy fights. Each pause is shorter now, and pauses close together shrink.
+- **No auto Combo Breaker** (MajorasPride). The other anti-stun-lock rules stay.
+- **MAGMA SURGE** replaces INFERNOTH's Magma Wall (MELTDOWN medium): a rolling lava wave that knocks them down, eats small shots (Hot Blood: each one fills rage) and leaves burning ground.
+- **🎥 CAM button** (PC: C): flips views mid-fight: TITAN CAM → ACTION CAM (over the right shoulder, crosshair, your titan strafes and faces where you aim) → OVER THE SHOULDER → FREE BEHIND → FIXED → NEWS CAM.
+- **Lock-on:** the red diamond and LOCK-ON tag show for 1 second, then fade; the lock stays on.
+- **Roomier Neon City:** checkerboard layout, about 84 buildings instead of about 194 (about 36 instead of 84 near the fight).
+- Game v8.4.7 (also here): RAIKOU and RAGNAVOX hidden until their reworks (code kept, `TITAN_HIDDEN` in `38-titan-status.js`).
+
 ### Sandbox 16b (Nov 7, 2026): rebuilt with v8.4.6 (RAGNAVOX marked NEXT UP on the select screen)
 
 ### Sandbox 16 (Nov 7, 2026): the twins moved into the game (v8.4.5)

@@ -20,6 +20,13 @@ Hi Claude. This is MajorasPride's game, and we build it together, one chat at a 
 6. I play on PC and on my phone.
 
 =====================================================================
+## v8.4.7 unfinished titans hidden (Nov 8, 2026)
+=====================================================================
+- `38-titan-status.js`: `TITAN_HIDDEN=['raikou','ragnavox']` takes them out of `V8DEFS`/`ROSTER` (kept in `HIDDEN_DEFS`). `TITAN_STATUS` is empty for now. makeCity: `MAP.bGap` switch (off in the game). Notes: `patch-notes/v8.4.7.md`.
+- Sandbox 17 (testing): fluid motion (`sandbox/src/17-motion.js`), lock-on flash + roomier city (`18`), MAGMA SURGE (`19`), camera views + ACTION CAM (`20`), hit-pause fix + no auto Combo Breaker (`21`).
+- Balance test tool: `tools/balance_test.py` (CPU vs CPU, no screen, fake clock for the game's timers).
+
+=====================================================================
 ## v8.4.5 "THE TWINS + COMBO FEEL" (Nov 7, 2026)
 =====================================================================
 - `41-combo-feel.js`: hit-pause by hit strength + a look-only flinch (root tilt, no stun) on every landed hit by a core titan; whiffed lights mark `landed` 0.1s after their hit moment so the string can continue.

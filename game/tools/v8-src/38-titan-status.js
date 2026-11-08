@@ -7,7 +7,13 @@
    The tags show on the select screen tabs and at the top of the titan file.
    To change who's next or finished, edit TITAN_STATUS (a titan with no entry = finished, no tag).
    ===================================================================== */
-const TITAN_STATUS={raikou:'old',ragnavox:'next'};   // v8.4.5: ASHVIN finished (the twins). Mark the next titan with 'next' once Clayton picks it
+const TITAN_STATUS={};   // v8.4.7: RAIKOU and RAGNAVOX are hidden (below), so no tags right now. Mark the next titan with 'next' once it's back on the roster
+/* v8.4.7 (Nov 8, 2026): MajorasPride: "every titan we haven't finished should be taken out, for now". Hide, don't delete:
+   the titans in TITAN_HIDDEN are taken off the select screen and out of the CPU's random picks. Their code and
+   data stay in the game (moved to HIDDEN_DEFS). To bring one back, take its id out of TITAN_HIDDEN. */
+const TITAN_HIDDEN=['raikou','ragnavox'], HIDDEN_DEFS=[];
+for(const id of TITAN_HIDDEN){ const i=V8DEFS.findIndex(d=>d.id===id); if(i>=0) HIDDEN_DEFS.push(V8DEFS.splice(i,1)[0]); const j=ROSTER.findIndex(d=>d.id===id); if(j>=0) ROSTER.splice(j,1); }
+if(TITAN_HIDDEN.includes(selId)) selId='valor'; if(TITAN_HIDDEN.includes(oppId)) oppId='random';
 const TITAN_SOON=[{name:'VOIDMAW',type:'kaiju',sub:'KAIJU · BEYOND THE STARS'}];
 const STATUS_TXT={next:'NEXT UP · IN THE LAB',old:'OLD KIT · REWORK COMING'};
 const STATUS_FILE={next:'Being reworked next. Playable now on its old kit; the new kit is being built in the sandbox.',
