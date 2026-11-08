@@ -25,6 +25,17 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 17 (Nov 8, 2026): fluid motion, MAGMA SURGE, camera views, roomier city, lock-on flash
+Status: **testing**. Feedback: waiting. Code: `sandbox/src/17-motion.js`, `18-lock-flash.js`, `19-magma-surge.js`, `20-cam-views.js`, `21-flow.js`. Sandbox only (except the two game changes in v8.4.7 below).
+- **Fluid motion (Soul Calibur style)** for every titan: joints are springs (hips and legs lead, arms and head follow a beat behind and settle), every move is retimed into wind-up, snap, impact hold and ease-out (the hit still lands at the same moment), a living fighting stance (bent knees, breathing, weight shift), walk sway and lean into turns, tails drag behind turns, and real body hit reactions. ⚙ → MOTION: NEW / OLD to compare. Cutscenes keep their own poses.
+- **Less hit-pause pile-up:** the balance test found the game frozen in hit-pause 12% to 55% of busy fights. Each pause is shorter now, and pauses close together shrink.
+- **No auto Combo Breaker** (MajorasPride). The other anti-stun-lock rules stay.
+- **MAGMA SURGE** replaces INFERNOTH's Magma Wall (MELTDOWN medium): a rolling lava wave that knocks them down, eats small shots (Hot Blood: each one fills rage) and leaves burning ground.
+- **🎥 CAM button** (PC: C): flips views mid-fight: TITAN CAM → ACTION CAM (over the right shoulder, crosshair, your titan strafes and faces where you aim) → OVER THE SHOULDER → FREE BEHIND → FIXED → NEWS CAM.
+- **Lock-on:** the red diamond and LOCK-ON tag show for 1 second, then fade; the lock stays on.
+- **Roomier Neon City:** checkerboard layout, about 84 buildings instead of about 194 (about 36 instead of 84 near the fight).
+- Game v8.4.7 (also here): RAIKOU and RAGNAVOX hidden until their reworks (code kept, `TITAN_HIDDEN` in `38-titan-status.js`).
+
 ### Sandbox 16b (Nov 7, 2026): rebuilt with v8.4.6 (RAGNAVOX marked NEXT UP on the select screen)
 
 ### Sandbox 16 (Nov 7, 2026): the twins moved into the game (v8.4.5)
@@ -744,6 +755,8 @@ v8.4.5 THE TWINS + COMBO FEEL (Nov 7, 2026). The new ASHVIN from the sandbox (Sa
     the ultimates SOLAR MANDALA and TOTAL ECLIPSE. Combo feel for everyone: a tiny hit-pause and a visible flinch on
     every hit (no extra stun), whiffed lights cancel sooner. Code: tools/v8-src/41-43. Notes: patch-notes/v8.4.5.md.
 v8.4.6 (Nov 7, 2026). Select screen: RAGNAVOX is NEXT UP (MajorasPride's pick). Code: tools/v8-src/38-titan-status.js.
+v8.4.7 (Nov 8, 2026). RAIKOU and RAGNAVOX are hidden until their reworks (code kept, TITAN_HIDDEN in tools/v8-src/38-titan-status.js).
+    makeCity can space buildings out (MAP.bGap, off in the game, on in Sandbox 17). Notes: patch-notes/v8.4.7.md.
 
 #####################################################################
 -->
@@ -8142,7 +8155,7 @@ function spdSync(){ document.querySelectorAll('#sbMenu [data-spd]').forEach(b=>b
 
 /* Which sandbox build is this? Shown small in the top-right corner and in the ⚙ menu, so an old (cached) copy is easy to spot.
    Bump SB_BUILD every time the sandbox is pushed. */
-const SB_BUILD='17 · Nov 8';
+const SB_BUILD='17b · Nov 8';
 { const d=document.createElement('div'); d.id='sbVer'; d.textContent='SANDBOX '+SB_BUILD;
   d.style.cssText="position:fixed;right:8px;bottom:6px;z-index:25;font:10px/1 'Russo One',sans-serif;letter-spacing:1px;color:#9fb3c8;opacity:.75;pointer-events:none";
   document.body.appendChild(d); }
@@ -8381,7 +8394,7 @@ function surgeUpdate(dt){ for(let i=SURGE.list.length-1;i>=0;i--){ const S=SURGE
    SANDBOX 17 (Nov 8, 2026): CAMERA VIEWS YOU CAN FLIP IN THE FIGHT + ACTION CAM.
    MajorasPride: "we need different toggled camera views" (his brother asked for a third-person
    shooter style view). Named ACTION CAM (MajorasPride: don't name it after the game).
-   - 🎥 CAM button (next to FULLSCREEN; PC: C key) flips through the views in the middle of a fight,
+   - small round 🎥 button (next to FULLSCREEN; PC: C key; Sandbox 17b: icon only, the view's name shows for 1s when you tap it) flips through the views in the middle of a fight,
      with a 1-second name tag:
      TITAN CAM (default) → ACTION CAM → OVER THE SHOULDER (close) → FREE BEHIND → FIXED → NEWS CAM (once unlocked)
    - ACTION CAM (third-person shooter style): the camera rides above and behind your
@@ -8395,7 +8408,7 @@ const CAMVIEWS=[['melee','TITAN CAM'],['action','ACTION CAM'],['shoulder','OVER 
 function camViewName(){ const v=CAMVIEWS.find(x=>x[0]===(SET.cam||'melee')); return v?v[1]:'TITAN CAM'; }
 function camCycle(){ let i=CAMVIEWS.findIndex(x=>x[0]===(SET.cam||'melee'));
  for(let k=0;k<CAMVIEWS.length;k++){ i=(i+1)%CAMVIEWS.length; if(CAMVIEWS[i][0]==='news'&&!(V8.wins>0)) continue; break; }
- SET.cam=CAMVIEWS[i][0]; for(const c of cams){ c.init=false; c.free=false; } toast('🎥 '+CAMVIEWS[i][1],'#7fd4ff',1000); const b=el('sbCam'); if(b) b.textContent='🎥 '+CAMVIEWS[i][1]; }
+ SET.cam=CAMVIEWS[i][0]; for(const c of cams){ c.init=false; c.free=false; } toast('🎥 '+CAMVIEWS[i][1],'#7fd4ff',1000); const b=el('sbCam'); if(b) b.title='Camera: '+CAMVIEWS[i][1]; }
 // the ACTION CAM
 function actionCam(dt){ const A=game.p, B=game.e, c=cams[0], C=camera, Pd=pads[0];
  const lk=(isDown('lookR',0)?1:0)-(isDown('lookL',0)?1:0)+Pd.rx, lu=(isDown('lookD',0)?1:0)-(isDown('lookU',0)?1:0)+Pd.ry*(SET.invert?-1:1);
@@ -8421,11 +8434,15 @@ function actionCam(dt){ const A=game.p, B=game.e, c=cams[0], C=camera, Pd=pads[0
 // the crosshair shows in ACTION CAM (phone too) while you're not locked on
 { const o=indicators; indicators=function(i,x0,w,showIt){ o(i,x0,w,showIt); if(i===0&&showIt&&SET.cam==='action'&&!game.vs2){ const xh=el('xhair'); xh.classList.toggle('hidden',!!cams[0].lock); xh.style.left=(x0+w/2)+'px'; } }; }
 // 🎥 button + C key
-{ const s=document.createElement('style'); s.textContent=`#sbCam{position:fixed;left:286px;top:70px;z-index:20;background:#0e1621dd;border:2px solid #7fd4ff99;color:#cfe3f5;border-radius:14px;padding:6px 12px;font-family:'Russo One',sans-serif;font-size:12px;letter-spacing:2px;cursor:pointer;pointer-events:auto}
+{ const s=document.createElement('style'); s.textContent=`#sbCam{position:fixed;left:292px;top:70px;z-index:20;width:34px;height:34px;padding:0;background:#0e1621dd;border:2px solid #7fd4ff99;color:#cfe3f5;border-radius:50%;font-size:16px;line-height:30px;text-align:center;cursor:pointer;pointer-events:auto}
 body.vcine #sbCam{visibility:hidden!important}`; document.head.appendChild(s);
-  const b=document.createElement('button'); b.id='sbCam'; b.textContent='🎥 '+camViewName(); document.body.appendChild(b);
+  const b=document.createElement('button'); b.id='sbCam'; b.textContent='🎥'; b.title='Camera: '+camViewName(); document.body.appendChild(b);
   b.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); camCycle(); });
   addEventListener('keydown',e=>{ if(e.code==='KeyC'&&!e.repeat&&game.mode==='match') camCycle(); }); }
+// keep the 🎥 button lined up just right of FULLSCREEN on any screen
+function camBtnPlace(){ const f=el('sbFull'), b=el('sbCam'); if(!f||!b) return; const r=f.getBoundingClientRect(); if(!r.width) return;
+ b.style.left=(r.right+6)+'px'; b.style.top=(r.top+(r.height-34)/2)+'px'; }
+addEventListener('resize',()=>setTimeout(camBtnPlace,60)); setInterval(camBtnPlace,1000); setTimeout(camBtnPlace,300);
 
 /* =====================================================================
    SANDBOX 17 (Nov 8, 2026): FLOW FIXES.

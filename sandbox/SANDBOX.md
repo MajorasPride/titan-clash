@@ -23,6 +23,9 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 17b (Nov 8, 2026): small camera button
+- MajorasPride: the camera angles are great, the button was massive on phone. Now a small round 🎥 icon right next to FULLSCREEN (no name on it); the view's name still shows for 1 second when you tap it.
+
 ### Sandbox 17 (Nov 8, 2026): fluid motion, MAGMA SURGE, camera views, roomier city, lock-on flash
 Status: **testing**. Feedback: waiting. Code: `sandbox/src/17-motion.js`, `18-lock-flash.js`, `19-magma-surge.js`, `20-cam-views.js`, `21-flow.js`. Sandbox only (except the two game changes in v8.4.7 below).
 - **Fluid motion (Soul Calibur style)** for every titan: joints are springs (hips and legs lead, arms and head follow a beat behind and settle), every move is retimed into wind-up, snap, impact hold and ease-out (the hit still lands at the same moment), a living fighting stance (bent knees, breathing, weight shift), walk sway and lean into turns, tails drag behind turns, and real body hit reactions. ⚙ → MOTION: NEW / OLD to compare. Cutscenes keep their own poses.
