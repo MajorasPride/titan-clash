@@ -20,6 +20,13 @@ Hi Claude. This is MajorasPride's game, and we build it together, one chat at a 
 6. I play on PC and on my phone.
 
 =====================================================================
+## v8.5 everything from the sandbox (Nov 8, 2026)
+=====================================================================
+- **Rule from MajorasPride:** the game never has more than the sandbox. The sandbox has everything the game has, with ⚙ switches to turn things off, and all new work starts in the sandbox.
+- Moved in: `44-motion.js` (fluid motion), `45-lock-flash.js` (lock-on flash, roomier city), `46-magma-surge.js` (Magma Wall archived: `archive/titan-clash-magma-wall-archive.js`), `47-cam-views.js` (🎥 / C), `48-flow.js` (hit-pause, no auto Combo Breaker; `FLOW.on`), `49-valor-kit.js` (Gunpla VALOR; `VK.on`), `50-limb-hits.js` (LIMB HITS; `SB.limb`). Notes: `patch-notes/v8.5.md`.
+- Sandbox 20: `sandbox/src/24-compare.js` = the ⚙ IN THE GAME SINCE v8.5 switches.
+
+=====================================================================
 ## Sandbox 19 FIGHT LAB (Nov 8, 2026, sandbox only)
 =====================================================================
 - `sandbox/src/23-fight-lab.js`: LIMB HITS (body-part hit points with swept checks, wraps `coneHit` and `FP.melee`; move-to-part list `LAB_LIMB`), HITBOXES view, live FRAME DATA cards, MOVE MAP of cancels. All toggles in the ⚙ menu. Details and next steps: `sandbox/SANDBOX.md` → Sandbox 19.

@@ -1,3 +1,4 @@
+// v8.5 (Nov 8, 2026): moved from the sandbox into the game (MajorasPride: put everything we did in the game; the sandbox keeps on/off switches to compare).
 /* =====================================================================
    SANDBOX 17 (Nov 8, 2026): MAGMA SURGE replaces INFERNOTH's Magma Wall (MELTDOWN medium).
    MajorasPride: "the lava wall is kinda dumb, switch it for something cooler, I trust you".

@@ -1,3 +1,4 @@
+// v8.5 (Nov 8, 2026): moved from the sandbox into the game (MajorasPride: put everything we did in the game; the sandbox keeps on/off switches to compare).
 /* =====================================================================================================
    SANDBOX 18: NEW VALOR MODEL, GUNPLA-KIT STYLE (Nov 8, 2026)
    MajorasPride loved the code-built VALOR test page ("perfect, marvelous"), so his body replaces the old

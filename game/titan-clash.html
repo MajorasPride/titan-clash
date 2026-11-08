@@ -501,6 +501,11 @@ v8.4.5 THE TWINS + COMBO FEEL (Nov 7, 2026). The new ASHVIN from the sandbox (Sa
 v8.4.6 (Nov 7, 2026). Select screen: RAGNAVOX is NEXT UP (MajorasPride's pick). Code: tools/v8-src/38-titan-status.js.
 v8.4.7 (Nov 8, 2026). RAIKOU and RAGNAVOX are hidden until their reworks (code kept, TITAN_HIDDEN in tools/v8-src/38-titan-status.js).
     makeCity can space buildings out (MAP.bGap, off in the game, on in Sandbox 17). Notes: patch-notes/v8.4.7.md.
+v8.5 EVERYTHING FROM THE SANDBOX (Nov 8, 2026). Sandbox 17 to 19 moved in: fluid Soul Calibur style motion (44), lock-on
+    flash 1s + roomier Neon City (45), MAGMA SURGE replaces Magma Wall (46, wall archived), camera views + ACTION CAM and
+    the 🎥 button / C key (47), shorter hit-pause + no auto Combo Breaker (48), the Gunpla-kit VALOR model (49), LIMB HITS
+    (50: hits land only when the claw / fist / tail / sword / staff really sweeps through the rival). Code: tools/v8-src/44-50.
+    Rule from MajorasPride: the game never has more than the sandbox. Notes: patch-notes/v8.5.md.
 
 #####################################################################
 -->
@@ -6161,9 +6166,7 @@ Object.assign(V8MOVE,{
    let yaw=f.yaw; if(canHit(o)&&dist2(f,o)<60) yaw=Math.atan2(o.pos.x-f.pos.x,o.pos.z-f.pos.z);
    const m=new THREE.Mesh(new THREE.SphereGeometry(c===2?1.6:1.1,8,6),glowM(INF.ORANGE,2.6)); m.position.copy(from); scene.add(m);
    KX.blobs.push({f,m,vel:V(Math.sin(yaw)*70,0,Math.cos(yaw)*70),t:c===2?.7:.55,dmg:(c===2?9:5)*pm,big:c===2}); Snd.tone('sawtooth',160,60,.15,.05); } },
- mwall(f,a,dt,pm,o){ if(once(a,'w',a.hitAt)){ for(const W of KX.walls) if(W.f===f) W.t=Math.min(W.t,.3);   // one wall at a time
-   const c=fwd(f,12*f.scale), w=24, g=new THREE.Mesh(new THREE.BoxGeometry(w,9,2.2),glowM(INF.ORANGE,1.8)); g.position.set(c.x,-4,c.z); g.rotation.y=f.yaw; scene.add(g);
-   KX.walls.push({f,x:c.x,z:c.z,yaw:f.yaw,w,t:4,m:g,dps:14*pm}); dust(c.x,c.z,8,8); Snd.boom(); game.shake=Math.max(game.shake,.4); } },
+ // v8.5: Magma Wall (mwall) archived, MAGMA SURGE replaces it (46-magma-surge.js). Old code: archive/titan-clash-magma-wall-archive.js
  merupt(f,a,dt,pm,o){ const c=a.chg||0;
   if(once(a,'e',a.hitAt)){ const rng=40+30*c; const ok=canHit(o)&&dist2(f,o)<rng; const at=ok?V(o.pos.x,0,o.pos.z):fwd(f,Math.min(rng,30));
    dropRock(at.x,at.z,{geyser:true,r:8+2*c,warn:.35,dmg:(15+6*c)*pm,kb:10,ln:20,owner:f,immune:f,col:0xffb347,bld:60}); Snd.thud&&Snd.thud(); game.shake=Math.max(game.shake,.4); } },
@@ -6325,12 +6328,7 @@ function ultGZ(f,a,dt,pm,o){ const t=a.t;
 function kxTick(dt){ if(game.mode!=='match') return; const fight=game.state==='fight';
  for(let i=KX.blobs.length-1;i>=0;i--){ const B=KX.blobs[i], o=B.f.opp; B.t-=dt; B.m.position.addScaledVector(B.vel,dt); if(Math.random()<dt*30) burst(B.m.position.clone(),Math.random()<.5?0xffd27a:0x5a1a08,1,3); let done=B.t<=0;
   if(o&&canHit(o)&&B.m.position.distanceTo(o.chest())<o.radius()+3){ V8.proj={r:3.2,mesh:B.m}; /* big enough that the auto-shield doesn't eat it; holding block still works */ try{ o.takeHit(B.f,B.dmg,B.big?14:5,0,false,{x:B.vel.x,z:B.vel.z}); } finally{ V8.proj=null; } if(B.big){ o.burnT=Math.max(o.burnT||0,1.5); o.burnBy=B.f; } lava(B.m.position.clone(),8,10); done=true; }
-  for(const W of KX.walls) if(W.f!==B.f&&wallHit(W,B.m.position)) done=true;
   if(done){ scene.remove(B.m); B.m.geometry.dispose(); KX.blobs.splice(i,1); } }
- for(let i=KX.walls.length-1;i>=0;i--){ const W=KX.walls[i], o=W.f.opp; W.t-=dt; W.m.position.y=Math.min(4.5,W.m.position.y+dt*30); if(W.t<.3) W.m.position.y-=dt*30;
-  for(let j=projs.length-1;j>=0;j--){ const p=projs[j]; if(p.owner!==W.f&&wallHit(W,p.mesh.position)){ burst(p.mesh.position.clone(),INF.ORANGE,8,10); p.life=0; } }   // blocks shots
-  if(o&&canHit(o)&&wallHit(W,o.pos.clone().setY(3),o.radius()*.6)){ const s0=o.stun; o.takeHit(W.f,W.dps*dt,0,0,true,{x:0,z:1}); o.stun=s0; const nx=Math.sin(W.yaw), nz=Math.cos(W.yaw), side=(o.pos.x-W.x)*nx+(o.pos.z-W.z)*nz>0?1:-1; o.kb.x+=nx*side*40*dt*10; o.kb.z+=nz*side*40*dt*10; }
-  if(W.t<=0){ scene.remove(W.m); W.m.geometry.dispose(); KX.walls.splice(i,1); } }
  for(let i=KX.patches.length-1;i>=0;i--){ const P=KX.patches[i], o=P.f&&P.f.opp; P.t-=dt;
   if(P.pool){ const q=1-P.t/P.max; P.m.material.color.setHex(0xffb347).lerp(new THREE.Color(0x4a0c02),q); P.m.material.opacity=.85*(1-q*q); if(Math.random()<dt*4*(1-q)) burst(V(P.x+rand(-P.r,P.r)*.6,.6,P.z+rand(-P.r,P.r)*.6),0xffd27a,1,4); }
   else P.m.material.opacity=Math.min(.6,P.t*.4);
@@ -6348,8 +6346,6 @@ function kxTick(dt){ if(game.mode!=='match') return; const fight=game.state==='f
  const sky=KX.match.sky||KX.round.sky; if(!sky&&KX.revert>0){ KX.revert-=dt; scene.background.lerp(SKY,Math.min(1,dt*1.5)); scene.fog.color.lerp(new THREE.Color(MAP.fog),Math.min(1,dt*1.5)); }
  if(sky){ const c=new THREE.Color(sky); scene.background.lerp(c.clone().multiplyScalar(.45),Math.min(1,dt*1.5)); scene.fog.color.lerp(c.clone().multiplyScalar(.35),Math.min(1,dt*1.5)); }
  crackEl.classList.toggle('on',!!KX.round.crack); }
-function wallHit(W,p,pad){ const nx=Math.sin(W.yaw), nz=Math.cos(W.yaw), dx=p.x-W.x, dz=p.z-W.z, along=dx*nz-dz*nx, across=dx*nx+dz*nz;
- return Math.abs(along)<W.w/2&&Math.abs(across)<1.6+(pad||0)&&p.y<10&&W.m.position.y>0; }
 { const o=updateHUD; updateHUD=function(dt){ o(dt); try{ kxTick(dt); }catch(e){ console.error(e); } }; }
 function kxClear(all){ for(const L of [KX.blobs,KX.walls,KX.patches]){ for(const x of L){ scene.remove(x.m); x.m.geometry&&x.m.geometry.dispose(); } L.length=0; }
  for(const R of KX.rocks){ scene.remove(R.m); } KX.rocks.length=0; KX.round={}; crackEl.classList.remove('on'); if(all){ KX.match={}; } }
@@ -6680,7 +6676,7 @@ function swSet(m){ Object.assign(SW13,m?SW13_M:{CUTS:SW13_0.CUTS,LAND:SW13_0.LAN
 // Hot Blood (BRAWLER): the bite fills rage
 { const o=V8MOVE.kbite; V8MOVE.kbite=function(f,a,dt,pm,o2){ const h=a._bh; o(f,a,dt,pm,o2); if(!h&&a._bh&&up(f,'hotblood')){ addRage(f,15); burst(f.chest(),0xfff2d0,10,10); } }; }
 // Hot Blood (MELTDOWN): Magma Wall fills rage when a shot hits it
-{ const o=wallHit; wallHit=function(W,p,pad){ const r=o(W,p,pad); if(r&&pad===undefined&&W.f&&up(W.f,'hotblood')&&game.time-(W._hb||0)>.15){ W._hb=game.time; addRage(W.f,8); } return r; }; }
+// v8.5: the Hot Blood hook on the Magma Wall moved to archive/titan-clash-magma-wall-archive.js (MAGMA SURGE fills rage itself, 46-magma-surge.js)
 // Living Fortress (MELTDOWN): Obsidian Shell lasts 2s longer
 { const o=V8MOVE.mshell; V8MOVE.mshell=function(f,a,dt,pm,o2){ const s=a._s; o(f,a,dt,pm,o2); if(!s&&a._s&&up(f,'fortress')) f.shellT+=2; }; }
 // King of Monsters (BRAWLER): KING sends them farther, they land in a lava burst. (MELTDOWN): LAVA DOMAIN pins them longer
@@ -7562,6 +7558,523 @@ runeKill=(function(o){ return function(a,key){ const g=a[key]; if(g&&g.userData.
   if(k<2.3){ cineShot(2); camAt(V(O.x+ds.x*170-dv.x*60,70,O.z+ds.z*170-dv.z*60),V(O.x,(f.pos.y+o.pos.y)/2+14,O.z)); return; }          // very wide: Sun leaps up under the black moon
   if(k<2.65){ cineShot(3); camAt(V(O.x+ds.x*110,o.pos.y+45,O.z+ds.z*110),V(O.x,o.pos.y*.6+6,O.z)); return; }                            // the spike
   cineShot(4); camAt(V(O.x+ds.x*95-dv.x*40,30,O.z+ds.z*95-dv.z*40),V(O.x,6,O.z)); if(k>3.6||!f.atk||f.atk.id!=='ultimate') cineEnd(); }; }
+
+// v8.5 (Nov 8, 2026): moved from the sandbox into the game (MajorasPride: put everything we did in the game; the sandbox keeps on/off switches to compare).
+/* =====================================================================
+   SANDBOX 17 (Nov 8, 2026): FLUID MOTION (the Soul Calibur way).
+   MajorasPride: "they look so stiff all the time" ... "we need better hand made animations" ...
+   "figure out how Soul Calibur does it" ... "fighting games are all about being fluid".
+   What was wrong (found in Fighter.animate):
+   1. Every joint slid straight to its target at one speed (no weight, no overshoot, no follow-through),
+      and every joint arrived at the same moment, so the whole body moved like one stiff block.
+   2. Every move went in a straight line to the hit pose and straight back: no wind-up, no snap,
+      no hold on impact. Soul Calibur moves have 5 steps: start pose, wind-up, strike, recovery, end pose.
+   3. Standing still = frozen (only a tiny chest bob). Soul Calibur fighters are never frozen: knees bent,
+      weight shifting, breathing.
+   4. Walking moved only the legs: no hip sway, no shoulder counter-twist, no lean into the run.
+   5. Getting hit only tilted the whole titan (41-combo-feel), the body itself never reacted.
+   What this file does (for every titan, every move, without changing any move's timing or damage):
+   1. SPRINGS: each joint is a spring with its own speed. Hips and legs lead, the chest follows, arms
+      lag a beat, elbows and head lag more and swing past the target a little, then settle (overlap).
+   2. FIVE STEPS: each move's pose is retimed (look only, the hit still lands at the same moment):
+      slow into the wind-up, hold it a hair, SNAP to the hit pose, hold the impact, ease out.
+      During the snap the joints get extra stiff so the strike is sharp.
+   3. LIVING STANCE: bent knees, breathing, weight shifting, a slight guard sway. Fades out as you move.
+   4. WALK: hips roll, shoulders twist against the legs, lean into the run and into turns, tails and
+      necks drag behind turns.
+   5. HIT REACTIONS: a landed hit kicks the springs (chest snaps back, head whips, arms fling), and
+      the springs carry the recoil back to the stance on their own. Heavy hits kick harder.
+   Cutscenes and ultimates keep their hand-directed poses (no retiming there).
+   ⚙ menu → MOTION: NEW / OLD to compare. Never saved; the game isn't affected.
+   ===================================================================== */
+const MOT={on:true,
+ // [part, axis, speed (higher = snappier), bounce (lower = more overshoot)]
+ J:[['legL','x',24,.85],['legR','x',24,.85],['knL','x',24,.85],['knR','x',24,.85],
+    ['torso','y',19,.62],['torso','x',19,.66],
+    ['armL','x',15,.5],['armR','x',15,.5],['armL','z',15,.55],['armR','z',15,.55],
+    ['elL','x',12,.44],['elR','x',12,.44],['head','x',11,.48],['jaw','x',17,.6]]};
+// the five steps: retime the pose (not the hit). p = 0..1 through the move, pk = the hit moment.
+function motWarp(p,pk){
+ if(p<pk){ const u=p/pk; return pk*(u<.72?.82*ez(u/.72):.82+.18*Math.pow((u-.72)/.28,.55)); }   // ease into the wind-up, then snap
+ const u=(p-pk)/(1-pk), h=.14; return pk+(1-pk)*(u<h?0:1-Math.pow(1-(u-h)/(1-h),2)); }              // hold the impact, ease out
+function motWarpable(a){ return a&&MOVES[a.id]&&a.id!=='ultimate'&&a.id!=='super'&&a.on==null&&a.landT==null&&!(typeof CINE!=='undefined'&&CINE.on)&&a.dur>0; }
+function motPk(a){ return clamp(a.hitAt?a.hitAt/a.dur:.3,.08,.9); }
+{ const oA=FP.animate; FP.animate=function(dt){
+  const P=this.P;
+  if(!MOT.on||!P||!(dt>0)||(typeof CINE!=='undefined'&&CINE.on)){ if(this._mot) this._mot=null; return oA.call(this,dt); }
+  const J=MOT.J, M=this._mot||(this._mot={x:J.map(([n,ax])=>P[n]?P[n].rotation[ax]:0),v:J.map(()=>0),add:J.map(()=>0),seed:Math.random()*6.28,yaw:this.yaw,yr:0,roll:0});
+  const x0=J.map(([n,ax])=>P[n]?P[n].rotation[ax]:0);
+  // 2. five steps: animate() reads a.t, so hand it the retimed time and put the real one back
+  const a=this.atk; let tReal=null, snap=1;
+  if(motWarpable(a)){ tReal=a.t; const p=clamp(a.t/a.dur,0,1), pk=motPk(a); a.t=motWarp(p,pk)*a.dur; if(p>pk*.72&&p<pk+(1-pk)*.1) snap=2.3; }
+  oA.call(this,dt);
+  if(tReal!=null) a.t=tReal;
+  // 1. springs: work out where animate() wanted each joint, then spring toward it
+  const r=1-Math.exp(-18*dt), n=dt>.02?2:1, h=dt/n;
+  for(let i=0;i<J.length;i++){ const [pn,ax,w0,z]=J[i], o=P[pn]; if(!o) continue;
+   const tgt=x0[i]+(o.rotation[ax]-x0[i])/r, w=w0*(snap>1&&pn!=='head'?snap:1);
+   for(let s=0;s<n;s++){ M.v[i]+=(w*w*(tgt-M.x[i])-2*z*w*M.v[i])*h; M.x[i]+=M.v[i]*h; } }
+  // 3 + 4. living stance and walk, added on top
+  const T=game.time+M.seed, m=clamp(this.moveAmt||0,0,1), idle=(1-m)*(a?.25:1)*(this.dead?0:1), ground=this.onGround!==false&&!this.flying;
+  const yr=angDiff(this.yaw,M.yaw)/dt; M.yaw=this.yaw; M.yr+=(clamp(yr,-6,6)-M.yr)*(1-Math.exp(-8*dt));
+  const br=Math.sin(T*1.9), sh=Math.sin(T*.85), ph=this.phase||0, ws=Math.sin(ph), kj=this.kaiju;
+  const add={};
+  add['torso.x']=br*.025*idle+(kj?.05:.1)*m*(a?.4:1);                              // breathe; lean into the run
+  add['torso.y']=sh*.06*idle-ws*.14*m*(a?.3:1);                                     // weight shift; shoulders twist against the legs
+  add['armL.x']=Math.sin(T*1.9+.6)*.05*idle; add['armR.x']=Math.sin(T*1.9+.9)*.05*idle;
+  add['armL.z']=-sh*.04*idle; add['armR.z']=-sh*.04*idle;
+  add['elL.x']=-.12*idle; add['elR.x']=-.12*idle;                                   // a loose guard instead of straight arms
+  add['head.x']=Math.sin(T*1.9+1.3)*.03*idle;
+  if(ground&&!kj){ add['knL.x']=(.16+br*.02)*idle; add['knR.x']=(.16+br*.02)*idle; add['legL.x']=-.1*idle; add['legR.x']=-.07*idle; }   // bent knees, fighting stance
+  for(let i=0;i<J.length;i++){ const [pn,ax]=J[i], o=P[pn]; if(!o) continue; M.add[i]=add[pn+'.'+ax]||0; o.rotation[ax]=M.x[i]+M.add[i]; }
+  // walk roll + lean into turns (torso z isn't used by animate)
+  const roll=Math.sin(ph)*.07*m+clamp(-M.yr*.05,-.18,.18)*(.4+m)+sh*.02*idle; M.roll+=(roll-M.roll)*(1-Math.exp(-10*dt));
+  if(P.torso) P.torso.rotation.z=M.roll;
+  if(P.tail) P.tail.forEach((g,i)=>{ g.rotation.y+=clamp(-M.yr*.06*(i+1)/P.tail.length,-.35,.35); });          // tail drags behind turns
+  if(P.neck) P.neck.forEach((g,i)=>{ g.rotation.z+=clamp(M.yr*.03,-.15,.15); });
+ }; }
+// 5. hit reactions: kick the springs
+function motKick(f,str,dir){ const M=f._mot; if(!M) return; const J=MOT.J, idx=(pn,ax)=>J.findIndex(j=>j[0]===pn&&j[1]===ax);
+ const side=Math.sin((dir||0)), back=Math.cos((dir||0)), k=str;
+ const add=(pn,ax,v)=>{ const i=idx(pn,ax); if(i>=0) M.v[i]+=v; };
+ add('torso','x',-7*k*back); add('torso','y',6*k*side); add('head','x',-11*k*back);
+ add('armL','x',(4+Math.random()*4)*k); add('armR','x',(4+Math.random()*4)*k); add('armL','z',-5*k); add('armR','z',5*k);
+ add('elL','x',-6*k); add('elR','x',-6*k); add('knL','x',4*k); add('knR','x',4*k); }
+{ const oTH=FP.takeHit; FP.takeHit=function(src,dmg,kb,launch,cont,dir){ const hp0=this.hp; const r=oTH.call(this,src,dmg,kb,launch,cont,dir);
+  if(MOT.on&&!cont&&this.hp<hp0&&src&&src!==HZ){ const c=src.atk?feelClass(src):'medium', str={light:.7,medium:1,heavy:1.5}[c]||1;
+   const d=Math.atan2((dir&&dir.x)||(this.pos.x-src.pos.x)||0,(dir&&dir.z)||(this.pos.z-src.pos.z)||1)-this.yaw; motKick(this,str*(this.kaiju?.7:1),d); }
+  return r; }; }
+// ⚙ menu: MOTION NEW / OLD
+function motUI(){ const m=el('sbMenu'); if(!m||m.querySelector('[data-mot]')) return;
+ const box=m.querySelector('.box'), kit=el('sbKit'), d=document.createElement('div'); d.className='sec';
+ d.innerHTML=`<div class="lbl">MOTION (compare the new fluid motion with the old)</div><div class="row"><button data-mot="1">NEW</button><button data-mot="0">OLD</button></div>`;
+ box.insertBefore(d,kit.closest('.sec'));
+ d.addEventListener('pointerdown',e=>{ const b=e.target.closest('button'); if(!b) return; e.preventDefault(); e.stopPropagation(); MOT.on=b.dataset.mot==='1';
+  for(const f of [game.p,game.e]) if(f){ f._mot=null; if(f.P&&f.P.torso) f.P.torso.rotation.z=0; } motSync(); toast('MOTION: '+(MOT.on?'NEW':'OLD'),'#7fd4ff',700); }); }
+function motSync(){ document.querySelectorAll('#sbMenu [data-mot]').forEach(b=>b.classList.toggle('on',(b.dataset.mot==='1')===MOT.on)); }
+{ const oS=sbStart; sbStart=function(){ oS(); motUI(); motSync(); }; }
+{ const oS=sbSync; sbSync=function(){ oS(); motSync(); }; }
+
+// v8.5 (Nov 8, 2026): moved from the sandbox into the game (MajorasPride: put everything we did in the game; the sandbox keeps on/off switches to compare).
+/* =====================================================================
+   SANDBOX 17 (Nov 8, 2026): LOCK-ON FLASH + A ROOMIER CITY.
+   MajorasPride: "lock on shouldn't have that red UI the whole time, just a quick 1 second, but keep
+   locked on. The overlay is annoying, screen clutter."
+   - The red diamond on the rival and the LOCK-ON tag show for 1 second when you lock on, then fade out.
+     The lock itself stays on. They flash again for 1 second whenever you lock on again.
+   - The off-screen arrow (where the rival is when you can't see them) stays, since it's only there
+     when you need it.
+   MajorasPride: "remove more buildings, there are so many. Just space them out."
+   - Neon City builds on a checkerboard (every building gets open space on all four sides) and a little
+     thinner: about a third of the buildings it had. Switch: MAP.bGap (game code, makeCity).
+   ===================================================================== */
+const LOCKFLASH={show:1, fade:.35, t:[-99,-99], was:[false,false]};
+{ const s=document.createElement('style'); s.textContent='.ret,.ltag{transition:opacity .35s ease-out}.ret.lkfade,.ltag.lkfade{opacity:0}'; document.head.appendChild(s); }
+{ const o=indicators; indicators=function(i,x0,w,showIt){ o(i,x0,w,showIt); const c=cams[i], now=performance.now()/1000, sx=i?'2':'';
+  if(c.lock&&!LOCKFLASH.was[i]) LOCKFLASH.t[i]=now; LOCKFLASH.was[i]=!!c.lock;
+  const fade=c.lock&&now-LOCKFLASH.t[i]>LOCKFLASH.show;
+  for(const id of ['reticle'+sx,'lockTag'+sx]){ const e=el(id); if(e) e.classList.toggle('lkfade',fade); } }; }
+// fewer buildings, more room between them (Neon City)
+MAPS.city.bGap=true; MAPS.city.bDen=.72;
+
+// v8.5 (Nov 8, 2026): moved from the sandbox into the game (MajorasPride: put everything we did in the game; the sandbox keeps on/off switches to compare).
+/* =====================================================================
+   SANDBOX 17 (Nov 8, 2026): MAGMA SURGE replaces INFERNOTH's Magma Wall (MELTDOWN medium).
+   MajorasPride: "the lava wall is kinda dumb, switch it for something cooler, I trust you".
+   He stomps, and a rolling wave of lava rushes forward along the ground (a breaking crest with a
+   glowing lip). It knocks the rival down and pushes them away, swallows small shots in its path
+   (so MELTDOWN keeps its zoning tool), and leaves short burning pools behind it.
+   The old wall code is still in the game (33-infernoth-meltdown-ults.js); it moves to the archive
+   if he OKs this.
+   ===================================================================== */
+const SURGE={list:[], speed:58, range:52, dmg:13};
+MOVES.mwall.name='Magma Surge'; MOVES.mwall.dur=.85; MOVES.mwall.hitAt=.4;
+function surgeMesh(){ const g=new THREE.Group();
+ const body=new THREE.Mesh(new THREE.CylinderGeometry(3.2,3.2,20,14,1,true,0,Math.PI),glowM(INF.ORANGE,1.6)); body.rotation.z=Math.PI/2; body.material.side=THREE.DoubleSide; g.add(body);
+ const lip=new THREE.Mesh(new THREE.TorusGeometry(2.6,.7,6,14,Math.PI*.9),glowM(0xffd27a,2.8)); lip.rotation.y=Math.PI/2; lip.position.set(0,1.2,1.6); lip.scale.set(1,1,1); g.add(lip);
+ const crust=new THREE.Mesh(new THREE.BoxGeometry(20,.8,3.4),std(0x2a120a,.9,.1)); crust.position.set(0,.2,-1.6); g.add(crust);
+ g.userData={body,lip}; return g; }
+V8MOVE.mwall=function(f,a,dt,pm,o){ if(once(a,'w',a.hitAt)){
+  const yaw=(canHit(o)&&dist2(f,o)<SURGE.range+10)?Math.atan2(o.pos.x-f.pos.x,o.pos.z-f.pos.z):f.yaw;
+  const s=fwd(f,6*f.scale), m=surgeMesh(); m.position.set(s.x,0,s.z); m.rotation.y=yaw; m.scale.set(.6,.2,.6); scene.add(m);
+  SURGE.list.push({f,m,x:s.x,z:s.z,yaw,d:0,hit:false,dmg:SURGE.dmg*pm,trail:0});
+  dust(s.x,s.z,8,10); burst(V(s.x,2,s.z),0xffd27a,14,18); Snd.boom(); game.shake=Math.max(game.shake,.5); } };
+function surgeUpdate(dt){ for(let i=SURGE.list.length-1;i>=0;i--){ const S=SURGE.list[i], nx=Math.sin(S.yaw), nz=Math.cos(S.yaw), step=SURGE.speed*dt;
+  S.d+=step; S.x+=nx*step; S.z+=nz*step; const k=S.d/SURGE.range, grow=Math.min(1,S.d/10), fade=k>.82?Math.max(0,1-(k-.82)/.18):1;
+  S.m.position.set(S.x,0,S.z); S.m.scale.set(.6+.4*grow,(.3+.9*grow)*fade,.7+.3*grow);
+  S.m.userData.lip.rotation.x=Math.sin(game.time*14)*.15;                      // the crest churns as it rolls
+  if(Math.random()<.6) burst(V(S.x+rand(-8,8),3*fade,S.z+rand(-8,8)),Math.random()<.5?0xffd27a:INF.ORANGE,2,10);
+  S.trail-=dt; if(S.trail<=0){ S.trail=.09; lavaPool(S.x-nx*3,S.z-nz*3,3.4,S.f,7*(S.dmg/SURGE.dmg),1.4); }
+  const inWave=(p,pad)=>{ const dx=p.x-S.x, dz=p.z-S.z, along=dx*nz-dz*nx, across=dx*nx+dz*nz; return Math.abs(along)<10+(pad||0)&&Math.abs(across)<3.5+(pad||0); };
+  for(let j=projs.length-1;j>=0;j--){ const p=projs[j]; if(p.owner!==S.f&&p.mesh&&p.mesh.position.y<10&&inWave(p.mesh.position)){ burst(p.mesh.position.clone(),INF.ORANGE,8,10); p.life=0; if(up(S.f,'hotblood')) addRage(S.f,8); } }   // eats small shots (Hot Blood: each one fills rage)
+  const o=S.f.opp; if(!S.hit&&o&&canHit(o)&&o.pos.y<8&&inWave(o.pos,o.radius()*.5)){ S.hit=true; o.takeHit(S.f,S.dmg,22,12,false,{x:nx,z:nz}); lavaFountain(o.pos.x,o.pos.z,14,4); game.shake=Math.max(game.shake,.6); }
+  for(const b of city) if(b.alive&&!b._sg&&Math.abs((b.x-S.x)*nz-(b.z-S.z)*nx)<10+b.w/2&&Math.abs((b.x-S.x)*nx+(b.z-S.z)*nz)<4+b.d/2){ b._sg=1; bHit(b,40,nx,nz,2,S.f); later(.5,()=>{ b._sg=0; }); }
+  if(S.d>=SURGE.range){ scene.remove(S.m); S.m.traverse(x=>{ if(x.geometry) x.geometry.dispose(); }); SURGE.list.splice(i,1); } } }
+{ const oP=updateProjs; updateProjs=function(dt){ oP(dt); try{ surgeUpdate(dt); }catch(e){ console.error(e); } }; }
+{ const oK=kxClear; kxClear=function(all){ for(const S of SURGE.list) scene.remove(S.m); SURGE.list.length=0; return oK(all); }; }
+// the Hot Blood upgrade's text follows the new move
+{ const n=V8TREE.infernoth.A.nodes.find(x=>x[2]==='hotblood'); if(n) n[1]=n[1].replace('Magma Wall fills rage when it gets hit','every shot Magma Surge swallows fills rage'); }
+
+// v8.5 (Nov 8, 2026): moved from the sandbox into the game (MajorasPride: put everything we did in the game; the sandbox keeps on/off switches to compare).
+/* =====================================================================
+   SANDBOX 17 (Nov 8, 2026): CAMERA VIEWS YOU CAN FLIP IN THE FIGHT + ACTION CAM.
+   MajorasPride: "we need different toggled camera views" (his brother asked for a third-person
+   shooter style view). Named ACTION CAM (MajorasPride: don't name it after the game).
+   - small round 🎥 button (next to FULLSCREEN; PC: C key; Sandbox 17c: just the emoji, first in the top-left row; the view's name shows for 1s when you tap it) flips through the views in the middle of a fight,
+     with a 1-second name tag:
+     TITAN CAM (default) → ACTION CAM → OVER THE SHOULDER (close) → FREE BEHIND → FIXED → NEWS CAM (once unlocked)
+   - ACTION CAM (third-person shooter style): the camera rides above and behind your
+     titan's right shoulder, with a crosshair in the middle of the screen. Your titan turns to face where
+     you aim and strafes when you move sideways, and attacks and shots go where the crosshair points.
+     Drag / mouse / right stick turns the view. LOCK still locks on (the camera swings to the rival).
+     It's a bit farther back than the close shoulder view because titans are huge.
+   Never saved in the sandbox; the game isn't affected.
+   ===================================================================== */
+const CAMVIEWS=[['melee','TITAN CAM'],['action','ACTION CAM'],['shoulder','OVER THE SHOULDER'],['behind','FREE BEHIND'],['fixed','FIXED CAMERAS'],['news','NEWS CAM']];
+function camViewName(){ const v=CAMVIEWS.find(x=>x[0]===(SET.cam||'melee')); return v?v[1]:'TITAN CAM'; }
+function camCycle(){ let i=CAMVIEWS.findIndex(x=>x[0]===(SET.cam||'melee'));
+ for(let k=0;k<CAMVIEWS.length;k++){ i=(i+1)%CAMVIEWS.length; if(CAMVIEWS[i][0]==='news'&&!(V8.wins>0)) continue; break; }
+ SET.cam=CAMVIEWS[i][0]; for(const c of cams){ c.init=false; c.free=false; } toast('🎥 '+CAMVIEWS[i][1],'#7fd4ff',1000); const b=el('sbCam'); if(b) b.title='Camera: '+CAMVIEWS[i][1]; }
+// the ACTION CAM
+function actionCam(dt){ const A=game.p, B=game.e, c=cams[0], C=camera, Pd=pads[0];
+ const lk=(isDown('lookR',0)?1:0)-(isDown('lookL',0)?1:0)+Pd.rx, lu=(isDown('lookD',0)?1:0)-(isDown('lookU',0)?1:0)+Pd.ry*(SET.invert?-1:1);
+ if(!c.lock) c.yaw-=lk*2.4*SET.sens*dt; c.pitch=clamp((c.pitch==null?.35:c.pitch)+lu*1.6*SET.sens*dt,-.25,.95);
+ if(c.lock&&!B.dead) c.yaw=turnToward(c.yaw,Math.atan2(B.pos.x-A.pos.x,B.pos.z-A.pos.z),5*dt);
+ const s=A.scale||1, big=A.kaiju?1.35:1, cp=Math.cos(c.pitch*.6), dir=V(Math.sin(c.yaw)*cp,-Math.sin(c.pitch*.6),Math.cos(c.yaw)*cp), right=V(-Math.cos(c.yaw),0,Math.sin(c.yaw));
+ const pivot=V(A.pos.x,Math.max(0,A.pos.y)+A.chest().y-A.pos.y+4*s*big,A.pos.z);
+ const tp=pivot.clone().addScaledVector(dir,-19*s*big).addScaledVector(right,7.5*s*big); tp.y=Math.max(tp.y,3);
+ if(!c.init){ c.pos.copy(tp); c.init=true; } else c.pos.lerp(tp,1-Math.exp(-12*dt));
+ const look=pivot.clone().addScaledVector(dir,60).addScaledVector(right,2*s);
+ const fov=isTouch?72:66; if(Math.abs(C.fov-fov)>.05){ C.fov+=(fov-C.fov)*Math.min(1,dt*8); C.updateProjectionMatrix(); } v8cam.fov=C.fov;
+ C.position.copy(c.pos); if(game.shake>0){ C.position.x+=rand(-1,1)*game.shake; C.position.y+=rand(-1,1)*game.shake; C.position.z+=rand(-1,1)*game.shake; }
+ C.lookAt(look); c.look.copy(look); const fwd=V(); C.getWorldDirection(fwd);
+ if(!c.lock) inps[0].aimPoint.copy(c.pos).addScaledVector(fwd,140); else camAim(0,A,B,fwd,c);
+ game.shake*=Math.exp(-6*dt); computeFade(0,dt); camLook.copy(c.look); moon.target.position.set(camLook.x,0,camLook.z); moon.position.set(camLook.x-50,110,camLook.z+40); }
+{ const o=updateCamera; updateCamera=function(dt){
+  const ok=SET.cam==='action'&&game.mode==='match'&&game.p&&game.state!=='over'&&game.state!=='clip'&&!game.destroy&&!game.vs2&&!game.cut&&!(typeof CINE!=='undefined'&&CINE.on);
+  if(!ok) return o(dt); actionCam(dt); }; }
+// your titan faces the crosshair (strafes) in ACTION CAM when you're not locked on
+{ const oU=FP.update; FP.update=function(dt,inp,opp){ const r=oU.call(this,dt,inp,opp);
+  if(SET.cam==='action'&&this===game.p&&!game.vs2&&!cams[0].lock&&!this.dead&&!this.flying&&!(typeof CINE!=='undefined'&&CINE.on)&&dt>0) this.yaw=turnToward(this.yaw,cams[0].yaw,(this.atk?14:9)*dt);
+  return r; }; }
+// the crosshair shows in ACTION CAM (phone too) while you're not locked on
+{ const o=indicators; indicators=function(i,x0,w,showIt){ o(i,x0,w,showIt); if(i===0&&showIt&&SET.cam==='action'&&!game.vs2){ const xh=el('xhair'); xh.classList.toggle('hidden',!!cams[0].lock); xh.style.left=(x0+w/2)+'px'; } }; }
+// 🎥 button + C key
+{ const s=document.createElement('style'); s.textContent=`#sbCam{position:fixed;left:10px;top:70px;z-index:20;width:26px;height:26px;padding:0;margin:0;background:none;border:none;box-shadow:none;font-size:20px;line-height:26px;text-align:center;cursor:pointer;pointer-events:auto;filter:drop-shadow(0 0 3px #000)}
+body.vcine #sbCam{visibility:hidden!important}`; document.head.appendChild(s);
+  const b=document.createElement('button'); b.id='sbCam'; b.textContent='🎥'; b.title='Camera: '+camViewName(); document.body.appendChild(b);
+  b.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); camCycle(); });
+  addEventListener('keydown',e=>{ if(e.code==='KeyC'&&!e.repeat&&game.mode==='match') camCycle(); }); }
+// Sandbox 17c: just the 🎥 emoji, first in the top-left row; ⚙ SANDBOX and FULLSCREEN slide right to make room
+function camBtnPlace(){ const g=el('sbGear'), f=el('sbFull'), b=el('sbCam'); if(!g||!f||!b) return; const W=26;
+ g.style.left=''; f.style.left=''; const gr=g.getBoundingClientRect(), fr=f.getBoundingClientRect(); if(!gr.width) return;
+ b.style.left=gr.left+'px'; b.style.top=(gr.top+(gr.height-W)/2)+'px'; g.style.left=(gr.left+W+4)+'px'; f.style.left=(fr.left+W+4)+'px'; }
+addEventListener('resize',()=>setTimeout(camBtnPlace,60)); setInterval(camBtnPlace,1000); setTimeout(camBtnPlace,300);
+
+// v8.5 (Nov 8, 2026): moved from the sandbox into the game (MajorasPride: put everything we did in the game; the sandbox keeps on/off switches to compare).
+/* =====================================================================
+   SANDBOX 17 (Nov 8, 2026): FLOW FIXES.
+   1. NO AUTO COMBO BREAKER. MajorasPride: "get rid of the combo breaker auto thing."
+      The automatic break-free after 10 hits in a row is off (BR.comboCap). The other anti-stun-lock rules
+      stay: light hits stun only every 5th hit, burn never stuns, BREAK FREE after 2s of stun, max 3 air lights.
+      The code stays in the game (13-valor-brawler.js), so it can come back.
+   2. LESS HIT-PAUSE PILE-UP. Found with the balance test: every hit freezes the game for a moment
+      (0.045 to 0.2s at 8% speed), and they stack: every jab, every blocked shot, every bullet. In busy
+      fights the game was frozen 12% to 55% of the time, which reads as choppy, not fluid.
+      Now: each pause is shorter (55%, max 0.09s; big moments up to 0.15s), and if a lot of pauses
+      happen close together, the next ones shrink (so a fast string still flows).
+   ===================================================================== */
+BR.comboCap=Infinity;
+const FLOW={on:true, scale:.55, cap:.09, bigCap:.15, recent:0};
+{ let hsv=game.hitStop||0;
+  Object.defineProperty(game,'hitStop',{configurable:true, get(){ return hsv; }, set(v){
+   if(v>hsv+1e-4){ const big=v>=.2, add=FLOW.on===false?v:Math.min(big?FLOW.bigCap:FLOW.cap,v*FLOW.scale)/(1+FLOW.recent*5);
+    FLOW.recent+=add; hsv=Math.max(hsv,add); } else hsv=v; } }); }
+{ const oL=loop; loop=function(now){ const r=oL(now); FLOW.recent*=.94; return r; }; }   // the pile-up memory fades in about a second
+
+// v8.5 (Nov 8, 2026): moved from the sandbox into the game (MajorasPride: put everything we did in the game; the sandbox keeps on/off switches to compare).
+/* =====================================================================================================
+   SANDBOX 18: NEW VALOR MODEL, GUNPLA-KIT STYLE (Nov 8, 2026)
+   MajorasPride loved the code-built VALOR test page ("perfect, marvelous"), so his body replaces the old
+   box VALOR here. Built like a Gundam model kit: an inner frame (dark metal joints, bones, pistons)
+   with white / blue / gold armor plates clipped on top, plus vents, bolts, sensors and fingers.
+   - Uses the SAME joints as the old VALOR (torso, head, arms, elbows, hands, legs, knees), so every
+     move, pose, ultimate and the new fluid motion still work. Only the joint spots moved to fit him.
+   - Sword and kite shield are restyled too. The kite shield sits on a forearm mount, and the thrown
+     shield (Cap throws, Shield Barrage) is the kite shield now.
+   - Sandbox only. The game keeps the old VALOR until MajorasPride OKs moving this over.
+   ===================================================================================================== */
+const VK = { S: 3 };   // test-page units -> game units (test model is ~4.2 tall, game mechs ~13)
+{
+  const KM = () => ({
+    white: std(0xe2e7ee, .32, .15), blue: std(0x1f45a8, .3, .35), navy: std(0x142a63, .35, .35),
+    frame: std(0x2c3240, .5, .75), dark: std(0x0f131b, .8, .3), steel: std(0xd3dbe6, .2, .95), gold: std(0xd9ac3c, .28, 1),
+  });
+  // rounded, tapered armor block: top face scaled by tx/tz and pushed forward by sz (like the test page)
+  function armor(w, h, d, tx = 1, tz = 1, r = .04, sz = 0) {
+    const b = Math.max(.004, Math.min(r, w / 2.4, h / 2.4, d / 2.4)), x = w / 2 - b, y = h / 2 - b;
+    const sh = new THREE.Shape(); sh.moveTo(-x, -y); sh.lineTo(x, -y); sh.lineTo(x, y); sh.lineTo(-x, y); sh.lineTo(-x, -y);
+    const g = new THREE.ExtrudeGeometry(sh, {depth: Math.max(.001, d - 2 * b), bevelEnabled: true, bevelThickness: b, bevelSize: b, bevelSegments: 2, curveSegments: 1});
+    g.translate(0, 0, -(d - 2 * b) / 2);
+    const p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) { const t = (p.getY(i) + h / 2) / h; p.setX(i, p.getX(i) * (1 + (tx - 1) * t)); p.setZ(i, p.getZ(i) * (1 + (tz - 1) * t) + sz * t); }
+    g.computeVertexNormals(); return g;
+  }
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const cyl = (a, b, h, s = 12) => new THREE.CylinderGeometry(a, b, h, s);
+  // inner group in test-page units, scaled up to game size
+  const inner = (parent, x = 0, y = 0, z = 0, s = VK.S) => { const g = grp(x, y, z, parent); g.scale.setScalar(s); return g; };
+  let M, G;
+  const part = (geo, mat, parent, pos = [0, 0, 0], rot = [0, 0, 0], big = false) => { const m = mesh(geo, mat, pos[0], pos[1], pos[2], parent, !big); m.rotation.set(...rot); return m; };
+  const bolt = (p, pos, rot = [Math.PI / 2, 0, 0], r = .022) => part(cyl(r, r, .02, 6), M.steel, p, pos, rot);
+  function vent(p, pos, w, h, n, rot = [0, 0, 0]) { const v = new THREE.Group(); v.position.set(...pos); v.rotation.set(...rot); p.add(v);
+    part(box(w, h, .02), M.dark, v); for (let i = 0; i < n; i++) part(box(w * .9, h / n * .35, .03), M.frame, v, [0, -h / 2 + (i + .5) * h / n, .01]); return v; }
+  function piston(p, a, b, r = .035) { const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), len = A.distanceTo(B);
+    const g = new THREE.Group(); g.position.copy(A.clone().add(B).multiplyScalar(.5)); g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), B.clone().sub(A).normalize()); p.add(g);
+    part(cyl(r, r, len * .55), M.frame, g, [0, -len * .2, 0]); part(cyl(r * .6, r * .6, len * .55), M.steel, g, [0, len * .2, 0]); }
+
+  function legKit(P, s) {           // s = game side (-1 = L, +1 = R)
+    const L = s < 0 ? 'L' : 'R', leg = P['leg' + L], kn = P['kn' + L];
+    leg.position.set(.32 * s * VK.S, 2.05 * VK.S, 0); kn.position.set(0, -.84 * VK.S, 0);
+    const T = inner(leg), K = inner(kn);   // thigh (hip -> knee) and shin (knee -> foot)
+    part(new THREE.SphereGeometry(.17, 14, 10), M.frame, T, [0, 0, 0], [0, 0, 0], true);
+    part(armor(.32, .78, .36, 1.12, 1.08, .05), M.frame, T, [0, -.4, 0], [0, 0, 0], true);
+    part(armor(.36, .62, .1, 1.08, 1, .04), M.white, T, [0, -.36, .2], [0, 0, 0], true);
+    part(armor(.08, .55, .3, 1, 1.1, .03), M.white, T, [.19 * s, -.36, 0]);
+    part(box(.04, .4, .02), M.blue, T, [.235 * s, -.36, 0]);
+    piston(T, [0, -.55, -.15], [0, -.8, -.18]);
+    // knee + shin (positions relative to the knee joint)
+    part(cyl(.13, .13, .34, 14), M.frame, K, [0, 0, 0], [0, 0, Math.PI / 2]);
+    part(cyl(.06, .06, .38, 8), M.steel, K, [0, 0, 0], [0, 0, Math.PI / 2]);
+    const kg = part(armor(.34, .32, .16, 1.25, 1, .05, .05), M.blue, K, [0, -.02, .2], [-.2, 0, 0], true);
+    part(box(.12, .05, .02), G, kg, [0, .02, .09]); bolt(kg, [-.11, -.08, .085]); bolt(kg, [.11, -.08, .085]);
+    part(cyl(.09, .11, .9, 10), M.frame, K, [0, -.58, -.02]);
+    piston(K, [0, -.05, -.2], [0, -.51, -.22]);
+    part(armor(.5, 1.05, .5, .8, .85, .07), M.white, K, [0, -.61, 0], [0, 0, 0], true);
+    part(armor(.3, .75, .07, .7, 1, .03), M.blue, K, [0, -.58, .265], [-.04, 0, 0]);
+    vent(K, [0, -.31, .305], .16, .12, 3, [-.04, 0, 0]);
+    part(box(.12, .03, .03), G, K, [0, -.84, .29]);
+    part(armor(.1, .7, .42, 1, 1.2, .03), M.white, K, [.27 * s, -.56, -.02], [0, 0, .08 * s]);
+    part(box(.02, .5, .06), M.gold, K, [.325 * s, -.56, .05], [0, 0, .08 * s]);
+    part(cyl(.12, .12, .26, 12), M.frame, K, [0, -1.11, 0], [0, 0, Math.PI / 2]);
+    const boot = new THREE.Group(); boot.position.set(0, -1.16, .1); K.add(boot);
+    part(armor(.3, .14, .5, 1, 1, .03), M.frame, boot, [0, 0, .02]);
+    part(armor(.48, .24, .78, .85, .78, .05, .04), M.navy, boot, [0, 0, 0], [0, 0, 0], true);
+    part(box(.5, .06, .82), M.dark, boot, [0, -.12, 0]);
+    part(armor(.44, .08, .26, .9, 1, .03), M.gold, boot, [0, .07, .32], [.35, 0, 0]);
+    part(armor(.2, .2, .18, .6, 1, .03), M.white, boot, [0, .08, -.38], [-.3, 0, 0]);
+  }
+
+  function armKit(P, s) {
+    const L = s < 0 ? 'L' : 'R', arm = P['arm' + L], el = P['el' + L], hand = P['hand' + L];
+    // joint spots: shoulder on the chest, elbow and hand at this model's arm lengths
+    arm.position.set(.68 * s * VK.S, (.1 / VK.S + .88) * VK.S, 0);
+    el.position.set(.12 * s * VK.S, -.66 * VK.S, 0); hand.position.set(0, -.72 * VK.S, 0);
+    const A = inner(arm), E = inner(el), H = inner(hand);
+    part(new THREE.SphereGeometry(.16, 14, 10), M.frame, A);
+    const pd = new THREE.Group(); pd.position.set(.12 * s, .12, 0); pd.rotation.z = -.25 * s; A.add(pd);
+    part(armor(.5, .34, .56, 1.15, 1.1, .07), M.white, pd, [0, 0, 0], [0, 0, 0], true);
+    part(armor(.44, .16, .5, 1.1, 1, .05), M.white, pd, [.04 * s, .22, 0]);
+    part(armor(.52, .09, .58, 1, 1, .03), M.blue, pd, [0, -.2, 0]);
+    part(box(.02, .06, .4), G, pd, [.26 * s, 0, 0]);
+    bolt(pd, [.15 * s, .05, .28]); bolt(pd, [-.1 * s, .05, .28]);
+    part(armor(.2, .5, .22, 1.1, 1.1, .04), M.frame, A, [.12 * s, -.36, 0], [0, 0, 0], true);
+    part(armor(.24, .32, .12, 1.1, 1, .03), M.white, A, [.14 * s, -.34, .08]);
+    // forearm (relative to the elbow)
+    part(cyl(.11, .11, .26, 12), M.frame, E, [0, 0, 0], [0, 0, Math.PI / 2]);
+    part(armor(.18, .16, .14, 1.2, 1, .03), M.blue, E, [0, .02, -.12], [.4, 0, 0]);
+    part(cyl(.07, .08, .55, 10), M.frame, E, [0, -.33, 0]);
+    part(armor(.32, .56, .34, 1.25, 1.2, .06), M.white, E, [0, -.33, 0], [0, 0, 0], true);
+    const fp = part(armor(.2, .32, .06, 1, 1, .02), M.blue, E, [-.06 * s, -.32, .18]);
+    vent(fp, [0, -.04, .035], .12, .12, 3);
+    part(box(.02, .36, .04), G, E, [.19 * s, -.34, 0]);
+    part(cyl(.11, .11, .06, 12), M.steel, E, [0, -.63, 0]);
+    if (s < 0) {   // shield mount on VALOR's shield arm (outer side)
+      part(armor(.1, .36, .16, 1, 1, .02), M.frame, E, [-.2, -.36, 0]);
+      for (const y of [-.12, .12]) part(armor(.06, .06, .24, 1, 1, .015), M.gold, E, [-.24, -.36 + y, 0]);
+    }
+    // hand: palm, curled fingers, thumb (relative to the wrist)
+    part(armor(.17, .18, .16, 1, 1, .03), M.navy, H);
+    for (let i = 0; i < 4; i++) { const f = new THREE.Group(); f.position.set(-.06 + i * .04, -.1, .03); f.rotation.x = .6; H.add(f);
+      part(armor(.032, .09, .04, 1, 1, .012), M.frame, f, [0, -.04, 0]); part(armor(.03, .07, .038, 1, 1, .012), M.frame, f, [0, -.1, .03], [.9, 0, 0]); }
+    part(armor(.05, .1, .05, 1, 1, .015), M.frame, H, [-.1 * s, -.04, .06], [.4, 0, .5 * s]);
+    part(box(.12, .03, .02), M.gold, H, [0, .03, .085]);
+  }
+
+  function bodyKit(b, P) {
+    // waist + skirt armor sit on the body (hips)
+    const W = inner(b.body);
+    part(armor(.78, .34, .5, 1.1, 1, .06), M.frame, W, [0, 2.1, 0], [0, 0, 0], true);
+    const fs = part(armor(.44, .44, .08, 1.3, 1, .03, .06), M.blue, W, [0, 1.98, .28], [.12, 0, 0], true);
+    part(new THREE.OctahedronGeometry(.07), M.gold, fs, [0, .08, .05]); part(box(.03, .22, .02), M.gold, fs, [0, -.08, .045]);
+    for (const s of [-1, 1]) { const sk = part(armor(.1, .52, .44, 1, 1, .03), M.white, W, [.48 * s, 1.98, 0], [0, 0, -.12 * s], true);
+      part(box(.02, .32, .04), G, sk, [.055 * s, -.02, 0]); bolt(sk, [.055 * s, .19, .14], [0, 0, Math.PI / 2]); bolt(sk, [.055 * s, .19, -.14], [0, 0, Math.PI / 2]); }
+    part(armor(.5, .4, .08, 1.2, 1, .03, -.05), M.white, W, [0, 2.0, -.28], [-.15, 0, 0]);
+    // torso: the game moves P.torso (breathing); this model's torso origin is 0.1 above it
+    const T = inner(P.torso, 0, .1, 0);
+    part(armor(.5, .32, .38, 1.2, 1.1, .05), M.frame, T, [0, .12, 0], [0, 0, 0], true);
+    for (let i = 0; i < 3; i++) part(armor(.38 - i * .02, .08, .06, 1, 1, .02), M.white, T, [0, .03 + i * .1, .2]);
+    const C = new THREE.Group(); C.position.y = .66; T.add(C);
+    part(armor(.66, .6, .46, 1.3, 1.1, .05), M.frame, C, [0, .02, -.02]);
+    part(armor(1.0, .72, .62, 1.4, 1.1, .08), M.blue, C, [0, 0, 0], [0, 0, 0], true);
+    part(armor(1.05, .2, .52, 1.15, 1, .05), M.white, C, [0, .42, -.02], [0, 0, 0], true);
+    for (const s of [-1, 1]) {
+      const pec = part(armor(.48, .36, .09, 1.4, 1, .04), M.white, C, [.33 * s, .06, .33], [.1, -.2 * s, 0]); bolt(pec, [.18 * s, -.12, .05]);
+      vent(C, [.36 * s, -.24, .335], .22, .14, 4, [.05, -.2 * s, 0]);
+      part(box(.04, .12, .02), G, C, [.55 * s, .02, .24], [0, -.5 * s, 0]);
+    }
+    const core = part(cyl(.12, .12, .06, 6), G, C, [0, -.06, .37], [Math.PI / 2, 0, 0]); P.core = core;
+    part(new THREE.TorusGeometry(.155, .035, 8, 6), M.gold, C, [0, -.06, .37]);
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; bolt(C, [Math.cos(a) * .21, -.06 + Math.sin(a) * .21, .36], [Math.PI / 2, 0, 0], .015); }
+    // backpack thrusters
+    const pk = new THREE.Group(); pk.position.set(0, .05, -.42); C.add(pk);
+    part(armor(.72, .62, .3, 1.1, 1, .06), M.navy, pk, [0, 0, 0], [0, 0, 0], true);
+    vent(pk, [0, .05, -.155], .3, .3, 5, [0, Math.PI, 0]);
+    for (const s of [-1, 1]) { const th = new THREE.Group(); th.position.set(.24 * s, -.22, -.14); pk.add(th);
+      part(cyl(.12, .15, .5, 14), M.white, th); part(cyl(.16, .13, .06, 14), M.gold, th, [0, .2, 0]);
+      part(new THREE.CylinderGeometry(.17, .2, .16, 14, 1, true), M.frame, th, [0, -.32, 0]); part(cyl(.13, .13, .02, 14), G, th, [0, -.3, 0]);
+      const fin = part(armor(.08, .75, .32, .3, 1, .03), M.blue, pk, [.4 * s, .38, -.05], [.3, 0, -.35 * s]); part(box(.02, .5, .04), G, fin, [.04 * s, 0, .1]); }
+    // head (its own joint so head turns still work)
+    P.head.position.set(0, (.1 + .66 + .62) * VK.S, .02 * VK.S);
+    const Hd = inner(P.head);
+    part(cyl(.11, .14, .18, 10), M.frame, Hd, [0, -.08, 0]);
+    for (let i = 0; i < 3; i++) part(new THREE.TorusGeometry(.12, .012, 6, 12), M.steel, Hd, [0, -.13 + i * .05, 0], [Math.PI / 2, 0, 0]);
+    part(armor(.34, .34, .38, .85, .9, .06), M.white, Hd, [0, .14, 0], [0, 0, 0], true);
+    part(armor(.16, .12, .3, .6, 1, .03, .02), M.blue, Hd, [0, .3, .02]);
+    part(armor(.27, .13, .1, 1.2, 1, .03), M.navy, Hd, [0, .05, .18]);
+    part(box(.26, .05, .03), G, Hd, [0, .15, .2]);
+    part(armor(.07, .12, .12, .6, 1, .02), M.gold, Hd, [0, 0, .2]);
+    for (const s of [-1, 1]) {
+      part(armor(.04, .4, .05, .5, 1, .012), M.gold, Hd, [.11 * s, .42, .16], [0, 0, -.55 * s]);
+      part(armor(.06, .2, .14, 1, .5, .02), M.white, Hd, [.16 * s, .08, .12]);
+      const ear = new THREE.Group(); ear.position.set(.19 * s, .17, -.02); Hd.add(ear);
+      part(cyl(.07, .07, .05, 12), M.frame, ear, [0, 0, 0], [0, 0, Math.PI / 2]); part(cyl(.035, .035, .06, 12), G, ear, [.01 * s, 0, 0], [0, 0, Math.PI / 2]);
+      part(armor(.04, .24, .16, 1, .4, .015), M.blue, ear, [.03 * s, .05, -.06], [.2, 0, -.15 * s]);
+    }
+    part(cyl(.012, .012, .32, 6), M.steel, Hd, [-.13, .4, -.1], [-.3, 0, .25]);
+    part(new THREE.OctahedronGeometry(.045), G, Hd, [0, .33, .18]);
+  }
+
+  // Swap VALOR's body: build the old one (keeps every joint, the vehicle, beam spots), then take its body meshes off
+  const oldBuild = buildMech;
+  buildMech = function (d) {
+    const b = oldBuild(d);
+    if (!d || d.id !== 'valor' || !VK.on) return b;
+    const old = []; b.body.traverse(o => { if (o.isMesh) old.push(o); });
+    for (const m of old) m.parent.remove(m);
+    M = KM(); G = b.glowMats[0];
+    bodyKit(b, b.P); for (const s of [-1, 1]) { legKit(b.P, s); armKit(b.P, s); }
+    return b;
+  };
+
+  // Sword + kite shield in VALOR's hands (the game adds them after the body)
+  function swordKit(parent) {   // blade points down -y like the old sword, ~9 long
+    const g = inner(parent, 0, 0, 0, 3.8); g.rotation.z = Math.PI;
+    part(cyl(.042, .042, .34, 10), M.dark, g);
+    for (let i = 0; i < 4; i++) part(new THREE.TorusGeometry(.045, .01, 6, 12), M.gold, g, [0, -.12 + i * .08, 0], [Math.PI / 2, 0, 0]);
+    const gd = new THREE.Group(); gd.position.y = .2; g.add(gd);
+    part(armor(.16, .1, .12, 1, 1, .02), M.gold, gd);
+    for (const s of [-1, 1]) part(armor(.24, .06, .08, .5, 1, .02), M.gold, gd, [.18 * s, .02, 0], [0, 0, .25 * s]);
+    part(new THREE.OctahedronGeometry(.055), G, gd, [0, 0, .065]);
+    part(new THREE.SphereGeometry(.06, 10, 8), M.gold, g, [0, -.21, 0]);
+    const bs = new THREE.Shape(); bs.moveTo(-.09, 0); bs.lineTo(.09, 0); bs.lineTo(.085, 1.9); bs.lineTo(0, 2.18); bs.lineTo(-.085, 1.9); bs.closePath();
+    const bg = new THREE.ExtrudeGeometry(bs, {depth: .026, bevelEnabled: true, bevelThickness: .02, bevelSize: .016, bevelSegments: 2}); bg.translate(0, 0, -.013);
+    part(bg, M.steel, g, [0, .25, 0], [0, 0, 0], true);
+    for (const z of [-.035, .035]) part(box(.028, 1.75, .012), G, g, [0, 1.15, z]);
+    part(armor(.14, .18, .07, .6, 1, .02), M.blue, g, [0, .33, 0]);
+    return g;
+  }
+  const kiteShape = () => { const k = new THREE.Shape(); k.moveTo(0, .75); k.quadraticCurveTo(.55, .72, .55, .3); k.quadraticCurveTo(.5, -.35, 0, -.85);
+    k.quadraticCurveTo(-.5, -.35, -.55, .3); k.quadraticCurveTo(-.55, .72, 0, .75); return k; };
+  const ext = (shape, depth, scale = 1, bev = .02) => { const g = new THREE.ExtrudeGeometry(shape, {depth, bevelEnabled: bev > 0, bevelThickness: bev, bevelSize: bev, bevelSegments: 2, curveSegments: 14}); g.center(); g.scale(scale, scale, 1); return g; };
+  function kiteKit(parent, glow) {  // face points +z of the returned group
+    const g = inner(parent), ks = kiteShape();
+    part(ext(ks, .05, 1.06, .02), M.gold, g, [0, 0, -.02]);
+    part(ext(ks, .07, 1, .03), M.blue, g, [0, 0, 0], [0, 0, 0], true);
+    part(ext(ks, .02, .76, .01), M.white, g, [0, -.02, .06]);
+    const w = new THREE.Shape(); w.moveTo(-.28, 0); w.bezierCurveTo(-.15, .22, 0, -.18, .12, .05); w.bezierCurveTo(.2, .2, .3, .12, .3, 0);
+    w.lineTo(.3, -.09); w.bezierCurveTo(.22, .04, .12, -.06, .06, -.12); w.bezierCurveTo(-.05, -.25, -.18, .05, -.28, -.09); w.closePath();
+    part(ext(w, .02, 1, 0), glow, g, [0, 0, .09]);
+    part(armor(.05, 1.1, .03, 1, 1, .012), M.gold, g, [0, -.08, .08]);
+    part(armor(.7, .05, .03, 1, 1, .012), M.gold, g, [0, .32, .08]);
+    for (let i = 0; i < 10; i++) { const t = i / 10 * Math.PI * 2, c = Math.cos(t);
+      bolt(g, [Math.sin(t) * .46 * (c < 0 ? 1 + c * .55 : 1), .05 + c * (c > 0 ? .55 : .75), .07], [Math.PI / 2, 0, 0], .02); }
+    return g;
+  }
+  const hideKids = g => g.children.forEach(c => { if (c.isMesh) c.visible = false; });
+  const oldDress = v8Dress;
+  v8Dress = function (f) {
+    oldDress(f); const P = f.P;
+    if (!VK.on || f.def.id !== 'valor' || !P || !P.v8sword) return;
+    M = M || KM(); G = f.glowMats ? f.glowMats[0] : glowM(0x7fd4ff, 2.4);
+    hideKids(P.v8sword); const sw = swordKit(P.v8sword);
+    if (P.v8swordBack) { hideKids(P.v8swordBack); P.v8swordBack.add(sw.clone(true)); }
+    if (P.v8shield) { hideKids(P.v8shield); P.v8shield.position.set(-.95, -1.08, 0); const k = kiteKit(P.v8shield, G); k.rotation.y = -Math.PI / 2; }
+  };
+  // the thrown shield is the kite shield too
+  const oldDisc = v8DiscMesh;
+  v8DiscMesh = function () {
+    if (!VK.on) return oldDisc();
+    M = M || KM(); const g = new THREE.Group(); kiteKit(g, glowM(0x7fd4ff, 2.4)); scene.add(g); return g;
+  };
+}
+VK.on = true;
+
+/* =====================================================================
+   v8.5 (Nov 8, 2026): LIMB HITS (from Sandbox 19, the FIGHT LAB). MajorasPride: "feels good", push it to the game.
+   Claws, fists, feet, jaws, tails, VALOR's sword and ASHVIN's staff have hit points that move with the
+   animation. A hit only lands if that body part sweeps through the rival during the move's active window
+   (before: "rival is in a cone in front of me = hit", and many moves kept checking until they ended).
+   Moves with no body part (beams, stomps, AoE magic) keep the old check. Move-to-part list: LAB_LIMB.
+   Idea from a study of open-source fighting projects: Fray (Godot combat framework, MIT), Mugen3D (MIT),
+   ThirdPersonSmashDemo (MIT). Our own code; nothing pasted in.
+   The sandbox keeps the test tools (hitbox view, frame data, move map) and an on/off switch (sandbox/src/23-fight-lab.js).
+   ===================================================================== */
+const LAB={pad:2.2, hist:7, lateWin:.2, cards:{}, map:{}, last:null};
+SB.limb=true;   // on in the game; the sandbox ⚙ has a LIMB HITS switch to compare with the old cone checks
+
+/* ---------- which body part does each move use ---------- */
+const LAB_LIMB={kclaw:'arms',kbite:'jaw',ktailwhip:'tail',starpunch:'arms',bsweep:'legs',vupper:'arms',vspin:'sword',vslash:'sword',
+ risingslash:'sword',swordthrust:'sword',vcross:'sword',vcleave:'sword',vairslash:'sword',asLight:'staff',asSpin:'staff',amLight:'staff'};
+const LAB_ANIM={punch:'arms',kick:'legs',spin:'tail',bite:'jaw',slam:'arms'};
+function labLimbFor(f,id){ let k=LAB_LIMB[id]; if(!k){ const M=MOVES[id]; k=M&&LAB_ANIM[M.anim]; }
+ if(k==='sword'&&!(f.v8&&f.v8.swordTip)) k='arms';
+ if(k==='tail'&&!(f.P&&f.P.tail)) return null; return k||null; }
+
+/* ---------- tip points: the far end of each body part ---------- */
+function labFar(g){ if(!g) return null; let best=null, bd=-1; const w=V(), o=V(); g.getWorldPosition(o);
+ g.traverse(m=>{ if(!m.isMesh||m===g) return; m.getWorldPosition(w); const d=w.distanceToSquared(o); if(d>bd){ bd=d; best=m; } }); return best||g; }
+function labTips(f){ if(f._labT) return f._labT; const P=f.P||{}, T={}; const one=g=>{ const m=labFar(g); return m?[m]:[]; };
+ T.arms=[...one(P.armL),...one(P.armR)]; T.legs=[...one(P.legL),...one(P.legR)];
+ T.jaw=[...one(P.jaw),...(P.head?[P.head]:[])];
+ if(Array.isArray(P.tail)&&P.tail.length){ const n=P.tail.length; T.tail=[P.tail[Math.max(0,n-3)],P.tail[Math.max(0,n-2)],...one(P.tail[n-1])]; } else T.tail=[];
+ return f._labT=T; }
+function labPts(f,k){ if(k==='sword'){ const b=V(),t=V(); f.v8.swordBase.getWorldPosition(b); f.v8.swordTip.getWorldPosition(t); return [0,.35,.7,1].map(q=>b.clone().lerp(t,q)); }
+ if(k==='staff'){ const E=typeof staffEnds==='function'?staffEnds(f):null; return E?E.map(e=>{ const p=V(); e.getWorldPosition(p); return p; }):[]; }
+ const L=labTips(f)[k]||[]; return L.map(m=>{ const p=V(); m.getWorldPosition(p); return p; }); }
+// every frame: remember where each part was, so a fast swing still counts the space it swept through
+{ const oU=FP.update; FP.update=function(dt,inp,opp){ const r=oU.apply(this,arguments); try{ labTrack(this); }catch(e){} return r; }; }
+function labTrack(f){ if(!SB.limb&&!SB.hbox) return; const a=f.atk, k=a?labLimbFor(f,a.id):null; f._labH=f._labH||{};
+ for(const key of ['arms','legs','jaw','tail','sword','staff']){ const H=f._labH[key]=f._labH[key]||[]; if(key!==k&&!SB.hbox){ H.length=0; continue; }
+  if((key==='sword'&&!(f.v8&&f.v8.swordTip))||(key==='staff'&&!(f.P&&(f.P.ashStaffR||f.P.ashStaffL)))) continue;
+  H.unshift(labPts(f,key)); if(H.length>LAB.hist) H.length=LAB.hist; } }
+function labTouch(f,o,k){ const H=(f._labH&&f._labH[k])||[]; if(!H.length) H.push(labPts(f,k)); const R=o.radius()+LAB.pad*f.scale, y0=o.pos.y-1, y1=o.chest().y+6*o.scale;
+ const ok=q=>q.y>=y0&&q.y<=y1&&Math.hypot(q.x-o.pos.x,q.z-o.pos.z)<R;
+ for(let i=0;i<H.length;i++){ const A=H[i], B=H[i+1]; for(let j=0;j<A.length;j++){ if(ok(A[j])) return A[j]; if(B&&B[j]) for(const s of [.33,.66]){ const q=A[j].clone().lerp(B[j],s); if(ok(q)) return q; } } }
+ return null; }
+// the active window: hits only count while the move is active (or a short moment after the first check, for moves with no window)
+function labWindow(a){ if(a.act) { a._labSeen=1; return true; } if(a._labSeen) return false; if(a._lab0===undefined) a._lab0=a.t; return a.t-a._lab0<=LAB.lateWin; }
+
+/* ---------- the hit checks ---------- */
+{ const oC=coneHit; coneHit=function(f,a,o,rg,arc,dmg,kb,ln,kind){ if(typeof labCone==='function') labCone(f,rg*f.scale,arc);
+  const k=SB.limb&&isCore(f)?labLimbFor(f,a.id):null; if(!k) return oC.apply(this,arguments);
+  if(a._bh||!canHit(o)) return false; if(!labWindow(a)) return false;
+  const q=labTouch(f,o,k); if(!q) return false; LAB.hitPart=k; return landHit(f,a,o,dmg,kb,ln,q,kind); }; }
+{ const oM=FP.melee; FP.melee=function(rg,arc,dmg,kb,ln){ if(typeof labCone==='function') labCone(this,rg,arc); const a=this.atk, o=this.opp;
+  const k=SB.limb&&a?labLimbFor(this,a.id):null; if(!k||!o) return oM.apply(this,arguments);
+  const q=labTouch(this,o,k), h=o.hidden; if(!q){ o.hidden=true; try{ oM.apply(this,arguments); } finally{ o.hidden=h; } return false; }  // keeps the building / prop smashing, no hit
+  const r=oM.apply(this,arguments); if(r) return true; if(o.dead||o.hidden) return false; o.takeHit(this,dmg,kb,ln,false); return true; }; }
+
 
 </script>
 <!-- V8 END -->

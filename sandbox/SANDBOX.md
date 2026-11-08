@@ -8,7 +8,7 @@
 - `sandbox/titan-clash-sandbox.html` = the game code (`game/`) + the test code in `sandbox/src/`, with three.js and the font packed inside. Rebuild it with `python3 sandbox/build_sandbox.py`. Keep it as its own file, separate from the game zip.
 - The real game file is never changed by the sandbox build. Settings the sandbox turns off (crowds, disasters) are never saved, so the game isn't affected.
 - When a test is approved: move its code from `sandbox/src/` into `game/tools/v8-src/`, run `python3 game/tools/build_v8.py`, then test the game.
-- v8.3 (Nov 7, 2026): Sandbox 1 to 12 (VALOR, combat, 1/2/3, water, ultimates, fonts, ult camera, cutscene view) moved into the game. `sandbox/src/` now holds only sandbox-only code: `02-sandbox.js` (test menu, fills in `sbBase`), `03-voidmaw.js`, `05-fullscreen.js`, `07-speed.js`, `08` to `10` (INFERNOTH rework), `11-version.js` (SB_BUILD), `12-loadout.js` and `13-element-looks.js` (Sandbox 14). v8.4: 08 to 10, 12, 13 and 15 moved into the game (`game/tools/v8-src/32-37`); `sandbox/src/` keeps 02, 03, 05, 07, 11, `12-sandbox-loadout.js`, `14-meters.js` and `16-ashvin-sandbox.js`.
+- v8.3 (Nov 7, 2026): Sandbox 1 to 12 (VALOR, combat, 1/2/3, water, ultimates, fonts, ult camera, cutscene view) moved into the game. `sandbox/src/` now holds only sandbox-only code: `02-sandbox.js` (test menu, fills in `sbBase`), `03-voidmaw.js`, `05-fullscreen.js`, `07-speed.js`, `08` to `10` (INFERNOTH rework), `11-version.js` (SB_BUILD), `12-loadout.js` and `13-element-looks.js` (Sandbox 14). v8.4: 08 to 10, 12, 13 and 15 moved into the game (`game/tools/v8-src/32-37`). v8.5: 17 to 22 and the limb hits from 23 moved into the game (`game/tools/v8-src/44-50`); `sandbox/src/` keeps 02, 03, 05, 07, 11, `12-sandbox-loadout.js`, `14-meters.js`, `16-ashvin-sandbox.js`, `23-fight-lab.js` (test tools) and `24-compare.js` (on/off switches).
 
 ## The settings menu (cleaned up Nov 6, 2026)
 On screen during the fight: only the **⚙ SANDBOX** button (top left) and a small damage counter (top right). Tap ⚙ (PC: Tab) to open the settings menu; the fight pauses while it's open.
@@ -23,6 +23,12 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 20 (Nov 8, 2026): everything moved into the game (v8.5) + on/off switches
+- MajorasPride: put everything we did into the main game. The game never has more than the sandbox; the sandbox has everything the game has, with switches to turn things off, and all new work starts here.
+- Moved into the game as `game/tools/v8-src/44` to `50`: fluid motion (was 17-motion), lock-on flash + roomier city (18), MAGMA SURGE (19; old Magma Wall archived in `game/archive/titan-clash-magma-wall-archive.js`), camera views (20), flow / hit-pause (21), the new VALOR model (22), LIMB HITS (from 23-fight-lab). Status of Sandbox 17 to 19: **in the game (v8.5)**.
+- New ⚙ section **IN THE GAME SINCE v8.5**: FLUID MOTION, LIMB HITS, HIT-PAUSE FIX, LOCK-ON FLASH, NEW VALOR ↻, ROOMY CITY ↻ (↻ restarts the fight). All on by default; tap to turn one off and compare. Code: `sandbox/src/24-compare.js`. MAGMA SURGE has no switch (the old wall is archived).
+- Sandbox-only now: the test menu (02), VOIDMAW (03), fullscreen (05), speed (07), build tag (11), loadout menu (12), meters (14), ASHVIN sandbox bits (16), the Fight Lab test tools (23: hitbox view, frame data, move map, phone readout) and the switches (24).
+
 ### Sandbox 19c (Nov 8, 2026): phone, one tiny faded line
 - MajorasPride: still in the way, "a lot smaller and faded". On any touch screen the box is now one tiny line (e.g. "8 DMG · 1 HIT · Claw 18f -14"), 60% faded, on the left under ARMOR / RAGE, and it fades out 1.5s after the last hit. His screenshot still showed build 19, so his phone may also have had the old copy cached.
 

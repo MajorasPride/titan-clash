@@ -68,9 +68,7 @@ Object.assign(V8MOVE,{
    let yaw=f.yaw; if(canHit(o)&&dist2(f,o)<60) yaw=Math.atan2(o.pos.x-f.pos.x,o.pos.z-f.pos.z);
    const m=new THREE.Mesh(new THREE.SphereGeometry(c===2?1.6:1.1,8,6),glowM(INF.ORANGE,2.6)); m.position.copy(from); scene.add(m);
    KX.blobs.push({f,m,vel:V(Math.sin(yaw)*70,0,Math.cos(yaw)*70),t:c===2?.7:.55,dmg:(c===2?9:5)*pm,big:c===2}); Snd.tone('sawtooth',160,60,.15,.05); } },
- mwall(f,a,dt,pm,o){ if(once(a,'w',a.hitAt)){ for(const W of KX.walls) if(W.f===f) W.t=Math.min(W.t,.3);   // one wall at a time
-   const c=fwd(f,12*f.scale), w=24, g=new THREE.Mesh(new THREE.BoxGeometry(w,9,2.2),glowM(INF.ORANGE,1.8)); g.position.set(c.x,-4,c.z); g.rotation.y=f.yaw; scene.add(g);
-   KX.walls.push({f,x:c.x,z:c.z,yaw:f.yaw,w,t:4,m:g,dps:14*pm}); dust(c.x,c.z,8,8); Snd.boom(); game.shake=Math.max(game.shake,.4); } },
+ // v8.5: Magma Wall (mwall) archived, MAGMA SURGE replaces it (46-magma-surge.js). Old code: archive/titan-clash-magma-wall-archive.js
  merupt(f,a,dt,pm,o){ const c=a.chg||0;
   if(once(a,'e',a.hitAt)){ const rng=40+30*c; const ok=canHit(o)&&dist2(f,o)<rng; const at=ok?V(o.pos.x,0,o.pos.z):fwd(f,Math.min(rng,30));
    dropRock(at.x,at.z,{geyser:true,r:8+2*c,warn:.35,dmg:(15+6*c)*pm,kb:10,ln:20,owner:f,immune:f,col:0xffb347,bld:60}); Snd.thud&&Snd.thud(); game.shake=Math.max(game.shake,.4); } },
@@ -232,12 +230,7 @@ function ultGZ(f,a,dt,pm,o){ const t=a.t;
 function kxTick(dt){ if(game.mode!=='match') return; const fight=game.state==='fight';
  for(let i=KX.blobs.length-1;i>=0;i--){ const B=KX.blobs[i], o=B.f.opp; B.t-=dt; B.m.position.addScaledVector(B.vel,dt); if(Math.random()<dt*30) burst(B.m.position.clone(),Math.random()<.5?0xffd27a:0x5a1a08,1,3); let done=B.t<=0;
   if(o&&canHit(o)&&B.m.position.distanceTo(o.chest())<o.radius()+3){ V8.proj={r:3.2,mesh:B.m}; /* big enough that the auto-shield doesn't eat it; holding block still works */ try{ o.takeHit(B.f,B.dmg,B.big?14:5,0,false,{x:B.vel.x,z:B.vel.z}); } finally{ V8.proj=null; } if(B.big){ o.burnT=Math.max(o.burnT||0,1.5); o.burnBy=B.f; } lava(B.m.position.clone(),8,10); done=true; }
-  for(const W of KX.walls) if(W.f!==B.f&&wallHit(W,B.m.position)) done=true;
   if(done){ scene.remove(B.m); B.m.geometry.dispose(); KX.blobs.splice(i,1); } }
- for(let i=KX.walls.length-1;i>=0;i--){ const W=KX.walls[i], o=W.f.opp; W.t-=dt; W.m.position.y=Math.min(4.5,W.m.position.y+dt*30); if(W.t<.3) W.m.position.y-=dt*30;
-  for(let j=projs.length-1;j>=0;j--){ const p=projs[j]; if(p.owner!==W.f&&wallHit(W,p.mesh.position)){ burst(p.mesh.position.clone(),INF.ORANGE,8,10); p.life=0; } }   // blocks shots
-  if(o&&canHit(o)&&wallHit(W,o.pos.clone().setY(3),o.radius()*.6)){ const s0=o.stun; o.takeHit(W.f,W.dps*dt,0,0,true,{x:0,z:1}); o.stun=s0; const nx=Math.sin(W.yaw), nz=Math.cos(W.yaw), side=(o.pos.x-W.x)*nx+(o.pos.z-W.z)*nz>0?1:-1; o.kb.x+=nx*side*40*dt*10; o.kb.z+=nz*side*40*dt*10; }
-  if(W.t<=0){ scene.remove(W.m); W.m.geometry.dispose(); KX.walls.splice(i,1); } }
  for(let i=KX.patches.length-1;i>=0;i--){ const P=KX.patches[i], o=P.f&&P.f.opp; P.t-=dt;
   if(P.pool){ const q=1-P.t/P.max; P.m.material.color.setHex(0xffb347).lerp(new THREE.Color(0x4a0c02),q); P.m.material.opacity=.85*(1-q*q); if(Math.random()<dt*4*(1-q)) burst(V(P.x+rand(-P.r,P.r)*.6,.6,P.z+rand(-P.r,P.r)*.6),0xffd27a,1,4); }
   else P.m.material.opacity=Math.min(.6,P.t*.4);
@@ -255,8 +248,6 @@ function kxTick(dt){ if(game.mode!=='match') return; const fight=game.state==='f
  const sky=KX.match.sky||KX.round.sky; if(!sky&&KX.revert>0){ KX.revert-=dt; scene.background.lerp(SKY,Math.min(1,dt*1.5)); scene.fog.color.lerp(new THREE.Color(MAP.fog),Math.min(1,dt*1.5)); }
  if(sky){ const c=new THREE.Color(sky); scene.background.lerp(c.clone().multiplyScalar(.45),Math.min(1,dt*1.5)); scene.fog.color.lerp(c.clone().multiplyScalar(.35),Math.min(1,dt*1.5)); }
  crackEl.classList.toggle('on',!!KX.round.crack); }
-function wallHit(W,p,pad){ const nx=Math.sin(W.yaw), nz=Math.cos(W.yaw), dx=p.x-W.x, dz=p.z-W.z, along=dx*nz-dz*nx, across=dx*nx+dz*nz;
- return Math.abs(along)<W.w/2&&Math.abs(across)<1.6+(pad||0)&&p.y<10&&W.m.position.y>0; }
 { const o=updateHUD; updateHUD=function(dt){ o(dt); try{ kxTick(dt); }catch(e){ console.error(e); } }; }
 function kxClear(all){ for(const L of [KX.blobs,KX.walls,KX.patches]){ for(const x of L){ scene.remove(x.m); x.m.geometry&&x.m.geometry.dispose(); } L.length=0; }
  for(const R of KX.rocks){ scene.remove(R.m); } KX.rocks.length=0; KX.round={}; crackEl.classList.remove('on'); if(all){ KX.match={}; } }

@@ -259,7 +259,7 @@ function swSet(m){ Object.assign(SW13,m?SW13_M:{CUTS:SW13_0.CUTS,LAND:SW13_0.LAN
 // Hot Blood (BRAWLER): the bite fills rage
 { const o=V8MOVE.kbite; V8MOVE.kbite=function(f,a,dt,pm,o2){ const h=a._bh; o(f,a,dt,pm,o2); if(!h&&a._bh&&up(f,'hotblood')){ addRage(f,15); burst(f.chest(),0xfff2d0,10,10); } }; }
 // Hot Blood (MELTDOWN): Magma Wall fills rage when a shot hits it
-{ const o=wallHit; wallHit=function(W,p,pad){ const r=o(W,p,pad); if(r&&pad===undefined&&W.f&&up(W.f,'hotblood')&&game.time-(W._hb||0)>.15){ W._hb=game.time; addRage(W.f,8); } return r; }; }
+// v8.5: the Hot Blood hook on the Magma Wall moved to archive/titan-clash-magma-wall-archive.js (MAGMA SURGE fills rage itself, 46-magma-surge.js)
 // Living Fortress (MELTDOWN): Obsidian Shell lasts 2s longer
 { const o=V8MOVE.mshell; V8MOVE.mshell=function(f,a,dt,pm,o2){ const s=a._s; o(f,a,dt,pm,o2); if(!s&&a._s&&up(f,'fortress')) f.shellT+=2; }; }
 // King of Monsters (BRAWLER): KING sends them farther, they land in a lava burst. (MELTDOWN): LAVA DOMAIN pins them longer

@@ -1,3 +1,4 @@
+// v8.5 (Nov 8, 2026): moved from the sandbox into the game (MajorasPride: put everything we did in the game; the sandbox keeps on/off switches to compare).
 /* =====================================================================
    SANDBOX 17 (Nov 8, 2026): FLOW FIXES.
    1. NO AUTO COMBO BREAKER. MajorasPride: "get rid of the combo breaker auto thing."
@@ -11,9 +12,9 @@
       happen close together, the next ones shrink (so a fast string still flows).
    ===================================================================== */
 BR.comboCap=Infinity;
-const FLOW={scale:.55, cap:.09, bigCap:.15, recent:0};
+const FLOW={on:true, scale:.55, cap:.09, bigCap:.15, recent:0};
 { let hsv=game.hitStop||0;
   Object.defineProperty(game,'hitStop',{configurable:true, get(){ return hsv; }, set(v){
-   if(v>hsv+1e-4){ const big=v>=.2, add=Math.min(big?FLOW.bigCap:FLOW.cap,v*FLOW.scale)/(1+FLOW.recent*5);
+   if(v>hsv+1e-4){ const big=v>=.2, add=FLOW.on===false?v:Math.min(big?FLOW.bigCap:FLOW.cap,v*FLOW.scale)/(1+FLOW.recent*5);
     FLOW.recent+=add; hsv=Math.max(hsv,add); } else hsv=v; } }); }
 { const oL=loop; loop=function(now){ const r=oL(now); FLOW.recent*=.94; return r; }; }   // the pile-up memory fades in about a second

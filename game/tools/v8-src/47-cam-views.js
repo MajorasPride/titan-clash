@@ -1,3 +1,4 @@
+// v8.5 (Nov 8, 2026): moved from the sandbox into the game (MajorasPride: put everything we did in the game; the sandbox keeps on/off switches to compare).
 /* =====================================================================
    SANDBOX 17 (Nov 8, 2026): CAMERA VIEWS YOU CAN FLIP IN THE FIGHT + ACTION CAM.
    MajorasPride: "we need different toggled camera views" (his brother asked for a third-person

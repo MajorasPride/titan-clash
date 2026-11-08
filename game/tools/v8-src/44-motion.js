@@ -1,3 +1,4 @@
+// v8.5 (Nov 8, 2026): moved from the sandbox into the game (MajorasPride: put everything we did in the game; the sandbox keeps on/off switches to compare).
 /* =====================================================================
    SANDBOX 17 (Nov 8, 2026): FLUID MOTION (the Soul Calibur way).
    MajorasPride: "they look so stiff all the time" ... "we need better hand made animations" ...

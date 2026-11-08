@@ -1,3 +1,4 @@
+// v8.5 (Nov 8, 2026): moved from the sandbox into the game (MajorasPride: put everything we did in the game; the sandbox keeps on/off switches to compare).
 /* =====================================================================
    SANDBOX 17 (Nov 8, 2026): LOCK-ON FLASH + A ROOMIER CITY.
    MajorasPride: "lock on shouldn't have that red UI the whole time, just a quick 1 second, but keep
