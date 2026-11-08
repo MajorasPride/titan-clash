@@ -1,5 +1,5 @@
 /* =====================================================================
-   SANDBOX 15c: THE TWINS' LOOK (Nov 7, 2026). Sandbox only.
+   THE TWINS' LOOK (Sandbox 15c to 15g, Nov 7, 2026). In the game since v8.4.5 (moved from the sandbox).
    MajorasPride: "Have ice and fire effects for their swings like VALOR does... it doesn't feel cohesive in battle."
    "Zoom out of the lunar eclipse, I can't see it." Sun symbol: his reference picture (a sun with flame rays and a
    face in a triangle-trimmed ring). Ours is our own drawing in that spirit, not a copy of the picture.

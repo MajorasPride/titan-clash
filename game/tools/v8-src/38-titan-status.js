@@ -7,7 +7,7 @@
    The tags show on the select screen tabs and at the top of the titan file.
    To change who's next or finished, edit TITAN_STATUS (a titan with no entry = finished, no tag).
    ===================================================================== */
-const TITAN_STATUS={ashvin:'next',raikou:'old',ragnavox:'old'};
+const TITAN_STATUS={raikou:'old',ragnavox:'old'};   // v8.4.5: ASHVIN finished (the twins). Mark the next titan with 'next' once Clayton picks it
 const TITAN_SOON=[{name:'VOIDMAW',type:'kaiju',sub:'KAIJU · BEYOND THE STARS'}];
 const STATUS_TXT={next:'NEXT UP · IN THE LAB',old:'OLD KIT · REWORK COMING'};
 const STATUS_FILE={next:'Being reworked next. Playable now on its old kit; the new kit is being built in the sandbox.',

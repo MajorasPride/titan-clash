@@ -1,5 +1,5 @@
 /* =====================================================================
-   SANDBOX 15: ASHVIN, THE TWINS (Nov 7, 2026). Sandbox only, not in the game.
+   ASHVIN, THE TWINS (Sandbox 15, Nov 7, 2026). In the game since v8.4.5 (moved from the sandbox).
    MajorasPride's plan (voice call, Nov 7): Game Plan > Ideas Inbox > ASHVIN rework. Our own design.
    - Two stances, one twin each. SUN (he, battle mage): fast, fiery, buffs himself, fights up close.
      MOON (she, pure mage): calm, slower but harder hits, waves and curses, fights from range.
@@ -80,7 +80,6 @@ function ashSwapFX(f){ const c=isSun(f)?ASH.SUN:ASH.MOON; burst(f.chest(),c,26,1
 /* ---------- element pair in the loadout: FIRE + ICE or LIGHTNING + WATER ---------- */
 { const o=loResolve; loResolve=function(L,id){ const r=o(L,id); if(id!=='ashvin') return r; const e=L.el;
   r.pair=(e==='lightwater'||e==='lightning'||e==='water')?'lightwater':'fireice'; r.el=ASH.PAIRS[r.pair][0]; return r; }; }
-{ const o=loRow; loRow=function(side,id,k,label,opts){ if(id==='ashvin'&&k==='el') opts=[['default','DEFAULT'],['fireice','FIRE + ICE'],['lightwater','LIGHTNING + WATER']]; return o(side,id,k,label,opts); }; }
 // the generic element system follows whichever twin is fighting (Ice is handled here, not by the generic system)
 function ashElTick(f){ if(!isAsh(f)||!f.load) return; const e=ashEl(f); f.load.el=e==='ice'?'none':e; }
 
@@ -146,10 +145,10 @@ Object.assign(V8MOVE,{
    ASH.patches.push({spike:sp,t:.9}); if(ashEl(f)==='water') wfxColumn(x,z,26,6); } },
  asTag(f,a,dt,pm,o){ if(once(a,'sw',0)) ashSwap(f);                                           // Moon cuts in: staff spin + cold wave that shoves them back
   if(once(a,'h',a.hitAt)){ const col=ashCol(f); ring(f.pos.x,2,f.pos.z,20,col,.45); wfxRing(f.pos.x,f.pos.z,22,.5); Snd.whoosh();
-   if(canHit(o)&&dist2(f,o)<22*f.scale+o.radius()){ o.takeHit(f,8*pm,62,4,false,ashDir(f,o)); ashOnHit(f,o); ashFx(f,o.chest(),14,12); } } },
+   if(canHit(o)&&dist2(f,o)<22*f.scale+o.radius()){ a._bh=1; a.hit=a.landed=true; o.takeHit(f,8*pm,62,4,false,ashDir(f,o)); ashOnHit(f,o); ashFx(f,o.chest(),14,12); } } },   // v8.4.5: counts as landed, so the combo can continue
  amTag(f,a,dt,pm,o){ if(once(a,'sw',0)) ashSwap(f);                                           // Sun cuts in: Dragon Ball style energy burst
   if(once(a,'h',a.hitAt)){ const col=ashCol(f), c=f.chest(); burst(c,col,50,30); burst(c,0xffffff,24,22); ring(f.pos.x,c.y,f.pos.z,24,col,.4); ring(f.pos.x,1,f.pos.z,26,col,.5);
-   game.shake=Math.max(game.shake,.7); Snd.boom(); if(canHit(o)&&dist2(f,o)<20*f.scale+o.radius()){ o.takeHit(f,10*pm,58,10,false,ashDir(f,o)); ashFx(f,o.chest(),16,14); } } },
+   game.shake=Math.max(game.shake,.7); Snd.boom(); if(canHit(o)&&dist2(f,o)<20*f.scale+o.radius()){ a._bh=1; a.hit=a.landed=true; o.takeHit(f,10*pm,16,18,false,ashDir(f,o)); ashFx(f,o.chest(),16,14); } } },   // v8.4.5: pops them up close (Sun fights up close) instead of blasting them away
  asBlaze(f,a,dt,pm,o){ if(once(a,'b',.15)){ f.blazeT=6; burst(f.chest(),ashCol(f),40,20); ring(f.pos.x,1,f.pos.z,16,ashCol(f),.5); Snd.tone('sawtooth',150,900,.4,.08);
    if(f.isPlayer) toast('BLAZE UP! FASTER ATTACKS','#ffc44d',900); } },
  asDash(f,a,dt,pm,o){ if(once(a,'d',0)){ Snd.whoosh(); a.dir=f.yaw; } if(a.t<.35){ f.kb.x=Math.sin(a.dir)*110; f.kb.z=Math.cos(a.dir)*110; f.inv=Math.max(f.inv||0,.05);
@@ -218,10 +217,6 @@ function ashClear(){ for(const R of ASH.runes) scene.remove(R.m); ASH.runes.leng
  for(const C of ASH.cages){ scene.remove(C.g); } ASH.cages.length=0; for(const f of [game.p,game.e]) if(f){ f.curse=null; f.blazeT=f.hexT=f.rootT=f.drainT=f.ashSlowT=f.soakT=0; } }
 { const oR=sbReset; sbReset=function(){ ashClear(); oR(); }; }
 { const o=startRound; startRound=function(...a){ ashClear(); return o.apply(this,a); }; }
-
-/* ---------- damage numbers by twin (orange = Sun, icy blue = Moon) ---------- */
-if(typeof dmgNum==='function'){ const o=dmgNum; dmgNum=function(f,n,cont){ o(f,n,cont); const p=game.p, d=document.body.lastElementChild;
-  if(d&&d.classList&&d.classList.contains('sbnum')&&isAsh(p)) d.style.color=isSun(p)?'#ffb347':'#9fd8ff'; }; }
 
 /* ---------- ULTIMATES: SOLAR MANDALA (Sun) and TOTAL ECLIPSE (Moon) ---------- */
 const AULT={ mandala:{name:'SOLAR MANDALA',intro:'THE SUN NEVER SETS ON US!',quote:'TWO HALVES, ONE SKY!'},
@@ -358,6 +353,12 @@ function ashUltCleanup(a){ if(!a) return; aBeamOff(a,'b1'); aBeamOff(a,'b2'); aB
   if(kk<2.3){ k.armL=k.armR=-2.9; k.azL=-.6; k.azR=.6; k.knL=k.knR=.8; k.lean=-.2; return; }                                // Sun leaps
   k.armR=k.armL=-3; k.elR=k.elL=-.2; k.lean=.7; k.knL=k.knR=.5; }; }
 
-/* ---------- sandbox: play the twins ---------- */
-if(!SB_PLAY.includes('ashvin')) SB_PLAY.push('ashvin');
-if(!SB_DUMMIES.includes('ashvin')) SB_DUMMIES.push('ashvin');
+
+/* ---------- the select page: ASHVIN's element pick is a pair ---------- */
+{ const o=loadOf; loadOf=function(id){ if(id!=='ashvin') return o(id); const L=V8LOAD[id]; const keep=L&&(L.el==='fireice'||L.el==='lightwater')?L.el:null; const r=o(id); if(keep) r.el=keep; return r; }; }
+{ const o=renderDossier; renderDossier=function(){ const r=o(); const d=getDef(selId); if(!d||d.id!=='ashvin'||vsMode==='story'||dPage!==2) return r;
+  const L=V8LOAD.ashvin||{}, first=doss.querySelector('[data-el]'); if(!first) return r; const row=first.parentNode, p=row.nextElementSibling;
+  row.innerHTML=[['default','DEFAULT'],['fireice','FIRE + ICE'],['lightwater','LIGHTNING + WATER']].map(([k,n])=>`<button data-el="${k}" class="${(L.el||'default')===k||(k==='default'&&!['fireice','lightwater'].includes(L.el))?'sel':''}">${n}</button>`).join('');
+  if(p&&p.tagName==='P') p.textContent=L.el==='lightwater'?'Split elements: Sun = Lightning, Moon = Water. Same moves. Moon\'s water soaks them, and Sun\'s lightning hits soaked rivals 25% harder.'
+   :L.el==='fireice'?'Split elements: Sun = Fire, Moon = Ice. Same moves. Ice (new, ASHVIN only) slows them; fire burns.':'The twins\' own pair: Sun = Fire, Moon = Ice.';
+  return r; }; }

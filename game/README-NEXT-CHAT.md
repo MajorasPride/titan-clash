@@ -20,6 +20,14 @@ Hi Claude. This is MajorasPride's game, and we build it together, one chat at a 
 6. I play on PC and on my phone.
 
 =====================================================================
+## v8.4.5 "THE TWINS + COMBO FEEL" (Nov 7, 2026)
+=====================================================================
+- `41-combo-feel.js`: hit-pause by hit strength + a look-only flinch (root tilt, no stun) on every landed hit by a core titan; whiffed lights mark `landed` 0.1s after their hit moment so the string can continue.
+- `42-ashvin-twins.js` (moved from sandbox `16-ashvin-twins.js`): the twins' kit, runes, statuses (hexT, rootT, drainT, ashSlowT, soakT, curse), element pairs (`f.load.pair`: fireice / lightwater; `ashEl(f)` gives the fighting twin's element), ultimates SOLAR MANDALA / TOTAL ECLIPSE (`CINE.ash`), select-page pair buttons. Tag cut-ins now count as landed.
+- `43-ashvin-look.js` (moved from sandbox `17-ashvin-look.js`): staff ribbons, painted hits/arcs (ice textures), the sun symbol (canvas drawing), eclipse moon + camera.
+- Sandbox keeps `16-ashvin-sandbox.js` (⚙ LOADOUT pair buttons, colored damage numbers, TITANS lists). `TITAN_STATUS`: ASHVIN finished; no titan marked next yet. Still to do for ASHVIN: loadout paths/goals/Focus swaps (his select page still shows the old ability tree). Notes: `patch-notes/v8.4.5.md`.
+
+=====================================================================
 ## v8.4.4 phone HUD on the left (Nov 7, 2026)
 =====================================================================
 - `40-phone-hud.js` (phone landscape only): `.infHud` and `#koBar` become one-line rows at left:90px under the health bars (yours at 84px, the rival's at 104px with a RIVAL tag). Rule from MajorasPride: nothing may cover the joystick or buttons. Notes: `patch-notes/v8.4.4.md`.

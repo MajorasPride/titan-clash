@@ -8,7 +8,7 @@
 - `sandbox/titan-clash-sandbox.html` = the game code (`game/`) + the test code in `sandbox/src/`, with three.js and the font packed inside. Rebuild it with `python3 sandbox/build_sandbox.py`. Keep it as its own file, separate from the game zip.
 - The real game file is never changed by the sandbox build. Settings the sandbox turns off (crowds, disasters) are never saved, so the game isn't affected.
 - When a test is approved: move its code from `sandbox/src/` into `game/tools/v8-src/`, run `python3 game/tools/build_v8.py`, then test the game.
-- v8.3 (Nov 7, 2026): Sandbox 1 to 12 (VALOR, combat, 1/2/3, water, ultimates, fonts, ult camera, cutscene view) moved into the game. `sandbox/src/` now holds only sandbox-only code: `02-sandbox.js` (test menu, fills in `sbBase`), `03-voidmaw.js`, `05-fullscreen.js`, `07-speed.js`, `08` to `10` (INFERNOTH rework), `11-version.js` (SB_BUILD), `12-loadout.js` and `13-element-looks.js` (Sandbox 14). v8.4: 08 to 10, 12, 13 and 15 moved into the game (`game/tools/v8-src/32-37`); `sandbox/src/` keeps 02, 03, 05, 07, 11, `12-sandbox-loadout.js`, `14-meters.js` and (Sandbox 15) `16-ashvin-twins.js`.
+- v8.3 (Nov 7, 2026): Sandbox 1 to 12 (VALOR, combat, 1/2/3, water, ultimates, fonts, ult camera, cutscene view) moved into the game. `sandbox/src/` now holds only sandbox-only code: `02-sandbox.js` (test menu, fills in `sbBase`), `03-voidmaw.js`, `05-fullscreen.js`, `07-speed.js`, `08` to `10` (INFERNOTH rework), `11-version.js` (SB_BUILD), `12-loadout.js` and `13-element-looks.js` (Sandbox 14). v8.4: 08 to 10, 12, 13 and 15 moved into the game (`game/tools/v8-src/32-37`); `sandbox/src/` keeps 02, 03, 05, 07, 11, `12-sandbox-loadout.js`, `14-meters.js` and `16-ashvin-sandbox.js`.
 
 ## The settings menu (cleaned up Nov 6, 2026)
 On screen during the fight: only the **⚙ SANDBOX** button (top left) and a small damage counter (top right). Tap ⚙ (PC: Tab) to open the settings menu; the fight pauses while it's open.
@@ -23,6 +23,10 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 16 (Nov 7, 2026): the twins moved into the game (v8.4.5)
+- ASHVIN's kit and look moved to `game/tools/v8-src/42-43`, and the combo feel fix (`41-combo-feel.js`) is in the game too. They're still here (the sandbox is built from the game). `sandbox/src/16-ashvin-sandbox.js` keeps only the sandbox parts.
+- Combo feel: tiny hit-pause and a visible flinch on every hit (no extra stun); whiffed lights cancel sooner; tag cut-ins count as landed so the combo keeps going; Sun's cut-in pops them up close instead of blasting them away.
+
 ### Sandbox 15g (Nov 7, 2026): the sun in the style of his reference
 - **Feedback:** MajorasPride: "That's perfect." (sun symbol approved)
 - MajorasPride didn't like the crowned cartoon face; picked "match your picture's style". Our own drawing in that mood: black wavy flame rays on a glowing cream-gold sunburst with fine radial lines, a dark ring with a white triangle border, and a dark bearded face drawn in pale strokes with glowing white eyes and a white star for the third eye, plus speckle grit. The rays still draw in with the air strikes; the ring and face appear at the end.
