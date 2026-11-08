@@ -23,6 +23,10 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 19b (Nov 8, 2026): phone, damage box out of the way
+- MajorasPride (phone screenshot): the damage / frame data box covered STANCE / SUPER / LOCK. On phone it now sits small on the left under ARMOR / RAGE (no background), skips the move-name line, and fades out 1.5 seconds after the last hit. PC unchanged.
+- Feedback on Sandbox 19: limb hits "feel good"; he expects the moves need another rework to fit them.
+
 ### Sandbox 19 (Nov 8, 2026): FIGHT LAB (limb hits, hitbox view, frame data, move map)
 Status: **testing**. Feedback: waiting. Code: `sandbox/src/23-fight-lab.js`. Sandbox only, the game is unchanged.
 Ideas come from four open-source fighting projects studied on Nov 8 (rebuilt in our own code, nothing pasted in): Fray (Godot combat framework, MIT), Mugen3D (3D fight engine, MIT), ThirdPersonSmashDemo (MIT), fighting-game-prototype (three.js, no license, ideas only). Credit Fray, Mugen3D and ThirdPersonSmashDemo in the credits if any of this moves into the game.

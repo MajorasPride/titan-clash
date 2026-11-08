@@ -116,3 +116,25 @@ function labMenu(){ const m=el('sbMenu'); if(!m) return;
 { const o=updateHUD; updateHUD=function(dt){ o(dt); try{ labDraw(); const i=el('sbInfo'), L=LAB.last;
    if(i&&SB.showDmg&&L&&!i.querySelector('.fd')) i.insertAdjacentHTML('beforeend',`<br><span class="fd">${labName(L.id)}: ${L.su}f startup · ${labSign(L.adv)} on ${L.blk?'block':'hit'}${L.part&&SB.limb?' · '+L.part:''}</span>`);
    if(SB.menu&&Math.random()<.1) labMenu(); }catch(e){ console.error(e); } }; }
+
+/* ---------- Sandbox 19b (Nov 8, 2026): phone, the damage / frame data box moves out of the way ----------
+   MajorasPride (phone screenshot): the box sat on top of STANCE / SUPER / LOCK. "I don't need this for mobile
+   unless it's off to the side and fades away." Phone landscape only (PC unchanged):
+   - small, no background, on the left under the ARMOR / RAGE rows (nothing there covers a button)
+   - shows when a hit lands, then fades out after 1.5 seconds
+   - the move-name line is dropped on phone (the frame data line already names the move) */
+{ const s=document.createElement('style'); s.textContent=`
+@media (pointer:coarse) and (max-height:520px){
+ #sbInfo{left:90px!important;right:auto!important;top:124px!important;text-align:left!important;background:none!important;border:none!important;padding:0!important;
+  text-shadow:0 1px 2px #000,0 0 4px #000;max-width:45vw;transition:opacity .5s ease-out}
+ #sbInfo,#sbInfo b{font-size:8px!important;line-height:1.5!important}
+ #sbInfo .big{font-size:10px!important}
+ #sbInfo .mv{display:none}
+ #sbInfo .fd{font-size:7px!important}
+ #sbInfo.labFade{opacity:0}
+}`; document.head.appendChild(s); }
+const LABF={t:-99, k:''};
+{ const o=updateHUD; updateHUD=function(dt){ o(dt); try{ const i=el('sbInfo'); if(!i) return; const C=SB.combo||{}, k=(C.t||0)+'|'+(C.n||0);
+   if(k!==LABF.k){ LABF.k=k; LABF.t=performance.now(); }
+   i.innerHTML=i.innerHTML.replace(/<br>([^<]*<b>[^<]*<\/b>)/,'<br><span class="mv">$1</span>');
+   i.classList.toggle('labFade',performance.now()-LABF.t>1500&&!SB.menu); }catch(e){} }; }
