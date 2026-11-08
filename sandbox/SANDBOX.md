@@ -23,6 +23,9 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 19c (Nov 8, 2026): phone, one tiny faded line
+- MajorasPride: still in the way, "a lot smaller and faded". On any touch screen the box is now one tiny line (e.g. "8 DMG · 1 HIT · Claw 18f -14"), 60% faded, on the left under ARMOR / RAGE, and it fades out 1.5s after the last hit. His screenshot still showed build 19, so his phone may also have had the old copy cached.
+
 ### Sandbox 19b (Nov 8, 2026): phone, damage box out of the way
 - MajorasPride (phone screenshot): the damage / frame data box covered STANCE / SUPER / LOCK. On phone it now sits small on the left under ARMOR / RAGE (no background), skips the move-name line, and fades out 1.5 seconds after the last hit. PC unchanged.
 - Feedback on Sandbox 19: limb hits "feel good"; he expects the moves need another rework to fit them.

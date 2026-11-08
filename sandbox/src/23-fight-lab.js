@@ -138,3 +138,16 @@ const LABF={t:-99, k:''};
    if(k!==LABF.k){ LABF.k=k; LABF.t=performance.now(); }
    i.innerHTML=i.innerHTML.replace(/<br>([^<]*<b>[^<]*<\/b>)/,'<br><span class="mv">$1</span>');
    i.classList.toggle('labFade',performance.now()-LABF.t>1500&&!SB.menu); }catch(e){} }; }
+
+/* ---------- Sandbox 19c (Nov 8, 2026): phone, even smaller ----------
+   MajorasPride: "still in the way, move it off the buttons, a lot smaller and faded. I can't see the match or buttons."
+   Any touch screen now (not only short screens): ONE tiny faded line on the left under ARMOR / RAGE,
+   e.g. "8 DMG · 1 HIT · Claw 18f -14". It fades out 1.5s after the last hit. PC unchanged. */
+const LAB_PHONE=matchMedia('(pointer:coarse)').matches||('ontouchstart' in window);
+if(LAB_PHONE){ document.body.classList.add('labPhone'); const s=document.createElement('style'); s.textContent=`
+ body.labPhone #sbInfo{left:90px!important;right:auto!important;top:124px!important;bottom:auto!important;text-align:left!important;background:none!important;border:none!important;
+  padding:0!important;max-width:40vw;white-space:nowrap;overflow:hidden;opacity:.6;transition:opacity .5s ease-out;text-shadow:0 1px 2px #000}
+ body.labPhone #sbInfo,body.labPhone #sbInfo *{font:7px/1.3 'Press Start 2P',monospace!important;color:#cfe3f5!important}
+ body.labPhone #sbInfo.labFade{opacity:0!important}`; document.head.appendChild(s); }
+{ const o=updateHUD; updateHUD=function(dt){ o(dt); if(!LAB_PHONE) return; try{ const i=el('sbInfo'); if(!i||!SB.showDmg) return; const C=SB.combo||{}, live=C.n&&game.time-C.t<1.6, L=LAB.last;
+   i.textContent=(live?Math.round(C.dmg)+' DMG · '+C.n+(C.n>1?' HITS':' HIT'):'')+(L?(live?' · ':'')+labName(L.id)+' '+L.su+'f '+labSign(L.adv):''); }catch(e){} }; }
