@@ -23,6 +23,8 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 16b (Nov 7, 2026): rebuilt with v8.4.6 (RAGNAVOX marked NEXT UP on the select screen)
+
 ### Sandbox 16 (Nov 7, 2026): the twins moved into the game (v8.4.5)
 - ASHVIN's kit and look moved to `game/tools/v8-src/42-43`, and the combo feel fix (`41-combo-feel.js`) is in the game too. They're still here (the sandbox is built from the game). `sandbox/src/16-ashvin-sandbox.js` keeps only the sandbox parts.
 - Combo feel: tiny hit-pause and a visible flinch on every hit (no extra stun); whiffed lights cancel sooner; tag cut-ins count as landed so the combo keeps going; Sun's cut-in pops them up close instead of blasting them away.

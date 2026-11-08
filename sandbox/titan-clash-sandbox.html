@@ -25,6 +25,8 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 16b (Nov 7, 2026): rebuilt with v8.4.6 (RAGNAVOX marked NEXT UP on the select screen)
+
 ### Sandbox 16 (Nov 7, 2026): the twins moved into the game (v8.4.5)
 - ASHVIN's kit and look moved to `game/tools/v8-src/42-43`, and the combo feel fix (`41-combo-feel.js`) is in the game too. They're still here (the sandbox is built from the game). `sandbox/src/16-ashvin-sandbox.js` keeps only the sandbox parts.
 - Combo feel: tiny hit-pause and a visible flinch on every hit (no extra stun); whiffed lights cancel sooner; tag cut-ins count as landed so the combo keeps going; Sun's cut-in pops them up close instead of blasting them away.
@@ -741,6 +743,7 @@ v8.4.5 THE TWINS + COMBO FEEL (Nov 7, 2026). The new ASHVIN from the sandbox (Sa
     M H), runes, Blaze Up / Flame Dash / Solar Flare, Hex / Frost Prison / Drain, two grabs, painted staff ribbons and
     the ultimates SOLAR MANDALA and TOTAL ECLIPSE. Combo feel for everyone: a tiny hit-pause and a visible flinch on
     every hit (no extra stun), whiffed lights cancel sooner. Code: tools/v8-src/41-43. Notes: patch-notes/v8.4.5.md.
+v8.4.6 (Nov 7, 2026). Select screen: RAGNAVOX is NEXT UP (MajorasPride's pick). Code: tools/v8-src/38-titan-status.js.
 
 #####################################################################
 -->
@@ -7198,7 +7201,7 @@ if(!load('tc_v84load')){ for(const k in V8LOAD) delete V8LOAD[k]; saveLoad(); sa
    The tags show on the select screen tabs and at the top of the titan file.
    To change who's next or finished, edit TITAN_STATUS (a titan with no entry = finished, no tag).
    ===================================================================== */
-const TITAN_STATUS={raikou:'old',ragnavox:'old'};   // v8.4.5: ASHVIN finished (the twins). Mark the next titan with 'next' once Clayton picks it
+const TITAN_STATUS={raikou:'old',ragnavox:'next'};   // v8.4.5: ASHVIN finished (the twins). Mark the next titan with 'next' once Clayton picks it
 const TITAN_SOON=[{name:'VOIDMAW',type:'kaiju',sub:'KAIJU · BEYOND THE STARS'}];
 const STATUS_TXT={next:'NEXT UP · IN THE LAB',old:'OLD KIT · REWORK COMING'};
 const STATUS_FILE={next:'Being reworked next. Playable now on its old kit; the new kit is being built in the sandbox.',
@@ -8132,7 +8135,7 @@ function spdSync(){ document.querySelectorAll('#sbMenu [data-spd]').forEach(b=>b
 
 /* Which sandbox build is this? Shown small in the top-right corner and in the ⚙ menu, so an old (cached) copy is easy to spot.
    Bump SB_BUILD every time the sandbox is pushed. */
-const SB_BUILD='16 · Nov 7';
+const SB_BUILD='16b · Nov 7';
 { const d=document.createElement('div'); d.id='sbVer'; d.textContent='SANDBOX '+SB_BUILD;
   d.style.cssText="position:fixed;right:8px;bottom:6px;z-index:25;font:10px/1 'Russo One',sans-serif;letter-spacing:1px;color:#9fb3c8;opacity:.75;pointer-events:none";
   document.body.appendChild(d); }
