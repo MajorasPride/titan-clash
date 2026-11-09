@@ -229,7 +229,7 @@ let dustTex = null;
 function makeDust(pt, view, R) {                                  // drifting grains that blow off the fading end
   if (!dustTex) { const c = document.createElement('canvas'); c.width = c.height = 32; const x = c.getContext('2d'), g = x.createRadialGradient(16, 16, 0, 16, 16, 16); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.5, 'rgba(255,255,255,.6)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 32, 32); dustTex = new THREE.CanvasTexture(c); }
   const st = 1 - pt.fade.amt, src = []; view.meshes.forEach(me => { const a = me.geometry.attributes.position; for (let i = 0; i < a.count; i += 3) { const x = a.getX(i), y = a.getY(i), z = a.getZ(i), d = Math.hypot(x, y, z) / R; if (d > st + pt.fade.amt * .25) src.push([x, y, z, me.material]); } });
-  if (!src.length) return null; const N = Math.min(320, 60 + src.length >> 2), O = new Float32Array(N * 3), V = new Float32Array(N * 3), A = new Float32Array(N), Lf = new Float32Array(N), pos = new Float32Array(N * 3);
+  if (!src.length) return null; const N = Math.max(20, Math.round(Math.min(320, 60 + src.length >> 2) * (pt.fade.mul || 1))), O = new Float32Array(N * 3), V = new Float32Array(N * 3), A = new Float32Array(N), Lf = new Float32Array(N), pos = new Float32Array(N * 3);
   for (let i = 0; i < N; i++) { const [x, y, z] = src[(Math.random() * src.length) | 0], l = Math.hypot(x, y, z) || 1; O.set([x, y, z], i * 3);
     V.set([x / l * .5 + (Math.random() - .5) * .5, y / l * .5 + (Math.random() - .5) * .5 + .15, z / l * .5 + (Math.random() - .5) * .5].map(v => v * R * .18), i * 3); Lf[i] = 1.2 + Math.random() * 2.2; A[i] = Math.random() * Lf[i]; }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); const m0 = src[0][3], key = (m0.userData && m0.userData.key) || '';
@@ -239,7 +239,7 @@ function makeDust(pt, view, R) {                                  // drifting gr
   if (glit) { const base = m0.color.clone(), cc = new Float32Array(N * 3); for (let i = 0; i < N; i++) { const c = base.clone().lerp(new THREE.Color().setHSL(Math.random(), .8, .7), .35).multiplyScalar(1.6); cc.set([c.r, c.g, c.b], i * 3); } g.setAttribute('color', new THREE.BufferAttribute(cc, 3)); }
   const pts = new THREE.Points(g, pm); pts.frustumCulled = false; pts.raycast = () => {}; view.M.add(pts); return {pts, O, V, A, L: Lf, N, grav: burn ? -.6 : glit ? 1.2 : 1.6, glit, R}; }
 const _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _dn = new THREE.Vector3();
-function fadeTick(dt) { FADE_T.value += dt; for (const v of Object.values(views)) { const d = v.dust; if (!d) continue; const p = d.pts.geometry.attributes.position;
+function fadeTick(dt) { FADE_T.value += dt; for (const v of Object.values(views)) for (const d of [v.dust, v.glit]) { if (!d) continue; const p = d.pts.geometry.attributes.position;
   v.M.getWorldQuaternion(_q); v.M.getWorldScale(_s); _dn.set(0, -1, 0).applyQuaternion(_q.invert()).divideScalar(Math.max(.05, Math.abs(_s.y))).multiplyScalar(d.grav * d.R * .35 * Math.abs(_s.y));   // world "down" in the part's own space
   for (let i = 0; i < d.N; i++) { d.A[i] += dt; if (d.A[i] > d.L[i]) d.A[i] = 0; const a = d.A[i], k = a * (1 + a * .35) * (d.grav > 0 ? .5 : 1), g2 = a * a;
     p.setXYZ(i, d.O[i * 3] + d.V[i * 3] * k + _dn.x * g2, d.O[i * 3 + 1] + d.V[i * 3 + 1] * k + _dn.y * g2, d.O[i * 3 + 2] + d.V[i * 3 + 2] * k + _dn.z * g2); }
@@ -279,6 +279,7 @@ function buildPart(pt) {
   views[pt.uid] = {G, M, meshes};
   if (fR && pt.fade.dust !== false) views[pt.uid].dust = makeDust(pt, views[pt.uid], fR);
   if (pt.drip && !colorMode) views[pt.uid].drip = makeDrip(pt);
+  if (pt.glit && !colorMode) views[pt.uid].glit = makeDust({fade: {amt: .95, style: 'glitter', mul: .4 + pt.glit.amt * 1.4}}, views[pt.uid], partRadius(pt));
 }
 function applyOff(pt, M) { const o = pt.off; if (o) M.position.set(-o[0] * M.scale.x, -o[1] * M.scale.y, -o[2] * M.scale.z); else M.position.set(0, 0, 0); }
 const hash = s => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
@@ -289,7 +290,7 @@ const twinOf = pt => pt && pt.twin ? partBy(pt.twin) : null;
 function mirrorInto(src, dst) {                                 // keep a mirrored twin in sync
   dst.p = [-src.p[0], src.p[1], src.p[2]]; dst.r = [src.r[0], -src.r[1], -src.r[2]]; dst.s = src.s; dst.l = src.l; dst.w = src.w; dst.flip = !src.flip;
   dst.mat = src.mat ? [...src.mat] : null; dst.matAll = src.matAll; dst.tint = src.tint; dst.tile = src.tile; dst.subdiv = src.subdiv; dst.sculpt = src.sculpt ? JSON.parse(JSON.stringify(src.sculpt)) : null; dst.cut = src.cut ? [...src.cut] : []; dst.vpaint = src.vpaint ? JSON.parse(JSON.stringify(src.vpaint)) : null;
-  dst.fade = src.fade ? {...src.fade} : null; dst.drip = src.drip ? {...src.drip} : null; dst.layer = src.layer ? JSON.parse(JSON.stringify(src.layer)) : null; dst.keep = src.keep ? [...src.keep] : null; dst.off = src.off ? [...src.off] : null; dst.hidden = src.hidden; dst.params = src.params ? {...src.params} : null; buildPart(dst);
+  dst.fade = src.fade ? {...src.fade} : null; dst.drip = src.drip ? {...src.drip} : null; dst.glit = src.glit ? {...src.glit} : null; dst.layer = src.layer ? JSON.parse(JSON.stringify(src.layer)) : null; dst.keep = src.keep ? [...src.keep] : null; dst.off = src.off ? [...src.off] : null; dst.hidden = src.hidden; dst.params = src.params ? {...src.params} : null; buildPart(dst);
 }
 const syncTwin = pt => { const t = twinOf(pt); if (t) mirrorInto(pt, t); };
 
@@ -707,6 +708,7 @@ $('bPaintAll').onclick = e => { paintAll = !paintAll; e.target.classList.toggle(
 $('tint').onchange = e => { if (paintAll) { snap(); for (const o of P.parts) if (!o.boxed) { o.tint = e.target.value; buildPart(o); } return saveCur(); } const pt = partBy(sel); if (!pt) return; snap(); pt.tint = e.target.value; buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); };
 function fadeUI(pt) { pt = pt || partBy(sel); const on = !!(pt && pt.fade); $('bFade').classList.toggle('on', on); $('fadeRow').style.display = on ? '' : 'none';
   if (on) { $('sFade').value = pt.fade.amt; $('vFade').textContent = (+pt.fade.amt).toFixed(2); $('bDust').classList.toggle('on', pt.fade.dust !== false); $('bFadeStyle').textContent = {burn: 'Style: 🔥 Burn', glitter: 'Style: ✨ Glitter'}[pt.fade.style] || 'Style: 💨 Dust'; }
+  const gl = !!(pt && pt.glit); $('bGlit').classList.toggle('on', gl); $('glitRow').style.display = gl ? '' : 'none'; if (gl) { $('sGlit').value = pt.glit.amt; }
   const dr = !!(pt && pt.drip); $('bPDrip').classList.toggle('on', dr); $('dripRow').style.display = dr ? '' : 'none'; if (dr) { $('sDrip').value = pt.drip.amt; $('vDrip').textContent = (+pt.drip.amt).toFixed(2); $('bMelt').classList.toggle('on', !!pt.drip.melt); } }
 const fadeTargets = () => { if (paintAll) return P.parts.filter(o => !o.boxed); const pt = partBy(sel); if (!pt) return []; const t = twinOf(pt); return t ? [pt, t] : [pt]; };
 $('bFade').onclick = () => { const L = fadeTargets(); if (!L.length) return tip('Tap a part first (or turn on Paint all)'); snap(); const on = !L[0].fade;
@@ -718,6 +720,9 @@ $('bPDrip').onclick = () => { const L = fadeTargets(); if (!L.length) return tip
 $('sDrip').oninput = e => { $('vDrip').textContent = (+e.target.value).toFixed(2); };
 $('sDrip').onchange = e => { snap(); fadeTargets().forEach(o => { if (o.drip) { o.drip.amt = +e.target.value; buildPart(o); } }); saveCur(); };
 $('bMelt').onclick = () => { const L = fadeTargets().filter(o => o.drip); if (!L.length) return; snap(); const m = !L[0].drip.melt; L.forEach(o => { o.drip.melt = m; buildPart(o); }); fadeUI(L[0]); saveCur(); tip(m ? 'Melt: drips from all over the part' : 'Drips from the bottom edges'); };
+$('bGlit').onclick = () => { const L = fadeTargets(); if (!L.length) return tip('Tap a part first (or turn on Paint all)'); snap(); const on = !L[0].glit; L.forEach(o => { o.glit = on ? {amt: .5} : null; buildPart(o); }); fadeUI(L[0]); saveCur();
+  tip(on ? 'Glitter fall on — sparkles shed off the part (works with or without Fade / Drip)' : 'Glitter fall off'); };
+$('sGlit').onchange = e => { snap(); fadeTargets().forEach(o => { if (o.glit) { o.glit.amt = +e.target.value; buildPart(o); } }); saveCur(); };
 $('sFade').onpointerdown = () => snap();
 $('sFade').oninput = e => { const v = +e.target.value; $('vFade').textContent = v.toFixed(2); fadeTargets().forEach(o => { if (!o.fade) return; o.fade.amt = v; const w = views[o.uid]; if (w) w.meshes.forEach(m => m.material.userData.fadeU && (m.material.userData.fadeU.uFadeA.value = v)); }); };
 $('sFade').onchange = () => { fadeTargets().forEach(o => o.fade && buildPart(o)); saveCur(); };
