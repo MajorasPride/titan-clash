@@ -33,13 +33,24 @@ const bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), .4, .45, .92); co
 let useBloom = true;
 
 // ====================================================================== parts library
-const LIB = {}, GROUP_ORDER = ['Basic Shapes & Clay', 'Heads & Skulls', 'Jaws & Teeth', 'Horns & Crests', 'Eyes & Faces', 'Necks & Spines', 'Torsos & Bellies', 'Arms & Shoulders', 'Hands & Claws',
+const LIB = {}, GROUP_ORDER = ['Basic Shapes & Clay', 'Part Makers (sliders)', 'Heads & Skulls', 'Jaws & Teeth', 'Horns & Crests', 'Eyes & Faces', 'Necks & Spines', 'Torsos & Bellies', 'Arms & Shoulders', 'Hands & Claws',
   'Legs & Feet', 'Tails', 'Wings', 'Back & Armor Plates', 'Tentacles & Extra Limbs', 'Bones & Skeleton', 'Mech Heads', 'Mech Torso & Core', 'Mech Arms & Legs', 'Mech Details', 'Mecha Dragon', 'Weapons', 'Accessories & Magic', 'Free Packs (CC0)', 'My Imports'];
 const MY = 'My Parts';
 const ALONG = new Set(['Necks & Spines', 'Arms & Shoulders', 'Legs & Feet', 'Tails', 'Wings', 'Tentacles & Extra Limbs', 'Mech Arms & Legs', 'Heads & Skulls', 'Mech Heads', 'Torsos & Bellies', 'Mech Torso & Core', 'Hands & Claws']);
 const isAlong = e => e.along != null ? e.along : ALONG.has(e.group) || (e.group === 'Mecha Dragon' && /Head|Neck|Wings|Limbs/.test(e.sub)) || e.id === 'md_chest' || e.id === 'md_belly';
 for (const reg of (window.FORGE_PARTS || [])) { try { for (const p of reg(THREE, K)) LIB[p.id] = {...p, src: p.src || 'Made in code for Titan Forge (ours)'}; } catch (e) { console.error('parts file failed', e); } }
-function pieces(id) {                                          // cached shared pieces of a library part
+const genCache = new Map();
+function pieces(id, params) {                                  // cached shared pieces of a library part (makers: per slider setting)
+  const e = LIB[id]; if (!e) return [];
+  if (params && e.makeP) { const key = id + JSON.stringify(params); if (!genCache.has(key)) { let raw = []; try { raw = e.makeP({...Object.fromEntries(e.params.map(q => [q.k, q.def])), ...params}); } catch (err) { console.error(id, err); }
+      genCache.set(key, prep(raw)); if (genCache.size > 60) genCache.delete(genCache.keys().next().value); } return genCache.get(key); }
+  if (!e._p) e._p = prep((() => { try { return e.make(); } catch (err) { console.error(id, err); return []; } })());
+  return e._p;
+}
+function prep(raw) { return raw.filter(p => p && p.geo && p.geo.attributes.position && p.geo.attributes.position.count).map(p => { let g = p.geo;
+      for (const a of Object.keys(g.attributes)) if (!['position', 'normal'].includes(a)) g.deleteAttribute(a);
+      g = mergeVertices(g, 1e-4); g.computeVertexNormals(); return {geo: g, mat: p.mat || 'skin', matObj: p.matObj}; }); }
+function piecesOld(id) {
   const e = LIB[id]; if (!e) return [];
   if (!e._p) { let raw = []; try { raw = e.make(); } catch (err) { console.error(id, err); }
     e._p = raw.filter(p => p && p.geo && p.geo.attributes.position && p.geo.attributes.position.count).map(p => { let g = p.geo;
@@ -125,7 +136,7 @@ function buildPart(pt) {
   const G = new THREE.Group(), M = new THREE.Group(); G.add(M); G.userData.uid = pt.uid;
   const parent = (pt.bone && bones[pt.bone]) || skelRoot; parent.add(G);
   const meshes = [];
-  pieces(pt.lib).forEach((pc, mi) => { const g = partGeo(pt, mi, pc.geo);
+  pieces(pt.lib, pt.params).forEach((pc, mi) => { const g = partGeo(pt, mi, pc.geo);
     const mat = colorMode ? new THREE.MeshStandardMaterial({color: new THREE.Color().setHSL((hash(pt.uid) % 360) / 360, .6, .55)}) : pc.matObj && !pt.mat ? pc.matObj : matFor(pt.mat && pt.mat[mi] != null ? pt.mat[mi] : (pt.matAll || pc.mat), pt.tint, pt.tile, !!(pt.vpaint && pt.vpaint[mi]));
     const mesh = new THREE.Mesh(g, mat); mesh.userData = {uid: pt.uid, mi}; M.add(mesh); meshes.push(mesh); });
   M.scale.set((pt.flip ? -1 : 1) * (pt.w || 1), pt.l || 1, pt.w || 1);
@@ -141,7 +152,7 @@ const twinOf = pt => pt && pt.twin ? partBy(pt.twin) : null;
 function mirrorInto(src, dst) {                                 // keep a mirrored twin in sync
   dst.p = [-src.p[0], src.p[1], src.p[2]]; dst.r = [src.r[0], -src.r[1], -src.r[2]]; dst.s = src.s; dst.l = src.l; dst.w = src.w; dst.flip = !src.flip;
   dst.mat = src.mat ? [...src.mat] : null; dst.matAll = src.matAll; dst.tint = src.tint; dst.tile = src.tile; dst.subdiv = src.subdiv; dst.sculpt = src.sculpt ? JSON.parse(JSON.stringify(src.sculpt)) : null; dst.cut = src.cut ? [...src.cut] : []; dst.vpaint = src.vpaint ? JSON.parse(JSON.stringify(src.vpaint)) : null;
-  dst.hidden = src.hidden; buildPart(dst);
+  dst.hidden = src.hidden; dst.params = src.params ? {...src.params} : null; buildPart(dst);
 }
 const syncTwin = pt => { const t = twinOf(pt); if (t) mirrorInto(pt, t); };
 
@@ -166,7 +177,9 @@ function addPart(lib, bone, p, r, s) {
   const tb = bone && twinName(bone);
   if (mirrorAdd && (tb ? bones[tb] : Math.abs(p[0]) > .25)) { const t = newPart(lib, tb || bone, [0, 0, 0], [0, 0, 0]); t.twin = pt.uid; pt.twin = t.uid; P.parts.push(t); mirrorInto(pt, t); }
   buildPart(pt); select(pt.uid); outliner(); saveCur();
-  tip(LIB[lib].name + ' added' + (pt.twin ? ' (+ mirrored twin)' : '') + ' — Move tab to adjust');
+  tip(LIB[lib].name + ' added' + (pt.twin ? ' (+ mirrored twin)' : '') + (LIB[lib].params ? ' — shape it with the sliders' : ' — Move tab to adjust'));
+  if (LIB[lib].params) { document.querySelector('.tabs [data-tab="shape"]').click(); if (!focusOn) $('bFocus').click(); }
+  else if (typeof inWS !== 'undefined' && inWS) frameObj(views[pt.uid].G, 1.4);
 }
 function placeAt(hit) {
   const lib = placing; placing = null; libUI();
@@ -190,7 +203,7 @@ $('bAddCenter').onclick = () => { const lib = placing || visibleIds()[0]; if (!l
   const b = selBone || (P.bones.find(b => b[4] === 'chest') || P.bones[0])[0]; addPart(lib, b, [0, 0, 0], [0, 0, 0]); };
 
 // ====================================================================== library UI
-let tagFilter = null;
+let tagFilter = null, catsOpen = true;
 let gFilter = GROUP_ORDER.find(g => Object.values(LIB).some(e => e.group === g)) || 'Basic Shapes & Clay', sFilter = null, query = '';
 const userTags = (() => { try { return JSON.parse(localStorage.getItem('titan-forge-tags') || '{}'); } catch (e) { return {}; } })();
 const tagsOf = id => [...(LIB[id].tags || []), ...(userTags[id] || [])];
@@ -198,8 +211,11 @@ const visibleIds = () => Object.keys(LIB).filter(id => { const e = LIB[id]; if (
   return e.group === gFilter && (!sFilter || e.sub === sFilter); });
 function libUI() {
   const groups = [MY, ...GROUP_ORDER].filter(g => g === 'Free Packs (CC0)' || g === 'My Imports' || g === MY || Object.values(LIB).some(e => e.group === g));
-  $('groups').innerHTML = ''; for (const g of groups) { const n = Object.values(LIB).filter(e => g === MY ? e.mine : e.group === g).length, b = document.createElement('button');
-    b.textContent = g + (n ? ` ${n}` : ''); b.className = !query && g === gFilter ? 'on' : ''; b.onclick = () => { gFilter = g; sFilter = null; query = ''; $('search').value = ''; if (g === 'Free Packs (CC0)') packsUI(); libUI(); }; $('groups').append(b); }
+  const SEC = {'My Parts': '⭐ YOURS', 'Basic Shapes & Clay': '🧱 START FROM CLAY + SLIDER MAKERS', 'Heads & Skulls': '🐲 CREATURE PARTS', 'Mech Heads': '🤖 MECH PARTS', 'Mecha Dragon': '🐉 KITS', 'Weapons': '⚔️ GEAR & MAGIC', 'Free Packs (CC0)': '📦 FREE MODEL PACKS'};
+  $('grpToggle').textContent = (catsOpen ? '📂 Categories ▴' : '📂 ' + (query ? 'Search results' : gFilter) + '  ▾ (tap for all categories)'); $('groups').style.display = catsOpen ? '' : 'none';
+  $('groups').innerHTML = ''; for (const g of groups) { if (SEC[g]) $('groups').append(Object.assign(document.createElement('div'), {className: 'sec', textContent: SEC[g]}));
+    const n = Object.values(LIB).filter(e => g === MY ? e.mine : e.group === g).length, b = document.createElement('button');
+    b.textContent = g + (n ? ` ${n}` : ''); b.className = !query && g === gFilter ? 'on' : ''; b.onclick = () => { gFilter = g; sFilter = null; query = ''; tagFilter = null; $('search').value = ''; catsOpen = false; libUI(); }; $('groups').append(b); }
   const subs = [...new Set(Object.values(LIB).filter(e => gFilter === MY ? e.mine : e.group === gFilter).map(e => e.sub))];
   $('subs').innerHTML = ''; if (!query && subs.length > 1) for (const s of [null, ...subs]) { const b = document.createElement('button'); b.textContent = s || 'All'; b.className = s === sFilter ? 'on' : ''; b.onclick = () => { sFilter = s; libUI(); }; $('subs').append(b); }
   const cnt = {}; Object.keys(LIB).filter(id => query ? true : (gFilter === MY ? LIB[id].mine : LIB[id].group === gFilter)).forEach(id => tagsOf(id).forEach(t => cnt[t] = (cnt[t] || 0) + 1));
@@ -218,6 +234,7 @@ function libUI() {
     gr.append(b); thumbObs.observe(img); }
   if (!visibleIds().length && gFilter !== 'Free Packs (CC0)') gr.innerHTML = gFilter === MY ? '<div class="hint">Your own parts land here. Open ⋯ → 🛠 Create Asset (Workshop), build a hand, wing, head… then 💾 Save part.</div>' : '<div class="hint">Nothing here yet.</div>';
 }
+$('grpToggle').onclick = () => { catsOpen = !catsOpen; libUI(); };
 $('search').oninput = e => { query = e.target.value.trim().toLowerCase(); libUI(); };
 // thumbnails
 let thumbR = null; const thumbCache = {};
@@ -285,7 +302,7 @@ $('fImport').onchange = async e => { for (const f of e.target.files) { tip('Read
   e.target.value = ''; gFilter = 'My Imports'; sFilter = null; libUI(); };
 
 // ====================================================================== selection + outliner
-function select(u) { if (u && u !== sel && navigator.vibrate) try { navigator.vibrate(10); } catch (e) {} sel = u; attachGizmo(); outliner(); syncEdit(); highlight(); }
+function select(u) { if (u && u !== sel && navigator.vibrate) try { navigator.vibrate(10); } catch (e) {} sel = u; attachGizmo(); outliner(); syncEdit(); highlight(); if (tab === 'shape') shapeUI(); }
 let hl = null;
 function highlight() { if (hl) { hl.removeFromParent(); hl = null; } const v = sel && views[sel]; if (!v || !v.meshes.length) return;
   const box = new THREE.Box3().setFromObject(v.M); hl = new THREE.Box3Helper(box, 0xffd166); hl.material.depthTest = false; hl.renderOrder = 11; scene.add(hl); setTimeout(() => { if (hl) { hl.removeFromParent(); hl = null; } }, 900); }
@@ -349,6 +366,20 @@ function reattach(boneName) { const pt = partBy(sel); reattaching = false; if (!
   const e = new THREE.Euler().setFromQuaternion(q); pt.bone = boneName; pt.p = p.toArray().map(x => +x.toFixed(3)); pt.r = [e.x, e.y, e.z].map(x => +(x / D).toFixed(1)); pt.s = +s.y.toFixed(3);
   buildPart(pt); attachGizmo(); outliner(); syncEdit(); saveCur(); tip('Moved onto ' + boneName); }
 
+// ====================================================================== shape tab (sliders for maker parts)
+function shapeUI() { const el = $('shapeBox'), pt = partBy(sel), e = pt && LIB[pt.lib]; el.innerHTML = '';
+  if (!e || !e.params) { el.innerHTML = '<div class="hint">Pick a part from ＋ Add → Part Makers (eye, finger, hand, horn, teeth, tail, wing, spikes, leg, ear), then shape it here with sliders. Any change keeps its mirrored twin in sync.</div>'; return; }
+  const cur = {...Object.fromEntries(e.params.map(q => [q.k, q.def])), ...(pt.params || {})};
+  for (const q of e.params) { const row = document.createElement('div');
+    if (q.options) { row.className = 'row'; row.append(Object.assign(document.createElement('span'), {textContent: q.label, style: 'min-width:70px;font-size:13px'}));
+      for (const o of q.options) { const b = document.createElement('button'); b.textContent = o; b.className = cur[q.k] === o ? 'on' : ''; b.style.minHeight = '34px'; b.style.fontSize = '12.5px';
+        b.onclick = () => { snap(); pt.params = {...cur, [q.k]: o}; pt.sculpt = null; pt.cut = []; pt.vpaint = null; buildPart(pt); syncTwin(pt); attachGizmo(); saveCur(); shapeUI(); }; row.append(b); } }
+    else { row.className = 'sl'; const r = Object.assign(document.createElement('input'), {type: 'range', min: q.min, max: q.max, step: q.step, value: cur[q.k]}), v = Object.assign(document.createElement('span'), {textContent: cur[q.k]});
+      r.onpointerdown = () => snap(); r.oninput = () => { cur[q.k] = +r.value; v.textContent = r.value; pt.params = {...cur}; pt.sculpt = null; pt.cut = []; pt.vpaint = null; buildPart(pt); syncTwin(pt); attachGizmo(); };
+      r.onchange = () => saveCur(); row.append(Object.assign(document.createElement('span'), {textContent: q.label}), r, v); }
+    el.append(row); }
+  const b = document.createElement('button'); b.textContent = 'Reset sliders'; b.onclick = () => { snap(); pt.params = null; buildPart(pt); syncTwin(pt); saveCur(); shapeUI(); }; el.append(b); }
+
 // ====================================================================== paint tab
 let matCat = MATS.LIST[0][2], paintTwin = true;
 function matsUI() { const cats = [...new Set(MATS.LIST.map(l => l[2]))]; $('matCats').innerHTML = '';
@@ -405,7 +436,7 @@ function stroke(x, y) {
     for (let t = 0; t < I.length / 3; t++) { let cx = 0, cy = 0, cz = 0; for (let j = 0; j < 3; j++) { const vv = I[t * 3 + j]; cx += p.getX(vv) / 3; cy += p.getY(vv) / 3; cz += p.getZ(vv) / 3; }
       if ((cx - local.x) ** 2 + (cy - local.y) ** 2 + (cz - local.z) ** 2 < R2) { cut.add(mi + ':' + t); n++; } }
     if (n) { if (pt.cut && pt.cut.length) tip('Erase is one-time per stroke here', 800); pt.cut = [...cut]; buildPart(pt); syncTwin(pt); } return; }
-  if (g === pieces(pt.lib)[mi].geo) { buildPartOwn(pt); return stroke(x, y); }
+  if (g === pieces(pt.lib, pt.params)[mi].geo) { buildPartOwn(pt); return stroke(x, y); }
   pt.sculpt = pt.sculpt || {}; const S = pt.sculpt[mi] = pt.sculpt[mi] || {};
   const centers = [local]; if (symSculpt) centers.push(new THREE.Vector3(-local.x, local.y, local.z));
   const hn = hit.face.normal.clone(); let drag = null; if (brush === 'grab') { if (lastHit) drag = local.clone().sub(lastHit); lastHit = local.clone(); if (!drag) return; }
@@ -424,7 +455,7 @@ function stroke(x, y) {
   for (const [i, mv] of moved) { p.setXYZ(i, p.getX(i) + mv.x, p.getY(i) + mv.y, p.getZ(i) + mv.z); const o = S[i] || [0, 0, 0]; S[i] = [o[0] + mv.x, o[1] + mv.y, o[2] + mv.z].map(v => +v.toFixed(4)); }
   if (moved.size) { p.needsUpdate = true; g.computeVertexNormals(); g.computeBoundingSphere(); }
 }
-function buildPartOwn(pt) { pt.sculpt = pt.sculpt || {}; const v = views[pt.uid]; v.meshes.forEach((m, mi) => { if (m.geometry === pieces(pt.lib)[mi].geo) m.geometry = m.geometry.clone(); }); }
+function buildPartOwn(pt) { pt.sculpt = pt.sculpt || {}; const v = views[pt.uid]; v.meshes.forEach((m, mi) => { if (m.geometry === pieces(pt.lib, pt.params)[mi].geo) m.geometry = m.geometry.clone(); }); }
 function updateOrbit() { controls.enabled = true; controls.touches.ONE = (!sculpting() || penSeen || stylus || fingerView) ? THREE.TOUCH.ROTATE : null;
   controls.touches.TWO = THREE.TOUCH.DOLLY_PAN; controls.mouseButtons.LEFT = sculpting() ? null : THREE.MOUSE.ROTATE; if (!sculpting()) $('ring').style.display = 'none'; }
 function ring(x, y) { const px = (+$('sBrush').value) * innerHeight / (camera.position.distanceTo(controls.target) * Math.tan(camera.fov * D / 2) * 2);
@@ -464,9 +495,9 @@ addEventListener('pointerup', e => {
 let poseMode = false, jointMode = false, anim = 'none', animT = 0;
 const STARTERS = window.FORGE_STARTERS || [];
 function loadStarter(st) { const keep = mirrorAdd; snap(); P = blankProject(st.skel); P.name = st.name; Object.assign(P.fx, st.fx || {}); rebuildSkeleton(); rebuildParts();
-  for (const [lib, bone, p, r, s] of st.parts) { if (!LIB[lib]) { console.warn('starter part missing', lib); continue; } if (!bones[bone]) { console.warn('starter bone missing', bone); continue; }
+  for (const [lib, bone, p, r, s, flag] of st.parts) { if (!LIB[lib]) { console.warn('starter part missing', lib); continue; } if (!bones[bone]) { console.warn('starter bone missing', bone); continue; }
     const fit = s == null ? autoFit(lib, bone) : [s, 1], pt = newPart(lib, bone, p, r, fit[0]); pt.l = fit[1]; P.parts.push(pt); buildPart(pt); const tb = twinName(bone);
-    if (tb ? bones[tb] : Math.abs(p[0]) > .25) { const t = newPart(lib, tb || bone, [0, 0, 0], [0, 0, 0]); t.twin = pt.uid; pt.twin = t.uid; P.parts.push(t); mirrorInto(pt, t); } }
+    if (flag !== 'solo' && (tb ? bones[tb] : Math.abs(p[0]) > .25)) { const t = newPart(lib, tb || bone, [0, 0, 0], [0, 0, 0]); t.twin = pt.uid; pt.twin = t.uid; P.parts.push(t); mirrorInto(pt, t); } }
   mirrorAdd = keep; sel = null; applyFX(); outliner(); saveCur(); frameAll(); tip(st.name + ' loaded — tap any part to change it'); }
 function startersUI() { const el = $('starters'); if (!el) return; el.innerHTML = ''; for (const st of STARTERS) { const b = document.createElement('button'); b.textContent = st.name;
   b.onclick = () => { if (P.parts.length && !confirm('Load ' + st.name + '? Your current creature is replaced (save it first with ⋯ if you want it).')) return; loadStarter(st); skelUI(); }; el.append(b); } }
@@ -571,11 +602,30 @@ $('bXray').onclick = e => { xray = !xray; e.target.classList.toggle('on', xray);
 let city = null; $('bScale').onclick = e => { if (!city) { city = new THREE.Group(); for (let i = 0; i < 6; i++) { const h = 3 + Math.random() * 5, m = new THREE.Mesh(new THREE.BoxGeometry(2.5, h, 2.5), new THREE.MeshStandardMaterial({color: 0x3a4250}));
   m.position.set(-9 + i * 3.6, h / 2, -6); city.add(m); } scene.add(city); city.visible = false; } city.visible = !city.visible; e.target.classList.toggle('on', city.visible); };
 
+// ====================================================================== phone navigation: nav pad, double-tap to center, focus a part
+function orbitBy(az, el) { const t = controls.target, off = camera.position.clone().sub(t), sp = new THREE.Spherical().setFromVector3(off); sp.theta += az; sp.phi = Math.min(Math.PI - .05, Math.max(.05, sp.phi + el)); camera.position.copy(t).add(new THREE.Vector3().setFromSpherical(sp)); }
+function zoomBy(k) { const t = controls.target; camera.position.copy(t).add(camera.position.clone().sub(t).multiplyScalar(k)); }
+function panBy(dx) { const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0).multiplyScalar(dx); camera.position.add(right); controls.target.add(right); }
+function frameObj(obj, pad = 1.25) { const b = new THREE.Box3().setFromObject(obj); if (b.isEmpty()) return; const c = b.getCenter(new THREE.Vector3()), r = Math.max(.6, b.getSize(new THREE.Vector3()).length() / 2);
+  const dir = camera.position.clone().sub(controls.target).normalize(); controls.target.copy(c); camera.position.copy(c).add(dir.multiplyScalar(r / Math.tan(camera.fov * D / 2) * pad)); }
+let navHeld = null;
+document.querySelectorAll('[data-nav]').forEach(b => { const act = () => { const a = b.dataset.nav; ({zin: () => zoomBy(.88), zout: () => zoomBy(1.13), left: () => orbitBy(-.12, 0), right: () => orbitBy(.12, 0), up: () => orbitBy(0, -.1), down: () => orbitBy(0, .1),
+    pl: () => panBy(-camera.position.distanceTo(controls.target) * .06), pr: () => panBy(camera.position.distanceTo(controls.target) * .06), fit: () => sel && views[sel] ? frameObj(views[sel].G) : frameAll()})[a](); };
+  b.addEventListener('pointerdown', e => { e.preventDefault(); act(); clearInterval(navHeld); navHeld = setInterval(act, 90); }); });
+addEventListener('pointerup', () => clearInterval(navHeld)); addEventListener('pointercancel', () => clearInterval(navHeld));
+$('bNav').onclick = e => { $('nav').classList.toggle('hide'); e.target.classList.toggle('on', !$('nav').classList.contains('hide')); };
+$('bFocus2').onclick = () => $('bFocus').click();
+let lastTap = 0;
+canvas.addEventListener('pointerup', e => { const now = performance.now(); if (now - lastTap < 320 && !sculpting()) { const h = cast(e.clientX, e.clientY, visibleMeshes()); if (h) { controls.target.copy(h.point); tip('Centered here', 900); } } lastTap = now; });
+let focusOn = false;
+$('bFocus').onclick = () => { if (!$('bFocus').isConnected) return; if (!sel) return tip('Tap a part first'); focusOn = !focusOn; soloUid = focusOn ? sel : null; showBones = !focusOn; boneHelpers.forEach(h => h.visible = showBones);
+  rebuildParts(); outliner(); if (focusOn) { frameObj(views[sel].G, 1.9); tip('Focus: only this part. Sculpt / paint / move it, then tap Focus again', 3500); } else frameAll(); $('bFocus').textContent = focusOn ? '↩ Back to whole creature' : '🔍 Focus on this part'; };
+
 // ====================================================================== tabs, sheet, fullscreen
 let tab = 'add';
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { tab = b.dataset.tab; document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
   document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.id === 'p-' + tab)); $('sheet').classList.remove('min');
-  if (tab !== 'add') { placing = null; } if (tab === 'add') libUI(); if (tab === 'paint') matsUI(); if (tab === 'skel') { skelUI(); syncBoneUI(); }
+  if (tab !== 'add') { placing = null; } if (tab === 'add') libUI(); if (tab === 'paint') matsUI(); if (tab === 'shape') shapeUI(); if (tab === 'skel') { skelUI(); syncBoneUI(); }
   if (tab === 'sculpt' && !sel) tip('Tap a part to sculpt it'); attachGizmo(); updateOrbit(); syncEdit(); });
 { // sheet: tap the handle to cycle small / half / tall, or drag it up and down
   const sh = $('sheet'), g = $('grab'); let y0 = null, moved = false;
@@ -605,18 +655,30 @@ $('mCredits').onclick = () => { const used = [...new Set(P.parts.map(p => LIB[p.
 // ====================================================================== workshop (create your own parts)
 let inWS = false, wsBack = null;
 function enterWS() { if (inWS) return; wsBack = JSON.stringify(P); inWS = true; document.body.classList.add('ws'); P = blankProject('none'); P.name = 'Workshop'; P.fx.bg = 'studio';
-  rebuildSkeleton(); rebuildParts(); applyFX(); outliner(); syncEdit(); $('bSaveAsset').style.display = $('bExitWork').style.display = ''; $('menu').classList.remove('open');
-  gFilter = 'Basic Shapes & Clay'; sFilter = null; document.querySelector('.tabs [data-tab="add"]').click(); frameAll();
+  rebuildSkeleton(); showBones = false; boneHelpers.forEach(h => h.visible = false); rebuildParts(); applyFX(); outliner(); syncEdit(); $('bSaveAsset').style.display = $('bExitWork').style.display = ''; $('menu').classList.remove('open');
+  gFilter = 'Basic Shapes & Clay'; sFilter = null; document.querySelector('.tabs [data-tab="add"]').click();
   tip('Workshop: add clay or any part, sculpt / paint / stack pieces, then 💾 Save part', 5000); }
 function exitWS() { if (!inWS) return; if (P.parts.length && !confirm('Leave the Workshop? Save your part first (💾) if you want to keep it.')) return; inWS = false; document.body.classList.remove('ws');
-  P = JSON.parse(wsBack); $('bSaveAsset').style.display = $('bExitWork').style.display = 'none'; rebuildSkeleton(); rebuildParts(); applyFX(); outliner(); syncEdit(); frameAll(); }
-$('mWork').onclick = enterWS; $('bExitWork').onclick = exitWS;
+  if (guide) { guide.removeFromParent(); guide = null; } showBones = true; P = JSON.parse(wsBack); $('bSaveAsset').style.display = $('bExitWork').style.display = 'none'; rebuildSkeleton(); rebuildParts(); applyFX(); outliner(); syncEdit(); frameAll(); }
+const WS_KINDS = [['Heads', '🐲 Head', 'Heads & Skulls'], ['Faces & Eyes', '👁 Face / eyes', 'Eyes & Faces'], ['Horns', '🦄 Horns / crest', 'Horns & Crests'], ['Necks', '🦒 Neck', 'Necks & Spines'], ['Bodies', '🫁 Body / torso', 'Torsos & Bellies'],
+  ['Arms', '💪 Arm', 'Arms & Shoulders'], ['Hands & Claws', '✋ Hand / claw', 'Hands & Claws'], ['Legs', '🦵 Leg', 'Legs & Feet'], ['Feet', '🦶 Foot', 'Legs & Feet'], ['Tails', '🦎 Tail', 'Tails'], ['Wings', '🪽 Wing', 'Wings'],
+  ['Armor & Plates', '🛡 Armor / plates', 'Back & Armor Plates'], ['Weapons', '⚔️ Weapon', 'Weapons'], ['Mech parts', '🤖 Mech part', 'Mech Details'], ['Gear & Magic', '✨ Gear / magic', 'Accessories & Magic'], ['Other', '🧱 Anything', 'Basic Shapes & Clay']];
+const GUIDE = {Heads: [2.6, 2.4, 3], 'Faces & Eyes': [1.2, .8, .8], Horns: [.8, 2, .8], Necks: [1.4, 3.5, 1.4], Bodies: [3.4, 4.5, 2.6], Arms: [1.2, 4.5, 1.2], 'Hands & Claws': [1.4, 2, 1], Legs: [1.4, 5, 1.6], Feet: [1.2, 1, 2.4], Tails: [1.4, 8, 1.4], Wings: [5, 8, .4], 'Armor & Plates': [1.6, 1.6, .4], Weapons: [.6, 6, .3], 'Mech parts': [1.5, 1.5, 1.5], 'Gear & Magic': [2, 2, 2], Other: [2, 2, 2]};
+let wsKind = 'Other', guide = null;
+$('mWork').onclick = () => { $('menu').classList.remove('open'); $('wsKinds').innerHTML = ''; for (const [k, label, grp] of WS_KINDS) { const b = document.createElement('button'); b.textContent = label; b.style.minHeight = '56px'; b.style.fontSize = '15px';
+  b.onclick = () => { $('wsPick').style.display = 'none'; wsKind = k; enterWS(); gFilter = grp; libUI(); showGuide(k); $('wsBadge').textContent = 'WORKSHOP · designing: ' + label.replace(/^\S+\s/, ''); }; $('wsKinds').append(b); } $('wsPick').style.display = 'block'; };
+$('wsCancel').onclick = () => $('wsPick').style.display = 'none';
+function showGuide(k) { if (guide) guide.removeFromParent(); const [w, h, d] = GUIDE[k] || [2, 2, 2]; guide = new THREE.Group();
+  const box = new THREE.Mesh(new THREE.BoxGeometry(w, h, d).translate(0, h / 2, 0), new THREE.MeshBasicMaterial({color: 0x40ffb0, wireframe: true, transparent: true, opacity: .25})); guide.add(box);
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(.15, 16, 10), new THREE.MeshBasicMaterial({color: 0xff8a3a})); guide.add(dot);
+  const arrow = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, h * .5, d / 2), 1, 0x40ffb0); guide.add(arrow); scene.add(guide); frameObj(box, 1.4);
+  tip('Green box = normal size for a ' + k.toLowerCase() + '. Orange dot = where it attaches. Arrow = front.', 6000); } $('bExitWork').onclick = exitWS;
 const MY_SUBS = ['Heads', 'Faces & Eyes', 'Horns', 'Necks', 'Bodies', 'Arms', 'Hands & Claws', 'Legs', 'Feet', 'Tails', 'Wings', 'Armor & Plates', 'Weapons', 'Mech parts', 'Gear & Magic', 'Other'];
 const ALONG_SUBS = new Set(['Heads', 'Necks', 'Bodies', 'Arms', 'Legs', 'Tails', 'Wings']);
 $('bSaveAsset').onclick = async () => {
   const vis = P.parts.filter(p => !p.hidden && views[p.uid]); if (!vis.length) return tip('Add something first');
   const name = prompt('Name your part', 'My part'); if (!name) return;
-  const sub = prompt('Which category?\n' + MY_SUBS.map((s, i) => (i + 1) + '. ' + s).join('\n'), '1'); const cat = MY_SUBS[(+sub || 1) - 1] || 'Other';
+  const def = Math.max(1, MY_SUBS.indexOf(wsKind) + 1), sub = prompt('Which category?\n' + MY_SUBS.map((s, i) => (i + 1) + '. ' + s).join('\n'), String(def)); const cat = MY_SUBS[(+sub || def) - 1] || 'Other';
   skelRoot.updateMatrixWorld(true); const pieces = [];
   for (const pt of vis) { const v = views[pt.uid]; v.meshes.forEach((m, mi) => { const g = m.geometry.clone(); g.applyMatrix4(m.matrixWorld);
     const mk = pt.mat && pt.mat[mi] != null ? pt.mat[mi] : (pt.matAll || (pieces_of(pt)[mi] || {}).mat || 'skin');
@@ -626,7 +688,7 @@ $('bSaveAsset').onclick = async () => {
   const id = 'my:' + Date.now().toString(36), rec = {id, name, sub: cat, tags: tg, along: ALONG_SUBS.has(cat), base: [0, Math.min(0, box.min.y), 0], pieces, made: new Date().toISOString().slice(0, 10)};
   await idb('myparts', 'readwrite', st => st.put(rec, id)); registerMine(rec); tip('Saved "' + name + '" to My Parts → ' + cat, 3500);
 };
-const pieces_of = pt => pieces(pt.lib);
+const pieces_of = pt => pieces(pt.lib, pt.params);
 function registerMine(rec) { LIB[rec.id] = {id: rec.id, group: 'My Parts', sub: rec.sub, name: rec.name, mine: true, tags: rec.tags || [], along: rec.along, src: 'Made by you in the Workshop (yours)',
   make: () => rec.pieces.map(pc => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pc.pos, 3)); g.setIndex(pc.idx); g.translate(0, -rec.base[1], 0); return {geo: g, mat: pc.mat}; })}; delete LIB[rec.id]._p; }
 async function loadMine() { try { for (const [, rec] of await idbAll('myparts')) registerMine(rec); } catch (e) {} }
