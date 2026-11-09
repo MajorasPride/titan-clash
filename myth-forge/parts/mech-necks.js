@@ -1,6 +1,6 @@
 // Mythic Forge parts: MECH NECKS (id prefix mn_, every id has "neck" so it fits the neck slot)
 // Group 'Necks & Spines', sub 'Mech Necks'. Neck base (on the chest) at the origin, grows along +Y toward the head, front = +Z.
-// Short necks for humanoid mechs; long segmented / crane / hose necks for mech dragons, Zoids-style beasts and serpents.
+// Short necks for humanoid mechs; long segmented / crane / hose necks for mech dragons, beast-style walkers and serpents.
 // All original hard-surface designs (Nov 9, 2026). Classic script, no modules.
 (window.FORGE_PARTS = window.FORGE_PARTS || []).push(function (T, K) {
   'use strict';
@@ -67,7 +67,7 @@
       const cap = at(cyl(.5, .55, .1, 24), 0, .64, 0), lamp = at(box(.5, .06, .06), 0, .5, .5);
       return out([[ring, 'paint'], [core, 'darkmetal'], [teeth, 'metal'], [[...bolts, cap], 'metal'], [lamp, 'glow']]);
     }),
-    P('mn_neck_segmented', 'Segmented mech dragon neck', ['dragon', 'zoids', 'beast', 'long', 'segments', 'armor'], () => {
+    P('mn_neck_segmented', 'Segmented mech dragon neck', ['dragon', 'beast-mech', 'beast', 'long', 'segments', 'armor'], () => {
       const c = cr([V3(0, 0, 0), V3(0, 1.3, -.35), V3(0, 2.8, -.2), V3(0, 4.0, .45), V3(0, 4.8, 1.4)]), n = 9, cores = [], caps = [], lights = [], links = [];
       for (let i = 0; i < n; i++) { const t = (i + .5) / n, p = c.getPointAt(t), d = c.getTangentAt(t), s = 1 - i * .055;
         cores.push(orient(cyl(.42 * s, .48 * s, .44, 8), p.clone(), d, Math.PI / 8));
@@ -78,7 +78,7 @@
       const hose = taper(cr([0, .25, .5, .75, 1].map(t => c.getPointAt(t).clone().add(V3(0, 0, .42 - t * .14)))), .09, .07, 60, 8);
       return out([[cores, 'darkmetal'], [caps, 'paint'], [links, 'metal'], [lights, 'glow'], [hose, 'rubber']]);
     }),
-    P('mn_neck_crane', 'Twin-strut crane neck', ['walker', 'zoids', 'beast', 'long', 'struts', 'hydraulic'], () => {
+    P('mn_neck_crane', 'Twin-strut crane neck', ['walker', 'beast-mech', 'beast', 'long', 'struts', 'hydraulic'], () => {
       const c = cr([V3(0, 0, 0), V3(0, 1.6, .2), V3(0, 3.0, .7), V3(0, 3.9, 1.5)]), struts = [], bars = [], ps = [];
       for (const sx of [-.28, .28]) { const pts = [0, .2, .4, .6, .8, 1].map(t => c.getPointAt(t).clone().add(V3(sx, 0, 0))); struts.push(taper(cr(pts), .13, .1, 40, 6, .7)); }
       for (let i = 1; i < 6; i++) { const t = i / 6, p = c.getPointAt(t), d = c.getTangentAt(t); bars.push(orient(at(box(.62, .1, .12), 0, 0, 0), p.clone(), d)); }

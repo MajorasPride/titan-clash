@@ -55,7 +55,7 @@
       for (const s of [-1, 1]) for (let i = 0; i < 5; i++) wheels.push(at(new T.CylinderGeometry(.35, .35, .3, 20).rotateZ(Math.PI / 2), s * 1.42, .5, -1.4 + i * .7));
       const ring = at(new T.CylinderGeometry(.9, 1.0, .25, 32), 0, 1.5, 0);
       return [{geo: hull, mat: 'paint'}, {geo: merge(treads), mat: 'rubber'}, {geo: merge(wheels), mat: 'darkmetal'}, {geo: ring, mat: 'metal'}]; }),
-    S('walker', MT, 'Bases', 'Walker cockpit hull', ['walker', 'mech', 'cockpit', 'pod', 'zoids'], () => {
+    S('walker', MT, 'Bases', 'Walker cockpit hull', ['walker', 'mech', 'cockpit', 'pod', 'beast-mech'], () => {
       const pod = body(2.8, t => (1.3 * Math.sin(Math.min(1, t * 1.05 + .03) * Math.PI) ** .7), 1.1, 1.35, 32, 30);
       const glass = at(new T.SphereGeometry(.75, 32, 20, 0, Math.PI * 2, 0, Math.PI / 2).rotateX(Math.PI / 2), 0, 1.7, 1.05).scale(1.1, .8, 1);
       const hips = [-1, 1].map(s => at(new T.CylinderGeometry(.45, .45, .5, 20).rotateZ(Math.PI / 2), s * 1.35, .9, 0));

@@ -358,7 +358,7 @@
     for (let i = 0; i < 12; i++) { const y = lerp(.35, 3.95, i / 11), s = lsurf(d, y, 0, 1, sz), g = ell(s.r * .42 + .15, .27, .1, 0, 0, 0, 16, 6); g.rotateX(-.2); placeN(g, s.p.clone().addScaledVector(s.n, -.04), s.n); P.push(g); }
     return out([[[nz(lth(d, 44, 1, sz), .02, 2), onL(d, 1, sz, 3.3, .6, .65, .6, .4), onL(d, 1, sz, 3.3, -.6, .65, .6, .4)], 'scale'], [P, 'leather']]);
   });
-  add('torso_round', TB, 'Chests', 'Chubby belly body', ['cute', 'pokemon', 'palworld', 'round'], () => {
+  add('torso_round', TB, 'Chests', 'Chubby belly body', ['cute', 'chubby', 'monster', 'round'], () => {
     const d = dens([[.001, 0], [1.0, .08], [1.55, .6], [1.75, 1.4], [1.7, 2.2], [1.45, 2.9], [1.0, 3.4], [.55, 3.65], [.001, 3.75]], 50);
     return out([[lth(d, 44, 1, .92), 'skin'], [ell(1.2, 1.25, .45, 0, 1.6, 1.22, 28, 18), 'paint2']]);
   });

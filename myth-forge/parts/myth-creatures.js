@@ -537,7 +537,7 @@
   add('cl_cape_royal', CC, 'Capes', 'Royal cape + clasp', ['cape', 'royal', 'hero', 'king'], () => out([
     [capeSheet({seed: 143, flare: 1.4}), 'capered'], [sweep([[-1.6, 1.15, -.5], [-.8, 1.35, -.9], [0, 1.4, -.98], [.8, 1.35, -.9], [1.6, 1.15, -.5]], .16, {seg: 24, rad: 10}), 'velvet'],
     ...[-1, 1].map(s2 => [new T.CylinderGeometry(.22, .22, .1, 24).rotateX(PI / 2).translate(s2 * 1.45, 1.2, -.3), 'gold'])]));
-  add('cl_shroud', CC, 'Shrouds & Scarves', 'Wasteland head shroud', ['shroud', 'hood', 'gauze', 'wrap', 'desert', 'megatron'], () => {
+  add('cl_shroud', CC, 'Shrouds & Scarves', 'Wasteland head shroud', ['shroud', 'hood', 'gauze', 'wrap', 'desert', 'warlord'], () => {
     rs(151); const cuts = [...Array(30)].map(() => rr(.75, 1));
     const g = sheet((u, w) => { const a = -2.75 + u * 5.5, el = w < .45 ? (w / .45) * 1.35 : 1.35, r = w < .45 ? 1.05 * sin(.25 + el) : 1.15 + (w - .45) * 1.6, y = w < .45 ? 1.15 + 1.05 * cos(.25 + el) : 1.2 - (w - .45) * 4.2;
       return V3(sin(a) * r + .12 * sin(u * 31) * w, y + .12 * sin(u * 23 + w * 4) * w, -cos(a) * r * .95 + .2 * w * w); }, 44, 22, .035, {skip: (u, w) => w > cuts[(u * 29.9) | 0]});
@@ -550,7 +550,7 @@
     L.push([nz(ell(.22, .18, .18, .1, .15, .82, 12, 10), .03, 5), 'capered']);
     return out(L);
   });
-  add('cl_chains', CC, 'Chains & Straps', 'Hanging chains', ['chains', 'iron', 'prisoner', 'megatron', 'rusty'], () => {
+  add('cl_chains', CC, 'Chains & Straps', 'Hanging chains', ['chains', 'iron', 'prisoner', 'warlord', 'rusty'], () => {
     const L = [], link = (p, d, i) => { const g = new T.TorusGeometry(.13, .04, 6, 14).scale(1, 1.6, 1); return place(g.rotateY(i % 2 ? PI / 2 : 0), p, d, [0, 0, 1]); };
     for (const pts of [[[1.3, 1.1, .5], [.6, -.4, 1.2], [-.3, -1.4, 1.1], [-1.2, -2.6, .7]], [[-1.4, .9, .4], [-1.1, -1.2, 1.1], [-.8, -2.7, .9]]]) { const c = crv(pts), n = (c.getLength() / .32) | 0;
       for (let i = 0; i <= n; i++) L.push([link(c.getPointAt(i / n), c.getTangentAt(i / n), i), 'rustchain']); }
