@@ -34,7 +34,7 @@ let useBloom = true;
 
 // ====================================================================== parts library
 const LIB = {}, GROUP_ORDER = ['Basic Shapes & Clay', 'Part Makers (sliders)', 'Heads & Skulls', 'Jaws & Teeth', 'Horns & Crests', 'Eyes & Faces', 'Necks & Spines', 'Torsos & Bellies', 'Arms & Shoulders', 'Hands & Claws',
-  'Legs & Feet', 'Tails', 'Wings', 'Back & Armor Plates', 'Tentacles & Extra Limbs', 'Bones & Skeleton', 'Mech Heads', 'Mech Torso & Core', 'Mech Arms & Legs', 'Mech Details', 'Mecha Dragon', 'Weapons', 'Accessories & Magic', 'Free Packs (CC0)', 'My Imports'];
+  'Legs & Feet', 'Tails', 'Wings', 'Back & Armor Plates', 'Tentacles & Extra Limbs', 'Bones & Skeleton', 'Mech Heads', 'Mech Torso & Core', 'Mech Arms & Legs', 'Mech Details', 'Mecha Dragon', 'Kaiju Kit', 'Turtle Kit', 'Weapons', 'Accessories & Magic', 'Free Packs (CC0)', 'My Imports'];
 const MY = 'My Parts';
 const ALONG = new Set(['Necks & Spines', 'Arms & Shoulders', 'Legs & Feet', 'Tails', 'Wings', 'Tentacles & Extra Limbs', 'Mech Arms & Legs', 'Heads & Skulls', 'Mech Heads', 'Torsos & Bellies', 'Mech Torso & Core', 'Hands & Claws']);
 const isAlong = e => e.along != null ? e.along : ALONG.has(e.group) || (e.group === 'Mecha Dragon' && /Head|Neck|Wings|Limbs/.test(e.sub)) || e.id === 'md_chest' || e.id === 'md_belly';
@@ -67,14 +67,14 @@ try { const s = JSON.parse(localStorage.getItem('titan-forge-cur') || 'null'); i
 const saveCur = () => { try { localStorage.setItem(typeof inWS !== 'undefined' && inWS ? 'titan-forge-ws' : 'titan-forge-cur', JSON.stringify(P)); } catch (e) { tip('Too big for quick save — use ⋯ Save as'); } };
 const hist = [], fut = [];
 const snap = () => { hist.push(JSON.stringify(P)); if (hist.length > 50) hist.shift(); fut.length = 0; };
-function restore(j) { P = JSON.parse(j); rebuildSkeleton(); rebuildParts(); outliner(); syncEdit(); saveCur(); }
+function restore(j) { P = JSON.parse(j); rebuildSkeleton(); rebuildParts(); outliner(); syncEdit(); saveCur(); if (typeof boxUI === 'function') boxUI(); }
 $('bUndo').onclick = () => { if (!hist.length) return tip('Nothing to undo'); fut.push(JSON.stringify(P)); restore(hist.pop()); };
 $('bRedo').onclick = () => { if (!fut.length) return tip('Nothing to redo'); hist.push(JSON.stringify(P)); restore(fut.pop()); };
 
 // ====================================================================== skeleton
 const skelRoot = new THREE.Group(); scene.add(skelRoot);
 let bones = {}, boneHelpers = [], showBones = true;
-const jointMat = new THREE.MeshBasicMaterial({color: 0xff8a3a, depthTest: false, transparent: true, opacity: .9}), stickMat = new THREE.MeshBasicMaterial({color: 0xffd166, depthTest: false, transparent: true, opacity: .45});
+const jointMat = new THREE.MeshBasicMaterial({color: 0xff8a3a, depthTest: false, transparent: true, opacity: .6}), stickMat = new THREE.MeshBasicMaterial({color: 0xffd166, depthTest: false, transparent: true, opacity: .28});
 const jointSelMat = new THREE.MeshBasicMaterial({color: 0x40ffb0, depthTest: false});
 function basisFor(dir, up) {
   if (up) return new THREE.Quaternion();
@@ -97,11 +97,11 @@ function rebuildSkeleton() {
     const pr = P.pose[name]; if (pr) b.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(pr[0] * D, pr[1] * D, pr[2] * D)));
     b.userData.poseQ = b.quaternion.clone();
     // helpers
-    const j = new THREE.Mesh(new THREE.SphereGeometry(.16, 12, 8), jointMat); j.renderOrder = 10; j.userData.bone = name; b.add(j); boneHelpers.push(j);
-    const L = b.userData.len, st = new THREE.Mesh(new THREE.CylinderGeometry(.03, .09, L, 6).translate(0, L / 2, 0), stickMat); st.renderOrder = 9; st.userData.bone = name; b.add(st); boneHelpers.push(st);
+    const j = new THREE.Mesh(new THREE.SphereGeometry(.11, 12, 8), jointMat); j.renderOrder = 10; j.userData.bone = name; b.add(j); boneHelpers.push(j);
+    const L = b.userData.len, st = new THREE.Mesh(new THREE.CylinderGeometry(.02, .055, L, 6).translate(0, L / 2, 0), stickMat); st.renderOrder = 9; st.userData.bone = name; b.add(st); boneHelpers.push(st);
   }
   boneOrder = P.bones.map(b => b[0]).sort((a, b) => { const ta = TAG_ORDER.indexOf(boneRow(a)[4]), tb = TAG_ORDER.indexOf(boneRow(b)[4]); return (ta < 0 ? 99 : ta) - (tb < 0 ? 99 : tb) || (a.endsWith('.R') - b.endsWith('.R')) || a.localeCompare(b, undefined, {numeric: true}); });
-  boneOrder.forEach((n, i) => { const sp = numberSprite(i + 1); sp.userData.bone = n; sp.position.set(.35, bones[n].userData.len * .5, 0); bones[n].add(sp); boneHelpers.push(sp); });
+  boneOrder.forEach((n, i) => { const sp = numberSprite(i + 1); sp.userData.bone = n; sp.userData.num = i + 1; sp.position.set(.35, bones[n].userData.len * .5, 0); bones[n].add(sp); boneHelpers.push(sp); });
   boneHelpers.forEach(h => h.visible = showBones); markBone(); boneNumsUI();
 }
 let selBone = null, boneOrder = [];
@@ -116,6 +116,7 @@ function boneNumsUI() { for (const [id, add] of [['boneNums', false], ['boneNums
 function goBone(n, add) { selBone = n; markBone(); boneNumsUI(); syncBoneUI();
   if (add && placing) { const lib = placing; placing = null; libUI(); const e = LIB[lib];
     if (e.whole) return placeAt({object: {userData: {bone: n}}, point: new THREE.Vector3(), face: null});
+    if (addWeaponToPalm(lib, n)) return;
     return addPart(lib, n, [0, 0, 0], [0, 0, 0], isAlong(e) && modeBone ? undefined : 1); }
   const b = bones[n]; if (b) { const w = new THREE.Vector3(); b.getWorldPosition(w); controls.target.copy(w); const d = Math.max(10, b.userData.len * 6); camera.position.copy(w).add(new THREE.Vector3(.55, .4, 1).normalize().multiplyScalar(d)); }
   attachGizmo(); tip('Bone ' + (boneOrder.indexOf(n) + 1) + ': ' + niceBone(n) + (add ? ' — pick a part above, then tap this number again' : ''), 2500); }
@@ -152,14 +153,15 @@ function buildPart(pt) {
   const G = new THREE.Group(), M = new THREE.Group(); G.add(M); G.userData.uid = pt.uid;
   const parent = (pt.bone && bones[pt.bone]) || skelRoot; parent.add(G);
   const meshes = [];
-  pieces(pt.lib, pt.params).forEach((pc, mi) => { const g = partGeo(pt, mi, pc.geo);
+  pieces(pt.lib, pt.params).forEach((pc, mi) => { if (pt.keep && !pt.keep.includes(mi)) return; const g = partGeo(pt, mi, pc.geo);
     const mat = colorMode ? new THREE.MeshStandardMaterial({color: new THREE.Color().setHSL((hash(pt.uid) % 360) / 360, .6, .55)}) : pc.matObj && !pt.mat ? pc.matObj : matFor(pt.mat && pt.mat[mi] != null ? pt.mat[mi] : (pt.matAll || pc.mat), pt.tint, pt.tile, !!(pt.vpaint && pt.vpaint[mi]));
     const mesh = new THREE.Mesh(g, mat); mesh.userData = {uid: pt.uid, mi}; M.add(mesh); meshes.push(mesh); });
-  M.scale.set((pt.flip ? -1 : 1) * (pt.w || 1), pt.l || 1, pt.w || 1);
+  M.scale.set((pt.flip ? -1 : 1) * (pt.w || 1), pt.l || 1, pt.w || 1); applyOff(pt, M);
   G.position.set(...pt.p); G.quaternion.setFromEuler(new THREE.Euler(...pt.r.map(x => x * D))); G.scale.setScalar(pt.s);
   G.visible = !pt.hidden && !(soloUid && soloUid !== pt.uid);
   views[pt.uid] = {G, M, meshes};
 }
+function applyOff(pt, M) { const o = pt.off; if (o) M.position.set(-o[0] * M.scale.x, -o[1] * M.scale.y, -o[2] * M.scale.z); else M.position.set(0, 0, 0); }
 const hash = s => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
 let soloUid = null;
 function rebuildParts() { Object.values(views).forEach(v => v.G.removeFromParent()); views = {}; P.parts.forEach(buildPart); attachGizmo(); }
@@ -168,7 +170,7 @@ const twinOf = pt => pt && pt.twin ? partBy(pt.twin) : null;
 function mirrorInto(src, dst) {                                 // keep a mirrored twin in sync
   dst.p = [-src.p[0], src.p[1], src.p[2]]; dst.r = [src.r[0], -src.r[1], -src.r[2]]; dst.s = src.s; dst.l = src.l; dst.w = src.w; dst.flip = !src.flip;
   dst.mat = src.mat ? [...src.mat] : null; dst.matAll = src.matAll; dst.tint = src.tint; dst.tile = src.tile; dst.subdiv = src.subdiv; dst.sculpt = src.sculpt ? JSON.parse(JSON.stringify(src.sculpt)) : null; dst.cut = src.cut ? [...src.cut] : []; dst.vpaint = src.vpaint ? JSON.parse(JSON.stringify(src.vpaint)) : null;
-  dst.hidden = src.hidden; dst.params = src.params ? {...src.params} : null; buildPart(dst);
+  dst.keep = src.keep ? [...src.keep] : null; dst.off = src.off ? [...src.off] : null; dst.hidden = src.hidden; dst.params = src.params ? {...src.params} : null; buildPart(dst);
 }
 const syncTwin = pt => { const t = twinOf(pt); if (t) mirrorInto(pt, t); };
 
@@ -178,7 +180,7 @@ function newPart(lib, bone, p, r, s = 1) { return {uid: uid(), lib, bone, p, r, 
 function autoScale(lib, bone) { return autoFit(lib, bone)[0]; }
 function autoFit(lib, bone) {                                  // fit limbs / tails / necks / wings to their bone chain -> [size, extra length stretch]
   const e = LIB[lib], b = bones[bone]; if (!e || !b || !isAlong(e)) return [1, 1];
-  if (/Heads|Torsos|Mech Torso|Hands/.test(e.group) || /^md_(head|jaw|chest|belly)/.test(e.id)) return [1, 1];
+  if (e.nofit || /Heads|Torsos|Mech Torso|Hands/.test(e.group) || /^md_(head|jaw|chest|belly)/.test(e.id)) return [1, 1];
   const box = new THREE.Box3(); pieces(lib).forEach(pc => { pc.geo.computeBoundingBox(); box.union(pc.geo.boundingBox); });
   const len = box.max.y - Math.max(0, box.min.y); if (len < .05) return [1, 1];
   const tag = b.userData.tag, kids = c => c.children.filter(k => !k.isMesh && k.userData && k.userData.len);
@@ -197,12 +199,18 @@ function addPart(lib, bone, p, r, s) {
   if (LIB[lib].params) { document.querySelector('.tabs [data-tab="shape"]').click(); if (!focusOn) $('bFocus').click(); }
   else if (typeof inWS !== 'undefined' && inWS) frameObj(views[pt.uid].G, 1.4);
 }
+// weapons on a hand bone: grip goes in the palm, blade/barrel points forward (one hand only; Mirror copy for dual wield)
+function palmGrip(lib, bone) { const e = LIB[lib], row = bone && boneRow(bone); if (!e || e.group !== 'Weapons' || !row || row[4] !== 'hand' || !bones[bone]) return null;
+  return {p: [0, +(bones[bone].userData.len * .5).toFixed(3), .15], r: [90, 0, 0]}; }
+function addWeaponToPalm(lib, bone) { const g = palmGrip(lib, bone); if (!g) return false; const m = mirrorAdd; mirrorAdd = false; addPart(lib, bone, g.p, g.r, 1); mirrorAdd = m;
+  tip(LIB[lib].name + ' in the palm — Move tab › More › Mirror copy for the other hand', 3200); return true; }
 function placeAt(hit) {
   const lib = placing; placing = null; libUI();
   let boneName = null;
   if (hit.object.userData.bone) boneName = hit.object.userData.bone;
   else if (hit.object.userData.uid) { const pt = partBy(hit.object.userData.uid); boneName = pt && pt.bone; }
   const e = LIB[lib], along = modeBone && isAlong(e) && boneName;
+  if (addWeaponToPalm(lib, boneName)) return;
   if (e.whole) { const m = mirrorAdd; mirrorAdd = false; addPart(lib, null, [0, 0, 0], [0, 0, 0], 1); mirrorAdd = m; return tip(e.name + ' added as a whole body — sculpt it, erase bits, or add parts on top'); }
   if (along) return addPart(lib, boneName, [0, 0, 0], [0, 0, 0]);
   const B = (boneName && bones[boneName]) || skelRoot; B.updateMatrixWorld(true);
@@ -326,7 +334,7 @@ function outliner() {
   const el = $('outliner'); el.innerHTML = '';
   const add = (h) => { const x = document.createElement('h3'); x.textContent = h; el.append(x); };
   const tools = document.createElement('div'); tools.className = 'row';
-  for (const [t, f] of [['Show all', () => { snap(); P.parts.forEach(p => p.hidden = false); soloUid = null; rebuildParts(); outliner(); saveCur(); }], ['Hide all', () => { snap(); P.parts.forEach(p => p.hidden = true); rebuildParts(); outliner(); saveCur(); }], ['Bones ' + (showBones ? 'on' : 'off'), () => $('bBones').click()]]) {
+  for (const [t, f] of [['Show all', () => { snap(); P.parts.forEach(p => { if (!p.boxed) p.hidden = false; }); soloUid = null; rebuildParts(); outliner(); saveCur(); }], ['Hide all', () => { snap(); P.parts.forEach(p => p.hidden = true); rebuildParts(); outliner(); saveCur(); }], ['Bones ' + (showBones ? 'on' : 'off'), () => $('bBones').click()]]) {
     const b = document.createElement('button'); b.textContent = t; b.onclick = f; tools.append(b); } el.append(tools);
   const byBone = {}; for (const pt of P.parts) (byBone[pt.bone || '(free)'] = byBone[pt.bone || '(free)'] || []).push(pt);
   if (!P.parts.length) { const d = document.createElement('div'); d.className = 'hint'; d.textContent = 'No parts yet. Use ＋ Add.'; el.append(d); }
@@ -349,7 +357,7 @@ function writeBack(live) {
   if (gzTarget === 'joint') return jointWriteBack(live);
   const pt = partBy(sel), v = views[sel]; if (!pt || !v) return;
   pt.p = v.G.position.toArray().map(x => +x.toFixed(3)); const e = new THREE.Euler().setFromQuaternion(v.G.quaternion); pt.r = [e.x, e.y, e.z].map(x => +(x / D).toFixed(1));
-  if (gizmo.mode === 'scale') { const s = v.G.scale; pt.l = +((pt.l || 1) * s.y / pt.s).toFixed(3); pt.w = +((pt.w || 1) * (s.x + s.z) / 2 / pt.s).toFixed(3); v.G.scale.setScalar(pt.s); v.M.scale.set((pt.flip ? -1 : 1) * pt.w, pt.l, pt.w); }
+  if (gizmo.mode === 'scale') { const s = v.G.scale; pt.l = +((pt.l || 1) * s.y / pt.s).toFixed(3); pt.w = +((pt.w || 1) * (s.x + s.z) / 2 / pt.s).toFixed(3); v.G.scale.setScalar(pt.s); v.M.scale.set((pt.flip ? -1 : 1) * pt.w, pt.l, pt.w); applyOff(pt, v.M); }
   syncTwin(pt); syncEdit(true);
 }
 function attachGizmo() { gizmo.detach(); gzTarget = 'part';
@@ -374,13 +382,14 @@ $('bDel').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); con
   sel = null; attachGizmo(); outliner(); syncEdit(); saveCur(); tip('Deleted' + (t ? ' (and its twin)' : '')); };
 $('bHide').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); pt.hidden = !pt.hidden; buildPart(pt); syncTwin(pt); outliner(); syncEdit(); saveCur(); };
 $('bSolo').onclick = () => { if (!sel) return; soloUid = soloUid === sel ? null : sel; rebuildParts(); outliner(); tip(soloUid ? 'Only this part shown — tap again to undo' : 'All parts shown'); };
-$('bShowAll').onclick = () => { snap(); soloUid = null; P.parts.forEach(p => p.hidden = false); rebuildParts(); outliner(); saveCur(); };
+$('bShowAll').onclick = () => { snap(); soloUid = null; P.parts.forEach(p => { if (!p.boxed) p.hidden = false; }); rebuildParts(); outliner(); saveCur(); };
 let reattaching = false;
 $('bReattach').onclick = () => { if (!sel) return; reattaching = true; showBones = true; boneHelpers.forEach(h => h.visible = true); tip('Tap the bone dot to move this part onto', 4000); };
 function reattach(boneName) { const pt = partBy(sel); reattaching = false; if (!pt || !views[sel]) return; snap(); const G = views[sel].G, B = bones[boneName]; G.updateMatrixWorld(true); B.updateMatrixWorld(true);
   const m = G.matrixWorld.clone().premultiply(B.matrixWorld.clone().invert()), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(); m.decompose(p, q, s);
   const e = new THREE.Euler().setFromQuaternion(q); pt.bone = boneName; pt.p = p.toArray().map(x => +x.toFixed(3)); pt.r = [e.x, e.y, e.z].map(x => +(x / D).toFixed(1)); pt.s = +s.y.toFixed(3);
-  buildPart(pt); attachGizmo(); outliner(); syncEdit(); saveCur(); tip('Moved onto ' + boneName); }
+  const g = palmGrip(pt.lib, boneName); if (g) { pt.p = g.p; pt.r = g.r; }
+  buildPart(pt); attachGizmo(); outliner(); syncEdit(); saveCur(); tip(g ? 'In the palm of ' + niceBone(boneName) : 'Moved onto ' + boneName); }
 
 // ====================================================================== shape tab (sliders for maker parts)
 function shapeUI() { const el = $('shapeBox'), pt = partBy(sel), e = pt && LIB[pt.lib]; el.innerHTML = '';
@@ -471,7 +480,7 @@ function stroke(x, y) {
   for (const [i, mv] of moved) { p.setXYZ(i, p.getX(i) + mv.x, p.getY(i) + mv.y, p.getZ(i) + mv.z); const o = S[i] || [0, 0, 0]; S[i] = [o[0] + mv.x, o[1] + mv.y, o[2] + mv.z].map(v => +v.toFixed(4)); }
   if (moved.size) { p.needsUpdate = true; g.computeVertexNormals(); g.computeBoundingSphere(); }
 }
-function buildPartOwn(pt) { pt.sculpt = pt.sculpt || {}; const v = views[pt.uid]; v.meshes.forEach((m, mi) => { if (m.geometry === pieces(pt.lib, pt.params)[mi].geo) m.geometry = m.geometry.clone(); }); }
+function buildPartOwn(pt) { pt.sculpt = pt.sculpt || {}; const v = views[pt.uid]; v.meshes.forEach(m => { const mi = m.userData.mi; if (m.geometry === pieces(pt.lib, pt.params)[mi].geo) m.geometry = m.geometry.clone(); }); }
 function updateOrbit() { controls.enabled = true; controls.touches.ONE = (!sculpting() || penSeen || stylus || fingerView) ? THREE.TOUCH.ROTATE : null;
   controls.touches.TWO = THREE.TOUCH.DOLLY_PAN; controls.mouseButtons.LEFT = sculpting() ? null : THREE.MOUSE.ROTATE; if (!sculpting()) $('ring').style.display = 'none'; }
 function ring(x, y) { const px = (+$('sBrush').value) * innerHeight / (camera.position.distanceTo(controls.target) * Math.tan(camera.fov * D / 2) * 2);
@@ -512,7 +521,7 @@ let poseMode = false, jointMode = false, anim = 'none', animT = 0;
 const STARTERS = window.FORGE_STARTERS || [];
 function loadStarter(st) { const keep = mirrorAdd; snap(); P = blankProject(st.skel); P.name = st.name; Object.assign(P.fx, st.fx || {}); rebuildSkeleton(); rebuildParts();
   for (const [lib, bone, p, r, s, flag] of st.parts) { if (!LIB[lib]) { console.warn('starter part missing', lib); continue; } if (!bones[bone]) { console.warn('starter bone missing', bone); continue; }
-    const fit = s == null ? autoFit(lib, bone) : [s, 1], pt = newPart(lib, bone, p, r, fit[0]); pt.l = fit[1]; P.parts.push(pt); buildPart(pt); const tb = twinName(bone);
+    const fit = s == null ? autoFit(lib, bone) : Array.isArray(s) ? s : [s, 1], pt = newPart(lib, bone, p, r, fit[0]); pt.l = fit[1]; P.parts.push(pt); buildPart(pt); const tb = twinName(bone);
     if (flag !== 'solo' && (tb ? bones[tb] : Math.abs(p[0]) > .25)) { const t = newPart(lib, tb || bone, [0, 0, 0], [0, 0, 0]); t.twin = pt.uid; pt.twin = t.uid; P.parts.push(t); mirrorInto(pt, t); } }
   mirrorAdd = keep; sel = null; applyFX(); outliner(); saveCur(); frameAll(); tip(st.name + ' loaded — tap any part to change it'); }
 function startersUI() { const el = $('starters'); if (!el) return; el.innerHTML = ''; for (const st of STARTERS) { const b = document.createElement('button'); b.textContent = st.name;
@@ -629,7 +638,8 @@ document.querySelectorAll('[data-nav]').forEach(b => { const act = () => { const
     pl: () => panBy(-camera.position.distanceTo(controls.target) * .06), pr: () => panBy(camera.position.distanceTo(controls.target) * .06), fit: () => sel && views[sel] ? frameObj(views[sel].G) : frameAll()})[a](); };
   b.addEventListener('pointerdown', e => { e.preventDefault(); act(); clearInterval(navHeld); navHeld = setInterval(act, 90); }); });
 addEventListener('pointerup', () => clearInterval(navHeld)); addEventListener('pointercancel', () => clearInterval(navHeld));
-$('bNav').onclick = e => { $('nav').classList.toggle('hide'); e.target.classList.toggle('on', !$('nav').classList.contains('hide')); };
+$('bNav').onclick = e => { $('nav').classList.toggle('hide'); const on = !$('nav').classList.contains('hide'); e.target.classList.toggle('on', on); try { localStorage.setItem('mf-nav', on ? '1' : '0'); } catch (x) {} };
+try { if (localStorage.getItem('mf-nav') === '1') { $('nav').classList.remove('hide'); $('bNav').classList.add('on'); } } catch (x) {}
 $('bFocus2').onclick = () => $('bFocus').click();
 let lastTap = 0;
 canvas.addEventListener('pointerup', e => { const now = performance.now(); if (now - lastTap < 320 && !sculpting()) { const h = cast(e.clientX, e.clientY, visibleMeshes()); if (h) { controls.target.copy(h.point); tip('Centered here', 900); } } lastTap = now; });
@@ -696,7 +706,7 @@ $('bSaveAsset').onclick = async () => {
   const name = prompt('Name your part', 'My part'); if (!name) return;
   const def = Math.max(1, MY_SUBS.indexOf(wsKind) + 1), sub = prompt('Which category?\n' + MY_SUBS.map((s, i) => (i + 1) + '. ' + s).join('\n'), String(def)); const cat = MY_SUBS[(+sub || def) - 1] || 'Other';
   skelRoot.updateMatrixWorld(true); const pieces = [];
-  for (const pt of vis) { const v = views[pt.uid]; v.meshes.forEach((m, mi) => { const g = m.geometry.clone(); g.applyMatrix4(m.matrixWorld);
+  for (const pt of vis) { const v = views[pt.uid]; v.meshes.forEach(m => { const mi = m.userData.mi, g = m.geometry.clone(); g.applyMatrix4(m.matrixWorld);
     const mk = pt.mat && pt.mat[mi] != null ? pt.mat[mi] : (pt.matAll || (pieces_of(pt)[mi] || {}).mat || 'skin');
     pieces.push({pos: Array.from(g.attributes.position.array, v => +v.toFixed(4)), idx: Array.from(g.index.array), mat: mk, tint: pt.tint, tile: pt.tile || 1}); }); }
   const box = new THREE.Box3(); for (const pc of pieces) for (let i = 0; i < pc.pos.length; i += 3) box.expandByPoint(new THREE.Vector3(pc.pos[i], pc.pos[i + 1], pc.pos[i + 2]));
@@ -723,6 +733,132 @@ $('bPatternDel').onclick = async () => { const pt = partBy(sel), k = pt && pt.ma
 $('sTile').onpointerdown = () => snap();
 $('sTile').oninput = e => { const pt = partBy(sel); if (!pt) return; pt.tile = +e.target.value; buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); };
 
+
+// ====================================================================== bone numbers on the model: all / picked / off, fade, size (saved)
+const NUMS = Object.assign({mode: 'pick', pick: [], fade: .7, size: .8}, (() => { try { return JSON.parse(localStorage.getItem('mf-nums')) || {}; } catch (e) { return {}; } })());
+const saveNums = () => { try { localStorage.setItem('mf-nums', JSON.stringify(NUMS)); } catch (e) {} };
+function numShown(sp) { if (NUMS.mode === 'off') return false; if (NUMS.mode === 'all') return true; return sp.userData.bone === selBone || NUMS.pick.includes(sp.userData.num); }
+function applyNums() { for (const h of boneHelpers) { if (!h.isSprite) continue; h.visible = showBones && numShown(h); const s = .036 * NUMS.size * (h.userData.bone === selBone ? 1.15 : 1); h.scale.set(s, s, 1); h.material.opacity = h.userData.bone === selBone ? 1 : NUMS.fade; } }
+function numCtlUI() { for (const id of ['numCtlAdd', 'numCtlSkel']) { const el = $(id); if (!el) continue; el.innerHTML = '';
+  for (const [m, t] of [['all', '# All'], ['pick', '# Picked'], ['off', '# Off']]) { const b = document.createElement('button'); b.textContent = t; b.className = NUMS.mode === m ? 'on' : '';
+    b.onclick = () => { NUMS.mode = m; saveNums(); numCtlUI(); tip(m === 'pick' ? 'Only the bone you picked + the numbers you type show' : m === 'off' ? 'Numbers hidden (dots stay)' : 'All numbers', 1600); }; el.append(b); }
+  const f = document.createElement('input'); f.type = 'range'; f.min = .15; f.max = 1; f.step = .05; f.value = NUMS.fade; f.title = 'Fade numbers'; f.style.flex = '1'; f.style.minWidth = '70px';
+  f.oninput = () => { NUMS.fade = +f.value; saveNums(); }; el.append(Object.assign(document.createElement('span'), {textContent: 'Fade', style: 'font-size:12px;opacity:.7'}), f);
+  if (NUMS.mode === 'pick') { const i = document.createElement('input'); i.type = 'text'; i.inputMode = 'numeric'; i.placeholder = 'Show #s, e.g. 2, 28'; i.value = NUMS.pick.join(', ');
+    i.onchange = () => { NUMS.pick = [...new Set((i.value.match(/\d+/g) || []).map(Number))]; saveNums(); numCtlUI(); }; el.append(i); } } }
+numCtlUI();
+
+// ====================================================================== focus window: a small window that stays zoomed on the picked part while the big view shows everything
+const fwCam = new THREE.PerspectiveCamera(35, 1, .05, 3000), FW = {on: false, size: 1, az: .6, el: .35, zoom: 1}, FW_SIZES = [['S', .36], ['M', .5], ['L', .68]];
+function fwLayout() { const w = Math.round(Math.min(innerWidth * FW_SIZES[FW.size][1], innerHeight * .42)); Object.assign($('fwin').style, {width: w + 'px', height: w + 'px'}); $('fwSize').textContent = 'Size ' + FW_SIZES[FW.size][0]; }
+function fwToggle() { FW.on = !FW.on; $('fwin').classList.toggle('on', FW.on); ['bFWin', 'bFWin2'].forEach(id => $(id) && $(id).classList.toggle('on', FW.on)); fwLayout(); if (FW.on && !sel) tip('Tap a part to see it in the window', 2200); }
+$('bFWin').onclick = fwToggle; $('bFWin2').onclick = fwToggle; $('fwClose').onclick = fwToggle;
+$('fwSize').onclick = () => { FW.size = (FW.size + 1) % FW_SIZES.length; fwLayout(); };
+{ const pts = new Map(); let pinch0 = 0; const el = $('fwin');
+  el.addEventListener('pointerdown', e => { if (e.target.tagName === 'BUTTON') return; e.preventDefault(); e.stopPropagation(); el.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch0 = Math.hypot(a[0] - b[0], a[1] - b[1]); } });
+  el.addEventListener('pointermove', e => { const p = pts.get(e.pointerId); if (!p) return; e.stopPropagation();
+    if (pts.size === 1) { FW.az -= (e.clientX - p[0]) * .012; FW.el = Math.max(-1.45, Math.min(1.45, FW.el + (e.clientY - p[1]) * .01)); }
+    pts.set(e.pointerId, [e.clientX, e.clientY]);
+    if (pts.size === 2) { const [a, b] = [...pts.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (pinch0) FW.zoom = Math.max(.3, Math.min(4, FW.zoom * pinch0 / d)); pinch0 = d; } });
+  const up = e => { pts.delete(e.pointerId); pinch0 = 0; }; el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  el.addEventListener('wheel', e => { e.preventDefault(); FW.zoom = Math.max(.3, Math.min(4, FW.zoom * (e.deltaY > 0 ? 1.1 : .9))); }, {passive: false}); }
+const fwBox = new THREE.Box3(), fwC = new THREE.Vector3(), fwS = new THREE.Vector3();
+function fwRender() { if (!FW.on) return; const v = sel && views[sel], pt = sel && partBy(sel); $('fwCap').textContent = v ? (pt && LIB[pt.lib] ? LIB[pt.lib].name || pt.lib : 'Part') : 'Tap a part';
+  if (!v) return; fwBox.setFromObject(v.G); if (fwBox.isEmpty()) return; fwBox.getCenter(fwC); const r = Math.max(.3, fwBox.getSize(fwS).length() / 2), d = r / Math.tan(fwCam.fov * D / 2) * 1.25 * FW.zoom;
+  fwCam.position.set(fwC.x + d * Math.cos(FW.el) * Math.sin(FW.az), fwC.y + d * Math.sin(FW.el), fwC.z + d * Math.cos(FW.el) * Math.cos(FW.az)); fwCam.lookAt(fwC); fwCam.near = Math.max(.01, d / 200); fwCam.far = d * 50; fwCam.updateProjectionMatrix();
+  const rc = $('fwin').getBoundingClientRect(), x = rc.left + 2, w = rc.width - 4, h = rc.height - 4, y = innerHeight - rc.bottom + 2;
+  const hidden = []; for (const h2 of boneHelpers) if (h2.visible) { h2.visible = false; hidden.push(h2); }
+  for (const k in views) if (k !== sel && views[k].G.visible) { views[k].G.visible = false; hidden.push(views[k].G); }
+  if (gizmo.visible) { gizmo.visible = false; hidden.push(gizmo); } const hlWas = typeof hl !== 'undefined' && hl ? hl.visible : null; if (hlWas !== null) hl.visible = false;
+  renderer.setScissorTest(true); renderer.setScissor(x, y, w, h); renderer.setViewport(x, y, w, h); renderer.render(scene, fwCam);
+  renderer.setScissorTest(false); renderer.setViewport(0, 0, innerWidth, innerHeight); hidden.forEach(o => o.visible = true); if (hlWas !== null) hl.visible = hlWas; }
+
+// ====================================================================== toy mode: break a part into its pieces, drag parts and they stick where you drop them, parts box
+function pieceClusters(pt) { const pcs = pieces(pt.lib, pt.params), boxes = pcs.map(pc => { pc.geo.computeBoundingBox(); const b = pc.geo.boundingBox.clone(), s = b.getSize(new THREE.Vector3()).length(); return b.expandByScalar(Math.max(.005, s * .01)); });
+  const par = pcs.map((_, i) => i), f = i => par[i] === i ? i : (par[i] = f(par[i]));
+  for (let i = 0; i < pcs.length; i++) for (let j = i + 1; j < pcs.length; j++) if (boxes[i].intersectsBox(boxes[j])) par[f(i)] = f(j);
+  const groups = {}; pcs.forEach((_, i) => { if (pt.keep && !pt.keep.includes(i)) return; (groups[f(i)] = groups[f(i)] || []).push(i); });
+  return Object.values(groups).map(ids => { const b = new THREE.Box3(); ids.forEach(i => b.union(boxes[i])); const cc = b.getCenter(new THREE.Vector3()); return {ids, off: [+cc.x.toFixed(3), +b.min.y.toFixed(3), +cc.z.toFixed(3)]}; }); }
+function splitOne(pt, groups) { const v = views[pt.uid]; v.G.updateMatrix(); const out = [];
+  for (const g of groups) { const q = JSON.parse(JSON.stringify(pt)); q.uid = uid(); q.keep = g.ids; q.twin = null;
+    const o0 = pt.off || [0, 0, 0], d = new THREE.Vector3(g.off[0] - o0[0], g.off[1] - o0[1], g.off[2] - o0[2]).multiply(v.M.scale).applyMatrix4(v.G.matrix);
+    q.p = d.toArray().map(x => +x.toFixed(3)); q.off = g.off;
+    if (q.sculpt) for (const k of Object.keys(q.sculpt)) if (!g.ids.includes(+k)) delete q.sculpt[k];
+    out.push(q); }
+  P.parts.splice(P.parts.indexOf(pt), 1, ...out); v.G.removeFromParent(); delete views[pt.uid]; out.forEach(buildPart); return out; }
+$('bBreak').onclick = () => { const pt = partBy(sel); if (!pt) return tip('Tap a part first'); const groups = pieceClusters(pt); if (groups.length < 2) return tip('This part is already one piece');
+  snap(); const tw = pt.twin && partBy(pt.twin), a = splitOne(pt, groups); if (tw) { const b = splitOne(tw, pieceClusters(tw)); a.forEach((q, i) => { if (b[i]) { q.twin = b[i].uid; b[i].twin = q.uid; } }); }
+  select(a[0].uid); outliner(); saveCur(); tip('Broke into ' + groups.length + ' pieces — turn on 🧲 Sticky and drag them anywhere', 3500); };
+let sticky = false, drag = null;
+function setSticky(on) { sticky = on; $('bSticky').classList.toggle('on', on); if (on) { gizmo.detach(); tip('Sticky on: drag a part with your finger or pen — it sticks where you let go. Drop it off the model to put it in the Parts box', 4200); } else attachGizmo(); }
+$('bSticky').onclick = () => setSticky(!sticky);
+const dragPlane = new THREE.Plane(), dragTmp = new THREE.Vector3();
+function stickyHit(x, y) { const own = drag ? views[drag.uid].meshes : []; return cast(x, y, visibleMeshes().filter(m => !own.includes(m))); }
+canvas.addEventListener('pointerdown', e => { if (!sticky || sculpting() || placing || touches.size > 1 || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  const h = cast(e.clientX, e.clientY, visibleMeshes()); if (!h) return; const uid0 = h.object.userData.uid, v = views[uid0]; if (!v) return;
+  e.stopImmediatePropagation(); e.preventDefault(); snap(); select(uid0); gizmo.detach(); controls.enabled = false;
+  const G = v.G; G.updateMatrixWorld(true); const wp = new THREE.Vector3(), wq = new THREE.Quaternion(); G.getWorldPosition(wp); G.getWorldQuaternion(wq);
+  const ws = new THREE.Vector3(); G.getWorldScale(ws); scene.attach(G);
+  drag = {uid: uid0, id: e.pointerId, grab: h.point.clone().sub(wp), q0: wq.clone(), moved: false, hit: null};
+  dragPlane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(new THREE.Vector3()).negate(), h.point); try { canvas.setPointerCapture(e.pointerId); } catch (x) {} }, true);
+canvas.addEventListener('pointermove', e => { if (!drag || e.pointerId !== drag.id) return; e.stopImmediatePropagation(); drag.moved = true; const G = views[drag.uid].G, pt = partBy(drag.uid);
+  const h = stickyHit(e.clientX, e.clientY); drag.hit = h;
+  if (h) { G.position.copy(h.point); const n = h.face ? h.face.normal.clone().transformDirection(h.object.matrixWorld).normalize() : new THREE.Vector3(0, 1, 0);
+    if (!isAlong(LIB[pt.lib]) || pt.keep) G.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), n); else G.quaternion.copy(drag.q0); drag.n = n; }
+  else { ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); if (ray.ray.intersectPlane(dragPlane, dragTmp)) G.position.copy(dragTmp).sub(drag.grab); G.quaternion.copy(drag.q0); } }, true);
+function endDrag(e) { if (!drag || (e && e.pointerId !== drag.id)) return; const d = drag; drag = null; controls.enabled = true; const pt = partBy(d.uid), v = views[d.uid]; if (!pt || !v) return;
+  if (!d.moved) { buildPart(pt); return; }
+  if (d.hit) { const tgt = partBy(d.hit.object.userData.uid), boneName = (tgt && tgt.bone) || null, B = (boneName && bones[boneName]) || skelRoot;
+    v.G.updateMatrixWorld(true); B.updateMatrixWorld(true); const m = v.G.matrixWorld.clone().premultiply(B.matrixWorld.clone().invert()), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(); m.decompose(p, q, s);
+    const eu = new THREE.Euler().setFromQuaternion(q); pt.bone = boneName; pt.p = p.toArray().map(x => +x.toFixed(3)); pt.r = [eu.x, eu.y, eu.z].map(x => +(x / D).toFixed(1));
+    buildPart(pt); const tw = pt.twin && partBy(pt.twin); if (tw) { tw.bone = (boneName && twinName(boneName)) || boneName; mirrorInto(pt, tw); }
+    if (navigator.vibrate) try { navigator.vibrate(18); } catch (x) {} tip('Stuck on ' + (tgt && LIB[tgt.lib] ? LIB[tgt.lib].name : 'the body'), 1400); }
+  else { pt.boxed = true; pt.hidden = true; const tw = pt.twin && partBy(pt.twin); if (tw) { tw.twin = null; pt.twin = null; } buildPart(pt); sel = null; tip('Put in the Parts box (Add tab) — tap it there to stick it back on', 3000); }
+  outliner(); boxUI(); saveCur(); }
+addEventListener('pointerup', endDrag, true); addEventListener('pointercancel', endDrag, true);
+let unboxing = null;
+function boxUI() { const el = $('boxRow'); if (!el) return; el.innerHTML = ''; const box = P.parts.filter(p => p.boxed); $('boxWrap').style.display = box.length ? '' : 'none';
+  for (const pt of box) { const b = document.createElement('button'); b.textContent = (LIB[pt.lib] ? LIB[pt.lib].name : 'part') + (pt.keep ? ' piece' : ''); b.className = unboxing === pt.uid ? 'on' : '';
+    b.onclick = () => { unboxing = unboxing === pt.uid ? null : pt.uid; boxUI(); if (unboxing) tip('Tap the model where it should stick', 2500); }; el.append(b); }
+  if (box.length) { const b = document.createElement('button'); b.textContent = '🗑 Empty box'; b.onclick = () => { if (!confirm('Delete the ' + box.length + ' part(s) in the box?')) return; snap(); P.parts = P.parts.filter(p => !p.boxed); rebuildParts(); unboxing = null; boxUI(); outliner(); saveCur(); }; el.append(b); } }
+canvas.addEventListener('pointerup', e => { if (!unboxing) return; const h = cast(e.clientX, e.clientY, visibleMeshes()); if (!h) return; const pt = partBy(unboxing); unboxing = null; if (!pt) return boxUI();
+  snap(); pt.boxed = false; pt.hidden = false; const tgt = partBy(h.object.userData.uid); pt.bone = (tgt && tgt.bone) || null; const B = (pt.bone && bones[pt.bone]) || skelRoot; B.updateMatrixWorld(true);
+  const n = h.face ? h.face.normal.clone().transformDirection(h.object.matrixWorld).normalize() : new THREE.Vector3(0, 1, 0), bq = new THREE.Quaternion(); B.getWorldQuaternion(bq);
+  const ql = bq.invert().multiply(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), n)), eu = new THREE.Euler().setFromQuaternion(ql);
+  pt.p = h.point.clone().applyMatrix4(B.matrixWorld.clone().invert()).toArray().map(x => +x.toFixed(3)); pt.r = [eu.x, eu.y, eu.z].map(x => +(x / D).toFixed(1));
+  buildPart(pt); select(pt.uid); boxUI(); outliner(); saveCur(); tip('Stuck back on', 1200); });
+boxUI();
+
+// ====================================================================== guide: first-time tour + help page
+$('mHelp').onclick = () => { $('menu').classList.remove('open'); $('help').classList.add('open'); };
+$('helpX').onclick = () => $('help').classList.remove('open');
+const tabBtn = t => document.querySelector('.tabs [data-tab="' + t + '"]');
+const TOUR = [
+  {t: 'Welcome to Myth Forge', p: 'Build monsters and mechs like a toy: snap parts on, drag them around, sculpt and paint. Pick something to start with:', start: true},
+  {sel: '.tabs [data-tab="add"]', pre: () => tabBtn('add').click(), t: 'Add parts', p: 'The Add tab has every part. Tap a category, then a part.'},
+  {sel: '#lib', pre: () => tabBtn('add').click(), t: 'Snap it on', p: 'After picking a part, tap an orange dot (a bone) or the body. It snaps on. Mirror L/R adds the other side too.'},
+  {sel: '.tabs [data-tab="edit"]', pre: () => tabBtn('edit').click(), t: 'Move', p: 'Tap any part on the model, then use Move / Turn / Stretch and the Size slider.'},
+  {sel: '#bSticky', pre: () => tabBtn('edit').click(), t: '🧲 Sticky (toy mode)', p: 'Turn this on and drag parts with your finger or pen. They stick where you let go. Drop one off the model and it goes in the Parts box.'},
+  {sel: '#bBreak', pre: () => tabBtn('edit').click(), t: '🧩 Break apart', p: 'A row of spikes or crystals is one part. Break it apart to move or remove them one by one.'},
+  {sel: '#bFWin', pre: () => tabBtn('edit').click(), t: '🪟 Focus window', p: 'A small window that stays zoomed on the part you picked, while you still see the whole creature.'},
+  {sel: '.tabs [data-tab="sculpt"]', t: 'Sculpt + Paint', p: 'Sculpt pushes and pulls like clay (the S Pen works great). Paint has materials and a brush.'},
+  {sel: '#bMenu', t: 'Save + help', p: '⋯ has Save as, Download model, ❓ How to build, and this tour again. Have fun!'}];
+let tourI = 0;
+function tourShow() { const s = TOUR[tourI], el = $('tour'), card = el.querySelector('.card'), hole = el.querySelector('.hole'); el.style.display = 'block'; if (s.pre) s.pre();
+  card.querySelector('h4').textContent = s.t; card.querySelector('p').textContent = s.p; const bs = card.querySelector('.btns'); bs.innerHTML = '';
+  bs.append(Object.assign(document.createElement('span'), {className: 'dots', textContent: (tourI + 1) + ' / ' + TOUR.length}));
+  const add = (t, f, on) => { const b = document.createElement('button'); b.textContent = t; if (on) b.className = 'on'; b.onclick = f; bs.append(b); };
+  if (s.start) { for (const [t, id] of [['🤖 Mech', 'heromech'], ['🦖 Kaiju', 'basaltkaiju'], ['🐢 Turtle', 'snapjaw']]) add(t, () => { const st = STARTERS.find(x => x.id === id); if (st) { loadStarter(st); skelUI(); } tourI++; tourShow(); }, true);
+    add('Keep what I have', () => { tourI++; tourShow(); }); add('Skip tour', tourEnd); }
+  else { add('Skip', tourEnd); if (tourI > 0) add('Back', () => { tourI--; tourShow(); }); add(tourI === TOUR.length - 1 ? 'Done' : 'Next', () => { if (tourI === TOUR.length - 1) tourEnd(); else { tourI++; tourShow(); } }, true); }
+  requestAnimationFrame(() => { const t = s.sel && document.querySelector(s.sel); if (t) { t.scrollIntoView({block: 'nearest', inline: 'nearest'}); const r = t.getBoundingClientRect(), pad = 6;
+      Object.assign(hole.style, {display: 'block', left: r.left - pad + 'px', top: r.top - pad + 'px', width: r.width + pad * 2 + 'px', height: Math.min(r.height, innerHeight * .5) + pad * 2 + 'px'});
+      const below = r.top < innerHeight * .45; Object.assign(card.style, below ? {top: Math.min(innerHeight - 220, r.top + Math.min(r.height, innerHeight * .5) + 16) + 'px', bottom: 'auto'} : {bottom: Math.max(12, innerHeight - r.top + 16) + 'px', top: 'auto'}); }
+    else { hole.style.display = 'none'; Object.assign(card.style, {top: '30%', bottom: 'auto'}); } }); }
+function tourEnd() { $('tour').style.display = 'none'; try { localStorage.setItem('mf-tour-done', '1'); } catch (e) {} }
+function tourStart() { $('menu').classList.remove('open'); tourI = 0; tourShow(); }
+$('mTour').onclick = tourStart;
+try { if (!localStorage.getItem('mf-tour-done')) setTimeout(tourStart, 700); } catch (e) {}
 // ====================================================================== loop
 function resize() { renderer.setSize(innerWidth, innerHeight, false); composer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight;
   const sh = $('sheet'), land = innerWidth >= 760 && innerWidth > innerHeight, full = document.body.classList.contains('full');
@@ -732,7 +868,7 @@ new ResizeObserver(() => resize()).observe($('sheet'));
 addEventListener('resize', resize); resize();
 const clock = new THREE.Clock();
 renderer.setAnimationLoop(() => { const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime; controls.update(); animate(dt); fxTick(dt, t);
-  if (spin) skelRoot.rotation.y += dt * .5; if (useBloom) composer.render(); else renderer.render(scene, camera); });
+  if (spin) skelRoot.rotation.y += dt * .5; applyNums(); if (useBloom) composer.render(); else renderer.render(scene, camera); fwRender(); });
 addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; const k = e.key.toLowerCase();
   if ((e.ctrlKey || e.metaKey) && k === 'z') { e.preventDefault(); (e.shiftKey ? $('bRedo') : $('bUndo')).click(); }
   else if (k === 'delete' || k === 'x') $('bDel').click(); else if (k === 'h') $('bHide').click(); else if (k === 'g') document.querySelector('[data-gz=translate]').click();

@@ -59,6 +59,34 @@
   #nav button{min-height:34px;padding:0;font-size:15px;border-radius:9px;background:rgba(40,40,50,.85)}
   #nav.hide{display:none}
   body.full #nav{display:grid}
+  #nav.hide,body.full #nav.hide{display:none}
+  #fwin{position:fixed;left:6px;top:58px;z-index:4;display:none;border:2px solid var(--ac);border-radius:12px;touch-action:none;box-shadow:0 4px 18px rgba(0,0,0,.5)}
+  #fwin.on{display:block}
+  #fwin .bar{position:absolute;left:0;right:0;top:0;display:flex;gap:4px;justify-content:flex-end;padding:4px}
+  #fwin .bar button{min-height:30px;padding:0 9px;font-size:13px;border-radius:8px;background:rgba(30,30,38,.85)}
+  #fwin .cap{position:absolute;left:6px;bottom:4px;right:6px;font:700 11px system-ui;color:#ffd9b0;text-shadow:0 1px 2px #000;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .numctl{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:4px 0}
+  .numctl input[type=text]{flex:1;min-width:90px;min-height:34px;border-radius:8px;border:1px solid var(--ln);background:#1b1b22;color:#eee;padding:0 8px;font-size:14px}
+  .numctl button{min-height:34px;padding:0 10px;font-size:13px}
+  details.more{margin:6px 0 2px;border-top:1px solid var(--ln);padding-top:4px}
+  details.more>summary{list-style:none;cursor:pointer;font-size:13px;opacity:.7;padding:6px 2px}
+  details.more>summary::-webkit-details-marker{display:none}
+  details.more[open]>summary{opacity:1;color:var(--ac)}
+  #tour{position:fixed;inset:0;z-index:20;pointer-events:none}
+  #tour .hole{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.55);border:2px solid var(--ac2);transition:all .2s;pointer-events:none}
+  #tour .card{position:fixed;left:12px;right:12px;max-width:440px;margin:auto;background:#24242c;border:1px solid var(--ac);border-radius:14px;padding:14px;pointer-events:auto;box-shadow:0 8px 30px rgba(0,0,0,.6)}
+  #tour h4{margin:0 0 6px;font:800 15px system-ui;color:var(--ac)}
+  #tour p{margin:0 0 10px;font-size:14.5px;line-height:1.4}
+  #tour .btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  #tour .btns button{min-height:40px}
+  #tour .dots{font-size:11px;opacity:.6;margin-right:auto;align-self:center}
+  #help{position:fixed;inset:0;z-index:21;background:rgba(18,18,22,.98);overflow:auto;padding:16px 16px 40px;display:none;font-size:15px;line-height:1.45}
+  #help.open{display:block}
+  #help h2{color:var(--ac);font:800 18px system-ui;margin:4px 0 10px}
+  #help h3{color:var(--ac2);font:800 14px system-ui;margin:16px 0 6px}
+  #help ol,#help ul{padding-left:20px;margin:4px 0}
+  #help li{margin:4px 0}
+  #help .x{position:sticky;top:0;float:right;min-height:40px}
   #ring{position:fixed;border:2px solid #ff5a3a;border-radius:50%;pointer-events:none;display:none;transform:translate(-50%,-50%);z-index:3}
   #menu{position:fixed;right:6px;top:52px;z-index:8;background:#24242c;border:1px solid var(--ln);border-radius:12px;padding:6px;display:none;flex-direction:column;gap:5px;min-width:220px}
   #menu.open{display:flex}
@@ -70,6 +98,31 @@
 </head>
 <body>
 <canvas id="c"></canvas>
+<div id="help"><button class="x" id="helpX">✕ Close</button>
+<h2>How to build in Myth Forge</h2>
+<h3>1. Start</h3>
+<ul><li>Skeleton tab → <b>Starters</b>: Hero Mech, Basalt Kaiju or Snapjaw Turtle Brute. Pull them apart and remix.</li>
+<li>Or pick a <b>Body type</b> for an empty skeleton and build from nothing.</li></ul>
+<h3>2. Add parts</h3>
+<ol><li>Add tab → pick a category, then tap a part.</li><li>Tap an orange dot (a bone) or the body. Limbs, tails, necks and wings line up with the bone. Small parts stick on the surface.</li>
+<li>Mirror L/R puts a copy on the other side. Weapons go into the palm of a hand.</li></ol>
+<h3>3. Move it</h3>
+<ul><li>Move tab: tap a part, then drag the arrows (Move), rings (Turn) or boxes (Stretch). The Size slider makes it bigger or smaller.</li>
+<li><b>🧲 Sticky</b>: drag any part with your finger or pen and it sticks where you let go, like a toy. Drop it off the model and it goes in the <b>📦 Parts box</b> (top of the Add tab) for later.</li>
+<li><b>🧩 Break apart</b>: turns a row of spikes or crystals into single pieces you can move one by one.</li></ul>
+<h3>4. Look closer</h3>
+<ul><li><b>🔍 Focus</b> shows only that part, big. <b>🪟 Focus window</b> keeps a small zoomed window on the part while you see the whole creature (drag in it to spin, pinch to zoom, Size S/M/L).</li>
+<li>One finger turns the view, two fingers pinch and move. Double-tap centers there. FX / View tab → Arrow pad if you want the buttons.</li></ul>
+<h3>5. Shape, sculpt and paint</h3>
+<ul><li>Shape tab: sliders for "maker" parts. Sculpt tab: push and pull like clay (S Pen sculpts, fingers turn the view). Paint tab: tap a material, or 🖌 brush paint.</li></ul>
+<h3>6. Bone numbers</h3>
+<ul><li>Every bone has a number. Under More: <b># All</b>, <b># Picked</b> (only the bone you're on plus the numbers you type, like 2, 28) or <b># Off</b>, and Fade.</li></ul>
+<h3>7. Save and use it</h3>
+<ul><li>⋯ → Save as… keeps a named copy. Loading a starter replaces what's on screen.</li><li>⋯ → Download model (.glb) to put it in the game.</li></ul>
+<p style="opacity:.6">Tip: the "More ▾" under each tab has the extra buttons.</p></div>
+<div id="tour" style="display:none"><div class="hole"></div><div class="card"><h4></h4><p></p><div class="btns"></div></div></div>
+
+<div id="fwin"><div class="bar"><button id="fwSize">Size M</button><button id="fwClose">✕</button></div><div class="cap" id="fwCap"></div></div>
 <div id="ring"></div>
 <div class="top">
   <button id="bList">☰</button><h1>MYTH FORGE</h1>
@@ -77,6 +130,7 @@
   <button id="bUndo">↶</button><button id="bRedo">↷</button><button id="bPen" title="Stylus mode">✒️</button><button id="bFull" title="Hide all menus">⤢</button><button id="bMenu">⋯</button>
 </div>
 <div id="menu">
+  <button id="mTour">🎓 Show me around (tour)</button><button id="mHelp">❓ How to build</button>
   <button id="mWork">🛠 Workshop: design a body part</button><button id="mNew">New creature…</button><button id="mSave">Save as…</button><button id="mLoad">Open saved…</button>
   <button id="mExport">Download model (.glb for the game)</button><button id="mCopy">Copy project (to paste to Claude)</button>
   <button id="mPaste">Paste project…</button><button id="mCredits">Asset credits &amp; licenses</button>
@@ -87,7 +141,7 @@
 <div id="outliner"></div>
 <textarea id="out"></textarea>
 <button id="restore">⤡ Menus</button>
-<div id="nav"><button data-nav="zin">＋</button><button data-nav="up">▲</button><button data-nav="zout">－</button><button data-nav="left">◀</button><button data-nav="fit">🎯</button><button data-nav="right">▶</button><button data-nav="pl">⇦</button><button data-nav="down">▼</button><button data-nav="pr">⇨</button></div>
+<div id="nav" class="hide"><button data-nav="zin">＋</button><button data-nav="up">▲</button><button data-nav="zout">－</button><button data-nav="left">◀</button><button data-nav="fit">🎯</button><button data-nav="right">▶</button><button data-nav="pl">⇦</button><button data-nav="down">▼</button><button data-nav="pr">⇨</button></div>
 
 <div id="sheet">
   <div id="grab">Myth Forge</div>
@@ -96,6 +150,7 @@
   </div>
 
   <div class="pane on" id="p-add">
+    <div id="boxWrap" style="display:none"><div class="lbl">📦 Parts box (tap one, then tap the model)</div><div class="chips" id="boxRow"></div></div>
     <input type="search" id="search" placeholder="Search parts: skull, wing, fang, sword, TV…">
     <button id="grpToggle" style="width:100%;text-align:left;margin:4px 0">📂 Categories</button>
     <div class="cats" id="groups"></div>
@@ -104,39 +159,50 @@
     <div class="grid" id="lib"></div>
     <div class="lbl">Put it on bone # (or tap a dot on the model)</div>
     <div class="chips" id="boneNumsAdd"></div>
-    <div class="row"><button id="bModeBone" class="on">Snap to bone</button><button id="bModeSurf">Stick on surface</button><button id="bMirrorAdd" class="on">Mirror L/R</button></div>
-    <div class="row"><button id="bAddCenter">Add without tapping</button><button id="bImport">Import file…</button><input type="file" id="fImport" hidden multiple accept=".glb,.gltf,.obj,.fbx,.zip"></div>
-    <div class="hint" id="addHint">Pick a part, then tap a bone (orange dots) or the body. Limbs, tails, necks and wings line up with the bone; small parts stick to the surface.</div>
+    <details class="more"><summary>More ▾</summary>
+      <div class="numctl" id="numCtlAdd"></div>
+      <div class="row"><button id="bModeBone" class="on">Snap to bone</button><button id="bModeSurf">Stick on surface</button><button id="bMirrorAdd" class="on">Mirror L/R</button></div>
+      <div class="row"><button id="bAddCenter">Add without tapping</button><button id="bImport">Import file…</button><input type="file" id="fImport" hidden multiple accept=".glb,.gltf,.obj,.fbx,.zip"></div>
+      <div class="hint" id="addHint">Pick a part, then tap a bone (orange dots) or the body. Limbs, tails, necks and wings line up with the bone; small parts stick to the surface.</div>
+    </details>
   </div>
 
   <div class="pane" id="p-edit">
-    <div class="row"><button data-gz="translate" class="on">Move</button><button data-gz="rotate">Turn</button><button data-gz="scale">Stretch</button><button id="bLocal">Local</button><button id="bSnap">Snap off</button></div>
+    <div class="row"><button data-gz="translate" class="on">Move</button><button data-gz="rotate">Turn</button><button data-gz="scale">Stretch</button></div>
     <div class="sl"><span>Size</span><input id="sSize" type="range" min=".1" max="4" step=".01"><span id="vSize"></span></div>
-    <div class="sl"><span>Length</span><input id="sLen" type="range" min=".3" max="3" step=".01"><span id="vLen"></span></div>
-    <div class="sl"><span>Width</span><input id="sWid" type="range" min=".3" max="3" step=".01"><span id="vWid"></span></div>
-    <div class="row"><button id="bDup">Duplicate</button><button id="bFlip">Flip</button><button id="bMirrorPart">Mirror copy</button><button id="bUnlink">Unlink twin</button><button id="bReattach">Move to bone…</button><button id="bDel">🗑 Delete</button></div>
-    <div class="row"><button id="bFocus" class="on">🔍 Focus on this part</button><button id="bHide">Hide</button><button id="bSolo">Solo (only this)</button><button id="bShowAll">Show all</button></div>
-    <div class="hint">Drag the arrows/rings on the part. One finger turns the view, two fingers pinch/move. Mirrored twins copy every change.</div>
+    <div class="row"><button id="bSticky">🧲 Sticky</button><button id="bBreak">🧩 Break apart</button><button id="bDup">Duplicate</button><button id="bFocus" class="on">🔍 Focus on this part</button><button id="bFWin">🪟 Focus window</button><button id="bDel">🗑 Delete</button></div>
+    <details class="more"><summary>More ▾</summary>
+    <div class="row"><button id="bLocal">Local</button><button id="bSnap">Snap off</button></div>
+      <div class="sl"><span>Length</span><input id="sLen" type="range" min=".3" max="3" step=".01"><span id="vLen"></span></div>
+      <div class="sl"><span>Width</span><input id="sWid" type="range" min=".3" max="3" step=".01"><span id="vWid"></span></div>
+      <div class="row"><button id="bFlip">Flip</button><button id="bMirrorPart">Mirror copy</button><button id="bUnlink">Unlink twin</button><button id="bReattach">Move to bone…</button></div>
+      <div class="row"><button id="bHide">Hide</button><button id="bSolo">Solo (only this)</button><button id="bShowAll">Show all</button></div>
+      <div class="hint">Drag the arrows/rings on the part. One finger turns the view, two fingers pinch/move. Mirrored twins copy every change.</div>
+    </details>
   </div>
 
-  <div class="pane" id="p-shape"><div class="row"><button id="bFocus2">🔍 Focus / back</button></div><div id="shapeBox"></div></div>
+  <div class="pane" id="p-shape"><div class="row"><button id="bFocus2">🔍 Focus / back</button><button id="bFWin2">🪟 Focus window</button></div><div id="shapeBox"></div></div>
 
   <div class="pane" id="p-sculpt">
     <div class="row"><button data-br="inflate" class="on">Inflate</button><button data-br="deflate">Deflate</button><button data-br="grab">Grab</button><button data-br="smooth">Smooth</button><button data-br="flatten">Flatten</button><button data-br="pinch">Pinch</button><button data-br="crease">Crease</button><button data-br="noise">Rough</button><button data-br="erase">Erase</button></div>
     <div class="sl"><span>Brush</span><input id="sBrush" type="range" min=".1" max="3" step=".05" value=".6"><span></span></div>
     <div class="sl"><span>Strength</span><input id="sStr" type="range" min=".05" max="1" step=".05" value=".4"><span></span></div>
-    <div class="row"><button id="bSubdiv">More detail (subdivide)</button><button id="bSymSculpt" class="on">Mirror sculpt</button><button id="bFingerView">Finger = turn view</button><button id="bResetSculpt">Undo all sculpt</button></div>
-    <div class="hint">Sculpts the selected part. Tap a part first. S Pen: pen sculpts, fingers turn the view. "More detail" adds polygons so sculpting looks smooth.</div>
+    <details class="more"><summary>More ▾</summary>
+      <div class="row"><button id="bSubdiv">More detail (subdivide)</button><button id="bSymSculpt" class="on">Mirror sculpt</button><button id="bFingerView">Finger = turn view</button><button id="bResetSculpt">Undo all sculpt</button></div>
+      <div class="hint">Sculpts the selected part. Tap a part first. S Pen: pen sculpts, fingers turn the view. "More detail" adds polygons so sculpting looks smooth.</div>
+    </details>
   </div>
 
   <div class="pane" id="p-paint">
     <div class="chips" id="matCats"></div>
     <div class="grid" id="mats"></div>
     <div class="row"><button id="bBrushPaint">🖌 Brush paint</button><input type="color" id="brushCol" value="#c03020" style="width:56px;height:40px;border:0;background:none"><button id="bBrushErase">Clear paint</button></div>
-    <div class="row"><input type="color" id="tint" value="#ffffff" style="width:56px;height:40px;border:0;background:none"><button id="bTintClear">Clear tint</button><button id="bPaintTwin" class="on">Twin too</button><button id="bPaintAllSame">All parts like this</button></div>
-    <div class="row"><button id="bPattern">Import pattern (image)…</button><input type="file" id="fPattern" hidden accept="image/*" multiple><button id="bPatternDel">Remove my pattern</button></div>
-    <div class="sl"><span>Pattern size</span><input id="sTile" type="range" min=".1" max="3" step=".05" value="1"><span></span></div>
-    <div class="hint">Tap a material to put it on the selected part. Tint mixes a color on top. Your own images go into My Patterns.</div>
+    <details class="more"><summary>More ▾</summary>
+      <div class="row"><input type="color" id="tint" value="#ffffff" style="width:56px;height:40px;border:0;background:none"><button id="bTintClear">Clear tint</button><button id="bPaintTwin" class="on">Twin too</button><button id="bPaintAllSame">All parts like this</button></div>
+      <div class="row"><button id="bPattern">Import pattern (image)…</button><input type="file" id="fPattern" hidden accept="image/*" multiple><button id="bPatternDel">Remove my pattern</button></div>
+      <div class="sl"><span>Pattern size</span><input id="sTile" type="range" min=".1" max="3" step=".05" value="1"><span></span></div>
+      <div class="hint">Tap a material to put it on the selected part. Tint mixes a color on top. Your own images go into My Patterns.</div>
+    </details>
   </div>
 
   <div class="pane" id="p-skel">
@@ -144,24 +210,30 @@
     <div class="chips" id="starters"></div>
     <div class="lbl">Body type (empty skeleton)</div>
     <div class="chips" id="skels"></div>
-    <div class="row"><button id="bBones" class="on">Show bones</button><button id="bPose">Pose bones</button><button id="bJoint">Move joints</button><button id="bResetPose">Reset pose</button><button id="bSaveSkel">💾 Save as my body type</button></div>
+    <div class="row"><button id="bBones" class="on">Show bones</button><button id="bPose">Pose bones</button></div>
     <div class="lbl">Jump to bone #</div>
     <div class="cats" id="boneNums"></div>
-    <div class="sl"><span>Bone len</span><input id="sBone" type="range" min=".3" max="3" step=".01" value="1"><span id="vBone"></span></div>
-    <div class="row"><button id="bAddBone">＋ Extend bone</button><button id="bAddBranch">＋ Branch (extra limb/head)</button><button id="bDelBone">Delete bone</button></div>
-    <div class="lbl">Animations (preview)</div>
-    <div class="row"><button data-anim="none" class="on">Still</button><button data-anim="idle">Idle</button><button data-anim="walk">Walk</button><button data-anim="roar">Roar</button><button data-anim="fly">Fly</button><button data-anim="attack">Attack</button><button data-anim="swim">Slither</button></div>
-    <div class="hint" id="boneHint">Tap an orange joint to pick a bone. Parts on a bone move with it.</div>
+    <details class="more"><summary>More ▾</summary>
+      <div class="row"><button id="bJoint">Move joints</button><button id="bResetPose">Reset pose</button><button id="bSaveSkel">💾 Save as my body type</button></div>
+      <div class="numctl" id="numCtlSkel"></div>
+      <div class="sl"><span>Bone len</span><input id="sBone" type="range" min=".3" max="3" step=".01" value="1"><span id="vBone"></span></div>
+      <div class="row"><button id="bAddBone">＋ Extend bone</button><button id="bAddBranch">＋ Branch (extra limb/head)</button><button id="bDelBone">Delete bone</button></div>
+      <div class="lbl">Animations (preview)</div>
+      <div class="row"><button data-anim="none" class="on">Still</button><button data-anim="idle">Idle</button><button data-anim="walk">Walk</button><button data-anim="roar">Roar</button><button data-anim="fly">Fly</button><button data-anim="attack">Attack</button><button data-anim="swim">Slither</button></div>
+      <div class="hint" id="boneHint">Tap an orange joint to pick a bone. Parts on a bone move with it.</div>
+    </details>
   </div>
 
   <div class="pane" id="p-fx">
-    <div class="row"><button id="bGlow" class="on">Glow (bloom)</button><button id="bFog">Fog</button><button id="bMist">Ground mist</button><button id="bAura">Aura</button><button id="bDrip">Ooze drips</button><button id="bSpin">Turntable</button></div>
-    <div class="lbl">Background</div>
-    <div class="row"><button data-bg="studio" class="on">Studio</button><button data-bg="neon">Neon city night</button><button data-bg="day">Daylight</button><button data-bg="hell">Hellfire</button><button data-bg="void">Void</button></div>
-    <div class="lbl">Aura / mist color</div>
-    <div class="row"><input type="color" id="fxCol" value="#8a2aff" style="width:56px;height:40px;border:0;background:none"></div>
+    <details class="more"><summary>More ▾</summary>
+      <div class="row"><button id="bGlow" class="on">Glow (bloom)</button><button id="bFog">Fog</button><button id="bMist">Ground mist</button><button id="bAura">Aura</button><button id="bDrip">Ooze drips</button><button id="bSpin">Turntable</button></div>
+      <div class="lbl">Background</div>
+      <div class="row"><button data-bg="studio" class="on">Studio</button><button data-bg="neon">Neon city night</button><button data-bg="day">Daylight</button><button data-bg="hell">Hellfire</button><button data-bg="void">Void</button></div>
+      <div class="lbl">Aura / mist color</div>
+      <div class="row"><input type="color" id="fxCol" value="#8a2aff" style="width:56px;height:40px;border:0;background:none"></div>
+    </details>
     <div class="lbl">View</div>
-    <div class="row"><button data-cam="front">Front</button><button data-cam="side">Side</button><button data-cam="back">Back</button><button data-cam="top">Top</button><button id="bFrame">Fit to screen</button><button id="bNav" class="on">Nav buttons</button><button id="bWire">Wireframe</button><button id="bXray">X-ray</button><button id="bScale">Size vs. city</button></div>
+    <div class="row"><button data-cam="front">Front</button><button data-cam="side">Side</button><button data-cam="back">Back</button><button data-cam="top">Top</button><button id="bFrame">Fit to screen</button><button id="bNav">Arrow pad</button><button id="bWire">Wireframe</button><button id="bXray">X-ray</button><button id="bScale">Size vs. city</button></div>
   </div>
 </div>
 
@@ -175,6 +247,8 @@
 <script src="parts/mech.js"></script>
 <script src="parts/weapons-magic.js"></script>
 <script src="parts/mecha-dragon.js"></script>
+<script src="parts/kaiju-kit.js"></script>
+<script src="parts/turtle-kit.js"></script>
 <script src="parts/sphinx.js"></script>
 <script src="starters.js"></script>
 <script src="packs/index.js"></script>
