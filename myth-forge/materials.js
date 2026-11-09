@@ -50,6 +50,12 @@
       x.beginPath(); for (let k = 0; k <= 8; k++) { const px = k * S / 8; x.lineTo(px, y + Math.tan(a) * px + Math.sin(k + i) * 3); } x.stroke(); } },
     grub(x) { fill(x, '#dcdcdc'); for (let k = 0; k < S; k += 42) { const g = x.createLinearGradient(0, k, 0, k + 42); g.addColorStop(0, '#9a9a9a'); g.addColorStop(.2, '#f2f2f2'); g.addColorStop(.85, '#d0d0d0'); g.addColorStop(1, '#8a8a8a'); x.fillStyle = g; x.fillRect(0, k, S, 42); }
       for (let i = 0; i < 2500; i++) { x.fillStyle = 'rgba(0,0,0,.08)'; x.fillRect(R(0, S), R(0, S), 2, 2); } },
+    scratch(x, o = {}) { fill(x, '#000'); for (let i = 0; i < (o.n || 160); i++) { const px = R(0, S), py = R(0, S), a = R(0, Math.PI), L = R(20, o.L || 140); x.strokeStyle = `rgba(255,255,255,${R(.5, 1)})`; x.lineWidth = R(.6, o.w || 2.2);
+      wrap(x, () => { x.beginPath(); x.moveTo(px, py); x.quadraticCurveTo(px + Math.cos(a) * L * .5 + R(-8, 8), py + Math.sin(a) * L * .5 + R(-8, 8), px + Math.cos(a) * L, py + Math.sin(a) * L); x.stroke(); }); } },
+    claws(x) { fill(x, '#000'); for (let k = 0; k < 7; k++) { const px = R(0, S), py = R(0, S), a = R(-.5, .5) + Math.PI / 3, L = R(140, 240);
+      for (let j = 0; j < 4; j++) { x.strokeStyle = '#fff'; x.lineWidth = 9 - j * .5; x.lineCap = 'round'; const ox = Math.cos(a + Math.PI / 2) * j * 20, oy = Math.sin(a + Math.PI / 2) * j * 20;
+        wrap(x, () => { x.beginPath(); x.moveTo(px + ox, py + oy); x.lineTo(px + ox + Math.cos(a) * L, py + oy + Math.sin(a) * L); x.stroke(); }); } } },
+    chips(x) { fill(x, '#000'); for (let i = 0; i < 90; i++) { const px = R(0, S), py = R(0, S), r = R(4, 22); x.fillStyle = '#fff'; wrap(x, () => { x.beginPath(); for (let k = 0; k < 9; k++) { const a = k / 9 * 7, rr2 = r * R(.5, 1.1); x.lineTo(px + Math.cos(a) * rr2, py + Math.sin(a) * rr2); } x.fill(); }); } },
     sand(x) { fill(x, '#d9d9d9'); for (let k = 0; k < S; k += 9) { x.strokeStyle = 'rgba(255,255,255,.18)'; x.lineWidth = 3; x.beginPath(); for (let i = 0; i <= S; i += 16) x.lineTo(i, k + Math.sin(i * .03 + k) * 4); x.stroke(); }
       for (let i = 0; i < 26000; i++) { const v = (R(120, 255)) | 0; x.fillStyle = `rgba(${v},${v},${v},${R(.35, .9)})`; x.fillRect(R(0, S), R(0, S), R(1, 2.6), R(1, 2.6)); } },
     leaf(x) { fill(x, '#cfcfcf'); noiseLayer(x, 80, 20, 60, ['#bbb', '#e6e6e6'], .25); x.strokeStyle = 'rgba(255,255,255,.55)'; for (let k = 0; k < 9; k++) { const cx = R(0, S), cy = R(0, S); x.lineWidth = 3; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + 120, cy - 120); x.stroke();
@@ -229,8 +235,13 @@ vec3 hue(float h){ return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.
     if (uFx == 23) { float cr = smoothstep(.06, .0, abs(vn(q * 2.5) - .5)) * (.7 + .3 * sin(t * 2.0)); fx = vec3(.03, .02, .02) * fbm(q * 3.0) + mix(c1, c2, .4) * cr * 2.5; base = .06; }
     else { fx = mix(mix(c0, c1, smoothstep(.0, .55, fl)), c2, smoothstep(.55, 1.0, fl)) * (.22 + fl * .95) + c1 * fr * .4; base = .03; } }
   else if (uFx == 24) { fx = vec3(.03, .025, .02) * fbm(q * 4.0) + vec3(1.0, .45, .1) * stars(q * 14.0 + vec3(0.0, -t * .6, 0.0), .1, t) * 3.0 + vec3(1.0, .3, .05) * smoothstep(.62, .8, fbm(q * 2.0 - vec3(0.0, t * .2, 0.0))) * .5; base = .05; }
+  else if (uFx == 25) { float n = fbm(q * 1.3 + vec3(0.0, t * .05, 0.0)); diffuseColor.rgb *= mix(vec3(1.0), hue(t * .04 + q.y * .12 + n * .9) * 1.7, .85); fx = hue(t * .04 + n + fr) * fr * .35; }
+  else if (uFx == 26) { vec3 g = q * 9.0; vec3 c = floor(g); float h = h3(c), tw = pow(.5 + .5 * sin(t * (3.0 + h * 5.0) + h * 40.0 + dot(Vd, vec3(7.0, 11.0, 5.0)) * 6.0), 14.0);
+    float fl = step(.55, h) * smoothstep(.35, .0, length(fract(g) - .5)); vec3 c2 = floor(q * 23.0); float h2 = h3(c2), tw2 = pow(.5 + .5 * sin(t * 4.0 + h2 * 50.0 + dot(Vd, vec3(13.0, 3.0, 9.0)) * 9.0), 18.0);
+    fx = (diffuse * 2.2 + vec3(.6)) * fl * tw * 2.2 + vec3(1.0) * step(.7, h2) * tw2 * smoothstep(.3, .0, length(fract(q * 23.0) - .5)) * 1.6 + diffuse * fr * .25; }
+  else if (uFx == 27) { float n = fbm(q * .9); vec3 sh = hue(fr * .9 + n * .35 + .55); diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * (.75 + sh * .5), .6); fx = mix(sh, vec3(1.0), .45) * pow(fr, 1.4) * .55 + vec3(1.0) * pow(max(dot(normalize(normal), Vd), 0.0), 40.0) * .15; }
   if (uFur > .5) fx *= .55 + diffuseColor.r * .9;
-  diffuseColor.rgb = (uFur > .5 ? diffuseColor.rgb * .2 : vec3(base)) + fx * .1; totalEmissiveRadiance += fx * diffuse;
+  if (uKeep > .5) totalEmissiveRadiance += fx; else { diffuseColor.rgb = (uFur > .5 ? diffuseColor.rgb * .2 : vec3(base)) + fx * .1; totalEmissiveRadiance += fx * diffuse; }
 }`;
   const texCache = {};
   function tex(T, kind) { if (texCache[kind]) return texCache[kind];
@@ -371,6 +382,18 @@ vec3 hue(float h){ return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.
     ['gauze', 'Gauze / old wrap', 'Cloth', 'burlap', 0xd8c89a, 1, 0, {side: 2}], ['gauzedirty', 'Dirty gauze', 'Cloth', 'burlap', 0xa8946a, 1, 0, {side: 2}], ['canvas', 'Canvas', 'Cloth', 'cloth', 0xb8a888, .95, 0, {side: 2}],
     ['capered', 'Cape red', 'Cloth', 'cloth', 0xa0141a, .85, 0, {side: 2}], ['capeblack', 'Cape black', 'Cloth', 'cloth', 0x1c1a20, .85, 0, {side: 2}], ['velvet', 'Royal purple velvet', 'Cloth', 'felt', 0x4a1a6a, .9, 0, {side: 2}],
     ['silkcloth', 'Silk (shiny)', 'Cloth', 'cloth', 0xe8e0f0, .3, .1, {side: 2}], ['camocloth', 'Camo cloth', 'Cloth', 'camo', 0x6a7a4a, .95, 0, {side: 2}], ['rustchain', 'Rusty iron', 'Cloth', 'rust', 0x6a4a3a, .7, .6],
+    ['glitter', 'Glitter (silver)', 'Glitter', 'plain', 0xc8ccd8, .3, .7, {fx: 26, keep: 1}], ['glittergold', 'Gold glitter', 'Glitter', 'plain', 0xd8a830, .3, .8, {fx: 26, keep: 1}], ['glitterpink', 'Pink glitter', 'Glitter', 'plain', 0xe860b0, .3, .5, {fx: 26, keep: 1}],
+    ['glitterblue', 'Blue glitter', 'Glitter', 'plain', 0x3a6ae8, .3, .6, {fx: 26, keep: 1}], ['glitterpurple', 'Purple glitter', 'Glitter', 'plain', 0x8a3ae0, .3, .6, {fx: 26, keep: 1}], ['glittergreen', 'Green glitter', 'Glitter', 'plain', 0x2ab05a, .3, .6, {fx: 26, keep: 1}],
+    ['glitterred', 'Red glitter', 'Glitter', 'plain', 0xd82a3a, .3, .6, {fx: 26, keep: 1}], ['glitterblack', 'Black glitter', 'Glitter', 'plain', 0x1a1a22, .3, .7, {fx: 26, keep: 1}], ['glitterrainbow', 'Rainbow glitter (oil sheen)', 'Glitter', 'plain', 0xb0b0c0, .2, .8, {fx: 26, keep: 1}],
+    ['chameleonshift', 'Chameleon (colour-shifting)', 'Chameleon', 'chameleon', 0xffffff, .4, 0, {fx: 25, keep: 1}], ['chameleonsmooth', 'Chameleon smooth skin', 'Chameleon', 'skin', 0xffffff, .45, 0, {fx: 25, keep: 1}],
+    ['chameleonmetal', 'Chameleon car paint', 'Chameleon', 'plain', 0xffffff, .2, .7, {fx: 25, keep: 1}], ['chameleonscale', 'Chameleon dragon scales', 'Chameleon', 'bigscales', 0xffffff, .4, .1, {fx: 25, keep: 1}],
+    ['scratches', 'Scratches (light)', 'Scratches & Wear', 'scratch', 0xd8d8d8, .4, .6, {transparent: true, cut: 1}], ['scratchesdark', 'Scratches (dark)', 'Scratches & Wear', 'scratch', 0x1a1a1a, .7, 0, {transparent: true, cut: 1}],
+    ['clawmarks', 'Claw marks', 'Scratches & Wear', 'claws', 0x2a1414, .8, 0, {transparent: true, cut: 1}], ['clawglow', 'Glowing claw marks', 'Scratches & Wear', 'claws', 0xff8a3a, .5, 0, {transparent: true, cut: 1, emissive: 0xff5a1a, emissiveIntensity: 1.5}],
+    ['paintchips', 'Chipped paint (bare metal)', 'Scratches & Wear', 'chips', 0xb8bcc4, .35, .8, {transparent: true, cut: 1}], ['rustspots', 'Rust patches', 'Scratches & Wear', 'chips', 0x8a4a2a, .9, .2, {transparent: true, cut: 1}],
+    ['scorch', 'Scorch marks', 'Scratches & Wear', 'chips', 0x141210, 1, 0, {transparent: true, cut: 1}],
+    ['pearl', 'Pearl white', 'Pearlescent', 'plain', 0xf2eee8, .25, .15, {fx: 27, keep: 1}], ['pearlpink', 'Pink pearl', 'Pearlescent', 'plain', 0xf0c8d8, .25, .15, {fx: 27, keep: 1}], ['pearlblue', 'Blue pearl', 'Pearlescent', 'plain', 0xb8d0f0, .25, .15, {fx: 27, keep: 1}],
+    ['pearlblack', 'Black pearl', 'Pearlescent', 'plain', 0x2a2830, .2, .25, {fx: 27, keep: 1}], ['pearlgold', 'Gold pearl', 'Pearlescent', 'plain', 0xe8d0a0, .25, .35, {fx: 27, keep: 1}], ['pearlmint', 'Mint pearl', 'Pearlescent', 'plain', 0xc8f0dc, .25, .15, {fx: 27, keep: 1}],
+    ['pearlscale', 'Pearl dragon scales', 'Pearlescent', 'bigscales', 0xf2eee8, .3, .15, {fx: 27, keep: 1}],
     ['toyrubber', 'Toy rubber', 'Craft (toy box)', 'plain', 0xe85a3a, .55, 0], ['toyplastic', 'Shiny toy plastic', 'Craft (toy box)', 'plain', 0x3a8ae8, .25, 0],
   ];
   const ALIAS = {paint2: 'paint2', fur: 'fur', feather: 'feather', stone: 'stone', wood: 'wood', cloth: 'cloth', leather: 'leather', chitin: 'chitin', glow: 'glow', screen: 'screen'};
@@ -381,18 +404,18 @@ vec3 hue(float h){ return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.
     if (tint && tint !== '#ffffff') m.color.multiply(new T.Color(tint));
     m.userData.key = key; m.userData.tile = tile || 1;
     m.onBeforeCompile = sh => {                                   // triplanar: texture from 3 directions, no UVs needed
-      sh.uniforms.tpMap = {value: t}; sh.uniforms.tpScale = {value: .55 / (m.userData.tile || 1)}; sh.uniforms.tpEm = {value: ex.emap ? 1 : 0}; sh.uniforms.tpEc = {value: ex.ecol ? 1 : 0};
+      sh.uniforms.tpMap = {value: t}; sh.uniforms.tpScale = {value: .55 / (m.userData.tile || 1)}; sh.uniforms.tpEm = {value: ex.emap ? 1 : 0}; sh.uniforms.tpEc = {value: ex.ecol ? 1 : 0}; sh.uniforms.tpA = {value: ex.cut ? 1 : 0};
       sh.vertexShader = 'varying vec3 vTP; varying vec3 vTN;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vTP = transformed; vTN = objectNormal;');
-      sh.fragmentShader = 'uniform sampler2D tpMap; uniform float tpScale; uniform float tpEm; uniform float tpEc; varying vec3 vTP; varying vec3 vTN;\n' + sh.fragmentShader
+      sh.fragmentShader = 'uniform sampler2D tpMap; uniform float tpScale; uniform float tpEm; uniform float tpEc; uniform float tpA; varying vec3 vTP; varying vec3 vTN;\n' + sh.fragmentShader
         .replace('#include <map_fragment>', `vec3 bw = pow(abs(normalize(vTN)), vec3(4.0)); bw /= (bw.x + bw.y + bw.z + 1e-5);
           vec4 tpc = texture2D(tpMap, vTP.yz * tpScale) * bw.x + texture2D(tpMap, vTP.xz * tpScale) * bw.y + texture2D(tpMap, vTP.xy * tpScale) * bw.z;
-          diffuseColor.rgb *= mix(tpc.rgb, vec3(1.0), tpEm);`)
+          diffuseColor.a *= mix(1.0, smoothstep(.25, .6, tpc.r), tpA); diffuseColor.rgb *= mix(mix(tpc.rgb, vec3(1.0), tpEm), vec3(1.0), tpA);`)
         .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance *= mix(1.0, smoothstep(0.35, 0.9, dot(tpc.rgb, vec3(.333))) * 2.5, tpEm); totalEmissiveRadiance *= mix(vec3(1.0), tpc.rgb, tpEc);');
     };
     if (ex.fx && (ex.sky || ex.fx === 5 || ex.fx === 6 || ex.fx === 10 || ex.fx === 11)) { m.envMapIntensity = .12; m.roughness = Math.max(m.roughness, .75); m.metalness = 0; }   // space skins: dark and deep, not shiny-washed
-    if (ex.fx) { const prev = m.onBeforeCompile; m.onBeforeCompile = sh => { prev(sh); sh.uniforms.uT = FX_T; sh.uniforms.uFx = {value: ex.fx}; sh.uniforms.uSky = {value: ex.sky ? 1 : 0}; sh.uniforms.uFur = {value: ex.furmix ? 1 : 0};
+    if (ex.fx) { const prev = m.onBeforeCompile; m.onBeforeCompile = sh => { prev(sh); sh.uniforms.uT = FX_T; sh.uniforms.uFx = {value: ex.fx}; sh.uniforms.uSky = {value: ex.sky ? 1 : 0}; sh.uniforms.uFur = {value: ex.furmix ? 1 : 0}; sh.uniforms.uKeep = {value: ex.keep ? 1 : 0};
       sh.vertexShader = 'varying vec3 vWP;\n' + sh.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n vWP = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-      sh.fragmentShader = 'varying vec3 vWP; uniform float uT; uniform int uFx; uniform float uSky; uniform float uFur;\n' + FX_GLSL + sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' + FX_MAIN); }; }
+      sh.fragmentShader = 'varying vec3 vWP; uniform float uT; uniform int uFx; uniform float uSky; uniform float uFur; uniform float uKeep;\n' + FX_GLSL + sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' + FX_MAIN); }; }
     m.customProgramCacheKey = () => 'tp-' + key + '-' + (tile || 1);
     return m;
   }

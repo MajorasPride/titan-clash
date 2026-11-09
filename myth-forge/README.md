@@ -91,3 +91,11 @@ MajorasPride's creature + mech builder for Titan Clash. Open `index.html` (GitHu
 - **🔷 Low-poly building** (Sculpt tab › 🔷 Low-poly, `parts/lowpoly.js` + "low-poly building" section in forge-core.js). Parts `lp_block` / `lp_tube` keep their own polygon data in `pt.params.poly = {v, f, mirror}`. Tap faces to pick (orange), then ⬆ Pull out (extrude), ⬇ Push in, 🔗 Connect 2 (bridge two faces), ✂ Cut loop / Other way (edge loop through quads), ➕/➖ size, move/tilt/twist/roll, 🧲 Weld points (closer than Step), 🪞 Mirror (left copies right; turning it off bakes both sides), 🗑 Delete faces. Undo works for every step.
 - **🔷 Low-poly look** (FX / View, `P.fx.lowpoly` 0–3): every part is shown — and exported — faceted with fewer polygons (vertex clustering, `lowpolyGeo`). **Titan Clash's theme is now low-poly** (MajorasPride, Nov 9): faceted, flat-shaded models with glowing accents (his reference: low-poly kaiju battle art + papercraft kaiju + low-poly mechs). Sculpt and brush paint pause while the look is on.
 - Paint "Twin too" is now "🪞 Both sides". FX "Ooze drips" kept its id `bDrip`; the new paint drip button is `bPDrip`.
+
+## Nov 9, 2026 (1am): glitter, chameleon, pearlescent, scratches
+- **Glitter** skins (silver, gold, pink, blue, purple, green, red, black, rainbow): FX 26 with `keep: 1` (new `uKeep` flag = keep the lit base colour, only add the effect as glow). Flakes twinkle as you turn the view.
+- **Chameleon** colour-shifting skins (FX 25, keep): chameleon scales, smooth skin, car paint, dragon scales — colours slowly cycle across the body.
+- **Pearlescent** (FX 27, keep): pearl white, pink, blue, black, gold, mint, pearl dragon scales — soft pastel rainbow sheen at the edges.
+- **Scratches & Wear** (meant for the 🧴 Skin brush): light/dark scratches, claw marks (+ glowing), chipped paint, rust patches, scorch marks. New material flag `cut: 1` = see-through except the marks (alpha from the texture, uniform `tpA`), so brushing them adds marks on top of the skin underneath.
+- Fade away styles now cycle 💨 Dust → 🔥 Burn → ✨ Glitter. Dust grains and glitter now **fall down** (world gravity worked out in the part's own space in `fadeTick`); embers rise; glitter flakes twinkle in random colours.
+- Any skin (glitter, chameleon, pearl, scratches, galaxy…) can be painted on with the 🧴 Skin brush and softened with 🌫 Blend.
