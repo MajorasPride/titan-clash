@@ -52,9 +52,13 @@
     ...both([['wing', 'chest', [.4, 8.4, -.6], [2.8, 10.2, -1.4], 'wingA'], ['wingmid', 'wing#', [2.8, 10.2, -1.4], [5.6, 11, -2], 'wingB'], ['wingtip', 'wingmid#', [5.6, 11, -2], [8.2, 9.6, -2.6], 'wingC']])]};
   T.centaur = {name: 'Centaur / beast-taur', bones: [...T.quad.bones.filter(b => !['neck', 'head', 'jaw'].includes(b[0])), ['torso', 'chest', [0, 5.6, 2.2], [0, 7.6, 2.6], 'chest'],
     ['neck', 'torso', [0, 7.6, 2.6], [0, 8.3, 2.8], 'neck'], ['head', 'neck', [0, 8.3, 2.8], [0, 9.4, 3], 'head', {up: 1}], ['jaw', 'head', [0, 8.4, 3], [0, 8.2, 3.8], 'jaw', {up: 1}], ...arms(7.4, .9, .9, 'torso').map(b => [b[0], b[1], [b[2][0], b[2][1], b[2][2] + 2.4], [b[3][0], b[3][1], b[3][2] + 2.4], b[4]])]};
-  T.naga = {name: 'Naga (snake tail + body)', bones: [...chain('tailseg', null, [[0, .6, -7], [0, .6, -5], [0, .7, -3], [0, 1, -1.2], [0, 2.2, 0], [0, 4, .3]], 'tail'), ['hips', 'tailseg5', [0, 4, .3], [0, 5, .3], 'spine'],
-    ['spine', 'hips', [0, 5, .3], [0, 6.2, .3], 'spine'], ['chest', 'spine', [0, 6.2, .3], [0, 7.6, .4], 'chest'], ['neck', 'chest', [0, 7.6, .4], [0, 8.3, .6], 'neck'], ['head', 'neck', [0, 8.3, .6], [0, 9.4, .8], 'head', {up: 1}],
-    ['jaw', 'head', [0, 8.4, .8], [0, 8.2, 1.7], 'jaw', {up: 1}], ...arms(7.4, .9, .9)].map(b => b[0] === 'tailseg1' ? ['tailseg1', null, b[2], b[3], 'tail'] : b)};
+  // 🐍 nagas (Nov 9 2026): the tail chain carries the whole snake body (one 🐍 Snake body part bends along it). Three poses.
+  const nagaTop = last => [['hips', last, [0, 4, .3], [0, 5, .3], 'spine'], ['spine', 'hips', [0, 5, .3], [0, 6.2, .3], 'spine'], ['chest', 'spine', [0, 6.2, .3], [0, 7.6, .4], 'chest'],
+    ['neck', 'chest', [0, 7.6, .4], [0, 8.3, .6], 'neck'], ['head', 'neck', [0, 8.3, .6], [0, 9.4, .8], 'head', {up: 1}], ['jaw', 'head', [0, 8.4, .8], [0, 8.2, 1.7], 'jaw', {up: 1}], ...arms(7.4, .9, .9)];
+  const naga = (name, pts) => ({name, bones: [...chain('tailseg', null, pts, 'tail'), ...nagaTop('tailseg' + (pts.length - 1))]});
+  T.naga = naga('Naga — rearing S (snake body)', [[1.5, .5, -6.5], [2.2, .55, -4.6], [1, .6, -3.2], [-.6, .7, -2.4], [-1.2, .9, -1], [-.6, 1.6, .2], [0, 2.8, .5], [0, 4, .3]]);
+  T.naga_coil = naga('Naga — coiled (snake body)', [[-2.8, .5, -1], [-2.2, .55, -3], [0, .6, -3.9], [2.3, .65, -2.9], [2.8, .7, -.6], [1.6, .8, 1.2], [-.4, .9, 1.4], [-1.4, 1.2, .2], [-.9, 1.9, -.6], [0, 3, -.2], [0, 4, .3]]);
+  T.naga_low = naga('Naga — low, long tail (beast)', [[1.8, .4, -10], [1.2, .5, -8], [.2, .6, -6], [-.6, .7, -4], [-.8, .9, -2.2], [-.2, 1.4, -.6], [0, 2.6, .2], [0, 4, .3]]);
   T.walker = {name: 'Mech walker (reverse knees)', bones: [['hips', null, [0, 6, 0], [0, 7.2, 0], 'spine'], ['chest', 'hips', [0, 7.2, 0], [0, 8.6, .2], 'chest'], ['head', 'chest', [0, 8.6, .4], [0, 9.6, .8], 'head', {up: 1}],
     ...both([['thigh', 'hips', [1, 6, 0], [1.4, 4.2, 1.6], 'legU'], ['shin', 'thigh#', [1.4, 4.2, 1.6], [1.4, 1.4, -.8], 'legL'], ['foot', 'shin#', [1.4, 1.4, -.8], [1.4, 0, .6], 'foot'], ['gun', 'chest', [1.6, 8, .2], [2.6, 8, 2.4], 'armF']])]};
   T.tank = {name: 'Tank base + upper body', bones: [['base', null, [0, 0, -1.5], [0, 0, 1.5], 'spine'], ['hips', 'base', [0, 2.6, 0], [0, 3.6, 0], 'spine'], ['chest', 'hips', [0, 3.6, 0], [0, 6, .2], 'chest'],

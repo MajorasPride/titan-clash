@@ -275,13 +275,14 @@ function buildPart(pt) {
   const G = new THREE.Group(), M = new THREE.Group(); G.add(M); G.userData.uid = pt.uid;
   const parent = (pt.bone && bones[pt.bone]) || skelRoot; parent.add(G);
   const meshes = [], fR = pt.fade && !colorMode ? partRadius(pt) : 0;
-  pieces(pt.lib, pt.params).forEach((pc, mi) => { if (pt.keep && !pt.keep.includes(mi)) return; let g = partGeo(pt, mi, pc.geo); if (P.fx.lowpoly && !(LIB[pt.lib] && LIB[pt.lib].lowpoly)) g = lowpolyGeo(g, P.fx.lowpoly);
+  (livePieces(pt) || pieces(pt.lib, pt.params)).forEach((pc, mi) => { if (pt.keep && !pt.keep.includes(mi)) return; let g = partGeo(pt, mi, pc.geo); if (P.fx.lowpoly && !(LIB[pt.lib] && LIB[pt.lib].lowpoly)) g = lowpolyGeo(g, P.fx.lowpoly);
     const mat = fR ? fadeMat(pt.mat && pt.mat[mi] != null ? pt.mat[mi] : (pt.matAll || pc.mat), pt.tint, pt.tile, !!(pt.vpaint && pt.vpaint[mi]), pt, fR) : colorMode ? new THREE.MeshStandardMaterial({color: new THREE.Color().setHSL((hash(pt.uid) % 360) / 360, .6, .55)}) : pc.matObj && !pt.mat ? pc.matObj : matFor(pt.mat && pt.mat[mi] != null ? pt.mat[mi] : (pt.matAll || pc.mat), pt.tint, pt.tile, !!(pt.vpaint && pt.vpaint[mi]));
     const mesh = new THREE.Mesh(g, mat); mesh.userData = {uid: pt.uid, mi}; M.add(mesh); meshes.push(mesh);
     if (!colorMode) addOutline(M, mesh, pt);
     if (g.attributes.lmask && !colorMode) { const ov = new THREE.Mesh(g, layerMat(pt, fR)); ov.raycast = () => {}; ov.renderOrder = 2; M.add(ov); } });
   M.scale.set((pt.flip ? -1 : 1) * (pt.w || 1), pt.l || 1, pt.w || 1); applyOff(pt, M);
   G.position.set(...pt.p); G.quaternion.setFromEuler(new THREE.Euler(...pt.r.map(x => x * D))); G.scale.setScalar(pt.s);
+  if (LIB[pt.lib] && LIB[pt.lib].live) { G.quaternion.identity(); G.scale.setScalar(1); }   // live parts are built in place from the bones (Size = thickness)
   G.visible = !pt.hidden && !(soloUid && soloUid !== pt.uid) && !(jointSet && !jointSet.has(pt.uid));
   views[pt.uid] = {G, M, meshes};
   if (fR && pt.fade.dust !== false) views[pt.uid].dust = makeDust(pt, views[pt.uid], fR);
@@ -289,6 +290,23 @@ function buildPart(pt) {
   if (pt.glit && !colorMode) views[pt.uid].glit = makeDust({fade: {amt: .95, style: 'glitter', mul: .4 + pt.glit.amt * 1.4}}, views[pt.uid], partRadius(pt));
   if (window.V3) window.V3.kids(pt);
 }
+// ---- 🐍 live parts: geometry made from the creature's own bones (one-piece snake body), rebuilt when those bones move
+const liveCache = new Map(), animOn = () => { try { return anim !== 'none'; } catch (e) { return false; } };   // (anim is declared further down)
+function livePts(pt) { const cover = ((pt.fit && pt.fit.cover) || [pt.bone]).filter(b => bones[b]), root = bones[pt.bone]; if (!root || cover.length < 1) return null;
+  skelRoot.updateMatrixWorld(true); const inv = root.matrixWorld.clone().invert(), w = [];
+  cover.forEach(b => w.push(bones[b].getWorldPosition(new THREE.Vector3()))); const last = cover[cover.length - 1];
+  w.push(bones[last].localToWorld(new THREE.Vector3(0, bones[last].userData.len, 0)));
+  const kid = P.bones.find(r => r[1] === last && TRUNK_TAGS.has(r[4])); if (kid && bones[kid[0]]) w.push(bones[kid[0]].localToWorld(new THREE.Vector3(0, bones[kid[0]].userData.len * .35, 0)));   // tuck the top into the waist
+  const q = root.getWorldQuaternion(new THREE.Quaternion()).invert(); livePts.dirs = {down: new THREE.Vector3(0, -1, 0).applyQuaternion(q), front: new THREE.Vector3(0, 0, 1).applyQuaternion(q)};
+  return w.map(v => v.applyMatrix4(inv)); }
+function livePieces(pt) { const e = LIB[pt.lib]; if (!e || e.live !== 'snake' || !window.MF_SNAKE) return null; const pts = livePts(pt); if (!pts) return null;
+  const R = bodyInfo().W * .36 * (pt.s || 1), key = pt.lib + '|' + R.toFixed(2) + '|' + (animOn() ? 1 : 0) + '|' + pts.map(v => v.toArray().map(x => x.toFixed(2)).join(',')).join(';');
+  if (!liveCache.has(key)) { liveCache.set(key, prep(window.MF_SNAKE(THREE, K, pts, R, {spikes: e.spikes, lite: animOn(), down: livePts.dirs.down, front: livePts.dirs.front}))); if (liveCache.size > 24) liveCache.delete(liveCache.keys().next().value); }
+  if (views[pt.uid]) views[pt.uid].liveKey = key; return liveCache.get(key); }
+let liveT = 0;
+function liveTick(dt) { liveT += dt; if (liveT < .07) return; liveT = 0; for (const pt of P.parts) { if (!LIB[pt.lib] || !LIB[pt.lib].live || pt.hidden || !views[pt.uid]) continue;
+  const pts = livePts(pt); if (!pts) continue; const R = bodyInfo().W * .36 * (pt.s || 1), key = pt.lib + '|' + R.toFixed(2) + '|' + (animOn() ? 1 : 0) + '|' + pts.map(v => v.toArray().map(x => x.toFixed(2)).join(',')).join(';');
+  if (key !== views[pt.uid].liveKey) { buildPart(pt); if (sel === pt.uid) attachGizmo(); } } }
 function applyOff(pt, M) { const o = pt.off; if (o) M.position.set(-o[0] * M.scale.x, -o[1] * M.scale.y, -o[2] * M.scale.z); else M.position.set(0, 0, 0); }
 const hash = s => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
 let soloUid = null, jointSet = null;   // jointSet: 🔗 Joint view — only the picked part + the parts it connects to are shown
@@ -392,7 +410,7 @@ function torsoRot(R, from, endPt) { const r = R[from], Y = endPt.clone().sub(v3(
 function limbChain(R, bone) {                                   // bones of the same limb from `bone` outward (stops before hands/feet)
   const fam = FAMILY[R[bone][4]], out = [R[bone]]; for (;;) { const k = kidRows(out[out.length - 1][0]).filter(x => FAMILY[x[4]] === fam); if (k.length !== 1) break; out.push(k[0]); } return out; }
 function thickFor(B, tag, i = 0) { const W = B.W; return {armU: .3, armF: .26, legU: .38, legL: .3, neck: .3, tail: .42 * Math.pow(.84, i), extra: .2, spine: .5, chest: .55, wingA: .12, wingB: .1, wingC: .08, hand: .28, foot: .32, head: .45, jaw: .3}[tag] * W || W * .25; }
-const MAIN_KINDS = new Set(['torso', 'head', 'jaw', 'limb', 'neck', 'tail', 'wing', 'hand', 'foot', 'seg']);
+const MAIN_KINDS = new Set(['torso', 'head', 'jaw', 'limb', 'neck', 'tail', 'wing', 'hand', 'foot', 'seg', 'snake']);
 const mainOn = (bone, not) => P.parts.find(p => p !== not && p.bone === bone && p.fit && MAIN_KINDS.has(p.fit.kind) && !p.boxed);
 function fitPart(lib, bone) {
   const e = LIB[lib], kind = kindOf(e); if (!kind || kind === 'decor' || !bone || !boneRow(bone)) return null;
@@ -404,6 +422,12 @@ function fitPart(lib, bone) {
     if (FAMILY[tag] !== 'trunk' && !B.names.has(bone)) { out.s = +(W / pw).toFixed(3); return out; }  // a torso dropped on a limb: just size it
     out.bone = B.root; out.fit.cover = B.path.map(r => r[0]); out.r = torsoRot(R, B.root, B.end); out.s = +Math.min(4, Math.max(.2, W / pw)).toFixed(3);
     out.l = +Math.min(2.4, Math.max(.45, B.len / (plen * out.s))).toFixed(3); return out; }
+  if (kind === 'snake') {                                        // 🐍 one-piece snake body: the whole tail chain that carries the body (naga), else the longest tail
+    const tails = P.bones.filter(r => r[4] === 'tail'), rootOf = n => { let r = R[n]; while (r && r[1] && R[r[1]] && R[r[1]][4] === 'tail') r = R[r[1]]; return r && r[0]; };
+    const chainFrom = n => { const c = [n]; for (;;) { const k = kidRows(c[c.length - 1]).find(x => x[4] === 'tail'); if (!k) break; c.push(k[0]); } return c; };
+    let roots = [...new Set(tails.map(r => rootOf(r[0])))].filter(Boolean), pick = tag === 'tail' ? rootOf(bone) : null;
+    if (!pick) pick = roots.find(n => kidRows(chainFrom(n).slice(-1)[0]).some(k => TRUNK_TAGS.has(k[4]))) || roots.sort((a, b) => chainFrom(b).length - chainFrom(a).length)[0];
+    if (!pick) return null; out.bone = pick; out.fit.drop = pick; out.fit.cover = chainFrom(pick); return out; }
   if (kind === 'seg') {                                          // base-body piece: exactly this bone
     const r = R[bone], len = Math.max(.15, v3(r[2]).distanceTo(v3(r[3]))); let i = 0, c = r; while (c[1] && R[c[1]] && R[c[1]][4] === tag) { i++; c = R[c[1]]; }
     if (!c[1] && tag === 'tail') { i = 0; let d = r; for (;;) { const k = kidRows(d[0]).find(x => x[4] === tag); if (!k) break; i++; d = k; } }   // tail grows out of the root (naga): thick end is the body end
@@ -472,7 +496,7 @@ function decorScale(bone) { const m = bone && mainOn(bone); if (m) return +Math.
 function removeParts(list) { const kill = new Set(); list.forEach(p => { kill.add(p); const t = twinOf(p); if (t) kill.add(t); });
   if (window.V3 && !window.V3.keepKids) for (let more = true; more;) { more = false; for (const k of P.parts) if (k.host && !kill.has(k) && [...kill].some(h => h.uid === k.host.u)) { kill.add(k); const t = twinOf(k); if (t) kill.add(t); more = true; } }
   P.parts = P.parts.filter(p => !kill.has(p)); kill.forEach(p => { if (views[p.uid]) { views[p.uid].G.removeFromParent(); killDrip(views[p.uid]); } }); return kill.size; }
-const SLOT = k => k === 'seg' || k === 'limb' || k === 'neck' || k === 'tail' ? 'chain' : k === 'hand' || k === 'foot' ? 'end' : k;
+const SLOT = k => k === 'seg' || k === 'limb' || k === 'neck' || k === 'tail' || k === 'snake' ? 'chain' : k === 'hand' || k === 'foot' ? 'end' : k;
 function swapOut(fit) {                                         // a new main part replaces what was in its slot (base pieces + same-kind parts)
   const cover = new Set(fit.cover), sk = SLOT(fit.kind);
   const old = P.parts.filter(p => p.fit && !p.boxed && cover.has(p.bone) && MAIN_KINDS.has(p.fit.kind) && (SLOT(p.fit.kind) === sk || (sk === 'chain' && p.lib.startsWith('base_')) || (p.lib.startsWith('base_') && fit.kind === 'torso' && p.fit.kind === 'seg'))
@@ -1086,7 +1110,7 @@ $('bDelBone').onclick = () => { if (!selBone) return; const r = boneRow(selBone)
 document.querySelectorAll('[data-anim]').forEach(b => b.onclick = () => { anim = b.dataset.anim; animT = 0; document.querySelectorAll('[data-anim]').forEach(x => x.classList.toggle('on', x === b));
   if (anim === 'none') Object.values(bones).forEach(bn => { bn.quaternion.copy(bn.userData.poseQ); bn.position.copy(bn.userData.basePos || bn.position); }); });
 function animate(dt) {
-  if (MATS.tick) MATS.tick(performance.now() / 1000);
+  if (MATS.tick) MATS.tick(performance.now() / 1000); liveTick(dt);
   if (anim === 'none') return; animT += dt; const t = animT, Q = new THREE.Quaternion(), E = new THREE.Euler();
   for (const b of Object.values(bones)) { const {tag} = b.userData, side = b.name.endsWith('.L') ? 1 : b.name.endsWith('.R') ? -1 : 0; let x = 0, y = 0, z = 0;
     const idx = +(b.name.match(/(\d+)/) || [0, 0])[1] || 0, front = /front|arm|shoulder|leg1|leg3/.test(b.name) ? 1 : -1;
@@ -1634,7 +1658,7 @@ if (window.MF_V2) {
   const BODY_FOR = {biped: ['bd_torso_brawler', 'bd_torso_dragon', 'bd_torso_round', 'kj_chest'], kaiju: ['bd_torso_dragon', 'bd_torso_brawler', 'kj_chest'], theropod: ['bd_torso_dragon', 'dn_body'],
     mech: ['mk_torso_hero', 'mk_torso_siege', 'mk_torso_slim', 'mk_torso_cockpit', 'mk_torso_barrel', 'mk_torso_frame'], walker: ['bb_walker', 'mk_torso_cockpit'], tank: ['bb_tank', 'mk_torso_siege'],
     quad: ['bb_beast', 'bb_lion', 'bd_torso_dragon'], sphinx: ['bb_lion', 'bb_beast'], centaur: ['bb_horse', 'bb_beast'], dragon: ['bd_torso_dragon', 'md_chest', 'bb_beast'], hydra: ['bd_torso_dragon', 'bb_beast'],
-    wyvern: ['bd_torso_dragon', 'bb_bird'], bird: ['bb_bird'], serpent: ['bb_snakeseg', 'bb_snake', 'bd_torso_naga'], naga: ['bd_torso_naga', 'bb_snake'], fish: ['bb_fish', 'kr_mantle'], octopus: ['kr_mantle', 'bd_torso_slug'],
+    wyvern: ['bd_torso_dragon', 'bb_bird'], bird: ['bb_bird'], serpent: ['bb_snakeseg', 'bb_snake', 'bd_torso_naga'], naga: ['sk_torso_naga', 'sk_torso_nagabeast'], naga_coil: ['sk_torso_naga', 'sk_torso_nagabeast'], naga_low: ['sk_torso_nagabeast', 'sk_torso_naga'], fish: ['bb_fish', 'kr_mantle'], octopus: ['kr_mantle', 'bd_torso_slug'],
     spider: ['bd_torso_spider', 'bd_torso_thorax'], crab: ['bd_torso_crab'], insect: ['bd_torso_thorax', 'bd_torso_spider'], scorpion: ['bb_scorpion', 'bd_torso_crab'], moth: ['mo_body', 'mo_torso_furry'], centipede: ['cp_segment'],
     slim: ['bd_torso_brawler', 'sp_torso_gaunt', 'mo_torso_furry'], brute: ['bd_torso_brawler', 'bd_torso_round', 'bd_torso_bloated'], gorilla: ['bd_torso_brawler', 'bd_torso_round', 'mo_torso_furry'],
     fourarm: ['bd_torso_brawler', 'sp_torso_gaunt'], angel: ['bd_torso_brawler', 'sp_torso_gaunt'], blob: ['bb_blob', 'bd_torso_slug', 'bd_torso_bloated'], treefolk: ['tf_trunk', 'tf_trunk_hunch']};
@@ -1651,7 +1675,9 @@ if (window.MF_V2) {
     wyvern: {Body: 'bd_torso_dragon', Neck: 'bd_neck_dragon', Head: 'hd_head_wyvern', Legs: 'bd_leg_dragon', Wings: 'tw_wing_bat', 'Tail / tentacles': 'tw_tail_whip'},
     bird: {Body: 'bb_bird', Neck: 'bd_neck_bird', Head: 'hd_head_eagle', Legs: 'bd_leg_bird', Wings: 'sx_wing_feather', 'Tail / tentacles': 'bb_tailfan'},
     serpent: {Body: 'bb_snakeseg', Head: 'hd_head_seaserpent'},
-    naga: {Body: 'bd_torso_naga', Neck: 'bd_neck_serpent', Head: 'hd_head_cobra', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', 'Tail / tentacles': 'tw_tail_reptile'},
+    naga: {Body: 'sk_torso_naga', Neck: 'sk_neck_naga', Head: 'sk_head_naga', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', 'Tail / tentacles': 'sk_snake'},
+    naga_coil: {Body: 'sk_torso_naga', Neck: 'sk_neck_naga', Head: 'sk_head_naga', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', 'Tail / tentacles': 'sk_snake'},
+    naga_low: {Body: 'sk_torso_nagabeast', Neck: 'bd_neck_serpent', Head: 'hd_head_cobra', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', 'Tail / tentacles': 'sk_snake_spiked'},
     spider: {Body: 'bd_torso_thorax', Head: 'hd_head_spider', Arms: 'bb_palp', Legs: 'bd_leg_spider', 'Tail / tentacles': 'bb_abdomen'},
     crab: {Body: 'bd_torso_crab', Neck: 'hd_eye_stalk', Head: 'hd_head_crab', Arms: 'bd_arm_crab', Hands: 'bd_hand_crab', Legs: 'bd_leg_insect'},
     insect: {Body: 'bd_torso_thorax', Head: 'hd_head_ant', Legs: 'bd_leg_insect', 'Extra limbs': 'bb_antenna', 'Tail / tentacles': 'bb_abdomen'},
@@ -1668,6 +1694,7 @@ if (window.MF_V2) {
     gorilla: {Body: 'bd_torso_brawler', Neck: 'bd_neck_bull', Head: 'hd_head_ape', Arms: 'bd_arm_brawler', Hands: 'bd_hand_bear', Legs: 'bd_leg_beast'},
     fourarm: {Body: 'bd_torso_brawler', Neck: 'bd_neck_bull', Head: 'hd_head_demon', Horns: 'hd_horn_ram', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed'},
     angel: {Body: 'bd_torso_brawler', Neck: 'bd_neck_bull', Head: 'hd_head_eagle', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', Legs: 'bd_leg_beast', Wings: 'sx_wing_feather'}};
+  window.MF_DEF_CORE = DEF;
   const DEF_MECH = {Body: null, Neck: 'mn_neck_piston', Head: 'mk_head_vcrest', Arms: 'mk_arm_full', Hands: 'mk_hand_fist', Legs: 'mk_leg_full', Feet: 'mk_foot_armored', Wings: 'tw_wing_mech', 'Tail / tentacles': 'tw_tail_plated', 'Armor + extras': 'mk_sh_round'};
   const DEF_MECH_SK = {walker: {Head: 'mk_head_camera', Arms: 'mk_arm_missile', Legs: 'mk_leg_chicken'}, tank: {Head: 'mk_head_monoeye', Hands: 'mk_hand_claw'}};
   const defFor = st => { const t = st.t; if (window.MF_V3) { const v = window.V3.defFor(P.skel, t, BT.style, BT.level); if (v !== undefined) return v && LIB[v] ? (lpParts && LIB[v].hasLpv ? LIB[v].hasLpv : v) : null; } let id = BT.style === 'mech' ? (t === 'Body' ? fitsFor()[0] : {...DEF_MECH, ...(DEF_MECH_SK[P.skel] || {})}[t]) : (DEF[P.skel] || {})[t];
