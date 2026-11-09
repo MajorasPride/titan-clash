@@ -202,12 +202,14 @@
   </div>
 
   <div class="pane" id="p-paint">
-    <div class="row"><button id="bPaintAll">🎨 Paint all</button><button id="bFWin4">🪟 Focus window</button><button id="bPiecePaint">🎯 One piece only</button></div>
+    <div class="row"><button id="bPaintAll">🎨 Paint all</button><button id="bFWin4">🪟 Focus window</button><button id="bPiecePaint">🎯 One piece only</button><button id="bFade">💨 Fade away</button></div>
+    <div class="row" id="fadeRow" style="display:none"><div class="sl" style="flex:1"><span>Fade amount</span><input id="sFade" type="range" min=".1" max=".95" step=".01" value=".5"><span id="vFade"></span></div><button id="bDust" class="on">Dust</button></div>
     <div class="chips" id="matCats"></div>
     <div class="grid" id="mats"></div>
     <div class="row"><button id="bBrushPaint">🖌 Brush paint</button><input type="color" id="brushCol" value="#c03020" style="width:56px;height:40px;border:0;background:none"><button id="bBrushErase">Clear paint</button></div>
     <details class="more"><summary>More ▾</summary>
-      <div class="row"><input type="color" id="tint" value="#ffffff" style="width:56px;height:40px;border:0;background:none"><button id="bTintClear">Clear tint</button><button id="bPaintTwin" class="on">Twin too</button><button id="bPaintAllSame">All parts like this</button></div>
+      <div class="row"><span>💡 Eye glow color</span><input type="color" id="eyeGlow" value="#ff5a1a" style="width:56px;height:40px;border:0;background:none"><button id="bEyeGlowReset">Default</button></div>
+      <div class="row"><input type="color" id="tint" value="#ffffff" style="width:56px;height:40px;border:0;background:none"><button id="bTintClear">Clear tint</button><button id="bPaintTwin" class="on">🪞 Both sides</button><button id="bPaintAllSame">All parts like this</button></div>
       <div class="row"><button id="bPattern">Import pattern (image)…</button><input type="file" id="fPattern" hidden accept="image/*" multiple><button id="bPatternDel">Remove my pattern</button></div>
       <div class="sl"><span>Pattern size</span><input id="sTile" type="range" min=".1" max="3" step=".05" value="1"><span></span></div>
       <div class="hint">Tap a material to put it on the selected part. Tint mixes a color on top. Your own images go into My Patterns.</div>
@@ -266,6 +268,8 @@
 <script src="parts/dino-kit.js"></script>
 <script src="parts/sphinx.js"></script>
 <script src="parts/tails-wings.js"></script>
+<script src="parts/mech-faces.js"></script>
+<script src="parts/myth-creatures.js"></script>
 <script src="starters.js"></script>
 <script src="packs/index.js"></script>
 <script type="importmap">

@@ -9,8 +9,51 @@
   const wrap = (x, f) => { for (const dx of [-S, 0, S]) for (const dy of [-S, 0, S]) { x.save(); x.translate(dx, dy); f(); x.restore(); } };
   function noiseLayer(x, n, rMin, rMax, cols, alpha = .15) { for (let i = 0; i < n; i++) { const px = R(0, S), py = R(0, S), r = R(rMin, rMax), c = cols[(rnd() * cols.length) | 0];
       x.globalAlpha = alpha; wrap(x, () => { const g = x.createRadialGradient(px, py, 0, px, py, r); g.addColorStop(0, c); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.beginPath(); x.arc(px, py, r, 0, 7); x.fill(); }); } x.globalAlpha = 1; }
+  // which cells get dark marks for the bead / fish-scale skins
+  function spotAt(cx, cy, kind) { const u = cx / S, v = cy / S, sn = Math.sin, n = sn(u * 13.1 + sn(v * 7.3) * 2) * sn(v * 11.7 + sn(u * 5.1) * 2);
+    if (kind === 'blob') return n > .45; if (kind === 'ring') { const d = Math.abs(sn(u * 18) * sn(v * 18)); return d > .55 && d < .85; } if (kind === 'band') return Math.abs(sn(v * 9 + sn(u * 6) * .6)) > .85;
+    if (kind === 'stripe') return sn(u * 10 + sn(v * 4)) > .6; if (kind === 'koi') return n > .25; return false; }
   const G = {
     plain(x) { fill(x, '#fff'); noiseLayer(x, 60, 20, 80, ['#ddd', '#fff'], .2); },
+    // ---- creature skins (Nov 9 2026). Grey-scale patterns; color comes from the material, so the same pattern makes many skins.
+    beads(x, o = {}) { fill(x, o.bg || '#9a9a9a'); const n = o.n || 34, w = S / n;
+      for (let j = 0; j <= n; j++) for (let i = 0; i <= n; i++) { const cx = i * w + (j % 2) * w / 2 + R(-1, 1), cy = j * w * .87, r = w * R(.42, .56), sp = o.spots && spotAt(cx, cy, o.spots);
+        const g = x.createRadialGradient(cx - r * .3, cy - r * .3, r * .1, cx, cy, r); g.addColorStop(0, sp ? '#5a5a5a' : '#ffffff'); g.addColorStop(1, sp ? '#202020' : '#8a8a8a');
+        wrap(x, () => { x.fillStyle = g; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill(); }); } },
+    gecko(x) { G.beads(x, {n: 40, spots: 'blob'}); },
+    monitor(x) { G.beads(x, {n: 46, spots: 'ring'}); },
+    iguana(x) { G.beads(x, {n: 30, spots: 'band'}); },
+    chameleon(x) { G.beads(x, {n: 52, bg: '#b8b8b8', spots: 'stripe'}); },
+    scutes(x) { fill(x, '#7a7a7a'); const rows = 6, cols = 5, w = S / cols, h = S / rows;
+      for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) { const px = i * w + (j % 2) * w * .5, py = j * h; wrap(x, () => { const g = x.createLinearGradient(px, py, px + w, py + h); g.addColorStop(0, '#e8e8e8'); g.addColorStop(1, '#8a8a8a');
+        x.fillStyle = g; x.beginPath(); x.roundRect(px + 5, py + 5, w - 10, h - 10, 14); x.fill(); x.fillStyle = 'rgba(255,255,255,.35)'; x.beginPath(); x.ellipse(px + w / 2, py + h / 2, w * .12, h * .25, 0, 0, 7); x.fill(); }); }
+      for (let i = 0; i < 4000; i++) { x.fillStyle = 'rgba(0,0,0,.12)'; x.fillRect(R(0, S), R(0, S), 2, 2); } },
+    fishscale(x, o = {}) { fill(x, '#808080'); const n = o.n || 12, w = S / n;
+      for (let row = -1; row <= n * 2.2; row++) for (let c = -1; c <= n; c++) { const cx = c * w + (row % 2) * w / 2, cy = row * w * .45, pat = o.koi ? spotAt(cx, cy, 'koi') : 0;
+        const g = x.createRadialGradient(cx, cy - w * .2, w * .05, cx, cy, w * .7); g.addColorStop(0, pat ? '#3a3a3a' : '#ffffff'); g.addColorStop(.7, pat ? '#2a2a2a' : '#d0d0d0'); g.addColorStop(1, '#606060');
+        wrap(x, () => { x.fillStyle = g; x.beginPath(); x.arc(cx, cy, w * .62, 0, Math.PI); x.fill(); x.strokeStyle = 'rgba(255,255,255,.5)'; x.lineWidth = 1.2; x.beginPath(); x.arc(cx, cy, w * .6, .2, Math.PI - .2); x.stroke(); }); } },
+    koi(x) { G.fishscale(x, {n: 10, koi: 1}); },
+    denticle(x) { fill(x, '#c4c4c4'); for (let i = 0; i < 9000; i++) { const px = R(0, S), py = R(0, S); x.fillStyle = rnd() < .5 ? 'rgba(255,255,255,.18)' : 'rgba(0,0,0,.14)'; x.beginPath(); x.ellipse(px, py, 3.2, 1.6, .25, 0, 7); x.fill(); }
+      for (let k = 0; k < 14; k++) { x.strokeStyle = 'rgba(0,0,0,.1)'; x.lineWidth = 2; x.beginPath(); const y = R(0, S); x.moveTo(0, y); for (let i = 0; i <= S; i += 32) x.lineTo(i, y + Math.sin(i * .02 + k) * 8); x.stroke(); } },
+    whaleshark(x) { G.denticle(x); x.fillStyle = 'rgba(255,255,255,.85)'; for (let j = 0; j < 9; j++) for (let i = 0; i < 9; i++) { const px = i * S / 9 + (j % 2) * S / 18 + R(-6, 6), py = j * S / 9 + R(-6, 6); wrap(x, () => { x.beginPath(); x.arc(px, py, R(6, 11), 0, 7); x.fill(); }); }
+      x.strokeStyle = 'rgba(255,255,255,.6)'; x.lineWidth = 4; for (let i = 0; i < 9; i++) { x.beginPath(); x.moveTo(0, i * S / 9 + S / 18); x.lineTo(S, i * S / 9 + S / 18); x.stroke(); } },
+    whale(x) { fill(x, '#b0b0b0'); noiseLayer(x, 120, 30, 120, ['#9a9a9a', '#c4c4c4', '#a4a4a4'], .35);
+      for (let i = 0; i < 40; i++) { x.strokeStyle = `rgba(255,255,255,${R(.15, .45)})`; x.lineWidth = R(1, 3); x.beginPath(); const px = R(0, S), py = R(0, S); x.moveTo(px, py); x.lineTo(px + R(-60, 60), py + R(10, 50)); x.stroke(); }
+      for (let k = 0; k < 6; k++) { const cx = R(0, S), cy = R(0, S); for (let i = 0; i < 40; i++) { const px = cx + R(-40, 40), py = cy + R(-30, 30), r = R(3, 8); wrap(x, () => { x.fillStyle = '#e8e8e8'; x.beginPath(); x.arc(px, py, r, 0, 7); x.fill(); x.fillStyle = '#5a5a5a'; x.beginPath(); x.arc(px, py, r * .4, 0, 7); x.fill(); }); } } },
+    papillae(x, o = {}) { fill(x, '#a0a0a0'); noiseLayer(x, 90, 30, 90, ['#7a7a7a', '#c8c8c8'], .35);
+      for (let i = 0; i < 700; i++) { const px = R(0, S), py = R(0, S), r = R(2, 9); wrap(x, () => { const g = x.createRadialGradient(px - r * .3, py - r * .3, 1, px, py, r); g.addColorStop(0, '#ffffff'); g.addColorStop(1, 'rgba(90,90,90,0)'); x.fillStyle = g; x.beginPath(); x.arc(px, py, r, 0, 7); x.fill(); }); }
+      if (o.rings) { for (let i = 0; i < 26; i++) { const px = R(0, S), py = R(0, S), r = R(12, 22); wrap(x, () => { x.strokeStyle = '#1a1a1a'; x.lineWidth = 7; x.beginPath(); x.arc(px, py, r, 0, 7); x.stroke(); x.strokeStyle = '#ffffff'; x.lineWidth = 3; x.beginPath(); x.arc(px, py, r, 0, 7); x.stroke(); }); } }
+      if (o.chroma) { for (let i = 0; i < 900; i++) { const px = R(0, S), py = R(0, S), r = R(1.5, 6); wrap(x, () => { x.fillStyle = `rgba(30,30,30,${R(.3, .8)})`; x.beginPath(); x.arc(px, py, r, 0, 7); x.fill(); }); } }
+      if (o.stripes) { for (let k = 0; k < 8; k++) { x.fillStyle = 'rgba(20,20,20,.75)'; const y = k * S / 8; x.beginPath(); x.moveTo(0, y); for (let i = 0; i <= S; i += 16) x.lineTo(i, y + Math.sin(i * .03 + k) * 10); x.lineTo(S, y + 26); x.lineTo(0, y + 26); x.fill(); } } },
+    octopus(x) { G.papillae(x); }, blueringed(x) { G.papillae(x, {rings: 1}); }, squid(x) { G.papillae(x, {chroma: 1}); }, mimic(x) { G.papillae(x, {stripes: 1}); },
+    silk(x) { fill(x, '#d8d8d8'); for (let i = 0; i < 520; i++) { const y = R(-40, S + 40), a = R(-.35, .35); x.strokeStyle = `rgba(${rnd() < .6 ? '255,255,255' : '150,150,150'},${R(.25, .7)})`; x.lineWidth = R(.6, 2.4);
+      x.beginPath(); for (let k = 0; k <= 8; k++) { const px = k * S / 8; x.lineTo(px, y + Math.tan(a) * px + Math.sin(k + i) * 3); } x.stroke(); } },
+    grub(x) { fill(x, '#dcdcdc'); for (let k = 0; k < S; k += 42) { const g = x.createLinearGradient(0, k, 0, k + 42); g.addColorStop(0, '#9a9a9a'); g.addColorStop(.2, '#f2f2f2'); g.addColorStop(.85, '#d0d0d0'); g.addColorStop(1, '#8a8a8a'); x.fillStyle = g; x.fillRect(0, k, S, 42); }
+      for (let i = 0; i < 2500; i++) { x.fillStyle = 'rgba(0,0,0,.08)'; x.fillRect(R(0, S), R(0, S), 2, 2); } },
+    sand(x) { fill(x, '#d9d9d9'); for (let k = 0; k < S; k += 9) { x.strokeStyle = 'rgba(255,255,255,.18)'; x.lineWidth = 3; x.beginPath(); for (let i = 0; i <= S; i += 16) x.lineTo(i, k + Math.sin(i * .03 + k) * 4); x.stroke(); }
+      for (let i = 0; i < 26000; i++) { const v = (R(120, 255)) | 0; x.fillStyle = `rgba(${v},${v},${v},${R(.35, .9)})`; x.fillRect(R(0, S), R(0, S), R(1, 2.6), R(1, 2.6)); } },
+    leaf(x) { fill(x, '#cfcfcf'); noiseLayer(x, 80, 20, 60, ['#bbb', '#e6e6e6'], .25); x.strokeStyle = 'rgba(255,255,255,.55)'; for (let k = 0; k < 9; k++) { const cx = R(0, S), cy = R(0, S); x.lineWidth = 3; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + 120, cy - 120); x.stroke();
+      x.lineWidth = 1.5; for (let j = 1; j < 6; j++) { const px = cx + j * 20, py = cy - j * 20; x.beginPath(); x.moveTo(px, py); x.lineTo(px + 26, py + 4); x.moveTo(px, py); x.lineTo(px - 4, py - 26); x.stroke(); } } },
     skin(x) { fill(x, '#e8e8e8'); noiseLayer(x, 140, 10, 70, ['#bbb', '#fff', '#ccc'], .25); for (let i = 0; i < 1500; i++) { x.fillStyle = 'rgba(0,0,0,.12)'; x.fillRect(R(0, S), R(0, S), 2, 2); } },
     scales(x, big) { fill(x, '#cfcfcf'); const n = big ? 8 : 16, w = S / n; for (let row = -1; row <= n * 1.6; row++) for (let c = -1; c <= n; c++) { const cx = c * w + (row % 2) * w / 2, cy = row * w * .6;
         const g = x.createRadialGradient(cx, cy + w * .1, w * .05, cx, cy, w * .62); g.addColorStop(0, '#ffffff'); g.addColorStop(.75, '#c8c8c8'); g.addColorStop(1, '#6a6a6a');
@@ -269,6 +312,33 @@ vec3 hue(float h){ return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.
     ['toypurple', 'Toy brick purple', 'Toys: plastic', 'plain', 0x7a3ab8, .18, 0],
     ['vinyl', 'Vinyl figure (tint it)', 'Toys: plastic', 'moldplastic', 0xf0e8e0, .4, 0],
     ['glitterplastic', 'Glitter plastic', 'Toys: plastic', 'crystal', 0xb070e0, .2, .35],
+    ['sand', 'Sand', 'Sand', 'sand', 0xd8b47a, .95, 0], ['sandgold', 'Golden sand', 'Sand', 'sand', 0xf0c060, .55, .35], ['sandwhite', 'White sand', 'Sand', 'sand', 0xf2ead8, .95, 0],
+    ['sandred', 'Red desert sand', 'Sand', 'sand', 0xc8683a, .95, 0], ['sandblack', 'Black volcanic sand', 'Sand', 'sand', 0x2a2826, .8, .1], ['sandstone', 'Sandstone', 'Sand', 'stone', 0xc8a070, .9, 0],
+    ['sandglow', 'Spirit sand (glowing)', 'Sand', 'sand', 0xffd890, .6, 0, {emissive: 0xc07a20, emissiveIntensity: .7}],
+    ['moss', 'Moss', 'Plants & Fungus', 'fur', 0x4f7a2a, .95, 0], ['leaf', 'Green leaves', 'Plants & Fungus', 'leaf', 0x4a8a2e, .6, 0, {side: 2}], ['leafautumn', 'Autumn leaves', 'Plants & Fungus', 'leaf', 0xc8642a, .6, 0, {side: 2}],
+    ['leafdead', 'Dead leaves', 'Plants & Fungus', 'leaf', 0x7a6440, .8, 0, {side: 2}], ['leafspirit', 'Spirit leaves (glow)', 'Plants & Fungus', 'leaf', 0x9affd0, .5, 0, {side: 2, emissive: 0x20a070, emissiveIntensity: .8}],
+    ['mushcap', 'Mushroom cap', 'Plants & Fungus', 'spots', 0xb0502a, .6, 0], ['mushstalk', 'Mushroom stalk', 'Plants & Fungus', 'skin', 0xeee4cc, .7, 0], ['mushglow', 'Glowing mushroom', 'Plants & Fungus', 'spots', 0x6ad0ff, .4, 0, {emissive: 0x2080ff, emissiveIntensity: 1}],
+    ['porcelain', 'Porcelain mask', 'Spirit', 'plain', 0xf4f0ea, .25, 0], ['shadowcloth', 'Shadow cloth', 'Spirit', 'cloth', 0x1a1820, .95, 0], ['ghosthair', 'Ghost hair (black)', 'Spirit', 'fur', 0x141416, .5, 0],
+    ['ragcloth', 'Moss-green rags', 'Spirit', 'burlap', 0x3e5a36, 1, 0], ['ragwhite', 'White burial rags', 'Spirit', 'burlap', 0xe8e4da, 1, 0], ['ectoplasm', 'Ectoplasm (see-through)', 'Spirit', 'plain', 0xbfe8ff, .3, 0, {transparent: true, opacity: .55, emissive: 0x3a7aa0, emissiveIntensity: .8, side: 2}],
+    ['krakenskin', 'Kraken skin', 'Skins & Scales', 'skin', 0x8a3a4a, .45, 0], ['sucker', 'Sucker rings', 'Skins & Scales', 'skin', 0xe8c0b0, .5, 0], ['chitinred', 'Red chitin', 'Skins & Scales', 'chitin', 0x8a2a1a, .3, .2],
+    ['mothwing', 'Moth wing dust', 'Skins & Scales', 'feather', 0xc8b490, .9, 0, {side: 2}], ['mothdark', 'Dark moth fur', 'Skins & Scales', 'fur', 0x2a2420, .95, 0, {side: 2}], ['mothfur', 'Moth fur', 'Skins & Scales', 'fur', 0xd8ccb0, .95, 0],
+    ['eyegold', 'Gold eye', 'Glow & Crystal', 'plain', 0xffc040, .2, 0, {emissive: 0xa06000, emissiveIntensity: .6}], ['mothyeye', 'Compound eye (dark)', 'Glow & Crystal', 'crystal', 0x3a1a2a, .1, .3, {emissive: 0x5a1030, emissiveIntensity: .5}],
+    ['gecko', 'Leopard gecko', 'Lizards', 'gecko', 0xe8c060, .55, 0], ['gecko2', 'Day gecko (green)', 'Lizards', 'gecko', 0x4ac040, .45, 0], ['monitor', 'Monitor lizard', 'Lizards', 'monitor', 0x7a7458, .6, 0],
+    ['komodo', 'Komodo dragon', 'Lizards', 'beads', 0x6a5a48, .75, 0], ['iguana', 'Green iguana', 'Lizards', 'iguana', 0x6aa04a, .5, 0], ['iguanablack', 'Marine iguana', 'Lizards', 'iguana', 0x3a3a3a, .7, 0],
+    ['chameleon', 'Chameleon', 'Lizards', 'chameleon', 0x5ad070, .45, 0], ['chameleonred', 'Panther chameleon', 'Lizards', 'chameleon', 0xe85a3a, .45, 0], ['gila', 'Gila monster', 'Lizards', 'gecko', 0xe87a50, .6, 0],
+    ['croc', 'Crocodile hide', 'Lizards', 'scutes', 0x5a6a3a, .55, 0], ['alligator', 'Alligator (dark)', 'Lizards', 'scutes', 0x2e3428, .6, 0], ['albinocroc', 'Albino gator', 'Lizards', 'scutes', 0xf0e8d0, .5, 0],
+    ['fish', 'Silver fish', 'Fish & Sea', 'fishscale', 0xc8d4e0, .25, .45], ['fishgold', 'Goldfish', 'Fish & Sea', 'fishscale', 0xff9a30, .3, .2], ['koi', 'Koi (white + orange)', 'Fish & Sea', 'koi', 0xffffff, .3, .1],
+    ['koired', 'Koi (red + black)', 'Fish & Sea', 'koi', 0xe84a2a, .3, .1], ['bass', 'Green bass', 'Fish & Sea', 'fishscale', 0x6a8a4a, .35, .15], ['tuna', 'Tuna blue', 'Fish & Sea', 'fishscale', 0x3a5a8a, .25, .4],
+    ['sharkgrey', 'Shark (grey)', 'Fish & Sea', 'denticle', 0x7a8590, .45, 0], ['sharkblue', 'Blue shark', 'Fish & Sea', 'denticle', 0x4a6aa0, .4, 0], ['greatwhite', 'Great white (dark top)', 'Fish & Sea', 'denticle', 0x4a5258, .45, 0],
+    ['whaleshark', 'Whale shark', 'Fish & Sea', 'whaleshark', 0x5a7590, .5, 0], ['whale', 'Humpback whale', 'Fish & Sea', 'whale', 0x3a4048, .5, 0], ['bluewhale', 'Blue whale', 'Fish & Sea', 'whale', 0x6a84a0, .5, 0],
+    ['orca', 'Orca black', 'Fish & Sea', 'whale', 0x1c1e22, .3, 0], ['belugawhite', 'Beluga white', 'Fish & Sea', 'whale', 0xf2f0ea, .45, 0],
+    ['octopus', 'Octopus (red)', 'Fish & Sea', 'octopus', 0xb04a3a, .45, 0], ['octopusbrown', 'Octopus (mottled brown)', 'Fish & Sea', 'octopus', 0x8a6a4a, .5, 0], ['blueringed', 'Ringed octopus (yellow)', 'Fish & Sea', 'blueringed', 0xe8c040, .4, 0, {emissive: 0x000000}],
+    ['squid', 'Squid (chromatophores)', 'Fish & Sea', 'squid', 0xf0b0a0, .3, 0], ['mimic', 'Striped mimic octopus', 'Fish & Sea', 'mimic', 0xe8d0b0, .45, 0], ['deepsea', 'Deep-sea glow squid', 'Fish & Sea', 'squid', 0x5a3a8a, .3, 0, {emissive: 0x3a1a8a, emissiveIntensity: .6}],
+    ['silk', 'Silk cocoon', 'Insects', 'silk', 0xf2ece0, .6, 0], ['silkgold', 'Golden silk', 'Insects', 'silk', 0xe8c060, .4, .3], ['silkdark', 'Dark spider silk', 'Insects', 'silk', 0x3a3640, .5, 0],
+    ['silkglow', 'Glowing silk', 'Insects', 'silk', 0xd8f0ff, .5, 0, {emissive: 0x5a8aff, emissiveIntensity: .6}], ['jewelbeetle', 'Jewel beetle', 'Insects', 'chitin', 0x2aa06a, .15, .8], ['stagbeetle', 'Stag beetle (glossy)', 'Insects', 'chitin', 0x2a1a14, .15, .3],
+    ['ladybug', 'Ladybug', 'Insects', 'spots', 0xd8281a, .25, 0], ['wasp', 'Wasp stripes', 'Insects', 'stripes', 0xf0c020, .35, 0], ['bee', 'Fuzzy bee', 'Insects', 'stripes', 0xe8b030, .9, 0],
+    ['mantis', 'Mantis green', 'Insects', 'chitin', 0x7ac84a, .35, 0], ['antblack', 'Ant (black gloss)', 'Insects', 'chitin', 0x141214, .15, .2], ['firefly', 'Firefly glow', 'Insects', 'grub', 0xe8ff7a, .4, 0, {emissive: 0x9aff20, emissiveIntensity: 1.2}],
+    ['grub', 'Grub / larva', 'Insects', 'grub', 0xf0e8d0, .45, 0], ['caterpillar', 'Green caterpillar', 'Insects', 'grub', 0x7ad04a, .5, 0], ['butterflyblue', 'Morpho wing blue', 'Insects', 'feather', 0x2a8aff, .2, .5, {side: 2}],
     ['toyrubber', 'Toy rubber', 'Craft (toy box)', 'plain', 0xe85a3a, .55, 0], ['toyplastic', 'Shiny toy plastic', 'Craft (toy box)', 'plain', 0x3a8ae8, .25, 0],
   ];
   const ALIAS = {paint2: 'paint2', fur: 'fur', feather: 'feather', stone: 'stone', wood: 'wood', cloth: 'cloth', leather: 'leather', chitin: 'chitin', glow: 'glow', screen: 'screen'};

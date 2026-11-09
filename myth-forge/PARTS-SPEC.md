@@ -23,7 +23,7 @@ Titan Forge is a phone-first browser editor (three.js r160) where MajorasPride k
 - `id` unique and prefixed by your file (e.g. `an_`, `mk_`, `wp_`), `group` from the list below, `sub` = a sub-category inside the group, short friendly `name`.
 
 ## Groups (use exactly these names)
-`Heads & Skulls`, `Jaws & Teeth`, `Horns & Crests`, `Eyes & Faces`, `Necks & Spines`, `Torsos & Bellies`, `Arms & Shoulders`, `Hands & Claws`, `Legs & Feet`, `Tails`, `Wings`, `Back & Armor Plates`, `Tentacles & Extra Limbs`, `Bones & Skeleton`, `Mech Heads`, `Mech Torso & Core`, `Mech Arms & Legs`, `Mech Details`, `Weapons`, `Accessories & Magic`.
+`Heads & Skulls`, `Jaws & Teeth`, `Horns & Crests`, `Eyes & Faces`, `Necks & Spines`, `Torsos & Bellies`, `Arms & Shoulders`, `Hands & Claws`, `Legs & Feet`, `Tails`, `Wings`, `Back & Armor Plates`, `Tentacles & Extra Limbs`, `Bones & Skeleton`, `Mech Heads`, `Mech Eyes & Faces`, `Mech Torso & Core`, `Mech Arms & Legs`, `Mech Details`, `Weapons`, `Accessories & Magic`.
 
 ## Material keys (the editor owns them; it also adds textures and lets the user swap)
 `bone`, `tooth`, `horn`, `skin`, `scale`, `chitin`, `fur`, `feather`, `membrane`, `flesh`, `slime`, `crystal`, `eye`, `glow`, `metal`, `darkmetal`, `gold`, `paint`, `paint2`, `rubber`, `wood`, `stone`, `cloth`, `leather`, `screen`.

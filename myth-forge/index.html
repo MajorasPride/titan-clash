@@ -202,12 +202,14 @@
   </div>
 
   <div class="pane" id="p-paint">
-    <div class="row"><button id="bPaintAll">🎨 Paint all</button><button id="bFWin4">🪟 Focus window</button><button id="bPiecePaint">🎯 One piece only</button></div>
+    <div class="row"><button id="bPaintAll">🎨 Paint all</button><button id="bFWin4">🪟 Focus window</button><button id="bPiecePaint">🎯 One piece only</button><button id="bFade">💨 Fade away</button></div>
+    <div class="row" id="fadeRow" style="display:none"><div class="sl" style="flex:1"><span>Fade amount</span><input id="sFade" type="range" min=".1" max=".95" step=".01" value=".5"><span id="vFade"></span></div><button id="bDust" class="on">Dust</button></div>
     <div class="chips" id="matCats"></div>
     <div class="grid" id="mats"></div>
     <div class="row"><button id="bBrushPaint">🖌 Brush paint</button><input type="color" id="brushCol" value="#c03020" style="width:56px;height:40px;border:0;background:none"><button id="bBrushErase">Clear paint</button></div>
     <details class="more"><summary>More ▾</summary>
-      <div class="row"><input type="color" id="tint" value="#ffffff" style="width:56px;height:40px;border:0;background:none"><button id="bTintClear">Clear tint</button><button id="bPaintTwin" class="on">Twin too</button><button id="bPaintAllSame">All parts like this</button></div>
+      <div class="row"><span>💡 Eye glow color</span><input type="color" id="eyeGlow" value="#ff5a1a" style="width:56px;height:40px;border:0;background:none"><button id="bEyeGlowReset">Default</button></div>
+      <div class="row"><input type="color" id="tint" value="#ffffff" style="width:56px;height:40px;border:0;background:none"><button id="bTintClear">Clear tint</button><button id="bPaintTwin" class="on">🪞 Both sides</button><button id="bPaintAllSame">All parts like this</button></div>
       <div class="row"><button id="bPattern">Import pattern (image)…</button><input type="file" id="fPattern" hidden accept="image/*" multiple><button id="bPatternDel">Remove my pattern</button></div>
       <div class="sl"><span>Pattern size</span><input id="sTile" type="range" min=".1" max="3" step=".05" value="1"><span></span></div>
       <div class="hint">Tap a material to put it on the selected part. Tint mixes a color on top. Your own images go into My Patterns.</div>
@@ -266,6 +268,8 @@
 <script src="parts/dino-kit.js"></script>
 <script src="parts/sphinx.js"></script>
 <script src="parts/tails-wings.js"></script>
+<script src="parts/mech-faces.js"></script>
+<script src="parts/myth-creatures.js"></script>
 <script src="starters.js"></script>
 <script src="packs/index.js"></script>
 <script type="importmap">
@@ -309,7 +313,7 @@ let useBloom = true;
 
 // ====================================================================== parts library
 const LIB = {}, GROUP_ORDER = ['Base Body', 'Basic Shapes & Clay', 'Part Makers (sliders)', 'Heads & Skulls', 'Jaws & Teeth', 'Horns & Crests', 'Eyes & Faces', 'Necks & Spines', 'Torsos & Bellies', 'Arms & Shoulders', 'Hands & Claws',
-  'Legs & Feet', 'Tails', 'Wings', 'Back & Armor Plates', 'Tentacles & Extra Limbs', 'Bones & Skeleton', 'Mech Heads', 'Mech Torso & Core', 'Mech Arms & Legs', 'Mech Details', 'Mecha Dragon', 'Kaiju Kit', 'Turtle Kit', 'Dino Kit', 'Weapons', 'Accessories & Magic', 'Free Packs (CC0)', 'My Imports'];
+  'Legs & Feet', 'Tails', 'Wings', 'Back & Armor Plates', 'Tentacles & Extra Limbs', 'Bones & Skeleton', 'Mech Heads', 'Mech Eyes & Faces', 'Mech Torso & Core', 'Mech Arms & Legs', 'Mech Details', 'Mecha Dragon', 'Kaiju Kit', 'Turtle Kit', 'Dino Kit', 'Weapons', 'Accessories & Magic', 'Free Packs (CC0)', 'My Imports'];
 const MY = 'My Parts';
 const ALONG = new Set(['Necks & Spines', 'Arms & Shoulders', 'Legs & Feet', 'Tails', 'Wings', 'Tentacles & Extra Limbs', 'Mech Arms & Legs', 'Heads & Skulls', 'Mech Heads', 'Torsos & Bellies', 'Mech Torso & Core', 'Hands & Claws']);
 const isAlong = e => e.along != null ? e.along : ALONG.has(e.group) || (e.group === 'Mecha Dragon' && /Head|Neck|Wings|Limbs/.test(e.sub)) || e.id === 'md_chest' || e.id === 'md_belly';
@@ -411,8 +415,44 @@ const twinName = n => n.endsWith('.L') ? n.slice(0, -2) + '.R' : n.endsWith('.R'
 let views = {};                                                 // uid -> {G, M, meshes}
 let sel = null, colorMode = false, wire = false, xray = false;
 const matCache = {};
-function matFor(key, tint, tile, vc) { const k = key + '|' + (tint || '') + '|' + (tile || 1) + (vc ? '|vc' : ''); if (!matCache[k]) { matCache[k] = MATS.makeMat(THREE, key, tint, tile); matCache[k].vertexColors = !!vc; } const m = matCache[k];
+function matFor(key, tint, tile, vc) { const k = key + '|' + (tint || '') + '|' + (tile || 1) + (vc ? '|vc' : ''); if (!matCache[k]) { matCache[k] = MATS.makeMat(THREE, key, tint, tile); matCache[k].vertexColors = !!vc; styleMat(matCache[k]); } const m = matCache[k];
   m.wireframe = wire; if (xray) { const c = m.clone(); c.transparent = true; c.opacity = .4; c.depthWrite = false; return c; } return m; }
+// ---- eye glow color: recolors every 'Glow (fire)' piece (eyes, visors, lamps) on the model (P.fx.eyeGlow)
+function styleMat(m) { if (!m || !m.userData || m.userData.key !== 'glow') return m; const u = m.userData; if (!u.baseEm) { u.baseEm = m.emissive.clone(); u.baseCol = m.color.clone(); }
+  const g = P && P.fx && P.fx.eyeGlow; if (g) { const c = new THREE.Color(g); m.emissive.copy(c); m.color.copy(c).lerp(new THREE.Color(1, 1, 1), .45); } else { m.emissive.copy(u.baseEm); m.color.copy(u.baseCol); } return m; }
+function applyEyeGlow() { Object.values(matCache).forEach(styleMat); Object.values(views).forEach(v => v.meshes.forEach(m => styleMat(m.material))); }
+// ---- fade away: the far end of a part dissolves into drifting dust (sand wings, galaxy skins…). pt.fade = {amt 0..1, dust bool}
+const FADE_T = {value: 0};
+const FADE_GLSL = `uniform float uFadeA; uniform float uFadeR; uniform float uFT; float fadeEdge = 0.0;
+float fh(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+float fn3(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
+  return mix(mix(mix(fh(i), fh(i + vec3(1, 0, 0)), f.x), mix(fh(i + vec3(0, 1, 0)), fh(i + vec3(1, 1, 0)), f.x), f.y), mix(mix(fh(i + vec3(0, 0, 1)), fh(i + vec3(1, 0, 1)), f.x), mix(fh(i + vec3(0, 1, 1)), fh(i + vec3(1, 1, 1)), f.x), f.y), f.z); }
+`;
+const FADE_MAIN = `{ float fd = length(vTP) / max(uFadeR, 1e-3), st = 1.0 - uFadeA, sc = 3.0 / max(uFadeR * .3, .05);
+  vec3 q = vTP * sc + vec3(0.0, -uFT * .7, uFT * .3); float n = fn3(q) * .62 + fn3(q * 2.7) * .38;
+  float e = smoothstep(st, 1.0, fd), cut = e * 1.1 - .05; if (n < cut) discard; fadeEdge = (1.0 - smoothstep(0.0, .09, n - cut)) * step(.001, e); }`;
+function partRadius(pt) { let R = .1; pieces(pt.lib, pt.params).forEach(pc => { const a = pc.geo.attributes.position; for (let i = 0; i < a.count; i++) R = Math.max(R, Math.hypot(a.getX(i), a.getY(i), a.getZ(i))); }); return R; }
+function fadeMat(key, tint, tile, vc, pt, R) {
+  const m = MATS.makeMat(THREE, key, tint, tile); m.vertexColors = !!vc; styleMat(m); m.userData.fadeU = {uFadeA: {value: pt.fade.amt}, uFadeR: {value: R}, uFT: FADE_T};
+  const prev = m.onBeforeCompile, pck = m.customProgramCacheKey; m.side = THREE.DoubleSide;
+  m.onBeforeCompile = sh => { prev(sh); Object.assign(sh.uniforms, m.userData.fadeU); sh.fragmentShader = FADE_GLSL + sh.fragmentShader.replace('#include <alphatest_fragment>', '#include <alphatest_fragment>\n' + FADE_MAIN)
+    .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += diffuseColor.rgb * fadeEdge * .9;'); };
+  m.customProgramCacheKey = () => pck() + '-fade'; return m; }
+let dustTex = null;
+function makeDust(pt, view, R) {                                  // drifting grains that blow off the fading end
+  if (!dustTex) { const c = document.createElement('canvas'); c.width = c.height = 32; const x = c.getContext('2d'), g = x.createRadialGradient(16, 16, 0, 16, 16, 16); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.5, 'rgba(255,255,255,.6)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 32, 32); dustTex = new THREE.CanvasTexture(c); }
+  const st = 1 - pt.fade.amt, src = []; view.meshes.forEach(me => { const a = me.geometry.attributes.position; for (let i = 0; i < a.count; i += 3) { const x = a.getX(i), y = a.getY(i), z = a.getZ(i), d = Math.hypot(x, y, z) / R; if (d > st + pt.fade.amt * .25) src.push([x, y, z, me.material]); } });
+  if (!src.length) return null; const N = Math.min(320, 60 + src.length >> 2), O = new Float32Array(N * 3), V = new Float32Array(N * 3), A = new Float32Array(N), Lf = new Float32Array(N), pos = new Float32Array(N * 3);
+  for (let i = 0; i < N; i++) { const [x, y, z] = src[(Math.random() * src.length) | 0], l = Math.hypot(x, y, z) || 1; O.set([x, y, z], i * 3);
+    V.set([x / l * .5 + (Math.random() - .5) * .5, y / l * .5 + (Math.random() - .5) * .5 + .15, z / l * .5 + (Math.random() - .5) * .5].map(v => v * R * .18), i * 3); Lf[i] = 1.2 + Math.random() * 2.2; A[i] = Math.random() * Lf[i]; }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); const m0 = src[0][3], key = (m0.userData && m0.userData.key) || '';
+  const glowy = /galaxy|star|nebula|const|aurora|void|holo|opal|sun|cyber|cosmic|glow|ecto|spirit|leafspirit|sandglow/.test(key) || (m0.emissive && m0.emissive.getHex() > 0 && m0.emissiveIntensity > .4);
+  const col = m0.color.clone(); if (glowy) col.lerp(new THREE.Color(1, 1, 1), .35);
+  const pm = new THREE.PointsMaterial({size: Math.max(.04, R * .022), map: dustTex, color: col, transparent: true, depthWrite: false, opacity: .9, blending: glowy ? THREE.AdditiveBlending : THREE.NormalBlending});
+  const pts = new THREE.Points(g, pm); pts.frustumCulled = false; pts.raycast = () => {}; view.M.add(pts); return {pts, O, V, A, L: Lf, N}; }
+function fadeTick(dt) { FADE_T.value += dt; for (const v of Object.values(views)) { const d = v.dust; if (!d) continue; const p = d.pts.geometry.attributes.position;
+  for (let i = 0; i < d.N; i++) { d.A[i] += dt; if (d.A[i] > d.L[i]) d.A[i] = 0; const a = d.A[i], k = a * (1 + a * .35); p.setXYZ(i, d.O[i * 3] + d.V[i * 3] * k, d.O[i * 3 + 1] + d.V[i * 3 + 1] * k, d.O[i * 3 + 2] + d.V[i * 3 + 2] * k); }
+  p.needsUpdate = true; d.pts.material.opacity = .9; } }
 function partGeo(pt, mi, base) {                                // per-instance geometry: subdivided + sculpted copy if needed
   const sd = pt.subdiv || 0, sc = pt.sculpt && pt.sculpt[mi], vp = pt.vpaint && pt.vpaint[mi];
   if (!sd && !sc && !vp && !(pt.cut && pt.cut.length)) return base;
@@ -435,14 +475,15 @@ function buildPart(pt) {
   if (views[pt.uid]) { views[pt.uid].G.removeFromParent(); }
   const G = new THREE.Group(), M = new THREE.Group(); G.add(M); G.userData.uid = pt.uid;
   const parent = (pt.bone && bones[pt.bone]) || skelRoot; parent.add(G);
-  const meshes = [];
+  const meshes = [], fR = pt.fade && !colorMode ? partRadius(pt) : 0;
   pieces(pt.lib, pt.params).forEach((pc, mi) => { if (pt.keep && !pt.keep.includes(mi)) return; const g = partGeo(pt, mi, pc.geo);
-    const mat = colorMode ? new THREE.MeshStandardMaterial({color: new THREE.Color().setHSL((hash(pt.uid) % 360) / 360, .6, .55)}) : pc.matObj && !pt.mat ? pc.matObj : matFor(pt.mat && pt.mat[mi] != null ? pt.mat[mi] : (pt.matAll || pc.mat), pt.tint, pt.tile, !!(pt.vpaint && pt.vpaint[mi]));
+    const mat = fR ? fadeMat(pt.mat && pt.mat[mi] != null ? pt.mat[mi] : (pt.matAll || pc.mat), pt.tint, pt.tile, !!(pt.vpaint && pt.vpaint[mi]), pt, fR) : colorMode ? new THREE.MeshStandardMaterial({color: new THREE.Color().setHSL((hash(pt.uid) % 360) / 360, .6, .55)}) : pc.matObj && !pt.mat ? pc.matObj : matFor(pt.mat && pt.mat[mi] != null ? pt.mat[mi] : (pt.matAll || pc.mat), pt.tint, pt.tile, !!(pt.vpaint && pt.vpaint[mi]));
     const mesh = new THREE.Mesh(g, mat); mesh.userData = {uid: pt.uid, mi}; M.add(mesh); meshes.push(mesh); });
   M.scale.set((pt.flip ? -1 : 1) * (pt.w || 1), pt.l || 1, pt.w || 1); applyOff(pt, M);
   G.position.set(...pt.p); G.quaternion.setFromEuler(new THREE.Euler(...pt.r.map(x => x * D))); G.scale.setScalar(pt.s);
   G.visible = !pt.hidden && !(soloUid && soloUid !== pt.uid);
   views[pt.uid] = {G, M, meshes};
+  if (fR && pt.fade.dust !== false) views[pt.uid].dust = makeDust(pt, views[pt.uid], fR);
 }
 function applyOff(pt, M) { const o = pt.off; if (o) M.position.set(-o[0] * M.scale.x, -o[1] * M.scale.y, -o[2] * M.scale.z); else M.position.set(0, 0, 0); }
 const hash = s => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
@@ -453,13 +494,13 @@ const twinOf = pt => pt && pt.twin ? partBy(pt.twin) : null;
 function mirrorInto(src, dst) {                                 // keep a mirrored twin in sync
   dst.p = [-src.p[0], src.p[1], src.p[2]]; dst.r = [src.r[0], -src.r[1], -src.r[2]]; dst.s = src.s; dst.l = src.l; dst.w = src.w; dst.flip = !src.flip;
   dst.mat = src.mat ? [...src.mat] : null; dst.matAll = src.matAll; dst.tint = src.tint; dst.tile = src.tile; dst.subdiv = src.subdiv; dst.sculpt = src.sculpt ? JSON.parse(JSON.stringify(src.sculpt)) : null; dst.cut = src.cut ? [...src.cut] : []; dst.vpaint = src.vpaint ? JSON.parse(JSON.stringify(src.vpaint)) : null;
-  dst.keep = src.keep ? [...src.keep] : null; dst.off = src.off ? [...src.off] : null; dst.hidden = src.hidden; dst.params = src.params ? {...src.params} : null; buildPart(dst);
+  dst.fade = src.fade ? {...src.fade} : null; dst.keep = src.keep ? [...src.keep] : null; dst.off = src.off ? [...src.off] : null; dst.hidden = src.hidden; dst.params = src.params ? {...src.params} : null; buildPart(dst);
 }
 const syncTwin = pt => { const t = twinOf(pt); if (t) mirrorInto(pt, t); };
 
 // ====================================================================== adding parts
 let placing = null, modeBone = true, mirrorAdd = true;
-function newPart(lib, bone, p, r, s = 1) { return {uid: uid(), lib, bone, p, r, s, l: 1, w: 1, flip: false, mat: null, matAll: null, tint: '#ffffff', subdiv: 0, sculpt: null, cut: [], hidden: false, twin: null}; }
+function newPart(lib, bone, p, r, s = 1) { const f = LIB[lib] && LIB[lib].fade; return {uid: uid(), lib, bone, p, r, s, l: 1, w: 1, flip: false, mat: null, matAll: null, tint: '#ffffff', subdiv: 0, sculpt: null, cut: [], hidden: false, twin: null, fade: f ? {amt: f.amt || .5, dust: true} : null}; }
 function autoScale(lib, bone) { return autoFit(lib, bone)[0]; }
 function autoFit(lib, bone) {                                  // fit limbs / tails / necks / wings to their bone chain -> [size, extra length stretch]
   const e = LIB[lib], b = bones[bone]; if (!e || !b || !isAlong(e)) return [1, 1];
@@ -811,7 +852,7 @@ $('bSnap').onclick = e => { const on = gizmo.translationSnap == null; gizmo.setT
 function syncEdit(soft) { const pt = partBy(sel);
   $('grab').textContent = pt ? (LIB[pt.lib] ? LIB[pt.lib].name : 'part') + (pt.bone ? ' · on ' + pt.bone : '') : (selBone && tab === 'skel' ? 'Bone: ' + selBone : 'Mythic Forge');
   if (!pt) return; for (const [s, v, k] of [['sSize', 'vSize', 's'], ['sLen', 'vLen', 'l'], ['sWid', 'vWid', 'w']]) { if (!soft || document.activeElement !== $(s)) $(s).value = pt[k] || 1; $(v).textContent = (+(pt[k] || 1)).toFixed(2); }
-  $('bHide').textContent = pt.hidden ? 'Show' : 'Hide'; $('bUnlink').style.display = pt.twin ? '' : 'none'; $('tint').value = pt.tint || '#ffffff'; }
+  $('bHide').textContent = pt.hidden ? 'Show' : 'Hide'; $('bUnlink').style.display = pt.twin ? '' : 'none'; $('tint').value = pt.tint || '#ffffff'; fadeUI(pt); }
 for (const [s, k] of [['sSize', 's'], ['sLen', 'l'], ['sWid', 'w']]) { $(s).onpointerdown = () => snap();
   $(s).oninput = e => { const pt = partBy(sel); if (!pt) return; if (pt.fit) pt.fit.tweaked = true; pt[k] = +e.target.value; buildPart(pt); syncTwin(pt); attachGizmo(); syncEdit(true); saveCur(); }; }
 $('bDup').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); const n = JSON.parse(JSON.stringify(pt)); n.uid = uid(); n.twin = null; n.p[0] += .6; P.parts.push(n); buildPart(n); select(n.uid); saveCur(); tip('Copy made'); };
@@ -867,6 +908,18 @@ function paint(k) { if (paintAll) { snap(); for (const o of P.parts) if (!o.boxe
   pt.matAll = k; pt.mat = null; buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); tip(MATS.LIST.find(l => l[0] === k)[1] + ' applied'); }
 $('bPaintAll').onclick = e => { paintAll = !paintAll; e.target.classList.toggle('on', paintAll); if (paintAll) { piecePaint = false; $('bPiecePaint').classList.remove('on'); } tip(paintAll ? 'Paint all on: a material or tint now goes on every part' : 'Paint all off: paints the part you tap', 2600); };
 $('tint').onchange = e => { if (paintAll) { snap(); for (const o of P.parts) if (!o.boxed) { o.tint = e.target.value; buildPart(o); } return saveCur(); } const pt = partBy(sel); if (!pt) return; snap(); pt.tint = e.target.value; buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); };
+function fadeUI(pt) { pt = pt || partBy(sel); const on = !!(pt && pt.fade); $('bFade').classList.toggle('on', on); $('fadeRow').style.display = on ? '' : 'none';
+  if (on) { $('sFade').value = pt.fade.amt; $('vFade').textContent = (+pt.fade.amt).toFixed(2); $('bDust').classList.toggle('on', pt.fade.dust !== false); } }
+const fadeTargets = () => { if (paintAll) return P.parts.filter(o => !o.boxed); const pt = partBy(sel); if (!pt) return []; const t = twinOf(pt); return t ? [pt, t] : [pt]; };
+$('bFade').onclick = () => { const L = fadeTargets(); if (!L.length) return tip('Tap a part first (or turn on Paint all)'); snap(); const on = !L[0].fade;
+  L.forEach(o => { o.fade = on ? {amt: .5, dust: true} : null; buildPart(o); }); fadeUI(L[0]); saveCur(); tip(on ? 'Fade away on — the far end dissolves into drifting dust' : 'Fade away off'); };
+$('sFade').onpointerdown = () => snap();
+$('sFade').oninput = e => { const v = +e.target.value; $('vFade').textContent = v.toFixed(2); fadeTargets().forEach(o => { if (!o.fade) return; o.fade.amt = v; const w = views[o.uid]; if (w) w.meshes.forEach(m => m.material.userData.fadeU && (m.material.userData.fadeU.uFadeA.value = v)); }); };
+$('sFade').onchange = () => { fadeTargets().forEach(o => o.fade && buildPart(o)); saveCur(); };
+$('bDust').onclick = () => { const L = fadeTargets().filter(o => o.fade); if (!L.length) return; snap(); const on = L[0].fade.dust === false; L.forEach(o => { o.fade.dust = on; buildPart(o); }); fadeUI(L[0]); saveCur(); };
+$('eyeGlow').oninput = e => { P.fx.eyeGlow = e.target.value; applyEyeGlow(); };
+$('eyeGlow').onchange = () => saveCur();
+$('bEyeGlowReset').onclick = () => { delete P.fx.eyeGlow; applyFX(); saveCur(); tip('Eye glow back to default'); };
 $('bTintClear').onclick = () => { $('tint').value = '#ffffff'; $('tint').onchange({target: $('tint')}); };
 $('bPaintTwin').onclick = e => { paintTwin = !paintTwin; e.target.classList.toggle('on', paintTwin); };
 $('bPaintAllSame').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); for (const o of P.parts) if (o.lib === pt.lib) { o.matAll = pt.matAll; o.mat = pt.mat; o.tint = pt.tint; buildPart(o); } saveCur(); tip('Every ' + LIB[pt.lib].name + ' painted the same'); };
@@ -972,9 +1025,15 @@ addEventListener('pointerup', e => {
 let poseMode = false, jointMode = false, anim = 'none', animT = 0;
 const STARTERS = window.FORGE_STARTERS || [];
 function loadStarter(st) { const keep = mirrorAdd; snap(); P = blankProject(st.skel); P.name = st.name; Object.assign(P.fx, st.fx || {}); rebuildSkeleton(); rebuildParts();
+  // part: [lib, bone, pos, rot, size ('fit' = body fit system, null = old auto fit, number or [size, length]), flag ('solo' or {solo, mat, tint, fade})]
   for (const [lib, bone, p, r, s, flag] of st.parts) { if (!LIB[lib]) { console.warn('starter part missing', lib); continue; } if (!bones[bone]) { console.warn('starter bone missing', bone); continue; }
-    const fit = s == null ? autoFit(lib, bone) : Array.isArray(s) ? s : [s, 1], pt = newPart(lib, bone, p, r, fit[0]); pt.l = fit[1]; P.parts.push(pt); buildPart(pt); const tb = twinName(bone);
-    if (flag !== 'solo' && (tb ? bones[tb] : Math.abs(p[0]) > .25)) { const t = newPart(lib, tb || bone, [0, 0, 0], [0, 0, 0]); t.twin = pt.uid; pt.twin = t.uid; P.parts.push(t); mirrorInto(pt, t); } }
+    const o = flag && typeof flag === 'object' ? flag : {solo: flag === 'solo'}; let pt = null;
+    if (s === 'fit') { const f = fitPart(lib, bone); if (f) { pt = newPart(lib, f.bone, f.p, f.r, f.s); pt.l = f.l; pt.fit = f.fit; } }
+    if (!pt) { const fit = s === 'decor' ? [decorScale(bone), 1] : s == null || s === 'fit' ? autoFit(lib, bone) : Array.isArray(s) ? s : [s, 1]; pt = newPart(lib, bone, p, r, fit[0]); pt.l = fit[1]; }
+    if (o.mat) pt.matAll = o.mat; if (o.tint) pt.tint = o.tint; if (o.fade) pt.fade = {amt: o.fade, dust: true};
+    P.parts.push(pt); buildPart(pt); const tb = twinName(pt.bone);
+    if (!o.solo && (tb ? bones[tb] : Math.abs(p[0]) > .25)) { const t = newPart(lib, tb || pt.bone, [0, 0, 0], [0, 0, 0]); t.twin = pt.uid; pt.twin = t.uid;
+      if (pt.fit) t.fit = {...pt.fit, drop: twinName(pt.fit.drop) || pt.fit.drop, cover: pt.fit.cover.map(c => twinName(c) || c)}; P.parts.push(t); mirrorInto(pt, t); } }
   mirrorAdd = keep; sel = null; applyFX(); outliner(); saveCur(); frameAll(); tip(st.name + ' loaded — tap any part to change it'); }
 function startersUI() { const el = $('starters'); if (!el) return; el.innerHTML = ''; for (const st of STARTERS) { const b = document.createElement('button'); b.textContent = st.name;
   b.onclick = () => { if (P.parts.length && !confirm('Load ' + st.name + '? Your current creature is replaced (save it first with ⋯ if you want it).')) return; loadStarter(st); skelUI(); }; el.append(b); } }
@@ -1053,7 +1112,7 @@ function applyFX() { const f = P.fx, [bg, gr] = BGS[f.bg] || BGS.studio; scene.b
   if (neonCity) neonCity.visible = f.bg === 'neon'; grid.visible = f.bg === 'studio';
   mist.visible = f.mist; aura.visible = f.aura; drips.visible = f.drip; mist.material.color.set(f.col); aura.material.color.set(f.col);
   for (const [id, k] of [['bGlow', 'glow'], ['bFog', 'fog'], ['bMist', 'mist'], ['bAura', 'aura'], ['bDrip', 'drip']]) $(id).classList.toggle('on', !!f[k]);
-  document.querySelectorAll('[data-bg]').forEach(b => b.classList.toggle('on', b.dataset.bg === f.bg)); $('fxCol').value = f.col; }
+  document.querySelectorAll('[data-bg]').forEach(b => b.classList.toggle('on', b.dataset.bg === f.bg)); $('fxCol').value = f.col; if ($('eyeGlow')) $('eyeGlow').value = f.eyeGlow || '#ff5a1a'; applyEyeGlow(); }
 // particles: mist, aura, ooze drips
 const mkPts = (n, size, col, fn) => { const g = new THREE.BufferGeometry(), a = new Float32Array(n * 3); for (let i = 0; i < n; i++) fn(a, i); g.setAttribute('position', new THREE.BufferAttribute(a, 3));
   const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64);
@@ -1356,7 +1415,7 @@ function resize() { renderer.setSize(innerWidth, innerHeight, false); composer.s
 new ResizeObserver(() => resize()).observe($('sheet'));
 addEventListener('resize', resize); resize();
 const clock = new THREE.Clock();
-renderer.setAnimationLoop(() => { const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime; controls.update(); animate(dt); fxTick(dt, t);
+renderer.setAnimationLoop(() => { const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime; controls.update(); animate(dt); fxTick(dt, t); fadeTick(dt);
   if (spin) skelRoot.rotation.y += dt * .5; applyNums(); if (useBloom) composer.render(); else renderer.render(scene, camera); fwRender(); });
 addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; const k = e.key.toLowerCase();
   if ((e.ctrlKey || e.metaKey) && k === 'z') { e.preventDefault(); (e.shiftKey ? $('bRedo') : $('bUndo')).click(); }
@@ -1380,6 +1439,7 @@ $('bRefit').onclick = () => { const pt = partBy(sel); if (!pt) return tip('Tap a
   refitPart(pt, true); attachGizmo(); syncEdit(); saveCur(); tip('Fitted to the body'); };
 bodyUI();
 if (!P.parts.length && P.skel !== 'none') { buildBase(); rebuildParts(); setTimeout(frameAll, 50); }   // every skeleton starts with a base body to build on
+window.__ls = loadStarter; window.__fa = () => frameAll(); window.__nb = () => { showBones = false; boneHelpers.forEach(h => h.visible = false); }; window.__cam = (x, y, z, tx, ty, tz) => { camera.position.set(x, y, z); controls.target.set(tx, ty, tz); };   // test hooks (headless checks)
 
 </script>
 </body>

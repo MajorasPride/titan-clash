@@ -76,6 +76,18 @@
     ...chain('tail', 'hips', [[0, 5.3, -.4], [0, 5.2, -2.4], [0, 4.9, -4.4], [0, 4.4, -6.4], [0, 3.8, -8.4], [0, 3.2, -10.2], [0, 2.8, -11.8]], 'tail')]};
   T.sphinx = {name: 'Sphinx (lion + wings)', bones: [...T.quad.bones.map(b => b[0] === 'neck' ? ['neck', 'chest', [0, 5.6, 2.2], [0, 7.4, 2.8], 'neck'] : b[0] === 'head' ? ['head', 'neck', [0, 7.4, 2.8], [0, 8.6, 3.1], 'head', {up: 1}] : b[0] === 'jaw' ? ['jaw', 'head', [0, 7.4, 3.1], [0, 7.2, 3.9], 'jaw', {up: 1}] : b), ...wings]};
   T.blob = {name: 'Blob / no legs', bones: [['body', null, [0, 0, 0], [0, 4, 0], 'spine'], ['top', 'body', [0, 4, 0], [0, 7, .3], 'chest'], ['head', 'top', [0, 7, .3], [0, 8.5, .6], 'head', {up: 1}]]};
+  // ---- Nov 9 2026: myth creatures ----
+  T.treefolk = {name: 'Treefolk (walking tree)', bones: [...core(4.6, 9.4, .25, 1.6), ...arms(9.0, 1.45, 1.35), ...legs(4.6, 1.15, .6),
+    ...both([['branch', 'chest', [.8, 9.3, -.3], [2.2, 11.6, -.8], 'extra']])]};
+  const centi = []; { const n = 12, z0 = 6, step = 1.15; for (let i = 0; i < n; i++) { const z = z0 - i * step, nm = 'seg' + (i + 1);
+      centi.push([nm, i ? 'seg' + i : null, [0, 1.6, z], [0, 1.6, z - step], 'spine']);
+      centi.push(...both([['leg' + (i + 1), nm, [.7, 1.5, z - step * .5], [2.0, 2.1, z - step * .3], 'legU'], ['leg' + (i + 1) + 'b', 'leg' + (i + 1) + '#', [2.0, 2.1, z - step * .3], [2.6, 0, z - step * .1], 'legL']])); }
+    centi.push(['head', 'seg1', [0, 1.6, z0], [0, 1.9, z0 + 1.2], 'head', {up: 1}], ['jaw', 'head', [0, 1.3, z0 + .3], [0, 1.1, z0 + 1.5], 'jaw', {up: 1}],
+      ['tail1', 'seg' + n, [0, 1.6, z0 - n * step], [0, 1.8, z0 - n * step - 1.5], 'tail']); }
+  T.centipede = {name: 'Centipede (12 segments)', bones: centi};
+  T.moth = {name: 'Giant moth (4 wings, 6 legs)', bones: [...T.insect.bones,
+    ...both([['wing', 'body', [.6, 3.8, 1.0], [4.6, 5.0, .7], 'wingA'], ['wingtip', 'wing#', [4.6, 5.0, .7], [9.0, 5.8, -.2], 'wingB'],
+      ['hindwing', 'body', [.6, 3.5, -.2], [4.0, 3.9, -1.9], 'wingA'], ['hindwingtip', 'hindwing#', [4.0, 3.9, -1.9], [6.6, 3.4, -4.6], 'wingB']])]};
   T.none = {name: 'No skeleton (free build)', bones: [['root', null, [0, 0, 0], [0, 2, 0], 'spine']]};
   window.FORGE_SKEL = T;
 })();
