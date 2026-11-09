@@ -9,17 +9,41 @@
       out.push(P(K.taper(K.bez(p, p.clone().add(dir.multiplyScalar(clawLen * .5)), tip), thick * .75, .01, 14, 10, .7), 'horn')); }
     return out; };
   const M = [
-    {id: 'mkr_eye', name: 'Eye maker', sub: 'Faces', params: [opt('pupil', 'Pupil', ['round', 'slit', 'goat bar', 'star', 'none', 'spiral'], 'slit'), num('size', 'Size', .2, 2, .05, .6), num('iris', 'Iris size', .2, .95, .05, .6),
-      opt('irisMat', 'Iris', ['glow', 'glowblue', 'glowgreen', 'glowpurple', 'gold', 'gemred', 'gemblue', 'eye'], 'glow'), num('lid', 'Eyelid', 0, 1, .05, .25), num('squint', 'Angry tilt', -40, 40, 1, 12), opt('socket', 'Socket rim', ['none', 'bone ring', 'scale ring', 'metal ring'], 'scale ring')],
-      make: p => { const r = p.size / 2, out = [P(new T.SphereGeometry(r, 32, 24), 'eye')], ir = r * p.iris;
-        out.push(P(new T.SphereGeometry(r * 1.002, 32, 16, 0, Math.PI * 2, 0, Math.asin(Math.min(.99, p.iris))).rotateX(Math.PI / 2), p.irisMat));
-        const pz = r * 1.01, pw = ir * .5; let pupil = null;
-        if (p.pupil === 'round') pupil = new T.CircleGeometry(pw, 24); else if (p.pupil === 'slit') pupil = new T.CircleGeometry(pw, 24).scale(.25, 1.6, 1); else if (p.pupil === 'goat bar') pupil = new T.CircleGeometry(pw, 24).scale(1.7, .3, 1);
-        else if (p.pupil === 'star') pupil = K.extr(K.ring(10, (i, a) => [Math.sin(a) * pw * (i % 2 ? .4 : 1), Math.cos(a) * pw * (i % 2 ? .4 : 1)]), .01, 0);
-        else if (p.pupil === 'spiral') pupil = new T.TorusGeometry(pw * .6, pw * .12, 6, 40, Math.PI * 3.2);
-        if (pupil) out.push(P(pupil.translate(0, 0, pz), 'darkmetal'));
-        if (p.lid > 0) { const lid = new T.SphereGeometry(r * 1.06, 32, 16, 0, Math.PI * 2, 0, Math.PI * p.lid * .55).rotateZ(p.squint * D); out.push(P(lid, 'skin')); }
-        if (p.socket !== 'none') out.push(P(new T.TorusGeometry(r * 1.08, r * .18, 10, 32), {'bone ring': 'bone', 'scale ring': 'scale', 'metal ring': 'metal'}[p.socket]));
+    {id: 'mkr_eye', name: 'Eye maker', sub: 'Faces', params: [opt('shape', 'Eye shape', ['round', 'almond', 'cat', 'tall oval', 'wide', 'bug (compound)'], 'round'),
+      opt('pupil', 'Pupil', ['round', 'slit', 'goat bar', 'star', 'none', 'spiral', 'cross', 'ring', 'crescent', 'double', 'heart', 'diamond'], 'slit'), num('pupilSize', 'Pupil size', .2, 1.8, .05, 1),
+      num('size', 'Size', .2, 2, .05, .6), num('iris', 'Iris size', .2, .95, .05, .6),
+      opt('irisMat', 'Iris', ['glow', 'glowblue', 'glowgreen', 'glowpurple', 'gold', 'gemred', 'gemblue', 'gemgreen', 'amethyst', 'crystal', 'screen', 'eye'], 'glow'),
+      opt('sclera', 'Eyeball', ['white', 'black', 'yellow', 'red', 'glowing', 'chrome'], 'white'), opt('shine', 'Shine dot', ['yes', 'no'], 'yes'),
+      num('lid', 'Top eyelid', 0, 1, .05, .25), num('lowLid', 'Bottom eyelid', 0, 1, .05, 0), num('squint', 'Angry tilt', -40, 40, 1, 12),
+      opt('lidMat', 'Eyelid skin', ['skin', 'scale', 'chitin', 'metal', 'fur'], 'skin'),
+      opt('socket', 'Socket rim', ['none', 'bone ring', 'scale ring', 'metal ring', 'mech lens'], 'scale ring'), opt('extra', 'Extra', ['none', 'brow ridge', 'spiky lashes', 'scar', 'tear streaks'], 'none')],
+      make: p => { const r = p.size / 2, sh = {round: [1, 1], almond: [1.25, .8], cat: [1.35, .7], 'tall oval': [.75, 1.3], wide: [1.5, .85], 'bug (compound)': [1, 1]}[p.shape] || [1, 1];
+        const scl = {white: 'eye', black: 'obsidian', yellow: 'paintyel', red: 'gemred', glowing: 'glow', chrome: 'chrome'}[p.sclera] || 'eye', out = [];
+        if (p.shape === 'bug (compound)') { const g = new T.IcosahedronGeometry(r, 3).toNonIndexed(); g.computeVertexNormals(); out.push(P(g, p.irisMat === 'eye' ? 'chitin' : p.irisMat)); }
+        else { out.push(P(new T.SphereGeometry(r, 32, 24), scl)); const ir = r * p.iris;
+          out.push(P(new T.SphereGeometry(r * 1.002, 32, 16, 0, Math.PI * 2, 0, Math.asin(Math.min(.99, p.iris))).rotateX(Math.PI / 2), p.irisMat));
+          const pz = r * 1.01, pw = ir * .5 * p.pupilSize, add = g => out.push(P(g.translate(0, 0, pz), 'darkmetal'));
+          const flat = pts => K.extr(pts, .01, 0);
+          if (p.pupil === 'round') add(new T.CircleGeometry(pw, 24)); else if (p.pupil === 'slit') add(new T.CircleGeometry(pw, 24).scale(.25, 1.6, 1)); else if (p.pupil === 'goat bar') add(new T.CircleGeometry(pw, 24).scale(1.7, .3, 1));
+          else if (p.pupil === 'star') add(flat(K.ring(10, (i, a) => [Math.sin(a) * pw * (i % 2 ? .4 : 1), Math.cos(a) * pw * (i % 2 ? .4 : 1)])));
+          else if (p.pupil === 'spiral') add(new T.TorusGeometry(pw * .6, pw * .12, 6, 40, Math.PI * 3.2));
+          else if (p.pupil === 'cross') { add(new T.PlaneGeometry(pw * .35, pw * 2)); add(new T.PlaneGeometry(pw * 2, pw * .35).translate(0, 0, .002)); }
+          else if (p.pupil === 'ring') add(new T.RingGeometry(pw * .6, pw, 32));
+          else if (p.pupil === 'crescent') add(flat([...Array(25).keys()].map(i => { const a = i / 24 * Math.PI; return [Math.cos(a) * pw, Math.sin(a) * pw - pw * .3]; }).concat([...Array(25).keys()].reverse().map(i => { const a = i / 24 * Math.PI; return [Math.cos(a) * pw * .8, Math.sin(a) * pw * .55 - pw * .3]; }))));
+          else if (p.pupil === 'double') { add(new T.CircleGeometry(pw * .6, 20).translate(-pw * .55, 0, 0)); add(new T.CircleGeometry(pw * .6, 20).translate(pw * .55, 0, 0)); }
+          else if (p.pupil === 'heart') add(flat([...Array(40).keys()].map(i => { const t = i / 40 * Math.PI * 2; return [16 * Math.sin(t) ** 3 * pw / 17, (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * pw / 17]; })));
+          else if (p.pupil === 'diamond') add(flat([[0, pw * 1.3], [pw * .6, 0], [0, -pw * 1.3], [-pw * .6, 0]]));
+          if (p.shine === 'yes') out.push(P(new T.SphereGeometry(r * .09, 10, 8).translate(r * .3, r * .32, r * .96), 'glowblue')); }
+        if (p.lid > 0) out.push(P(new T.SphereGeometry(r * 1.06, 32, 16, 0, Math.PI * 2, 0, Math.PI * p.lid * .55).rotateZ(p.squint * D), p.lidMat));
+        if (p.lowLid > 0) out.push(P(new T.SphereGeometry(r * 1.05, 32, 16, 0, Math.PI * 2, Math.PI - Math.PI * p.lowLid * .45, Math.PI * p.lowLid * .45).rotateZ(-p.squint * D * .4), p.lidMat));
+        if (p.socket === 'mech lens') { for (const [k, rr] of [[0, 1.1], [1, 1.28]]) out.push(P(new T.TorusGeometry(r * rr, r * (.08 + k * .04), 8, 40).translate(0, 0, -r * .1 * k), k ? 'darkmetal' : 'metal'));
+          for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; out.push(P(new T.BoxGeometry(r * .12, r * .3, r * .12).translate(Math.cos(a) * r * 1.42, Math.sin(a) * r * 1.42, 0).rotateZ(0), 'metal')); } }
+        else if (p.socket !== 'none') out.push(P(new T.TorusGeometry(r * 1.08, r * .18, 10, 32), {'bone ring': 'bone', 'scale ring': 'scale', 'metal ring': 'metal'}[p.socket]));
+        if (p.extra === 'brow ridge') out.push(P(K.taper(K.bez(V3(-r * 1.3, r * .9, r * .3), V3(0, r * 1.45, r * .55), V3(r * 1.3, r * .9 + Math.tan(p.squint * D) * r * .6, r * .3)), r * .22, r * .16, 16, 8), p.lidMat));
+        else if (p.extra === 'spiky lashes') for (let i = 0; i < 7; i++) { const a = (i / 6 - .5) * 2.2, x = Math.sin(a) * r * 1.02, y = Math.cos(a) * r * 1.02; out.push(P(K.taper(K.bez(V3(x, y, r * .3), V3(x * 1.3, y * 1.3, r * .4), V3(x * 1.6, y * 1.6 + r * .15, r * .3)), r * .06, .005, 8, 6), 'horn')); }
+        else if (p.extra === 'scar') out.push(P(K.taper(K.bez(V3(-r * .5, r * 1.5, r * .5), V3(r * .1, 0, r * 1.15), V3(r * .4, -r * 1.5, r * .5)), r * .06, r * .03, 20, 6), 'flesh'));
+        else if (p.extra === 'tear streaks') for (const x of [-.25, .25]) out.push(P(K.taper(K.bez(V3(x * r, -r * .85, r * .6), V3(x * r * 1.2, -r * 1.4, r * .7), V3(x * r * 1.1, -r * 2.1, r * .5)), r * .07, r * .03, 14, 6), p.irisMat));
+        if (sh[0] !== 1 || sh[1] !== 1) out.forEach(o => o.geo.scale(sh[0], sh[1], 1));
         return out; }},
     {id: 'mkr_finger', name: 'Finger / toe maker', sub: 'Hands', params: [num('len', 'Length', .3, 3, .05, 1.2), num('thick', 'Thickness', .04, .5, .01, .14), num('segs', 'Joints', 1, 5, 1, 3), num('curl', 'Curl', -30, 60, 1, 12), opt('claw', 'Claw', ['yes', 'no'], 'yes'), num('clawLen', 'Claw length', .05, 1.5, .05, .35)],
       make: p => finger(p.len, p.thick, p.segs, p.curl, p.claw === 'yes', p.clawLen)},
