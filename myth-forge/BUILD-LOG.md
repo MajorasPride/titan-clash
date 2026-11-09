@@ -3,22 +3,46 @@
 Live: https://majoraspride.github.io/titan-clash/myth-forge/ · Newest first. Every change gets a line here (what was built + what still needs fixing).
 Deeper technical notes for Claude are in `README.md` (same folder).
 
-## 👉 START HERE (handoff for a new chat, updated Nov 9 2026, 3:05pm)
-- **Full review done Nov 9 (nothing in the code was changed).** Report: "Mythic Forge review — Nov 9, 2026" in MajorasPride's Google Docs: https://docs.google.com/document/d/1YIyigqgC0K8bpkWGBwG9Q1DwixKyWkksMzClwa8esDQ/edit — 14 sections: must fix / should fix / nice to have, looks (10 worst models), mech versions (5 worst), feature checklist, security, into the game, going public, doc mismatches, top 10 upgrades. Read it before building anything.
-- **❓ Questions waiting on MajorasPride (ask these first, go through them together, push nothing until he answers):**
-  1. OK to fix the two quick bugs first? (a) on-screen 🔗 Joint button does nothing and "Move joints" in Skeleton is hijacked, because two buttons share the id `bJoint` in page.html; (b) on PC the Focus / Joint / Remove part / View buttons (`#vtools`) sit behind the side panel.
-  2. His first name is in the public git history (a code comment in the game files, commits 9b9ad42 and 23441d4, already gone from today's files): scrub it with a history rewrite (changes every commit id) or leave it?
-  3. What comes first after the bugs: backup + saves (project file download, real save list, back up everything), the camera + phone layout, or the looks pass?
-  4. Should V3 (test.html) become the live page now, or after the eight broken default builds are fixed (slim, fourarm, brute, theropod, hydra, hydra2, blob, turtle)?
-  5. Art style rule: chunky toy / low-poly for everything?
-- **Other asks from this chat (not built, in the report):** drawing tablet support (pressure already works through pen input; add tilt, side button, eraser, pressure curve, hover cursor), 3D wires / cables / connectors with smart placement per body type, creature behaviors + ooze reactions, paint layers, eyes, pulse, pose presets, game-ready data.
-- **Docs known to be out of date (fix on the next push):** README says build.py writes an identical test.html, mentions page-v2.html and titan-forge.html; build.py lists starters-v3.js (no such file); body type counts (now 34 live, 67 test); the 12:45pm entry below says 🔗 Joint works (it does not).
+## 👉 START HERE (handoff for a new chat, updated Nov 9 2026, 3:40pm)
+- **BUILD METHOD (MajorasPride, Nov 9 3pm). Follow this, it keeps chats cheap:**
+  1. Read ONLY this START HERE section, then start working. Don't re-read the whole README / log / review unless the task needs it.
+  2. Take the next item from **NEXT UP** and build it. Don't stop to ask. Where there's a choice, pick the recommended / safest option and write down what you picked.
+  3. Any question for him goes in **QUESTIONS FOR MAJORASPRIDE** below, not into the chat. Ask in chat only if the work can't go on without it, or it can't be undone. (He goes through that list in a cheaper-model chat; that chat writes his answers under each question.)
+  4. New work goes on the **test page** only. `build.py` rebuilds both pages: after building run `git checkout index.html` so the live page stays as it is. The live page changes only on his OK.
+  5. Test in headless Chrome (phone 412x915 + PC 1920x1080), then update this section + add a log entry + fix README, commit, push. End the chat with a 3-line summary.
+  6. Things CAN be cut from the big wishlist (he said so Nov 9); "never delete" is a Titan Clash rule. Still archive replaced code in `archive/`.
+- **NEXT UP (in order):**
+  1. ✅ Joint button, PC buttons, camera fit (done 3:40pm, test page — see entry below).
+  2. Backup + saves: real save list (tap to open, rename, delete, overwrite asks first), Download / Load project file, one "Back up everything" button, check a pasted project before loading it, save version + upgrade step. In-app sheets instead of browser pop-ups for these.
+  3. Fix the eight broken default builds (slim, fourarm, brute, theropod, hydra, hydra2, blob, turtle) — details in the review doc, section 2 item 10 + section 5.
+  4. Make V3 (test.html) the one live page (his pick: after item 3). Needs his OK at that moment (Question 1).
+  5. Pen layer: one shared stylus input for every section + stylus settings page + "test my pen" pad (pressure curve per mode, tilt, hover cursor, side button action, palm rejection option, left-handed mode). His full stylus list is in the Nov 9 chat; short version in the 3:40pm entry.
+  6. Move the Sketch Pad in (uses the pen layer), then 2D layers / symmetry / stabilizer.
+  7. Path/curve tool → wires + connectors → metaballs (all on the snake-body tech).
+  8. Color zones → real paint layer stack. 9. Modifier stack → skin modifier. 10. Life (auto-animation, eyes, shape keys). 11. Game export. Content packs (teeth sets, clothes, hair) fit in between.
+- **QUESTIONS FOR MAJORASPRIDE (answer under each one; Claude keeps going meanwhile):**
+  1. The 3:40pm fixes (Joint button, PC buttons, camera fit) are on the test page only. OK to put them on the live page now? (Recommended: yes, they only fix broken things.)
+  2. Name scrub: you picked "scrub it". It rewrites all commits, so no other chat may be pushing while it runs, and old commit links break. Say "scrub now" in a chat when nothing else is running. (GitHub may keep the old commits reachable by their id for a while; fully purging them needs a GitHub Support request from your account.)
+  3. Art style rule: chunky toy / low-poly for everything? (Recommended: yes. Until answered, new parts follow it.)
+  4. S Pen side button: which action when held? Eraser / undo / colour picker / radial menu / turn view. (Default until answered: eraser in 2D + paint, smooth in sculpt, changeable in settings.)
+  5. Backup: is a downloaded project file enough for now, or do you also want phone ↔ PC sync? (Sync needs an account or your Google Drive; default: file only.)
+- **Answered Nov 9:** fix-first before new features · scrub the name · V3 goes live after the broken defaults are fixed.
+- **Review report** (read only the section a task needs): https://docs.google.com/document/d/1YIyigqgC0K8bpkWGBwG9Q1DwixKyWkksMzClwa8esDQ/edit
+- **Full wishlist** (the big art-toolkit list: 3D shaping, surface, life, game-ready, teeth, clothes, hair, 2D, linking, workflow, export, stylus) was pasted in the Nov 9 3pm chat; the order above is the agreed plan for it.
 - **Two pages.** Live: https://majoraspride.github.io/titan-clash/myth-forge/ (`index.html`). **Test: https://majoraspride.github.io/titan-clash/myth-forge/test.html** — has everything from the 🔌 V3 work (plugs/connectors, full part kits for every skeleton, new body types, ooze + horror, paint by number, mech it, combine, low-poly look, blocky slimes, polygon jellyfish, 🌋 elements on any part, elemental titans, ✨ gods, giant spine titan). The live page does NOT have V3 yet.
 - **Waiting on MajorasPride:** he is going to try the test page on his phone. When he says OK, make the live page the same as the test page (build.py: write index.html the same way as test.html, or drop the `window.MF_V3` checks) and say so here. Ask him before pushing anything big (his rule: talk changes through first; pictures help him — draw plug maps / plans with the inline visual tool).
 - **How the code is laid out:** README.md (this folder), sections "Nov 9, 2026 (11am): 🔌 V3" and "(noon)". Test page = page.html + V3 part files + forge-core.js + forge-v3.js in one module (build.py). Always `python3 build.py` after edits; `git fetch` + rebase before pushing.
 - **Known rough spots to check with him (V3):** eye / tooth sizes on every kit head; finger + toe angles per palm / foot; spine vertebra pieces come in thin on the 🦴 Colossal bone titan (and its long hair didn't show in a test render); chained titan's belly maw looks like a floating ring (needs a sunken dark inside); cosmic god's extra arms hard to see from the front; many ⭐ elemental/god builds reuse the brute head + horns (give them their own heads); chimera's goat head uses the lion head; combine bakes the saved model as one solid piece; the 🪝 Hooked toggle for bee wings is in the Shape tab; Workshop 💾 Save part asks an extra question about plugs.
 - **Still open from before:** more Lynocs skins (item 6 below); merge the rest of Titan Clash Studio (Sketch Pad, FX Lab, Stage) into Mythic Forge (item 5); dragon / bat wing reads as a thin spar from some angles.
 - **His design rules:** original designs only (inspired by, never copies — no show / card / game character copies, no brand names); everything gets a low-poly version that looks good (faceted, polygon-art); oozes are unique and can grow their own face; jellyfish have no face; multi-head creatures are built head by head; never put his real name in the repo (MajorasPride).
+
+## Nov 9 2026 (3:40pm, TEST PAGE ONLY): Joint button, PC buttons, camera fit + build method
+- **🔗 Joint works again, and Move joints is back.** Two buttons shared the id `bJoint`. The on-screen one is now `bJointV` (page.html + its handler in forge-core.js). Tested: Skeleton › Move joints turns joint mode on; on-screen Joint asks for a part and doesn't touch Move joints.
+- **PC: Focus / Joint / Remove part / View are no longer under the side panel** (wide screens: `#vtools` sits left of the panel, bottom corner).
+- **Fit to screen fits both ways** (`frameAll`): fits height AND width into the free area above the menu, so tails / wings aren't cut off on an upright phone. Per-step camera aim in Build together is still to do.
+- `build.py`: dropped `starters-v3.js` from the list (no such file). README mismatches from the review fixed.
+- Live `index.html` NOT rebuilt (waiting on Question 1). Checked in headless Chrome, phone + PC, no page errors. Not checked on his real phone.
+- **Stylus facts for item 5 (browser limits, to confirm on his pen with the test pad):** pressure works today (pointer events). Tilt, hover and the S Pen side button need testing on the S23 Ultra (Samsung may keep the button for itself). Air actions most likely can't reach a web page. The S Pen has no eraser end; PC pens do. Tablet area mapping / multi-monitor is set in the tablet driver, not by the page. Express keys = map them to our keyboard shortcuts (so the PC shortcut list comes first).
 
 ## Nov 9 2026 (1:40pm, live + test): naga round 2 + 👁 View button ("everything, just do everything")
 - **Naga heads:** new shaped humanoid face (cheekbones, brow, nose, lips, chin, slit-pupil eyes, fin ears) in 4 styles — long hair, serpent crown (small snakes instead of hair), topknot, scaled crest. Heads with hair are sized + seated by the face only (`fitBox` on the part), so long hair no longer shrinks or lifts the head.
@@ -38,7 +62,7 @@ Deeper technical notes for Claude are in `README.md` (same folder).
 ## Nov 9 2026 (12:45pm, live + test): heads connect, 🔗 Joint view, 🗑, resume Build together, tags
 - **Heads connect to their neck:** a head now sits with the neck end tucked into the back-bottom of the skull (a "socket" worked out from each head's shape) and is always at least ~1.35x as wide as the neck's end, so no neck stub under the chin and no gap (mech heads too). A head dropped on the body / neck / jaw goes to its head slot. Swapping a neck re-sizes the head on it (refit order: necks → heads → jaws). Jaws follow the head's socket shift. Code: `fitPart` head branch, `neckTipW`, `partTipW`, `headSlotFor`, `refitHeadsOn`, `fitOrder`.
 - **Tiny bird neck fixed:** the fitter measured the feather ruff at the base as the neck's thickness and shrank the whole neck (wyvern 0.29 → 0.62). `partRootW` now never reads a base much wider than the part's typical width along its length (helps any part with spikes / manes / ruffs at its root).
-- **🔗 Joint** (on-screen, next to Focus/Window): shows ONLY the picked part + what it connects to (neck under a head, jaw on it, plugged eyes/horns), other bones hidden, zoomed on the joint. Tap a shown part to hop along; tap again (↩ Whole creature) to see everything. `jointNeighbors`, `jointApply`, `jointOff`.
+- **🔗 Joint** (on-screen, next to Focus/Window; was broken by a shared id until the 3:40pm fix): shows ONLY the picked part + what it connects to (neck under a head, jaw on it, plugged eyes/horns), other bones hidden, zoomed on the joint. Tap a shown part to hop along; tap again (↩ Whole creature) to see everything. `jointNeighbors`, `jointApply`, `jointOff`.
 - **🗑 Remove part** (on-screen): removes the picked part (+ twin); ↶ undo brings it back; Build together step updates.
 - **🎓 Resume Build together:** ✕ pauses instead of losing your place — an orange "🎓 Back to <step> · n/N" button stays at the top (also after a reload, same creature), and Start › Build together asks "carry on or start over". localStorage `mf-bt-resume`.
 - **🏷 Tags editor** (Move & size tab, bottom): the picked part's search tags with ✕ to remove (built-in ones too) and ＋ Add tag; ↺ brings removed ones back. Saved on the device (`titan-forge-tags`, `-tag` = removed built-in).

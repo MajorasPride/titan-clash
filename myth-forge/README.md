@@ -7,8 +7,8 @@ Renamed from Myth Forge on Nov 8, 2026 (MajorasPride's call). The folder and lin
 MajorasPride's creature + mech builder for Titan Clash. Open `index.html` (GitHub Pages link or double-click). Not used by the game directly: it exports `.glb` models (⋯ → Download model) that Claude then puts into the game.
 
 ## Files
-- `index.html` — BUILT file (do not edit by hand). Run `python3 build.py` after editing `index.html` or `forge-core.js`.
-- `page.html` — page + UI. `forge-core.js` — the editor (inlined into titan-forge.html by build.py so it works from file://).
+- `index.html` (live) and `test.html` (test, + V3) — BUILT files (do not edit by hand). Run `python3 build.py` after editing `page.html`, `forge-core.js` or `forge-v3.js`. To keep the live page unchanged, run `git checkout index.html` after building.
+- `page.html` — page + UI. `forge-core.js` — the editor (inlined into index.html / test.html by build.py so it works from file://).
 - `k-helpers.js` — geometry helper kit `K` used by every parts file. `materials.js` — procedural textures (ours) + triplanar shader. `skeletons.js` — body types.
 - `parts/*.js` — part libraries (classic scripts, `FORGE_PARTS.push((THREE,K)=>[...])`). Spec: `PARTS-SPEC.md`.
   basic.js (clay + shapes), creature-heads.js, creature-body.js, mech.js, weapons-magic.js, mecha-dragon.js, sphinx.js, kaiju-kit.js (Basalt Kaiju), turtle-kit.js (Snapjaw turtle + 3 shells). All made in code = ours, no license.
@@ -168,3 +168,10 @@ MajorasPride's plan (talked through in chat with plug-map pictures, then "start 
 - UI added by forge-v3.js: 🔌 Plugs on-screen button (`mf-plugs`), Paint tab `#v3paint` (🔢 Paint by number with colour inputs, numbers on the model, patterns; 🫧 Ooze & horror: Murk `pt.murk`, Swallow, Depth `pt.dep`, Digested `pt.dig` (fade + old-bone skin), Breakout, Horror `P.fx.horror` 0/1/2 hides parts with `e.horror` above it and blood-tints jelly at 2; 🤖 Mech it / Mech it all / Undo (`pt.mechOf`)), Move tab row (🔌 Add plug here -> `pt.plugs`, 🔗 Combine a saved one -> LIB `cmb:<name>` plugged into a combine plug, ⏏ Unplug), Start tab 🧬 Mix halves (`mixBones(front, back)`: chest-and-below from the front body, the rest from the back body, front moved so the chests meet; SKEL `mix_<f>_<b>`). Workshop 💾 Save part stores plugs + plugAs on the saved part.
 - Test hooks: `window.__v3` (addPart, P, views, look(uids, dir, k), ids, frame, nb...).
 - (noon) `parts/kit-elementals.js` (ke_* elemental bases / limbs / bodies / hair / bits, kg_* god parts + weapons). forge-v3.js: `ELEM` table + `elemBits` (merged bit meshes added to the part's M group in `V3.post`, seeded by uid, from `samples()`), `setElem`, `afterDefault` (FORGE_DEF3 `_` keys), 🌋 Element row prepended to `#v3paint`. skeletons-v3.js: elemental, sixarm, hound2 + aliases (storm_el … chained_titan) that reuse bones. forge-core buildDefault calls `V3.afterDefault(k)`. Heads get a `crown` plug (kit + auto).
+
+## Nov 9, 2026 (3:40pm): notes that replace older lines above
+- `page-v2.html` no longer exists (it became `page.html` at 3:10am). `build.py` does NOT write an identical test.html any more: test.html = page.html + V3 files + forge-v3.js.
+- Body types today: 34 on live, 67 on test.
+- On-screen 🔗 Joint button id = `bJointV`; `bJoint` = Skeleton › Move joints only.
+- `frameAll()` fits width and height into the free area (top bar 50px, panel below on phone / at the side on wide screens).
+- Build method + next-up list + open questions: top of BUILD-LOG.md.

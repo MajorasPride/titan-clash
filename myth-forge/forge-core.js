@@ -1159,8 +1159,13 @@ for (const [id, k] of [['bGlow', 'glow'], ['bFog', 'fog'], ['bMist', 'mist'], ['
 document.querySelectorAll('[data-bg]').forEach(b => b.onclick = () => { P.fx.bg = b.dataset.bg; applyFX(); saveCur(); });
 $('fxCol').oninput = e => { P.fx.col = e.target.value; applyFX(); saveCur(); };
 let spin = false; $('bSpin').onclick = e => { spin = !spin; e.target.classList.toggle('on', spin); };
-function frameAll() { const b = new THREE.Box3().setFromObject(skelRoot); if (b.isEmpty()) return; const c = b.getCenter(new THREE.Vector3()), r = b.getSize(new THREE.Vector3()).length() / 2;
-  const dir = camera.position.clone().sub(controls.target).normalize(); controls.target.copy(c); camera.position.copy(c).add(dir.multiplyScalar(r / Math.tan(camera.fov * D / 2) * 1.05)); }
+function frameAll() { const b = new THREE.Box3().setFromObject(skelRoot); if (b.isEmpty()) return; const c = b.getCenter(new THREE.Vector3()), sz = b.getSize(new THREE.Vector3());
+  // fit BOTH ways into the free area (not under the top bar / panel), so wide creatures aren't cut off on an upright phone
+  const sh = $('sheet').getBoundingClientRect(), land = innerWidth >= 760 && innerWidth > innerHeight, full = document.body.classList.contains('full');
+  const freeH = Math.max(120, innerHeight - 50 - (full || land ? 0 : Math.max(0, innerHeight - sh.top))), freeW = Math.max(120, innerWidth - (full || !land ? 0 : sh.width));
+  const t = Math.tan(camera.fov * D / 2), wide = Math.hypot(sz.x, sz.z) / 2, k = innerHeight / t;
+  const dist = Math.max(sz.y / 2 * k / freeH, wide * k / freeW) * 1.12 + wide * .5;
+  const dir = camera.position.clone().sub(controls.target).normalize(); controls.target.copy(c); camera.position.copy(c).add(dir.multiplyScalar(dist)); }
 $('bFrame') && ($('bFrame').onclick = frameAll);
 const camTo = v => { const t = controls.target, d = camera.position.distanceTo(t); camera.position.copy(t).add(new THREE.Vector3(...v).normalize().multiplyScalar(d)); };
 document.querySelectorAll('[data-cam]').forEach(b => b.onclick = () => camTo({front: [0, .15, 1], side: [1, .15, 0], back: [0, .15, -1], top: [0, 1, .01]}[b.dataset.cam]));
@@ -1215,9 +1220,9 @@ function jointApply(frame) { const pt = partBy(sel); if (!pt) return; jointSet =
   const c = pb.getCenter(new THREE.Vector3()).lerp(j, .5), dir = camera.position.clone().sub(controls.target).normalize();
   controls.target.copy(c); camera.position.copy(c).add(dir.multiplyScalar(dist)); }   // (the view is already offset above the panel by resize())
 function jointOff() { jointSet = null; Object.entries(views).forEach(([u, v]) => { const q = partBy(u); v.G.visible = !!q && !q.hidden && !q.boxed && !(soloUid && soloUid !== u); }); boneHelpers.forEach(h => h.visible = showBones); if (typeof applyNums === 'function') applyNums(); }
-$('bJoint').onclick = () => { if (jointSet) { jointOff(); frameAll(); $('bJoint').classList.remove('lit'); $('bJoint').textContent = '🔗 Joint'; return; }
+$('bJointV').onclick = () => { if (jointSet) { jointOff(); frameAll(); $('bJointV').classList.remove('lit'); $('bJointV').textContent = '🔗 Joint'; return; }
   if (!sel) return tip('Tap a part first — 🔗 Joint shows just it + what it connects to', 3000);
-  if (focusOn) $('bFocus').click(); jointApply(); $('bJoint').classList.add('lit'); $('bJoint').textContent = '↩ Whole creature';
+  if (focusOn) $('bFocus').click(); jointApply(); $('bJointV').classList.add('lit'); $('bJointV').textContent = '↩ Whole creature';
   tip('🔗 Joint: only this part + what it connects to. Move it, swap it, tap another shown part to hop along. Tap again to see everything', 4200); };
 
 // ====================================================================== tabs, sheet, fullscreen
