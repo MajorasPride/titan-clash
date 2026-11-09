@@ -39,6 +39,12 @@ const MY = 'My Parts';
 const ALONG = new Set(['Necks & Spines', 'Arms & Shoulders', 'Legs & Feet', 'Tails', 'Wings', 'Tentacles & Extra Limbs', 'Mech Arms & Legs', 'Heads & Skulls', 'Mech Heads', 'Torsos & Bellies', 'Mech Torso & Core', 'Hands & Claws']);
 const isAlong = e => e.along != null ? e.along : ALONG.has(e.group) || (e.group === 'Mecha Dragon' && /Head|Neck|Wings|Limbs/.test(e.sub)) || e.id === 'md_chest' || e.id === 'md_belly';
 for (const reg of (window.FORGE_PARTS || [])) { try { for (const p of reg(THREE, K)) LIB[p.id] = {...p, src: p.src || 'Made in code for Titan Forge (ours)'}; } catch (e) { console.error('parts file failed', e); } }
+// 🔷 low-poly versions of every body / mech / gear part (Nov 9): lpv_<id>, same group + body slot, faceted with fewer polygons (mech parts a bit finer so they keep their shape)
+const LP_SKIP = /^(Base Body|Basic Shapes & Clay|Part Makers \(sliders\)|Free Packs \(CC0\)|My Imports|My Parts|Low-Poly Builds)$/;
+for (const id of Object.keys(LIB)) { const e = LIB[id]; if (LP_SKIP.test(e.group) || e.params || e.lowpoly) continue; const lv = /^Mech |Mecha Dragon/.test(e.group) ? 4 : 2;
+  LIB['lpv_' + id] = {...e, id: 'lpv_' + id, name: e.name + ' (low-poly)', lpv: id, tags: [...(e.tags || []), 'low poly'], make: () => pieces(id).map(pc => ({geo: lowpolyGeo(pc.geo, lv), mat: pc.mat})), _p: undefined};
+  e.hasLpv = 'lpv_' + id; }
+let lpParts = false; try { lpParts = localStorage.getItem('mf-lpparts') === '1'; } catch (x) {}
 const genCache = new Map();
 function pieces(id, params) {                                  // cached shared pieces of a library part (makers: per slider setting)
   const e = LIB[id]; if (!e) return [];
@@ -201,7 +207,7 @@ function dripTick(dt) { const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion
 // ---- 🔷 low-poly look (P.fx.lowpoly 0..3): every part is shown (and exported) faceted, with fewer polygons — the Titan Clash art style
 const LOWLV = ['off', 'light', 'chunky', 'very chunky'], lowCache = new Map();
 function lowpolyGeo(g, lv) { const key = g.uuid + '|' + lv; if (lowCache.has(key)) return lowCache.get(key);
-  g.computeBoundingBox(); const bb = g.boundingBox, diag = bb.max.distanceTo(bb.min) || 1, cell = diag / [0, 16, 10, 6][lv];
+  g.computeBoundingBox(); const bb = g.boundingBox, diag = bb.max.distanceTo(bb.min) || 1, cell = diag / [0, 16, 10, 6, 26][lv];
   const p = g.attributes.position, extra = ['color', 'lmask'].filter(a => g.attributes[a]), cid = new Map(), sums = [], ids = new Int32Array(p.count);
   for (let i = 0; i < p.count; i++) { const k = Math.round(p.getX(i) / cell) + ',' + Math.round(p.getY(i) / cell) + ',' + Math.round(p.getZ(i) / cell); let c = cid.get(k);
     if (c == null) { c = sums.length; cid.set(k, c); sums.push({n: 0, p: [0, 0, 0], e: extra.map(a => new Array(g.attributes[a].itemSize).fill(0))}); }
@@ -508,14 +514,14 @@ let tagFilter = null, catsOpen = true;
 let gFilter = GROUP_ORDER.find(g => Object.values(LIB).some(e => e.group === g)) || 'Basic Shapes & Clay', sFilter = null, query = '';
 const userTags = (() => { try { return JSON.parse(localStorage.getItem('titan-forge-tags') || '{}'); } catch (e) { return {}; } })();
 const tagsOf = id => [...(LIB[id].tags || []), ...(userTags[id] || [])];
-const visibleIds = () => Object.keys(LIB).filter(id => { const e = LIB[id]; if (tagFilter && !tagsOf(id).includes(tagFilter)) return false; if (tagFilter === 'fav') return true; if (gFilter === MY && !query) return e.mine && (!sFilter || e.sub === sFilter); if (query) return (e.name + ' ' + e.group + ' ' + e.sub + ' ' + tagsOf(id).join(' ')).toLowerCase().includes(query);
+const visibleIds = () => Object.keys(LIB).filter(id => { const e = LIB[id]; if (lpParts ? e.hasLpv : e.lpv) return false; if (tagFilter && !tagsOf(id).includes(tagFilter)) return false; if (tagFilter === 'fav') return true; if (gFilter === MY && !query) return e.mine && (!sFilter || e.sub === sFilter); if (query) return (e.name + ' ' + e.group + ' ' + e.sub + ' ' + tagsOf(id).join(' ')).toLowerCase().includes(query);
   return e.group === gFilter && (!sFilter || e.sub === sFilter); });
 function libUI() {
   const groups = [MY, ...GROUP_ORDER].filter(g => g === 'Free Packs (CC0)' || g === 'My Imports' || g === MY || Object.values(LIB).some(e => e.group === g));
   const SEC = {'My Parts': '⭐ YOURS', 'Basic Shapes & Clay': '🧱 START FROM CLAY + SLIDER MAKERS', 'Heads & Skulls': '🐲 CREATURE PARTS', 'Mech Heads': '🤖 MECH PARTS', 'Mecha Dragon': '🐉 KITS', 'Weapons': '⚔️ GEAR & MAGIC', 'Free Packs (CC0)': '📦 FREE MODEL PACKS'};
   $('grpToggle').textContent = (catsOpen ? '📂 Categories ▴' : '📂 ' + (query ? 'Search results' : gFilter) + '  ▾ (tap for all categories)'); $('groups').style.display = catsOpen ? '' : 'none';
   $('groups').innerHTML = ''; for (const g of groups) { if (SEC[g]) $('groups').append(Object.assign(document.createElement('div'), {className: 'sec', textContent: SEC[g]}));
-    const n = Object.values(LIB).filter(e => g === MY ? e.mine : e.group === g).length, b = document.createElement('button');
+    const n = Object.values(LIB).filter(e => !(lpParts ? e.hasLpv : e.lpv) && (g === MY ? e.mine : e.group === g)).length, b = document.createElement('button');
     b.textContent = g + (n ? ` ${n}` : ''); b.className = !query && g === gFilter ? 'on' : ''; b.onclick = () => { gFilter = g; sFilter = null; query = ''; tagFilter = null; $('search').value = ''; catsOpen = false; manualCat = true; libUI(); }; $('groups').append(b); }
   const subs = [...new Set(Object.values(LIB).filter(e => gFilter === MY ? e.mine : e.group === gFilter).map(e => e.sub))];
   $('subs').innerHTML = ''; if (!query && subs.length > 1) for (const s of [null, ...subs]) { const b = document.createElement('button'); b.textContent = s || 'All'; b.className = s === sFilter ? 'on' : ''; b.onclick = () => { sFilter = s; libUI(); }; $('subs').append(b); }
@@ -537,6 +543,11 @@ function libUI() {
   if (!visibleIds().length && gFilter !== 'Free Packs (CC0)') gr.innerHTML = gFilter === MY ? '<div class="hint">Your own parts land here. Open ⋯ → 🛠 Create Asset (Workshop), build a hand, wing, head… then 💾 Save part.</div>' : '<div class="hint">Nothing here yet.</div>';
 }
 $('grpToggle').onclick = () => { catsOpen = !catsOpen; libUI(); };
+const lpPartsUI = () => { $('bLPParts').textContent = '🔷 Low-poly parts: ' + (lpParts ? 'on' : 'off'); $('bLPParts').classList.toggle('on', lpParts); }; lpPartsUI();
+$('bLPParts').onclick = () => { lpParts = !lpParts; try { localStorage.setItem('mf-lpparts', lpParts ? '1' : '0'); } catch (x) {} lpPartsUI(); libUI(); tip(lpParts ? 'Showing the low-poly version of every part' : 'Showing the normal smooth parts', 2000); };
+$('bLPSwap').onclick = () => { if (!P.parts.length) return tip('Build or load something first'); snap(); const toLow = P.parts.some(p => LIB[p.lib] && LIB[p.lib].hasLpv); let n = 0;
+  for (const p of P.parts) { const e = LIB[p.lib]; const nid = toLow ? e && e.hasLpv : e && e.lpv; if (!nid || !LIB[nid]) continue; p.lib = nid; p.sculpt = null; p.cut = []; p.vpaint = null; p.layer = null; p.keep = null; n++; }
+  rebuildParts(); outliner(); saveCur(); $('bLPSwap').textContent = toLow ? '🔷 Swap back to smooth' : '🔷 Swap my model to low-poly'; tip(n + ' parts swapped to ' + (toLow ? 'low-poly' : 'smooth') + ' (sculpt / brushed paint on them was cleared)', 3000); };
 $('search').oninput = e => { query = e.target.value.trim().toLowerCase(); libUI(); };
 // thumbnails
 let thumbR = null; const thumbCache = {};
