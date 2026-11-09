@@ -120,6 +120,11 @@
   #nav{top:140px}
   body.ws .top h1{display:none} body.ws .top button{padding:5px 7px}
   .bgrp{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:3px 0}.bgrp>span{font:800 10.5px system-ui;letter-spacing:.5px;color:var(--ac);width:100%;margin:4px 2px 0;text-transform:uppercase}.bgrp button{min-height:36px;padding:4px 9px;font-size:13px}
+  .top h1{cursor:pointer}
+  #sections{position:fixed;left:8px;top:52px;z-index:9;background:#24242c;border:1px solid var(--ac);border-radius:12px;padding:6px;display:none;flex-direction:column;gap:4px;min-width:260px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+  #sections.open{display:flex}#sections .sh{font:800 11px system-ui;letter-spacing:2px;color:var(--ac);padding:4px 6px}
+  #sections .sec{display:block;padding:10px;border-radius:9px;background:#2e2e38;color:var(--tx);text-decoration:none;font:700 15px system-ui}#sections .sec.on{outline:2px solid var(--ac)}
+  #sections small{display:block;font:500 12px system-ui;opacity:.65;margin-top:2px}
   details.pick{background:#22222a;border-radius:10px;padding:2px 8px;margin:6px 0}
   details.pick>summary{list-style:none;cursor:pointer;font:700 14px system-ui;padding:10px 2px}details.pick>summary::-webkit-details-marker{display:none}
   details.pick[open]>summary{color:var(--ac2)}
@@ -181,7 +186,7 @@
 <div id="fwin"><div class="bar"><button id="fwSize">Size M</button><button id="fwClose">✕</button></div><div class="cap" id="fwCap"></div></div>
 <div id="ring"></div>
 <div class="top">
-  <button id="bList">☰</button><h1>MYTHIC FORGE</h1>
+  <button id="bList">☰</button><h1 id="bSections" title="Mythic Forge sections">MYTHIC FORGE ▾</h1>
   <span class="sp"></span><button id="bSaveAsset" style="display:none" class="on">💾 Save part</button><button id="bExitWork" style="display:none">↩ Creature</button>
   <button id="bUndo">↶</button><button id="bRedo">↷</button><button id="bPen" title="Stylus mode">✒️</button><button id="bFull" title="Full screen">⤢</button><button id="bMenu">⋯</button>
 </div>
@@ -342,6 +347,12 @@
 </div>
 <div id="vtools"><button id="bFocus" class="on">🔍 Focus</button><button id="bFWin">🪟 Window</button><button id="bVBones">🦴 Bones</button><button id="bVNums"># Numbers</button></div>
 <div id="guide"></div>
+<div id="sections"><div class="sh">MYTHIC FORGE</div>
+  <a class="sec on">🐉 Creature Forge <small>titans, mechs, monsters, parts</small></a>
+  <a class="sec" href="studio/levels.html">🏙 Level Builder <small>buildings, roads, water, sky</small></a>
+  <a class="sec" href="https://claude.ai/artifact/BsrDyk9ZbEmxBoRkitDqEo" target="_blank">✏️ Sketch Pad <small>moving over soon · opens the old Studio</small></a>
+  <a class="sec" href="https://claude.ai/artifact/BsrDyk9ZbEmxBoRkitDqEo" target="_blank">✨ FX Lab <small>moving over soon · opens the old Studio</small></a>
+  <a class="sec" href="https://claude.ai/artifact/BsrDyk9ZbEmxBoRkitDqEo" target="_blank">🎬 Stage <small>moving over soon · opens the old Studio</small></a></div>
 <div id="gest" style="position:fixed;inset:0;pointer-events:none;z-index:6"></div>
 <div id="demoDot" style="position:fixed;z-index:31;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:rgba(255,209,102,.55);border:3px solid #fff;pointer-events:none;display:none;box-shadow:0 0 14px #ffd166"></div>
 <div id="boxZone">📦 Drop here = put in Parts box</div>

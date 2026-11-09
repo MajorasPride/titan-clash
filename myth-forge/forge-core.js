@@ -1889,3 +1889,6 @@ $('bFull').onclick = async () => { try { if (document.fullscreenElement) await d
 document.addEventListener('fullscreenchange', () => { $('bFull').classList.toggle('on', !!document.fullscreenElement); setTimeout(resize, 120); });
 if ($('mHide')) $('mHide').onclick = () => { $('menu').classList.remove('open'); document.body.classList.add('full'); gizmo.detach(); resize(); };
 window.__sc = {open: scOpen, start: id => scStart(LESSONS.find(l => l.id === id)), demo: () => scDemo(SC.L.steps[SC.i][3]), next: () => { SC.i++; scStep(); }, st: () => SC};   // test hooks
+
+// Mythic Forge sections menu (tap the title): Creature Forge (here), Level Builder (studio/levels.html), more moving over from the old Studio
+$('bSections').onclick = e => { e.stopPropagation(); $('sections').classList.toggle('open'); }; document.addEventListener('click', e => { if (!e.target.closest('#sections') && e.target.id !== 'bSections') $('sections').classList.remove('open'); });

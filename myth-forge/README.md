@@ -151,3 +151,7 @@ Looked at how Nomad Sculpt (phone) and Blender sculpt mode do it; he picked all 
 ## Nov 9, 2026 (5:30am): bone levels + default polish
 - `detailBones(bones, lvl)` (before the fit system; `boneDetail` in localStorage `mf-bones`): 'simple' merges straight same-tag chains of spine / tail / neck / armU / extra; 'complex' splits spine / chest / neck / tail bones in two (second half named `<name>_x2<.L|.R>`). Applied in `blankProject` and the body-type buttons. Start › empty body has the `[data-bd]` row.
 - Build together: anything placed on a limb family removes the base_ pieces on that family. bb_tank / bb_walker have `fitKind: 'torso'`. New bodies-more parts: bb_antenna, bb_palp, bb_abdomen, bb_fin, bb_tailfan.
+
+## Nov 9, 2026 (5:50am): Studio merge step 1 — Level Builder
+- `studio/levels.html` = Build Lab copied from the Titan Clash Studio artifact (5814e90a-…, build.html; three.js r128 from CDN, classic scripts) + `studio/studio.js` (shared IndexedDB `titan-studio`). Changes: title / ⌂ link, and when `window.claude` is missing (the website) the send dialog copies `MYTHIC FORGE BUILD (Level Builder) — check my build` + JSON {name, kind, use, note, parts…} to the clipboard; Download file falls back to a normal browser download. In a chat: when he pastes that text, read the parts list (Build Lab part format is in the "Titan Clash Art Tools" Google Doc).
+- Creature Forge: `#bSections` (title) opens `#sections`. Next: shared library between sections, same three.js version (r160), same menu style, then Sketch Pad / FX Lab / Stage.
