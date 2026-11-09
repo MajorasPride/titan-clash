@@ -320,3 +320,23 @@ const _reg = registerMine; registerMine = function (rec) { if (V3X.pendingPlugs 
     for (const pt of P.parts) { const v = views[pt.uid]; if (!v || pt.hidden || !pt.plugs) continue; for (const q of pt.plugs) { const w = new THREE.Vector3(...q.p).applyMatrix4(v.M.matrixWorld), d = new THREE.Vector3(...q.d).transformDirection(v.M.matrixWorld); pl.push({...q, p: r3(w), d: r3(d)}); } }
     V3X.pendingPlugs = pl.length ? pl : null; const as = prompt('Does this part plug into something? (leave empty = no)\n' + PLUG_TYPES.slice(1).join(', '), ''); V3X.pendingAs = as && as.trim() || null; if (V3X.pendingAs && !V3X.pendingPlugs) V3X.pendingPlugs = [];
     await old(); }; })();
+
+// ====================================================================== 🔷 low-poly that looks good (V3): flat facets + a little colour per facet, low-poly twins for kit parts too
+// every low-poly part (🔷 low-poly parts, 🔷 Low-poly look, or parts marked facet) is shown with flat facets; each facet gets a slightly different shade, like polygon art
+const facetCache = new Map();
+function facetGeo(g, amt) { const key = g.uuid + '|' + amt; if (facetCache.has(key)) return facetCache.get(key); const n = g.index ? g.toNonIndexed() : g.clone(); n.computeVertexNormals();
+  const p = n.attributes.position, col = new Float32Array(p.count * 3);
+  for (let t = 0; t < p.count; t += 3) { const cx = (p.getX(t) + p.getX(t + 1) + p.getX(t + 2)) * 7.31, cy = (p.getY(t) + p.getY(t + 1) + p.getY(t + 2)) * 3.17, cz = (p.getZ(t) + p.getZ(t + 1) + p.getZ(t + 2)) * 5.03;
+    const h = Math.abs(Math.sin(cx * 12.9898 + cy * 78.233 + cz * 37.719) * 43758.5453) % 1, v = 1 - amt / 2 + h * amt; for (let k = 0; k < 3; k++) col.set([v, v, v], (t + k) * 3); }
+  n.setAttribute('color', new THREE.BufferAttribute(col, 3)); n.userData.low = true; if (facetCache.size > 600) facetCache.delete(facetCache.keys().next().value); facetCache.set(key, n); return n; }
+let facetAmt = .22; try { const v = localStorage.getItem('mf-facet'); if (v != null) facetAmt = +v; } catch (x) {}
+const _post = V3X.post; V3X.post = pt => { _post(pt); const v = views[pt.uid], e = LIB[pt.lib]; if (!v || !e || colorMode) return; if (!(e.lpv || e.facet || P.fx.lowpoly) || pt.sculpt || pt.vpaint || pt.layer) return;
+  v.meshes.forEach(m => { if (m.userData.mi == null || !m.geometry.attributes.position) return; const mk = (m.material.userData || {}).key || ''; const fxm = mk === 'glow' || (MATS.LIST.find(l => l[0] === mk) || [])[7] && (MATS.LIST.find(l => l[0] === mk)[7].fx || MATS.LIST.find(l => l[0] === mk)[7].emissive);
+    if (fxm) { m.geometry = facetGeo(m.geometry, 0); return; } m.geometry = facetGeo(m.geometry, facetAmt); const c = m.material.clone(); c.onBeforeCompile = m.material.onBeforeCompile; c.customProgramCacheKey = m.material.customProgramCacheKey; c.vertexColors = true; c.flatShading = true; c.needsUpdate = true; m.material = c; }); };
+// low-poly twins for the kit parts made with sliders, and hand-made polygon-art twins for the jellyfish
+for (const id of Object.keys(LIB)) { const e = LIB[id]; if (!e.params || !e.makeP || e.lpv || e.hasLpv || !(e.tags || []).includes('kit')) continue;
+  LIB['lpv_' + id] = {...e, id: 'lpv_' + id, name: e.name + ' (low-poly)', lpv: id, tags: [...(e.tags || []), 'low poly'], makeP: q => pieces(id, q).map(pc => ({geo: lowpolyGeo(pc.geo, 2), mat: pc.mat, num: pc.num})), make: () => pieces(id).map(pc => ({geo: lowpolyGeo(pc.geo, 2), mat: pc.mat, num: pc.num})), _p: undefined}; e.hasLpv = 'lpv_' + id; }
+for (const [a, b] of [['kj_bell', 'kj_bell_lp'], ['kj_tentacle', 'kj_ribbon_lp'], ['kj_oral', 'kj_oral_lp']]) if (LIB[a] && LIB[b]) { LIB[a].hasLpv = b; }
+// 🔷 facet shading slider (View tab › Low-poly look row)
+(() => { const b = $('bLowLook'); if (!b) return; const r = document.createElement('div'); r.className = 'row'; r.innerHTML = '<span class="hint" style="margin:0">🔷 Facet shading</span><input type="range" id="sFacet" min="0" max=".5" step=".02" style="flex:1">'; b.parentElement.after(r);
+  $('sFacet').value = facetAmt; $('sFacet').oninput = e => { facetAmt = +e.target.value; try { localStorage.setItem('mf-facet', facetAmt); } catch (x) {} rebuildParts(); }; })();

@@ -58,6 +58,9 @@
   // 👁 Beholder: a floating orb with one big eye and a crown of eye stalks
   const bh = []; for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2, c = Math.cos(a), s = Math.sin(a); bh.push(...chain('stalk' + i, 'orb', [[s * 1.4, 8.6, c * 1.2 - .6], [s * 2.2, 10.0, c * 2.0 - .8], [s * 2.6, 11.2, c * 2.4 - .6]], 'extra')); }
   T.beholder = {name: 'Beholder (orb + eye stalks)', bones: [['orb', null, [0, 4.6, 0], [0, 8.6, 0], 'chest'], ['head', 'orb', [0, 6.4, 1.6], [0, 7.4, 2.0], 'head', {up: 1}], ['jaw', 'head', [0, 5.4, 1.8], [0, 5.0, 2.8], 'jaw', {up: 1}], ...bh]};
+  // 🟩 Blocky slime (block-game feel) and a low-poly jellyfish (same bones as the jellyfish, polygon-art parts)
+  T.slime = {name: 'Blocky slime (cube)', bones: [['core', null, [0, 0, 0], [0, 1.6, 0], 'spine'], ['top', 'core', [0, 1.6, 0], [0, 3.2, 0], 'chest']]};
+  T.jellyfish_lp = {name: 'Jellyfish (low-poly art)', bones: T.jellyfish.bones.map(b => b.slice())};
   // ---- 🧬 mix halves: any front half + any back half (four-legged family), see forge-v3.js
   window.FORGE_HALVES = ['quad', 'dragon', 'sphinx', 'chimera', 'hippogriff', 'centaur', 'hydra', 'turtle'];
   // defaults for Build together / ⭐ default builds of the new body types (step title -> part id)
@@ -73,5 +76,7 @@
     turtle2: {Body: 'kc_shell_snapper', Neck: 'bd_neck_bull', Head: 'kh_turtle', Arms: 'bd_arm_kaiju', Hands: 'kl_palm_kaiju', Legs: 'bd_leg_pillar', 'Tail / tentacles': 'kl_tailseg_plated'},
     hippogriff: {Body: 'bb_horse', Neck: 'bd_neck_bird', Head: 'kh_bird', Legs: 'bd_leg_beast', Wings: 'kw_feather_simple', 'Tail / tentacles': 'tw_tail_whip'},
     ooze: {Body: 'ko_goo', 'Extra limbs': 'ko_pod', 'Goo face': 'ko_face_wrong', Mouths: 'ko_mouth_toothy', Swallowed: 'ko_vic_skull'},
+    slime: {Body: 'kv_slime_green', Swallowed: 'kv_slime_mini'},
+    jellyfish_lp: {Body: 'kj_bell_lp', 'Tail / tentacles': 'kj_ribbon_lp', 'Extra limbs': 'kj_oral_lp'},
     beholder: {Body: 'ko_orb', Head: 'kp_eye_big', 'Extra limbs': 'ko_eyestalk', Eyes: 'kp_eye_round', Mouths: 'ko_mouth_toothy'}};
 })();

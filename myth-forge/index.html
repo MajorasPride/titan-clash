@@ -435,7 +435,7 @@ for (const reg of (window.FORGE_PARTS || [])) { try { for (const p of reg(THREE,
 // 🔷 low-poly versions of every body / mech / gear part (Nov 9): lpv_<id>, same group + body slot, faceted with fewer polygons (mech parts a bit finer so they keep their shape)
 const LP_SKIP = /^(Base Body|Basic Shapes & Clay|Part Makers \(sliders\)|Free Packs \(CC0\)|My Imports|My Parts|Low-Poly Builds)$/;
 for (const id of Object.keys(LIB)) { const e = LIB[id]; if (LP_SKIP.test(e.group) || e.params || e.lowpoly) continue; const lv = /^Mech |Mecha Dragon/.test(e.group) ? 4 : 2;
-  LIB['lpv_' + id] = {...e, id: 'lpv_' + id, name: e.name + ' (low-poly)', lpv: id, tags: [...(e.tags || []), 'low poly'], make: () => pieces(id).map(pc => ({geo: lowpolyGeo(pc.geo, lv), mat: pc.mat})), _p: undefined};
+  LIB['lpv_' + id] = {...e, id: 'lpv_' + id, name: e.name + ' (low-poly)', lpv: id, tags: [...(e.tags || []), 'low poly'], make: () => pieces(id).map(pc => ({geo: lowpolyGeo(pc.geo, lv), mat: pc.mat, num: pc.num})), _p: undefined};
   e.hasLpv = 'lpv_' + id; }
 let lpParts = false; try { lpParts = localStorage.getItem('mf-lpparts') === '1'; } catch (x) {}
 const genCache = new Map();
@@ -601,8 +601,9 @@ function dripTick(dt) { const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion
 const LOWLV = ['off', 'light', 'chunky', 'very chunky'], lowCache = new Map();
 function lowpolyGeo(g, lv) { const key = g.uuid + '|' + lv; if (lowCache.has(key)) return lowCache.get(key);
   g.computeBoundingBox(); const bb = g.boundingBox, diag = bb.max.distanceTo(bb.min) || 1, cell = diag / [0, 16, 10, 6, 26][lv];
+  const sz = bb.getSize(new THREE.Vector3()), thin = window.MF_V3 ? [sz.x, sz.y, sz.z].map(e => e < cell * 2 ? Math.max(1e-4, e / 3) : cell) : [cell, cell, cell];   // V3: thin parts (wings, fins, panels) keep both faces
   const p = g.attributes.position, extra = ['color', 'lmask'].filter(a => g.attributes[a]), cid = new Map(), sums = [], ids = new Int32Array(p.count);
-  for (let i = 0; i < p.count; i++) { const k = Math.round(p.getX(i) / cell) + ',' + Math.round(p.getY(i) / cell) + ',' + Math.round(p.getZ(i) / cell); let c = cid.get(k);
+  for (let i = 0; i < p.count; i++) { const k = Math.round(p.getX(i) / thin[0]) + ',' + Math.round(p.getY(i) / thin[1]) + ',' + Math.round(p.getZ(i) / thin[2]); let c = cid.get(k);
     if (c == null) { c = sums.length; cid.set(k, c); sums.push({n: 0, p: [0, 0, 0], e: extra.map(a => new Array(g.attributes[a].itemSize).fill(0))}); }
     const s = sums[c]; s.n++; s.p[0] += p.getX(i); s.p[1] += p.getY(i); s.p[2] += p.getZ(i); extra.forEach((a, j) => { const A = g.attributes[a]; for (let q = 0; q < A.itemSize; q++) s.e[j][q] += A.array[i * A.itemSize + q]; }); ids[i] = c; }
   const I = g.index ? g.index.array : [...Array(p.count).keys()], pos = [], ex = extra.map(() => []);
@@ -1992,7 +1993,7 @@ if (window.MF_V2) {
     angel: {Body: 'bd_torso_brawler', Neck: 'bd_neck_bull', Head: 'hd_head_eagle', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', Legs: 'bd_leg_beast', Wings: 'sx_wing_feather'}};
   const DEF_MECH = {Body: null, Neck: 'mn_neck_piston', Head: 'mk_head_vcrest', Arms: 'mk_arm_full', Hands: 'mk_hand_fist', Legs: 'mk_leg_full', Feet: 'mk_foot_armored', Wings: 'tw_wing_mech', 'Tail / tentacles': 'tw_tail_plated', 'Armor + extras': 'mk_sh_round'};
   const DEF_MECH_SK = {walker: {Head: 'mk_head_camera', Arms: 'mk_arm_missile', Legs: 'mk_leg_chicken'}, tank: {Head: 'mk_head_monoeye', Hands: 'mk_hand_claw'}};
-  const defFor = st => { const t = st.t; if (window.MF_V3) { const v = window.V3.defFor(P.skel, t, BT.style, BT.level); if (v !== undefined) return v && LIB[v] ? v : null; } let id = BT.style === 'mech' ? (t === 'Body' ? fitsFor()[0] : {...DEF_MECH, ...(DEF_MECH_SK[P.skel] || {})}[t]) : (DEF[P.skel] || {})[t];
+  const defFor = st => { const t = st.t; if (window.MF_V3) { const v = window.V3.defFor(P.skel, t, BT.style, BT.level); if (v !== undefined) return v && LIB[v] ? (lpParts && LIB[v].hasLpv ? LIB[v].hasLpv : v) : null; } let id = BT.style === 'mech' ? (t === 'Body' ? fitsFor()[0] : {...DEF_MECH, ...(DEF_MECH_SK[P.skel] || {})}[t]) : (DEF[P.skel] || {})[t];
     if (!id && BT.style !== 'mech' && t === 'Body') id = fitsFor()[0]; return id && LIB[id] ? (lpParts && LIB[id].hasLpv ? LIB[id].hasLpv : id) : null; };
   const MECHY = id => /^(mk_|md_|bb_tank|bb_walker)/.test(id);
   const fitsFor = () => { let L = (BODY_FOR[P.skel] || []).filter(id => LIB[id]); const f = BT.style === 'mech' ? L.filter(MECHY) : BT.style === 'creature' ? L.filter(id => !MECHY(id)) : L; return f.length ? f : L; };

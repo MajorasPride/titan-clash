@@ -10,7 +10,9 @@
     ['fleshraw', 'Raw flesh', 'Horror', 'octopus', 0xb04a4a, .45, 0, {}], ['gore', 'Wet gore', 'Horror', 'plain', 0x7a0a10, .15, .1, {}], ['muscle', 'Exposed muscle', 'Horror', 'bark1', 0xa83a3a, .5, 0, {}],
     ['bonedirty', 'Old bone', 'Horror', 'plain', 0xd8ccb0, .7, 0, {}], ['vein', 'Pulsing veins', 'Horror', 'plain', 0x6a1020, .4, 0, {emissive: 0x6a0010, emissiveIntensity: .6}]);
   const mk = M.makeMat;   // paint by number colours: material key 'col:#rrggbb'
-  M.makeMat = function (T, key, tint, tile) { if (typeof key === 'string' && key.startsWith('col:')) { const m = new T.MeshStandardMaterial({color: new T.Color(key.slice(4)), roughness: .6, metalness: 0, side: T.DoubleSide}); m.userData.key = key; return m; } return mk.call(this, T, key, tint, tile); };
+  M.makeMat = function (T, key, tint, tile) { if (typeof key === 'string' && key.startsWith('col:')) { const [hex, fl = ''] = key.slice(4).split(':');   // flags: g = glows a little, c = see-through, s = shiny
+    const m = new T.MeshStandardMaterial({color: new T.Color(hex), roughness: fl.includes('s') ? .25 : .6, metalness: 0, side: T.DoubleSide, transparent: fl.includes('c'), opacity: fl.includes('c') ? .72 : 1});
+    if (fl.includes('g')) { m.emissive = new T.Color(hex); m.emissiveIntensity = .35; } if (tint && tint !== '#ffffff') m.color.multiply(new T.Color(tint)); m.userData.key = key; return m; } return mk.call(this, T, key, tint, tile); };
 })();
 (window.FORGE_PARTS = window.FORGE_PARTS || []).push(function (T, K) {
   const X = window.makeKit(T, K), {loft, ell, spike, claw, at, merge, plug, pair, P, V3, orient} = X, out = [];
