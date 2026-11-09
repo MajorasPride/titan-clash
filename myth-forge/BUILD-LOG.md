@@ -11,6 +11,13 @@ Deeper technical notes for Claude are in `README.md` (same folder).
 - **Still open from before:** more Lynocs skins (item 6 below); merge the rest of Titan Clash Studio (Sketch Pad, FX Lab, Stage) into Mythic Forge (item 5); dragon / bat wing reads as a thin spar from some angles.
 - **His design rules:** original designs only (inspired by, never copies — no show / card / game character copies, no brand names); everything gets a low-poly version that looks good (faceted, polygon-art); oozes are unique and can grow their own face; jellyfish have no face; multi-head creatures are built head by head; never put his real name in the repo (MajorasPride).
 
+## Nov 9 2026 (1:40pm, live + test): naga round 2 + 👁 View button ("everything, just do everything")
+- **Naga heads:** new shaped humanoid face (cheekbones, brow, nose, lips, chin, slit-pupil eyes, fin ears) in 4 styles — long hair, serpent crown (small snakes instead of hair), topknot, scaled crest. Heads with hair are sized + seated by the face only (`fitBox` on the part), so long hair no longer shrinks or lifts the head.
+- **Naga arm (slim, bracer)** — toned arm with a gold bracer; nagas use it (low beast keeps the brawler arms). Human torso got shoulder caps so arms join cleanly.
+- **Naga — four arms** body type (second pair of arms under the first), default build with the topknot head.
+- **👁 View** button: Window, bones, numbers and 🔌 Plugs now fold under one button; on screen stay 🔍 Focus, 🔗 Joint, 🗑 Remove part, 👁 View.
+- Still to check with him: coil can show a little twist where it rises out of the coil; dark spots there are its own shadow.
+
 ## Nov 9 2026 (1:15pm, live + test): 🐍 nagas rebuilt — one-piece snake body that bends
 - He said the naga "looks like ass" (coil base + snake segments + a tail stacked on top of each other) and wants ONE snake body like the tail, feeling like his reference minis (coiled / rearing S / low with a long tail). He picked: bends with the bones + both upper bodies.
 - **🐍 Snake body (one piece, bends)** + **(spiked back)** (Tails › 🐍 Snake bodies, `parts/snake-body.js`, `window.MF_SNAKE`): a single smooth mesh from the tail tip into the waist, made from the creature's own tail bones and rebuilt whenever they move (posing, idle/walk preview) — `fitKind: 'snake'`, `live: 'snake'`; core `livePts`, `livePieces`, `liveTick` (~14 fps, lighter mesh while animating). Belly plates follow the ground when it lies flat and face forward where it rears up; domed scales in offset rows on the back; Size = thickness. Drop it on any tail bone or the body: it takes the whole tail chain that carries the body (else the longest tail).

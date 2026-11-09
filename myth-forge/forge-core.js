@@ -414,7 +414,7 @@ const MAIN_KINDS = new Set(['torso', 'head', 'jaw', 'limb', 'neck', 'tail', 'win
 const mainOn = (bone, not) => P.parts.find(p => p !== not && p.bone === bone && p.fit && MAIN_KINDS.has(p.fit.kind) && !p.boxed);
 function fitPart(lib, bone) {
   const e = LIB[lib], kind = kindOf(e); if (!kind || kind === 'decor' || !bone || !boneRow(bone)) return null;
-  const B = bodyInfo(), R = B.R, W = B.W, bx = partBoxOf(lib), pw = Math.max(.05, bx.max.x - bx.min.x), pd = Math.max(.05, bx.max.z - bx.min.z);
+  const B = bodyInfo(), R = B.R, W = B.W, bx = e.fitBox ? new THREE.Box3(new THREE.Vector3(...e.fitBox[0]), new THREE.Vector3(...e.fitBox[1])) : partBoxOf(lib), pw = Math.max(.05, bx.max.x - bx.min.x), pd = Math.max(.05, bx.max.z - bx.min.z);
   const plen = Math.max(.05, bx.max.y - Math.max(0, bx.min.y)), thick = (pw + pd) / 2, tag = R[bone][4];
   const out = {bone, p: [0, 0, 0], r: [0, 0, 0], s: 1, l: 1, fit: {kind, drop: bone, cover: [bone]}};
   const stretch = (len, T, lo = .5, hi = 2.2) => { let s = T / thick, l = len / (plen * s); if (l > hi) { l = hi; s = len / (plen * l); } if (l < lo) { l = lo; s = len / (plen * l); } s = Math.min(4, Math.max(.15, s)); return [+s.toFixed(3), +(len / (plen * s)).toFixed(3)]; };
@@ -1189,6 +1189,8 @@ let focusOn = false;
 $('bFocus').onclick = () => { if (!$('bFocus').isConnected) return; if (!sel) return tip('Tap a part first'); focusOn = !focusOn; soloUid = focusOn ? sel : null; showBones = !focusOn; boneHelpers.forEach(h => h.visible = showBones);
   rebuildParts(); outliner(); if (focusOn) { frameObj(views[sel].G, 1.9); tip('Focus: only this part. Sculpt / paint / move it, then tap Focus again', 3500); } else frameAll(); $('bFocus').textContent = focusOn ? '↩ Back to whole creature' : '🔍 Focus on this part'; };
 
+// ---- 👁 View: the less-used view buttons (Window, bones, numbers, plugs) fold under one button so the screen stays calm
+$('bView').onclick = () => { const o = $('vtools').classList.toggle('open'); $('bView').textContent = o ? '👁 View ▴' : '👁 View ▾'; };
 // ---- 🔗 Joint view: shows ONLY the picked part + what it connects to (head + its neck + its jaw, a hand + its arm…),
 // zoomed on the joint between them, other bones hidden — so you can see if a part sits right without the rest of the creature in the way.
 const coverOf = q => { const c = new Set((q.fit && q.fit.cover) || []); if (q.bone) c.add(q.bone); return c; };
@@ -1658,7 +1660,7 @@ if (window.MF_V2) {
   const BODY_FOR = {biped: ['bd_torso_brawler', 'bd_torso_dragon', 'bd_torso_round', 'kj_chest'], kaiju: ['bd_torso_dragon', 'bd_torso_brawler', 'kj_chest'], theropod: ['bd_torso_dragon', 'dn_body'],
     mech: ['mk_torso_hero', 'mk_torso_siege', 'mk_torso_slim', 'mk_torso_cockpit', 'mk_torso_barrel', 'mk_torso_frame'], walker: ['bb_walker', 'mk_torso_cockpit'], tank: ['bb_tank', 'mk_torso_siege'],
     quad: ['bb_beast', 'bb_lion', 'bd_torso_dragon'], sphinx: ['bb_lion', 'bb_beast'], centaur: ['bb_horse', 'bb_beast'], dragon: ['bd_torso_dragon', 'md_chest', 'bb_beast'], hydra: ['bd_torso_dragon', 'bb_beast'],
-    wyvern: ['bd_torso_dragon', 'bb_bird'], bird: ['bb_bird'], serpent: ['bb_snakeseg', 'bb_snake', 'bd_torso_naga'], naga: ['sk_torso_naga', 'sk_torso_nagabeast'], naga_coil: ['sk_torso_naga', 'sk_torso_nagabeast'], naga_low: ['sk_torso_nagabeast', 'sk_torso_naga'], fish: ['bb_fish', 'kr_mantle'], octopus: ['kr_mantle', 'bd_torso_slug'],
+    wyvern: ['bd_torso_dragon', 'bb_bird'], bird: ['bb_bird'], serpent: ['bb_snakeseg', 'bb_snake', 'bd_torso_naga'], naga: ['sk_torso_naga', 'sk_torso_nagabeast'], naga_coil: ['sk_torso_naga', 'sk_torso_nagabeast'], naga_four: ['sk_torso_naga', 'sk_torso_nagabeast'], naga_low: ['sk_torso_nagabeast', 'sk_torso_naga'], fish: ['bb_fish', 'kr_mantle'], octopus: ['kr_mantle', 'bd_torso_slug'],
     spider: ['bd_torso_spider', 'bd_torso_thorax'], crab: ['bd_torso_crab'], insect: ['bd_torso_thorax', 'bd_torso_spider'], scorpion: ['bb_scorpion', 'bd_torso_crab'], moth: ['mo_body', 'mo_torso_furry'], centipede: ['cp_segment'],
     slim: ['bd_torso_brawler', 'sp_torso_gaunt', 'mo_torso_furry'], brute: ['bd_torso_brawler', 'bd_torso_round', 'bd_torso_bloated'], gorilla: ['bd_torso_brawler', 'bd_torso_round', 'mo_torso_furry'],
     fourarm: ['bd_torso_brawler', 'sp_torso_gaunt'], angel: ['bd_torso_brawler', 'sp_torso_gaunt'], blob: ['bb_blob', 'bd_torso_slug', 'bd_torso_bloated'], treefolk: ['tf_trunk', 'tf_trunk_hunch']};
@@ -1675,8 +1677,9 @@ if (window.MF_V2) {
     wyvern: {Body: 'bd_torso_dragon', Neck: 'bd_neck_dragon', Head: 'hd_head_wyvern', Legs: 'bd_leg_dragon', Wings: 'tw_wing_bat', 'Tail / tentacles': 'tw_tail_whip'},
     bird: {Body: 'bb_bird', Neck: 'bd_neck_bird', Head: 'hd_head_eagle', Legs: 'bd_leg_bird', Wings: 'sx_wing_feather', 'Tail / tentacles': 'bb_tailfan'},
     serpent: {Body: 'bb_snakeseg', Head: 'hd_head_seaserpent'},
-    naga: {Body: 'sk_torso_naga', Neck: 'sk_neck_naga', Head: 'sk_head_naga', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', 'Tail / tentacles': 'sk_snake'},
-    naga_coil: {Body: 'sk_torso_naga', Neck: 'sk_neck_naga', Head: 'sk_head_naga', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', 'Tail / tentacles': 'sk_snake'},
+    naga: {Body: 'sk_torso_naga', Neck: 'sk_neck_naga', Head: 'sk_head_naga_long', Arms: 'sk_arm_naga', Hands: 'bd_hand_clawed', 'Tail / tentacles': 'sk_snake'},
+    naga_coil: {Body: 'sk_torso_naga', Neck: 'sk_neck_naga', Head: 'sk_head_naga_crown', Arms: 'sk_arm_naga', Hands: 'bd_hand_clawed', 'Tail / tentacles': 'sk_snake'},
+    naga_four: {Body: 'sk_torso_naga', Neck: 'sk_neck_naga', Head: 'sk_head_naga_topknot', Arms: 'sk_arm_naga', Hands: 'bd_hand_clawed', 'Tail / tentacles': 'sk_snake'},
     naga_low: {Body: 'sk_torso_nagabeast', Neck: 'bd_neck_serpent', Head: 'hd_head_cobra', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', 'Tail / tentacles': 'sk_snake_spiked'},
     spider: {Body: 'bd_torso_thorax', Head: 'hd_head_spider', Arms: 'bb_palp', Legs: 'bd_leg_spider', 'Tail / tentacles': 'bb_abdomen'},
     crab: {Body: 'bd_torso_crab', Neck: 'hd_eye_stalk', Head: 'hd_head_crab', Arms: 'bd_arm_crab', Hands: 'bd_hand_crab', Legs: 'bd_leg_insect'},

@@ -144,7 +144,7 @@ V3X.dropMoved = (pt, x, y) => { const want = plugAsOf(LIB[pt.lib]); if (!want) {
   if (best.used && best.used !== pt) removeParts([best.used]); pt.host = {u: best.h.uid, k: best.pl.id}; pt.ps = 1; seat(pt); buildPart(pt); const tw = twinOf(pt); if (tw) { tw.twin = null; pt.twin = null; }
   tip('🔌 Plugged into the ' + (PLUG_NAMES[best.pl.t] || best.pl.t), 1600); return true; };
 // on-screen 🔌 button (next to 🔍 Focus): show every plug
-(() => { const vt = $('vtools'); if (!vt) return; const b = document.createElement('button'); b.id = 'bPlugs'; b.innerHTML = '🔌 Plugs'; vt.appendChild(b);
+(() => { const vt = $('vtools'); if (!vt) return; const b = document.createElement('button'); b.id = 'bPlugs'; b.className = 'vx'; b.innerHTML = '🔌 Plugs'; vt.appendChild(b);
   const ui = () => b.classList.toggle('on', plugAlways); ui();
   b.onclick = () => { plugAlways = !plugAlways; try { localStorage.setItem('mf-plugs', plugAlways ? '1' : '0'); } catch (x) {} if (plugAlways) showPlugs(true); else clearDots(); ui();
     tip(plugAlways ? '🔌 Blue dots = free plugs, orange = something is plugged in. Drag a part onto a dot.' : 'Plug dots hidden', 2600); };
@@ -173,7 +173,7 @@ const KIT_TAIL = {kaiju: 'kl_tailseg_scaly', biped: 'kl_tailseg_scaly', theropod
 const KIT_TIP = {dragon: 'kl_tip_spade', wyvern: 'kl_tip_stinger', hydra: 'kl_tip_spade', hydra2: 'kl_tip_spade', scorpion: 'kl_tip_stinger', chimera: 'kl_tip_snakehead', sphinx: 'kl_tip_tuft', quad: 'kl_tip_tuft', fish: 'kl_tip_fin', kaiju: null, biped: null, wasp: 'kl_tip_stinger'};
 const KIT_BACK = {kaiju: 'kl_back_crystal', biped: 'kl_back_plate', dragon: 'kl_back_spike', hydra: 'kl_back_spike', hydra2: 'kl_back_spike', turtle: 'kl_back_spike', turtle2: 'kl_back_spike', theropod: null};
 V3X.defFor = (skel, t, style, level) => { const cx = level !== 'simple', mech = style === 'mech';
-  if (/^naga/.test(skel) && !mech && ['Body', 'Head', 'Tail / tentacles', 'Neck'].includes(t)) { const d = ((window.MF_DEF_CORE || {})[skel] || {})[t]; if (d !== undefined) return d; }   // 🐍 nagas: one-piece snake body + naga torsos/heads
+  if (/^naga/.test(skel) && !mech && ['Body', 'Head', 'Tail / tentacles', 'Neck', 'Arms', 'Hands'].includes(t)) { const d = ((window.MF_DEF_CORE || {})[skel] || {})[t]; if (d !== undefined) return d; }   // 🐍 nagas: one-piece snake body + naga torsos/heads
   // custom per-skeleton defaults (new body types)
   const kitMain = cx && !mech && ({Head: KIT_HEAD, Hands: KIT_HAND, Feet: KIT_FOOT, 'Tail / tentacles': KIT_TAIL}[t] || {})[skel]; if (kitMain) return kitMain;
   if (cx && !mech && (t === 'Legs' && KIT_FOOT[skel] || t === 'Arms' && KIT_HAND[skel] && !/mantis|wasp|uprightbug/.test(skel))) { const m = /paw/.test(KIT_FOOT[skel] || '') ? 'fur' : /human/.test((t === 'Arms' ? KIT_HAND : KIT_FOOT)[skel] || '') ? 'skin' : 'scaly'; return 'kl_limb_' + m + (t === 'Arms' ? '_arm' : ''); }

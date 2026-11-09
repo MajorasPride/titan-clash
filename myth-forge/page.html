@@ -118,6 +118,7 @@
   #vtools button{min-height:36px;padding:4px 10px;font-size:13px;background:rgba(40,40,50,.88);max-width:46vw}
   #vtools button.on{background:rgba(40,40,50,.88);color:var(--tx);border-color:#4c4c58}
   #btResume{position:fixed;left:50%;transform:translateX(-50%);top:62px;z-index:6;min-height:44px;padding:6px 16px;font-size:15px;font-weight:700;background:var(--ac);color:#141414;border:0;border-radius:22px;box-shadow:0 4px 14px #0008;max-width:92vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #vtools:not(.open) .vx{display:none} #vtools .vx{font-size:12px;min-height:32px;opacity:.95}
   #vtools button.lit{border-color:var(--ac,#ff8c32);color:#ffb070}
   #nav{top:140px}
   body.ws .top h1{display:none} body.ws .top button{padding:5px 7px}
@@ -349,7 +350,7 @@
     <div class="row"><button data-bg="studio" class="on">Studio</button><button data-bg="neon">Neon city night</button><button data-bg="day">Daylight</button><button data-bg="hell">Hellfire</button><button data-bg="void">Void</button></div>
   </div>
 </div>
-<div id="vtools"><button id="bFocus" class="on">🔍 Focus</button><button id="bFWin">🪟 Window</button><button id="bJoint">🔗 Joint</button><button id="bTrash">🗑 Remove part</button><button id="bVBones">🦴 Bones</button><button id="bVNums"># Numbers</button></div>
+<div id="vtools"><button id="bFocus" class="on">🔍 Focus</button><button id="bJoint">🔗 Joint</button><button id="bTrash">🗑 Remove part</button><button id="bView">👁 View ▾</button><button id="bFWin" class="vx">🪟 Window</button><button id="bVBones" class="vx">🦴 Bones</button><button id="bVNums" class="vx"># Numbers</button></div>
 <div id="guide"></div>
 <div id="sections"><div class="sh">MYTHIC FORGE</div>
   <a class="sec on">🐉 Creature Forge <small>titans, mechs, monsters, parts</small></a>

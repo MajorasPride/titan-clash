@@ -59,6 +59,7 @@
   T.naga = naga('Naga — rearing S (snake body)', [[1.5, .5, -6.5], [2.2, .55, -4.6], [1, .6, -3.2], [-.6, .7, -2.4], [-1.2, .9, -1], [-.6, 1.6, .2], [0, 2.8, .5], [0, 4, .3]]);
   T.naga_coil = naga('Naga — coiled (snake body)', [[-2.8, .5, -1], [-2.2, .55, -3], [0, .6, -3.9], [2.3, .65, -2.9], [2.8, .7, -.6], [1.6, .8, 1.2], [-.4, .9, 1.4], [-1.4, 1.2, .2], [-.9, 1.9, -.6], [0, 3, -.2], [0, 4, .3]]);
   T.naga_low = naga('Naga — low, long tail (beast)', [[1.8, .4, -10], [1.2, .5, -8], [.2, .6, -6], [-.6, .7, -4], [-.8, .9, -2.2], [-.2, 1.4, -.6], [0, 2.6, .2], [0, 4, .3]]);
+  T.naga_four = {name: 'Naga — four arms (snake body)', bones: [...T.naga.bones, ...arms(6.5, .82, .85, 'chest', 'B')]};
   T.walker = {name: 'Mech walker (reverse knees)', bones: [['hips', null, [0, 6, 0], [0, 7.2, 0], 'spine'], ['chest', 'hips', [0, 7.2, 0], [0, 8.6, .2], 'chest'], ['head', 'chest', [0, 8.6, .4], [0, 9.6, .8], 'head', {up: 1}],
     ...both([['thigh', 'hips', [1, 6, 0], [1.4, 4.2, 1.6], 'legU'], ['shin', 'thigh#', [1.4, 4.2, 1.6], [1.4, 1.4, -.8], 'legL'], ['foot', 'shin#', [1.4, 1.4, -.8], [1.4, 0, .6], 'foot'], ['gun', 'chest', [1.6, 8, .2], [2.6, 8, 2.4], 'armF']])]};
   T.tank = {name: 'Tank base + upper body', bones: [['base', null, [0, 0, -1.5], [0, 0, 1.5], 'spine'], ['hips', 'base', [0, 2.6, 0], [0, 3.6, 0], 'spine'], ['chest', 'hips', [0, 3.6, 0], [0, 6, .2], 'chest'],

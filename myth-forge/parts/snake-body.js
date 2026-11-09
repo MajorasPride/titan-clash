@@ -67,8 +67,9 @@
     out.push({id: 'sk_torso_naga', group: 'Torsos & Bellies', sub: '🐍 Naga', name: 'Naga torso (human-style)', fitKind: 'torso', tags: ['naga', 'lamia', 'humanoid', 'slim', 'snake'],
       make: () => { const body = K.noise(torso(humanProf, .72), .012, 2), m = [body];
         for (const sd of [-1, 1]) { m.push(K.at(ell(.42, .3, .2), sd * .42, 3.25, .62, 0, 0, sd * .15));   // chest
-          m.push(K.at(ell(.22, .4, .14), sd * .78, 2.2, .45, 0, 0, sd * -.3)); }                            // obliques
-        for (const y of [1.75, 2.15, 2.55]) for (const sd of [-1, 1]) m.push(K.at(ell(.17, .15, .05), sd * .18, y, .6, 0, 0, 0));   // abs
+          m.push(K.at(ell(.22, .4, .14), sd * .78, 2.2, .45, 0, 0, sd * -.3));                             // obliques
+          m.push(K.at(ell(.5, .42, .46), sd * 1.12, 3.72, 0, 0, 0, sd * -.35)); }                         // shoulder caps (arms join here)
+        for (const y of [1.75, 2.15, 2.55]) for (const sd of [-1, 1]) m.push(K.at(ell(.16, .14, .035), sd * .17, y, .6, 0, 0, 0));   // abs
         return [{geo: K.merge(m.map(g => g.index ? g.toNonIndexed() : g)), mat: 'skin'}, {geo: scaleRing(.93, .25, 4, .74, .32), mat: 'scale'}]; }});
     out.push({id: 'sk_torso_nagabeast', group: 'Torsos & Bellies', sub: '🐍 Naga', name: 'Naga torso (beast, scaled)', fitKind: 'torso', tags: ['naga', 'snake', 'beast', 'muscle', 'scales', 'serpent warrior'],
       make: () => { const body = K.noise(torso(beastProf, .74), .025, 3), m = [body], plates = [], sp = [];
@@ -81,16 +82,38 @@
       make: () => { const n = K.lathe([[.001, 0], [.62, 0], [.5, .25], [.4, .7], [.37, 1.2], [.36, 1.7], [.001, 1.72]], 32).scale(1, 1, .88), m = [n];
         for (const sd of [-1, 1]) m.push(K.at(new T.CylinderGeometry(.09, .12, 1.3, 10), sd * .22, .75, .2, -.25, 0, sd * .35));   // neck muscles
         return [{geo: K.merge(m), mat: 'skin'}]; }});
-    // humanoid naga head: smooth face, brow, nose, slit-pupil eyes, small fin-ears and a scaled crest down the back (original)
-    out.push({id: 'sk_head_naga', group: 'Heads & Skulls', sub: '🐍 Naga', name: 'Naga warrior head (humanoid)', tags: ['naga', 'lamia', 'humanoid', 'face', 'snake', 'crest'],
-      make: () => { const skull = K.lathe([[.001, 0], [.42, .05], [.6, .45], [.72, 1.0], [.74, 1.45], [.62, 1.85], [.38, 2.08], [.001, 2.15]], 40).scale(1, 1, 1.12).translate(0, .15, .1);
-        const face = [skull, K.at(ell(.5, .55, .35), 0, .55, .55, 0, 0, 0), K.at(ell(.62, .14, .3), 0, 1.22, .62, 0, 0, 0)];   // jaw / chin, brow
-        face.push(K.at(new T.ConeGeometry(.12, .42, 10).scale(1, 1, .8), 0, .95, .92, 1.25, 0, 0));                                   // nose
-        for (const sd of [-1, 1]) face.push(K.at(ell(.07, .26, .2), sd * .74, 1.05, .1, 0, 0, sd * .3));                            // fin ears
-        const eyes = [], pupils = [], crest = [];
-        for (const sd of [-1, 1]) { eyes.push(K.at(ell(.16, .11, .08), sd * .3, 1.06, .78, 0, sd * .25, 0)); pupils.push(K.at(ell(.025, .09, .03), sd * .31, 1.06, .85, 0, sd * .25, 0)); }
-        for (let i = 0; i < 8; i++) { const a = -.2 + i * .28, y = 1.95 - i * .22, z = -.2 - i * .13; crest.push(K.at(ell(.3 - i * .02, .22, .07), 0, y, z, a, 0, 0)); }
-        return [{geo: K.merge(face), mat: 'skin'}, {geo: K.merge(eyes), mat: 'eye'}, {geo: K.merge(pupils), mat: 'darkmetal'}, {geo: K.merge(crest), mat: 'scale'}]; }});
+    // humanoid naga heads (original): shaped face (cheekbones, brow, nose, lips, chin), slit-pupil eyes, fin ears, + a hair style each
+    const nagaFace = () => { const skull = K.lathe([[.001, 0], [.4, .05], [.56, .4], [.68, .95], [.72, 1.4], [.62, 1.82], [.38, 2.06], [.001, 2.13]], 40).scale(.94, 1, 1.1).translate(0, .15, .08);
+      const f = [skull, K.at(ell(.42, .42, .32), 0, .5, .5, .2, 0, 0), K.at(ell(.22, .16, .2), 0, .28, .68, 0, 0, 0),   // jaw, chin
+        K.at(ell(.6, .1, .28), 0, 1.22, .66, .15, 0, 0), K.at(new T.ConeGeometry(.11, .4, 10).scale(1, 1, .75), 0, .93, .9, 1.3, 0, 0),   // brow, nose
+        K.at(ell(.17, .045, .07), 0, .66, .86, 0, 0, 0), K.at(ell(.14, .05, .07), 0, .58, .84, 0, 0, 0)];                                     // lips
+      for (const sd of [-1, 1]) { f.push(K.at(ell(.2, .14, .16), sd * .42, .9, .66, 0, sd * .4, 0)); f.push(K.at(ell(.06, .24, .2), sd * .7, 1.02, .08, 0, 0, sd * .35)); }   // cheekbones, fin ears
+      const eyes = [], pup = []; for (const sd of [-1, 1]) { eyes.push(K.at(ell(.15, .085, .07), sd * .28, 1.06, .8, 0, sd * .25, 0)); pup.push(K.at(ell(.022, .075, .025), sd * .29, 1.06, .865, 0, sd * .25, 0)); }
+      return [{geo: K.merge(f), mat: 'skin'}, {geo: K.merge(eyes), mat: 'eye'}, {geo: K.merge(pup), mat: 'darkmetal'}]; };
+    const strand = (pts, r0, r1, flat) => K.taper(K.cr(pts.map(p => V(...p))), r0, r1, 20, 8, flat);
+    const HAIR = {
+      long: () => { const h = [K.at(ell(.76, .55, .82), 0, 1.72, -.02, 0, 0, 0)];   // hair cap + long locks down the back and over the shoulders
+        for (let i = 0; i < 13; i++) { const a = -1.5 + i * .25, x = Math.sin(a) * .7, z = -Math.cos(a) * .55 - .05, sw = Math.sin(i * 1.7) * .15;
+          h.push(strand([[x * .9, 2.0, z * .6], [x * 1.05, 1.4, z * 1.1], [x * 1.15 + sw, .4, z * 1.25 - .15], [x * 1.2 - sw, -.9, z * 1.1 - .45], [x * 1.1, -2.1, z - .7]], .2, .03, .55)); }
+        return [{geo: K.merge(h), mat: 'fur'}]; },
+      crown: () => { const sn = [], heads = [];   // a crown of small serpents instead of hair
+        for (let i = 0; i < 9; i++) { const a = -2.4 + i * .6, x = Math.sin(a) * .62, z = Math.cos(a) * .62 - .08, up = 1.7 + Math.cos(a) * .15, ox = Math.sin(a) * 1.05, oz = Math.cos(a) * .95 - .3, lift = .35 + (i % 2) * .25;
+          sn.push(strand([[x * .8, up, z * .8], [x * 1.2, up + .45, z * 1.2], [ox, up + .5 + lift, oz], [ox * 1.1, up + .25 + lift, oz + .25]], .12, .07, .9));
+          heads.push(K.at(ell(.1, .07, .17), ox * 1.1, up + .25 + lift, oz + .38, 0, a * .3, 0)); }
+        return [{geo: K.merge([K.at(ell(.74, .4, .78), 0, 1.8, -.02, 0, 0, 0), ...sn, ...heads]), mat: 'scale'}]; },
+      topknot: () => { const h = [K.at(ell(.74, .45, .8), 0, 1.78, -.04, 0, 0, 0), K.at(ell(.26, .32, .26), 0, 2.35, -.25, -.3, 0, 0)];   // tied topknot + tail
+        h.push(strand([[0, 2.55, -.3], [0, 2.4, -.8], [0, 1.6, -1.05], [0, .6, -1.0], [0, -.4, -.8]], .14, .04, .7));
+        const band = K.at(new T.TorusGeometry(.2, .05, 8, 18), 0, 2.15, -.2, Math.PI / 2 - .3, 0, 0);
+        return [{geo: K.merge(h), mat: 'fur'}, {geo: K.merge([band]), mat: 'gold'}]; },
+      crest: () => { const c = []; for (let i = 0; i < 8; i++) { const y = 1.95 - i * .22, z = -.2 - i * .13; c.push(K.at(ell(.3 - i * .02, .22, .07), 0, y, z, -.2 + i * .28, 0, 0)); } return [{geo: K.merge(c), mat: 'scale'}]; }};
+    for (const [k, nm] of [['long', 'long hair'], ['crown', 'serpent crown'], ['topknot', 'topknot'], ['crest', 'scaled crest']])
+      out.push({id: k === 'crest' ? 'sk_head_naga' : 'sk_head_naga_' + k, group: 'Heads & Skulls', sub: '🐍 Naga', name: 'Naga head (' + nm + ')', tags: ['naga', 'lamia', 'humanoid', 'face', 'snake', k === 'long' || k === 'topknot' ? 'hair' : 'crest'],
+        fitBox: [[-.75, 0, -.75], [.75, 2.2, 1.0]], make: () => [...nagaFace(), ...HAIR[k]()]});
+    // slim, toned naga arm (shoulder to wrist) with a gold bracer — lighter than the brawler arm
+    out.push({id: 'sk_arm_naga', group: 'Arms & Shoulders', sub: '🐍 Naga', name: 'Naga arm (slim, bracer)', tags: ['naga', 'humanoid', 'slim', 'arm', 'bracer'],
+      make: () => { const arm = K.lathe([[.001, 0], [.4, .02], [.48, .3], [.44, .7], [.36, 1.15], [.39, 1.55], [.34, 1.95], [.26, 2.25], [.3, 2.6], [.28, 3.1], [.22, 3.7], [.18, 4.2], [.001, 4.25]], 28).scale(1, 1, .88);
+        const bracer = K.lathe([[.25, 3.35], [.27, 3.4], [.26, 3.75], [.22, 3.95], [.21, 3.98]], 24).scale(1, 1, .9);
+        return [{geo: K.noise(arm, .01, 2), mat: 'skin'}, {geo: bracer, mat: 'gold'}]; }});
     return out;
   });
 })();
