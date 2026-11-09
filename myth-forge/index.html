@@ -218,7 +218,7 @@
     <div class="row" id="dripRow" style="display:none"><div class="sl" style="flex:1"><span>Drip amount</span><input id="sDrip" type="range" min=".05" max="1" step=".01" value=".5"><span id="vDrip"></span></div><button id="bMelt">🫠 Melt</button></div>
     <div class="chips" id="matCats"></div>
     <div class="grid" id="mats"></div>
-    <div class="row"><button data-pb="color">🖌 Color brush</button><input type="color" id="brushCol" value="#c03020" style="width:56px;height:40px;border:0;background:none"><button data-pb="skin">🧴 Skin brush</button><button data-pb="blend">🌫 Blend</button><button id="bBrushErase">Clear paint</button></div>
+    <div class="row"><button data-pb="color">🖌 Color brush</button><input type="color" id="brushCol" value="#c03020" style="width:56px;height:40px;border:0;background:none"><button data-pb="skin">🧴 Skin brush</button><button data-pb="blend">🌫 Blend</button><button data-pb="blotch">🩸 Blotch</button><button id="bBrushErase">Clear paint</button></div>
     <div id="pbRow" style="display:none"><div class="hint" id="pbHint"></div><div class="sl"><span>Brush size</span><input id="sPSize" type="range" min=".1" max="3" step=".05" value=".6"><span></span></div><div class="sl"><span>Strength</span><input id="sPStr" type="range" min=".05" max="1" step=".05" value=".5"><span></span></div></div>
     <details class="more"><summary>More ▾</summary>
       <div class="row"><span>💡 Eye glow color</span><input type="color" id="eyeGlow" value="#ff5a1a" style="width:56px;height:40px;border:0;background:none"><button id="bEyeGlowReset">Default</button></div>
@@ -1051,13 +1051,14 @@ const sculpting = () => tab === 'sculpt' || (tab === 'paint' && brushPaint);
 $('bPen').onclick = e => { stylus = !stylus; e.target.classList.toggle('on', stylus); if (stylus) penSeen = true; updateOrbit();
   tip(stylus ? 'Stylus mode: pen sculpts / paints / taps, fingers only turn and zoom the view' : 'Stylus mode off', 3000); };
 let paintBrush = 'color', skinBrushMat = 'galaxy';
-const PB_TIP = {color: 'Color brush: draw on the part with the color next to it', skin: 'Skin brush: tap any skin below to pick it, then draw it on (one brushed skin per part)', blend: 'Blend: rub where two paints meet to mix them softly'};
+const PB_TIP = {color: 'Color brush: draw on the part with the color next to it', skin: 'Skin brush: tap any skin below to pick it, then draw it on (one brushed skin per part)', blend: 'Blend: rub where two paints meet to mix them softly', blotch: 'Blotch: tap to splat paint (the color next to 🖌) that runs down the skin'};
 function pbUI() { document.querySelectorAll('[data-pb]').forEach(b => b.classList.toggle('on', brushPaint && b.dataset.pb === paintBrush)); $('pbRow').style.display = brushPaint ? '' : 'none';
   const nm = (MATS.LIST.find(l => l[0] === skinBrushMat) || [])[1]; $('pbHint').textContent = PB_TIP[paintBrush] + (paintBrush === 'skin' ? ' — now: ' + nm : ''); paintNowUI(); }
 document.querySelectorAll('[data-pb]').forEach(b => b.onclick = () => { const k = b.dataset.pb; brushPaint = !(brushPaint && paintBrush === k); paintBrush = k; pbUI(); updateOrbit();
   tip(brushPaint ? (sel ? PB_TIP[k] : 'Tap a part first, then draw on it') : 'Brush off', 2600); });
 $('bBrushErase').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); pt.vpaint = null; pt.layer = null; buildPart(pt); syncTwin(pt); saveCur(); tip('Brushed paint cleared'); };
 function paintStroke(x, y) { const pt = partBy(sel), v = views[sel]; if (!pt || !v) return; const hit = cast(x, y, v.meshes); if (!hit) return;
+  if (paintBrush === 'blotch') return lastHit ? null : (lastHit = true, blotchStroke(pt, hit, x, y));
   if (paintBrush !== 'color') return layerStroke(pt, hit, x, y);
   const mesh = hit.object, mi = mesh.userData.mi; pt.vpaint = pt.vpaint || {};
   if (!pt.vpaint[mi]) { pt.vpaint[mi] = {}; buildPart(pt); return paintStroke(x, y); }
@@ -1066,6 +1067,20 @@ function paintStroke(x, y) { const pt = partBy(sel), v = views[sel]; if (!pt || 
   const centers = [local]; if (symSculpt) centers.push(new THREE.Vector3(-local.x, local.y, local.z));
   for (const ce of centers) for (let i = 0; i < p.count; i++) { const d2 = (p.getX(i) - ce.x) ** 2 + (p.getY(i) - ce.y) ** 2 + (p.getZ(i) - ce.z) ** 2; if (d2 > R2) continue;
     const f = (1 - d2 / R2) * power, r = col.getX(i) + (c.r - col.getX(i)) * f, gg = col.getY(i) + (c.g - col.getY(i)) * f, b = col.getZ(i) + (c.b - col.getZ(i)) * f; col.setXYZ(i, r, gg, b); M[i] = [+r.toFixed(3), +gg.toFixed(3), +b.toFixed(3)]; }
+  col.needsUpdate = true; }
+// 🩸 blotch: a splat with a ragged edge, then runs trickle downhill over the mesh (follows the lowest neighbour each step)
+function blotchStroke(pt, hit, x, y) { const mesh = hit.object, mi = mesh.userData.mi; pt.vpaint = pt.vpaint || {};
+  if (!pt.vpaint[mi]) { pt.vpaint[mi] = {}; buildPart(pt); lastHit = null; return paintStroke(x, y); }
+  const g = mesh.geometry, p = g.attributes.position, col = g.attributes.color; if (!col) return; const M = pt.vpaint[mi], c = new THREE.Color($('brushCol').value), nb = adj(g);
+  const local = mesh.worldToLocal(hit.point.clone()), ws = new THREE.Vector3(); mesh.getWorldScale(ws); const R = (+$('sPSize').value) / Math.abs(ws.y), power = Math.min(1, +$('sPStr').value * 2.2);
+  const set = (i, f) => { f = Math.min(1, f); const r = col.getX(i) + (c.r - col.getX(i)) * f, gg = col.getY(i) + (c.g - col.getY(i)) * f, b = col.getZ(i) + (c.b - col.getZ(i)) * f; col.setXYZ(i, r, gg, b); M[i] = [+r.toFixed(3), +gg.toFixed(3), +b.toFixed(3)]; };
+  const wy = i => new THREE.Vector3(p.getX(i), p.getY(i), p.getZ(i)).applyMatrix4(mesh.matrixWorld).y, seeds = [];
+  const ph = Math.random() * 9; for (let i = 0; i < p.count; i++) { const dx = p.getX(i) - local.x, dy = p.getY(i) - local.y, dz = p.getZ(i) - local.z, d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const ang = Math.atan2(dy, dx + dz), rr2 = R * (.75 + .35 * Math.sin(ang * 5 + ph) + .15 * Math.sin(ang * 11 + ph * 2)); if (d > rr2) continue; set(i, power * (1 - Math.pow(d / rr2, 3))); if (d > rr2 * .7) seeds.push(i); }
+  seeds.sort((a, b) => wy(a) - wy(b)); const runs = Math.min(seeds.length, 3 + ((Math.random() * 4) | 0));
+  for (let k = 0; k < runs; k++) { let i = seeds[(k * 2 + ((Math.random() * 3) | 0)) % seeds.length], amt = power, steps = 0; const seen = new Set();
+    while (amt > .08 && steps++ < 160) { seen.add(i); set(i, amt); nb[i].forEach(o => set(o, amt * .45)); let best = -1, by = wy(i);
+      for (const o of nb[i]) { if (seen.has(o)) continue; const y2 = wy(o); if (y2 < by - 1e-5) { by = y2; best = o; } } if (best < 0) break; i = best; amt *= .985; } }
   col.needsUpdate = true; }
 function layerStroke(pt, hit, x, y) { const mesh = hit.object, mi = mesh.userData.mi;
   if (paintBrush === 'skin') { pt.layer = pt.layer || {mat: skinBrushMat, m: {}}; if (!pt.layer.m[mi]) { pt.layer.m[mi] = {}; buildPart(pt); return paintStroke(x, y); } }
