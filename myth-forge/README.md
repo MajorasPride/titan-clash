@@ -1,5 +1,7 @@
 # Mythic Forge (myth-forge/)
 
+**Build Log (what was built + what to fix next): `BUILD-LOG.md`. Keep it updated every change.**
+
 Renamed from Myth Forge on Nov 8, 2026 (MajorasPride's call). The folder and link stay `myth-forge/` so old links keep working.
 
 MajorasPride's creature + mech builder for Titan Clash. Open `index.html` (GitHub Pages link or double-click). Not used by the game directly: it exports `.glb` models (⋯ → Download model) that Claude then puts into the game.

@@ -1499,10 +1499,20 @@ if (window.MF_V2) {
   const SHAPES = [['Normal', {}], ['Tall + slim', {height: 1.25, bulk: .8, legs: 1.15}], ['Big + bulky', {bulk: 1.45, height: 1.05, head: .9}], ['Short + stocky', {height: .8, bulk: 1.3, legs: .75}],
     ['Long neck + tail', {neck: 1.8, tail: 1.6}], ['Long arms', {arms: 1.45}], ['Big head', {head: 1.4}]];
   const SKINCATS = ['Skins & Scales', 'Lizards', 'Fur', 'Fish & Sea', 'Insects', 'Metal', 'Mech Paint', 'Alien Armor', 'Gems & Stone', 'Glow & Crystal', 'Neon', 'Fire', 'Cosmic & Special', 'Toys: plastic', 'Candy', 'Bark (Lynocs, CC0)'];
+  // ⭐ bodies made for each body type (first choice in the Body step)
+  const BODY_FOR = {biped: ['bd_torso_brawler', 'kj_chest', 'bd_torso_dragon', 'bd_torso_round'], kaiju: ['kj_chest', 'kj_hips', 'bd_torso_dragon', 'bd_torso_brawler'], theropod: ['dn_body', 'bd_torso_dragon'],
+    mech: ['mk_torso_hero', 'mk_torso_siege', 'mk_torso_slim', 'mk_torso_cockpit', 'mk_torso_barrel', 'mk_torso_frame'], walker: ['bb_walker', 'mk_torso_cockpit'], tank: ['bb_tank', 'mk_torso_siege'],
+    quad: ['bb_beast', 'bb_lion', 'bd_torso_dragon'], sphinx: ['bb_lion', 'bb_beast'], centaur: ['bb_horse', 'bb_beast'], dragon: ['bd_torso_dragon', 'md_chest', 'bb_beast'], hydra: ['bd_torso_dragon', 'bb_beast'],
+    wyvern: ['bd_torso_dragon', 'bb_bird'], bird: ['bb_bird'], serpent: ['bb_snake', 'bd_torso_naga'], naga: ['bd_torso_naga', 'bb_snake'], fish: ['bb_fish', 'kr_mantle'], octopus: ['kr_mantle', 'bd_torso_slug'],
+    spider: ['bd_torso_spider', 'bd_torso_thorax'], crab: ['bd_torso_crab'], insect: ['bd_torso_thorax', 'bd_torso_spider'], scorpion: ['bb_scorpion', 'bd_torso_crab'], moth: ['mo_body', 'mo_torso_furry'], centipede: ['cp_segment'],
+    slim: ['bd_torso_brawler', 'sp_torso_gaunt', 'mo_torso_furry'], brute: ['bd_torso_brawler', 'bd_torso_round', 'bd_torso_bloated'], gorilla: ['bd_torso_brawler', 'bd_torso_round', 'mo_torso_furry'],
+    fourarm: ['bd_torso_brawler', 'sp_torso_gaunt'], angel: ['bd_torso_brawler', 'sp_torso_gaunt'], blob: ['bb_blob', 'bd_torso_slug', 'bd_torso_bloated'], treefolk: ['tf_trunk', 'tf_trunk_hunch']};
+  const MECHY = id => /^(mk_|md_|bb_tank|bb_walker)/.test(id);
+  const fitsFor = () => { let L = (BODY_FOR[P.skel] || []).filter(id => LIB[id]); const f = BT.style === 'mech' ? L.filter(MECHY) : BT.style === 'creature' ? L.filter(id => !MECHY(id)) : L; return f.length ? f : L; };
   const srcOf = st => BT.style === 'mech' ? (st.mech.length ? st.mech : st.cre) : BT.style === 'mix' ? [...st.mech, ...st.cre] : st.cre;
-  const choicesOf = st => { const out = []; for (const c of srcOf(st)) { const subs = [...new Set(Object.values(LIB).filter(e => e.group === c.g && !e.lpv && (!c.subs || c.subs.includes(e.sub))).map(e => e.sub))];
-    subs.forEach(sb => out.push({g: c.g, sub: sb, label: sb})); } return out; };
-  const partsOf = ch => Object.keys(LIB).filter(id => { const e = LIB[id]; return e.group === ch.g && e.sub === ch.sub && (lpParts ? !e.hasLpv : !e.lpv); });
+  const choicesOf = st => { const out = []; if (st.how === 'trunk' && fitsFor().length) out.push({fit: true, label: '⭐ Fits ' + ((SKEL[P.skel] || {}).name || 'this body').split(' (')[0].toLowerCase()}); for (const c of srcOf(st)) { const subs = [...new Set(Object.values(LIB).filter(e => e.group === c.g && !e.lpv && (!c.subs || c.subs.includes(e.sub))).map(e => e.sub))];
+    subs.forEach(sb => out.push({g: c.g, sub: sb, label: (BT.style === 'mix' && /^Mech /.test(c.g) ? '🤖 ' : '') + sb})); } return out; };
+  const partsOf = ch => ch.fit ? fitsFor().map(id => lpParts && LIB[id].hasLpv ? LIB[id].hasLpv : id) : Object.keys(LIB).filter(id => { const e = LIB[id]; return e.group === ch.g && e.sub === ch.sub && (lpParts ? !e.hasLpv : !e.lpv); });
   function btPlace(st, id) { if (BT.added.length) { removeParts(BT.added.map(partBy).filter(Boolean)); BT.added = []; }
     snap(); const before = new Set(P.parts.map(p => p.uid)), e = LIB[id], m = mirrorAdd, keepMode = modeBone; modeBone = true;
     if (st.how === 'weapon') { const hands = famBones('hand'), h = hands.find(n => n.endsWith('.R')) || hands[0]; if (!h || !addWeaponToPalm(id, h)) addPart(id, (P.bones.find(r => r[4] === 'chest') || P.bones[0])[0], [0, 0, 0], [0, 0, 0]); }
@@ -1533,13 +1543,13 @@ if (window.MF_V2) {
       btn(r, '🎚 Sliders', () => { tabBtn('start').click(); BT.small = true; document.body.classList.add('gside'); btShow(); }); nav(); return; }
     if (st.k === 'part') { const chs = choicesOf(st), roots = st.how ? [] : famRoots(st.fam);
       q(st.q + (roots.length > 1 ? ` <span class="go">(goes on all ${roots.length})</span>` : '') + (st.opt ? ' <span class="go">optional</span>' : '')); const r = row();
-      if (!BT.pick || !chs.some(c => c.g === BT.pick.g && c.sub === BT.pick.sub)) BT.pick = chs[0];
-      chs.forEach(c => btn(r, c.label, () => { BT.pick = c; btShow(); }, BT.pick === c || (BT.pick.g === c.g && BT.pick.sub === c.sub)));
+      if (!BT.pick || !chs.some(c => !!c.fit === !!BT.pick.fit && c.g === BT.pick.g && c.sub === BT.pick.sub)) BT.pick = chs[0];
+      chs.forEach(c => btn(r, c.label, () => { BT.pick = c; btShow(); }, BT.pick === c || (!!BT.pick.fit === !!c.fit && BT.pick.g === c.g && BT.pick.sub === c.sub)));
       const ids = partsOf(BT.pick), grid = row('gg');
       ids.slice(0, 12).forEach(id => { const b = document.createElement('button'), im = document.createElement('img'); im.src = thumb(id); b.append(im, Object.assign(document.createElement('span'), {textContent: LIB[id].name}));
         if (BT.added.some(u => (partBy(u) || {}).lib === id)) b.className = 'on'; b.onclick = () => btPlace(st, id); grid.append(b); });
       const tools = row(); btn(tools, '🎲 Surprise me', () => btPlace(st, ids[Math.random() * ids.length | 0]));
-      btn(tools, '✋ I\'ll drag one on myself', () => { openCat(BT.pick.g, BT.pick.sub); BT.small = true; document.body.classList.add('gside'); btShow(); });
+      btn(tools, '✋ I\'ll drag one on myself', () => { if (BT.pick.fit) openCat(LIB[fitsFor()[0]].group); else openCat(BT.pick.g, BT.pick.sub); BT.small = true; document.body.classList.add('gside'); btShow(); });
       nav(BT.added.length ? 'Next ▶' : 'Skip ▶'); return; }
     if (st.k === 'move') { q('Anything look off? Tap a part (orange outline), then drag it. Let go on the body = sticks. Let go in the air = floats. Size slider and 🎯 Arrows are in ✋ Move & size.');
       const r = row(); btn(r, '✋ Open Move & size', () => { tabBtn('edit').click(); BT.small = true; document.body.classList.add('gside'); btShow(); }); nav(); return; }
