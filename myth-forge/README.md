@@ -54,4 +54,8 @@ MajorasPride's creature + mech builder for Titan Clash. Open `index.html` (GitHu
 - New material categories in materials.js: **Fur** (zebra, giraffe, dalmatian, wolf, calico, shaggy, snow, black, fox; plus the old fur, tiger, leopard) and **Cosmic & Special** (galaxy, starfield, nebula, constellations, aurora, void, hologram, oil slick, opal, sun plasma, cyber grid, cosmic fur).
 - Cosmic skins are shader effects (`ex.fx`, FX_GLSL/FX_MAIN in materials.js). `sky: 1` skins sample space by view direction so the stars stay put while the model moves (the classic "galaxy skin" look). Animated via `MATS.tick(t)` called from animate().
 - 🎨 Paint all (Paint tab): a material or tint goes on every part at once.
-- Pending: MajorasPride uploaded a stylized Tree Bark pack (10 sets: diffuseOriginal/normal/height/ao bmp + preview png). Not added yet — waiting on where it came from / its license (repo is public).
+- Bark skins: 10 Tree Bark textures from **Texture Pack by Lynocs** (https://lynocs.itch.io/texture-pack), **CC0 1.0** (credit optional; credited here). Baked diffuse x AO at 512px into `textures-bark.js` (base64, so the page still works from a double-clicked file). Materials `bark1`..`bark10`, category "Bark (Lynocs, CC0)". Material textures `img:<name>` read from `window.FORGE_TEX`. The pack also has Cave Walls, Alien and other sets (same CC0) he can send next.
+
+## Credits
+- Texture Pack by Lynocs (CC0 1.0) — Tree Bark. Thank you, Lynocs!
+- Quaternius packs (CC0) — see packs/index.js.

@@ -143,7 +143,9 @@ vec3 hue(float h){ return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.
   diffuseColor.rgb = (uFur > .5 ? diffuseColor.rgb * .2 : vec3(base)) + fx * .1; totalEmissiveRadiance += fx * diffuse;
 }`;
   const texCache = {};
-  function tex(T, kind) { if (texCache[kind]) return texCache[kind]; const [c, x] = cv(); seed = 7 + kind.length * 131; (G[kind] || G.plain)(x, kind === 'bigscales');
+  function tex(T, kind) { if (texCache[kind]) return texCache[kind];
+    if (kind.startsWith('img:')) { const img = new Image(), t = new T.Texture(img); t.wrapS = t.wrapT = T.RepeatWrapping; t.colorSpace = T.SRGBColorSpace; t.anisotropy = 4;   // embedded picture textures (textures-*.js)
+      img.onload = () => { t.needsUpdate = true; }; img.src = (window.FORGE_TEX || {})[kind.slice(4)] || ''; return texCache[kind] = t; } const [c, x] = cv(); seed = 7 + kind.length * 131; (G[kind] || G.plain)(x, kind === 'bigscales');
     if (kind === 'bigscales') G.scales(x, true); const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.colorSpace = T.SRGBColorSpace; t.anisotropy = 4; return texCache[kind] = t; }
   // [key, name, category, texture, color, roughness, metalness, extra]
   const LIST = [
@@ -196,6 +198,7 @@ vec3 hue(float h){ return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.
     ['hologram', 'Hologram', 'Cosmic & Special', 'plain', 0xffffff, .2, .3, {fx: 7}], ['oilslick', 'Oil slick (rainbow sheen)', 'Cosmic & Special', 'plain', 0xffffff, .15, .9, {fx: 8}],
     ['opal', 'Opal', 'Cosmic & Special', 'plain', 0xffffff, .2, .1, {fx: 9}], ['solar', 'Sun plasma', 'Cosmic & Special', 'plain', 0xffffff, .6, 0, {fx: 10}],
     ['cybergrid', 'Cyber grid', 'Cosmic & Special', 'plain', 0xffffff, .4, .5, {fx: 11}], ['cosmicfur', 'Cosmic fur', 'Cosmic & Special', 'fur', 0xffffff, .8, 0, {fx: 1, sky: 1, furmix: 1}],
+    ['bark1', 'Bark 1', 'Bark (Lynocs, CC0)', 'img:bark1', 0xffffff, .85, 0], ['bark2', 'Bark 2', 'Bark (Lynocs, CC0)', 'img:bark2', 0xffffff, .85, 0], ['bark3', 'Bark 3', 'Bark (Lynocs, CC0)', 'img:bark3', 0xffffff, .85, 0], ['bark4', 'Bark 4', 'Bark (Lynocs, CC0)', 'img:bark4', 0xffffff, .85, 0], ['bark5', 'Bark 5', 'Bark (Lynocs, CC0)', 'img:bark5', 0xffffff, .85, 0], ['bark6', 'Bark 6', 'Bark (Lynocs, CC0)', 'img:bark6', 0xffffff, .85, 0], ['bark7', 'Bark 7', 'Bark (Lynocs, CC0)', 'img:bark7', 0xffffff, .85, 0], ['bark8', 'Bark 8', 'Bark (Lynocs, CC0)', 'img:bark8', 0xffffff, .85, 0], ['bark9', 'Bark 9', 'Bark (Lynocs, CC0)', 'img:bark9', 0xffffff, .85, 0], ['bark10', 'Bark 10', 'Bark (Lynocs, CC0)', 'img:bark10', 0xffffff, .85, 0],
     ['toyrubber', 'Toy rubber', 'Craft (toy box)', 'plain', 0xe85a3a, .55, 0], ['toyplastic', 'Shiny toy plastic', 'Craft (toy box)', 'plain', 0x3a8ae8, .25, 0],
   ];
   const ALIAS = {paint2: 'paint2', fur: 'fur', feather: 'feather', stone: 'stone', wood: 'wood', cloth: 'cloth', leather: 'leather', chitin: 'chitin', glow: 'glow', screen: 'screen'};
