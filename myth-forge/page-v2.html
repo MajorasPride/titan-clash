@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Mythic Forge (test)</title>
+<script>window.MF_V2 = 1;</script>
+<style>
+  :root{--bg:#18181c;--pn:rgba(28,28,34,.96);--ln:#3a3a46;--tx:#ecebf2;--ac:#ff8a3a;--ac2:#ffd166}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font-family:system-ui,Roboto,sans-serif;color:var(--tx);user-select:none;-webkit-user-select:none}
+  #c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+  button{font:600 14px system-ui,sans-serif;color:var(--tx);background:#33333d;border:1px solid #4c4c58;border-radius:10px;padding:8px 11px;min-height:40px;touch-action:manipulation}
+  button.on{background:var(--ac);border-color:#ffab6a;color:#141414}
+  button:active{transform:scale(.97)}
+  input[type=range]{width:100%;accent-color:var(--ac);height:30px}
+  input[type=search]{width:100%;box-sizing:border-box;font-size:16px;padding:9px 12px;border-radius:10px;border:1px solid #4c4c58;background:#24242c;color:var(--tx)}
+  .top{position:fixed;left:0;right:0;top:0;display:flex;align-items:center;gap:5px;padding:6px 8px;padding-top:max(6px,env(safe-area-inset-top));background:var(--pn);border-bottom:1px solid var(--ln);z-index:5}
+  .top h1{font:800 13px system-ui;letter-spacing:2px;color:var(--ac);margin:0 4px}
+  .top .sp{flex:1}
+  .top button{min-height:36px;padding:5px 9px}
+  #wsBadge{position:fixed;left:50%;transform:translateX(-50%);top:56px;z-index:4;background:#2a6a3a;color:#d8ffd8;font:800 12px system-ui;padding:4px 10px;border-radius:8px;display:none;letter-spacing:1px}
+  body.ws #wsBadge{display:block}
+  #tip{position:fixed;left:0;right:0;top:58px;text-align:center;font:700 14px system-ui;color:var(--ac2);pointer-events:none;text-shadow:0 0 6px #000,0 0 2px #000;z-index:4;padding:0 10px}
+  #sheet{position:fixed;left:0;right:0;bottom:0;background:var(--pn);border-top:1px solid var(--ln);z-index:5;padding:0 8px calc(6px + env(safe-area-inset-bottom));height:46vh;display:flex;flex-direction:column;border-radius:14px 14px 0 0;touch-action:none}
+  #sheet.tall{height:78vh}#sheet.min{height:auto}
+  .pane{touch-action:pan-y}
+  #grab{padding:6px 0 4px;text-align:center;font:700 13px system-ui;color:var(--ac2)}
+  #grab::before{content:'';display:block;width:46px;height:5px;border-radius:3px;background:#5a5a66;margin:0 auto 5px}
+  .tabs{display:flex;gap:3px;margin-bottom:6px;overflow-x:auto;flex:none}
+  #grab{flex:none}
+  .tabs button{flex:1 0 auto;padding:8px 8px;font-size:13px}
+  .pane{display:none;overflow:auto;flex:1;min-height:0}.pane.on{display:block}
+  #sheet.min .tabs,#sheet.min .pane{display:none!important}
+  .row{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0;align-items:center}
+  .chips{display:flex;gap:5px;overflow-x:auto;padding-bottom:3px;margin:4px 0}
+  .cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:4px;margin:4px 0}
+  .cats button{font-size:12px;padding:6px 6px;min-height:36px;text-align:left;line-height:1.1}
+  .cats .sec{grid-column:1/-1;font:800 10.5px system-ui;letter-spacing:1px;color:var(--ac);margin:4px 2px 0}
+  .chips button.sug{outline:2px solid #40ffb0;box-shadow:0 0 10px #40ffb088}
+  .chips button{flex:none;font-size:12.5px;padding:6px 10px;min-height:34px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;margin:4px 0}
+  .item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;font-size:11.5px;line-height:1.15;min-height:110px;text-align:center}
+  .item.cur{outline:3px solid #ff8a2a;outline-offset:-3px;background:#3a2a1a} .item.brush{outline:3px dashed #7ad0ff;outline-offset:-3px}
+  #paintNow{display:flex;align-items:center;gap:8px;padding:6px 8px;margin:4px 0;border-radius:10px;background:#22222a;font-size:13px;line-height:1.25} #paintNow img{width:38px;height:38px;border-radius:6px}
+  .item img,.item .ph{width:72px;height:72px;border-radius:8px;background:#22222a}
+  .lbl{font-size:12px;opacity:.75;margin:6px 2px 2px}
+  .sl{display:grid;grid-template-columns:70px 1fr 46px;gap:6px;align-items:center;font-size:13px}
+  .hint{opacity:.6;font-size:11.5px;margin:4px 2px}
+  #outliner{position:fixed;left:0;top:50px;bottom:0;width:min(300px,82vw);overflow:auto;background:rgba(24,24,30,.98);border-right:1px solid var(--ln);padding:6px;z-index:6;transform:translateX(-105%);transition:transform .18s}
+  #outliner.open{transform:none}
+  #outliner h3{margin:10px 4px 4px;font:800 11px system-ui;letter-spacing:1px;color:var(--ac)}
+  .ol{display:flex;align-items:center;gap:6px;padding:7px 6px;border-radius:8px;font-size:14px}
+  .ol.sel{background:#4a3524;outline:1px solid var(--ac)}
+  .ol .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ol button{min-height:32px;padding:2px 8px;font-size:14px}
+  .ol.hid .nm{opacity:.4;text-decoration:line-through}
+  #restore{position:fixed;right:10px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:7;display:none;min-height:48px;font-size:18px;opacity:.85}
+  body.full .top,body.full #sheet,body.full #outliner,body.full #wsBadge{position:fixed;left:50%;transform:translateX(-50%);top:56px;z-index:4;background:#2a6a3a;color:#d8ffd8;font:800 12px system-ui;padding:4px 10px;border-radius:8px;display:none;letter-spacing:1px}
+  body.ws #wsBadge{display:block}
+  #tip{display:none!important}
+  body.full #restore{display:block}
+  #nav{position:fixed;right:6px;top:58px;z-index:4;display:grid;grid-template-columns:repeat(3,38px);gap:3px;opacity:.82}
+  #nav button{min-height:34px;padding:0;font-size:15px;border-radius:9px;background:rgba(40,40,50,.85)}
+  #nav.hide{display:none}
+  body.full #nav{display:grid}
+  #nav.hide,body.full #nav.hide{display:none}
+  #fwin{position:fixed;left:6px;top:58px;z-index:4;display:none;border:2px solid var(--ac);border-radius:12px;touch-action:none;box-shadow:0 4px 18px rgba(0,0,0,.5)}
+  #fwin.on{display:block}
+  #fwin .bar{position:absolute;left:0;right:0;top:0;display:flex;gap:4px;justify-content:flex-end;padding:4px}
+  #fwin .bar button{min-height:30px;padding:0 9px;font-size:13px;border-radius:8px;background:rgba(30,30,38,.85)}
+  #fwin .cap{position:absolute;left:6px;bottom:4px;right:6px;font:700 11px system-ui;color:#ffd9b0;text-shadow:0 1px 2px #000;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .numctl{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:4px 0}
+  .numctl input[type=text]{flex:1;min-width:90px;min-height:34px;border-radius:8px;border:1px solid var(--ln);background:#1b1b22;color:#eee;padding:0 8px;font-size:14px}
+  .numctl button{min-height:34px;padding:0 10px;font-size:13px}
+  details.more{margin:6px 0 2px;border-top:1px solid var(--ln);padding-top:4px}
+  details.more>summary{list-style:none;cursor:pointer;font-size:13px;opacity:.7;padding:6px 2px}
+  details.more>summary::-webkit-details-marker{display:none}
+  details.more[open]>summary{opacity:1;color:var(--ac)}
+  #tour{position:fixed;inset:0;z-index:20;pointer-events:none}
+  #tour .hole{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.55);border:2px solid var(--ac2);transition:all .2s;pointer-events:none}
+  #tour .card{position:fixed;left:12px;right:12px;max-width:440px;margin:auto;background:#24242c;border:1px solid var(--ac);border-radius:14px;padding:14px;pointer-events:auto;box-shadow:0 8px 30px rgba(0,0,0,.6)}
+  #tour h4{margin:0 0 6px;font:800 15px system-ui;color:var(--ac)}
+  #tour p{margin:0 0 10px;font-size:14.5px;line-height:1.4}
+  #tour .btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  #tour .btns button{min-height:40px}
+  #tour .dots{font-size:11px;opacity:.6;margin-right:auto;align-self:center}
+  #help{position:fixed;inset:0;z-index:21;background:rgba(18,18,22,.98);overflow:auto;padding:16px 16px 40px;display:none;font-size:15px;line-height:1.45}
+  #help.open{display:block}
+  #help h2{color:var(--ac);font:800 18px system-ui;margin:4px 0 10px}
+  #help h3{color:var(--ac2);font:800 14px system-ui;margin:16px 0 6px}
+  #help ol,#help ul{padding-left:20px;margin:4px 0}
+  #help li{margin:4px 0}
+  #help .x{position:sticky;top:0;float:right;min-height:40px}
+  #ring{position:fixed;border:2px solid #ff5a3a;border-radius:50%;pointer-events:none;display:none;transform:translate(-50%,-50%);z-index:3}
+  #menu{position:fixed;right:6px;top:52px;z-index:8;background:#24242c;border:1px solid var(--ln);border-radius:12px;padding:6px;display:none;flex-direction:column;gap:5px;min-width:220px}
+  #menu.open{display:flex}
+  #out{position:fixed;left:8px;right:8px;top:60px;height:120px;display:none;background:#000;color:#ffd9b0;border:1px solid var(--ac);border-radius:8px;font-size:10px;z-index:9}
+  .matsw{width:100%;height:72px;border-radius:8px}
+  @media (orientation:landscape) and (min-width:760px){ #sheet,#sheet.tall{left:auto;top:50px;width:380px;height:auto;border-left:1px solid var(--ln);border-top:none;border-radius:0} }
+  @media (max-width:420px){ .tabs button{padding:8px 6px;font-size:12.5px} .item{min-height:104px} .item img{width:64px;height:64px} }
+
+  /* ---- v2 layout ---- */
+  .tops{display:flex;gap:4px;margin-bottom:5px;flex:none}
+  .tops button{flex:1 1 0;min-height:44px;font-size:14px;padding:6px 4px}
+  .tops button.gear{flex:0 0 48px;font-size:18px}
+  .tabs.sub{background:#22222a;border-radius:10px;padding:3px}
+  .tabs.sub button{min-height:34px;font-size:13px;background:transparent;border-color:transparent}
+  .tabs.sub button.on{background:#4a3524;border-color:var(--ac);color:var(--tx)}
+  .how{font-size:13.5px;line-height:1.35;background:#26262f;border-left:3px solid var(--ac2);border-radius:8px;padding:7px 9px;margin:4px 0 6px}
+  .step{font:800 12px system-ui;letter-spacing:.5px;color:var(--ac2);margin:10px 2px 4px}
+  .seg{display:flex;gap:4px;margin:4px 0;flex-wrap:wrap}.seg button{flex:1 1 auto}
+  .chips.wrap{flex-wrap:wrap;overflow:visible}
+  button.next{width:100%;margin:12px 0 6px;background:var(--ac);color:#141414;border-color:#ffab6a;min-height:46px;font-size:15px}
+  #tip{display:block!important;left:50%;right:auto;transform:translateX(-50%);max-width:88vw;width:max-content;font:600 13px system-ui;color:#fff3d6;background:rgba(20,20,26,.82);border:1px solid #5a4a30;border-radius:18px;padding:6px 12px;text-shadow:none}
+  #tip:empty{display:none!important}
+  body.full #tip{display:none!important}
+  #vtools{position:fixed;right:6px;bottom:calc(46vh + 8px);z-index:4;display:flex;flex-direction:column;gap:5px}
+  #vtools button{min-height:36px;padding:4px 10px;font-size:13px;background:rgba(40,40,50,.88);max-width:46vw}
+  #vtools button.on{background:rgba(40,40,50,.88);color:var(--tx);border-color:#4c4c58}
+  #nav{top:140px}
+  body.full #vtools{display:none}
+  #boxZone{position:fixed;left:50%;top:56px;transform:translateX(-50%);z-index:9;display:none;background:#2a3a6a;border:2px dashed #9ab8ff;color:#e8f0ff;font:800 14px system-ui;padding:12px 22px;border-radius:14px}
+  #ghost{position:fixed;z-index:30;width:84px;height:84px;border-radius:12px;transform:translate(-50%,-70%);pointer-events:none;display:none;opacity:.9;box-shadow:0 6px 20px rgba(0,0,0,.6);outline:2px solid var(--ac);background:#22222a}
+  .item img{pointer-events:none;-webkit-user-drag:none}
+  .item{-webkit-touch-callout:none}
+  body.gdrag #sheet{opacity:.55}
+  #guide{position:fixed;left:6px;right:6px;top:52px;z-index:7;display:none;background:rgba(30,26,20,.96);border:1px solid var(--ac);border-radius:12px;padding:8px 10px;max-width:520px;margin:0 auto;font-size:13.5px;line-height:1.35;box-shadow:0 4px 18px rgba(0,0,0,.5)}
+  #guide{max-height:52vh;overflow:auto}#guide.small{max-height:none}
+  #guide .gh{display:flex;align-items:center;gap:6px}#guide .gh b{flex:1}#guide .mini{min-height:30px;padding:0 10px}
+  #guide .gp{margin:4px 0 6px}#guide .go{font-size:11px;opacity:.6}
+  #guide .gc{display:flex;gap:5px;flex-wrap:wrap;margin:4px 0}#guide .gc button{min-height:34px;padding:4px 10px;font-size:13px}
+  #guide .gc.scroll{flex-wrap:nowrap;overflow-x:auto;padding-bottom:3px}#guide .gc.scroll button{flex:none}
+  #guide .gg{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:5px;margin:4px 0}
+  #guide .gg button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:3px;font-size:11px;line-height:1.1;min-height:92px}#guide .gg img{width:60px;height:60px;border-radius:6px;background:#22222a}
+  #guide .gb{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}#guide .gb button{min-height:36px;padding:4px 10px}
+  body.guiding #tip{top:auto;bottom:calc(46vh + 56px)} body.guiding #nav{display:none}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="help"><button class="x" id="helpX">✕ Close</button>
+<h2>How to build in Mythic Forge</h2>
+<h3>🏁 Start</h3>
+<ul><li>Pick a <b>starter</b> to remix, or an empty <b>body type</b>. Every body type comes with a smooth base body (like a mannequin).</li>
+<li><b>Body shape</b> sliders: height, bulk, arm/leg/neck/tail length, head size. Every part refits as you slide.</li></ul>
+<h3>🧩 Build › ＋ Add parts</h3>
+<ol><li>Pick a category, then <b>press and hold</b> a part and <b>drag</b> it onto the model. (Tap it, then tap the model also works. Double-tap adds it fast.)</li>
+<li><b>🦴 Snap to bone</b>: limbs, tails, necks, wings and heads line up with the bone and size to fit. Main parts swap out what was there.</li>
+<li><b>✋ Free</b>: the part goes exactly where you let go, on the body or floating in the air.</li>
+<li><b>🪞 Both sides</b> puts a mirrored copy on the other side. Weapons go into the palm.</li></ol>
+<h3>🧩 Build › ✋ Move &amp; size</h3>
+<ul><li><b>Tap</b> a part to pick it (orange outline), then <b>drag</b> it. Let go on the body: it sticks there. Let go in the air: it floats there (and still moves with the closest bone). Let go on the 📦 box at the top: it goes in the Parts box for later.</li>
+<li>Touching anything that isn't picked turns the view, so you won't knock parts off by accident.</li>
+<li><b>🎯 Arrows</b> for fine-tuning: Move / Turn / Stretch handles. The Size slider makes it bigger or smaller.</li>
+<li><b>📄 Copy / 📋 Paste</b> works between creatures, saves and the Workshop.</li>
+<li>More: 🧩 Break apart (a row of spikes, or a part you saved, into single pieces), 🫳 Mold, Flip, Hide, Solo.</li></ul>
+<h3>🛠 Workshop: build a part by itself</h3>
+<ul><li>Build tab or Start tab › 🛠 Workshop. No skeleton: stack shapes and parts, sculpt, paint. A green box shows the normal size.</li>
+<li>💾 Save part (top bar) puts it in <b>My Parts</b>, then drag it onto any creature. ↩ Creature goes back.</li>
+<li>To change a saved part later: add it, 🧩 Break apart, edit the pieces.</li></ul>
+<h3>🎨 Paint · 🗿 Sculpt · ⚙</h3>
+<ul><li>Paint: tap a part, then a skin. Brushes below. ✨ Effects has Fade away, Drip and Glitter fall.</li>
+<li>Sculpt: push and pull like clay (S Pen sculpts, fingers turn the view). 🎚 Shape sliders for maker parts.</li>
+<li>⚙: 🦴 Skeleton &amp; pose (bones, poses, make your own skeleton, animations) and 👁 View &amp; look (camera, game look, background).</li></ul>
+<h3>🔍 Focus</h3>
+<ul><li>Top right: 🔍 Focus shows only the picked part, big. 🪟 Window keeps a zoomed window on it.</li></ul>
+<h3>Save and use it</h3>
+<ul><li>⋯ → Save as… keeps a named copy. ⋯ → Download model (.glb) to put it in the game.</li></ul>
+</div>
+<div id="tour" style="display:none"><div class="hole"></div><div class="card"><h4></h4><p></p><div class="btns"></div></div></div>
+
+<div id="fwin"><div class="bar"><button id="fwSize">Size M</button><button id="fwClose">✕</button></div><div class="cap" id="fwCap"></div></div>
+<div id="ring"></div>
+<div class="top">
+  <button id="bList">☰</button><h1>MYTHIC FORGE</h1>
+  <span class="sp"></span><button id="bSaveAsset" style="display:none" class="on">💾 Save part</button><button id="bExitWork" style="display:none">↩ Creature</button>
+  <button id="bUndo">↶</button><button id="bRedo">↷</button><button id="bPen" title="Stylus mode">✒️</button><button id="bFull" title="Hide all menus">⤢</button><button id="bMenu">⋯</button>
+</div>
+<div id="menu">
+  <button id="mGuide">🎓 Build together (step by step)</button><button id="mTour">🎓 Show me around (tour)</button><button id="mHelp">❓ How to build</button>
+  <button id="mWork">🛠 Workshop: design a body part</button><button id="mNew">New creature…</button><button id="mSave">Save as…</button><button id="mLoad">Open saved…</button>
+  <button id="mExport">Download model (.glb for the game)</button><button id="mCopy">Copy project (to paste to Claude)</button>
+  <button id="mPaste">Paste project…</button><button id="mCredits">Asset credits &amp; licenses</button>
+</div>
+<div id="wsBadge">WORKSHOP</div>
+<div id="wsPick" style="display:none;position:fixed;inset:0;z-index:20;background:rgba(10,10,14,.92);padding:70px 14px 14px;overflow:auto"><h2 style="color:#ff8a3a;font:800 18px system-ui;margin:0 0 10px">What do you want to design?</h2><div class="cats" id="wsKinds" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))"></div><button id="wsCancel" style="margin-top:12px">Cancel</button></div>
+<div id="tip"></div>
+<div id="outliner"></div>
+<textarea id="out"></textarea>
+<button id="restore">⤡ Menus</button>
+<div id="nav" class="hide"><button data-nav="zin">＋</button><button data-nav="up">▲</button><button data-nav="zout">－</button><button data-nav="left">◀</button><button data-nav="fit">🎯</button><button data-nav="right">▶</button><button data-nav="pl">⇦</button><button data-nav="down">▼</button><button data-nav="pr">⇨</button></div>
+
+<div id="sheet">
+  <div id="grab">Mythic Forge</div>
+  <div class="tops" id="tops"><button data-top="start">🏁 Start</button><button data-top="build" class="on">🧩 Build</button><button data-top="paint">🎨 Paint</button><button data-top="sculpt">🗿 Sculpt</button><button data-top="more" class="gear" title="Skeleton, pose, view">⚙</button></div>
+  <div class="tabs sub" id="subtabs">
+    <button data-tab="start">Start</button>
+    <button data-tab="add" class="on">＋ Add parts</button><button data-tab="edit">✋ Move &amp; size</button>
+    <button data-tab="paint">Paint</button>
+    <button data-tab="sculpt">🗿 Sculpt</button><button data-tab="shape">🎚 Shape sliders</button>
+    <button data-tab="skel">🦴 Skeleton &amp; pose</button><button data-tab="fx">👁 View &amp; look</button>
+  </div>
+
+  <div class="pane" id="p-start">
+    <button class="next" id="bGuide" style="margin-top:4px">🎓 Build together: a mech or kaiju, step by step</button>
+    <div class="step">1 · Pick a starter to remix…</div>
+    <div class="chips wrap" id="starters"></div>
+    <div class="step">…or an empty body type</div>
+    <div class="chips wrap" id="skels"></div>
+    <div class="step">…or build a part on its own (no skeleton)</div>
+    <div class="row"><button id="bWS2">🛠 Workshop: make a part by itself</button></div>
+    <div class="step">2 · Body shape <span class="hint">(every part refits)</span></div>
+    <div id="bodySl"></div>
+    <div class="row"><button id="bBase">🧱 Base body on/off</button><button id="bRefitAll">↻ Fit all parts</button></div>
+    <button class="next" id="bGoBuild">Next: add parts →</button>
+  </div>
+
+  <div class="pane on" id="p-add">
+    <div class="how">👉 <b>Press and hold</b> a part, then <b>drag</b> it onto your model. Or tap it, then tap the model. Double-tap = add fast.</div>
+    <div class="seg" id="placeSeg"><button id="bModeBone" class="on">🦴 Snap to bone</button><button id="bModeSurf">✋ Free (where I drop it)</button><button id="bMirrorAdd" class="on">🪞 Both sides</button></div>
+    <div class="row"><button id="bWS1">🛠 Workshop (build a part by itself)</button></div>
+    <div id="boxWrap" style="display:none"><div class="lbl">📦 Parts box (tap one, then tap the model)</div><div class="chips" id="boxRow"></div></div>
+    <input type="search" id="search" placeholder="Search parts: skull, wing, fang, sword, TV…">
+    <button id="grpToggle" style="width:100%;text-align:left;margin:4px 0">📂 Categories</button>
+    <div class="cats" id="groups"></div>
+    <div class="chips" id="subs"></div>
+    <div class="chips" id="tags"></div>
+    <div class="grid" id="lib"></div>
+    <details class="more"><summary>More ▾</summary>
+      <div class="lbl">Put it on bone # (or tap a dot on the model)</div>
+      <div class="chips" id="boneNumsAdd"></div>
+      <div class="numctl" id="numCtlAdd"></div>
+      <div class="row"><button id="bLPParts">🔷 Low-poly parts: off</button><button id="bLPSwap">🔷 Swap my model to low-poly</button></div>
+      <div class="row"><button id="bAddCenter">Add without tapping</button><button id="bImport">Import file…</button><input type="file" id="fImport" hidden multiple accept=".glb,.gltf,.obj,.fbx,.zip"></div>
+      <div class="hint" id="addHint">Snap: limbs, tails, necks and wings line up with the bone and size to fit. Free: the part goes exactly where you let go.</div>
+    </details>
+  </div>
+
+  <div class="pane" id="p-edit">
+    <div class="how" id="editHow"></div>
+    <div class="seg"><button id="bDragMode" class="on">✋ Drag</button><button id="bArrowMode">🎯 Arrows (fine-tune)</button></div>
+    <div class="row" id="gzRow" style="display:none"><button data-gz="translate" class="on">Move</button><button data-gz="rotate">Turn</button><button data-gz="scale">Stretch</button><button id="bLocal">Local</button><button id="bSnap">Snap off</button></div>
+    <div class="row" id="axRow" style="display:none"><span class="hint" style="margin:0">Arrows:</span><button id="axX" class="on">🔴 Left-right</button><button id="axY" class="on">🟢 Up-down</button><button id="axZ" class="on">🔵 Front-back</button></div>
+    <div class="sl"><span>Size</span><input id="sSize" type="range" min=".1" max="4" step=".01"><span id="vSize"></span></div>
+    <div class="row"><button id="bDup">⧉ Duplicate</button><button id="bMirrorPart">🪞 Mirror copy</button><button id="bRefit">↻ Fit to body</button><button id="bDel">🗑 Delete</button></div>
+    <div class="row" id="copyRow"><button id="bCopy">📄 Copy</button><button id="bCopyAll">📄 Copy all</button><button id="bPaste">📋 Paste</button></div>
+    <details class="more"><summary>More ▾</summary>
+      <div class="row"><button id="bBreak">🧩 Break apart</button><button id="bMold">🫳 Mold</button><button id="bFlip">Flip</button><button id="bUnlink">Unlink twin</button><button id="bReattach">Move to bone…</button></div>
+      <div class="sl"><span>Length</span><input id="sLen" type="range" min=".3" max="3" step=".01"><span id="vLen"></span></div>
+      <div class="sl"><span>Width</span><input id="sWid" type="range" min=".3" max="3" step=".01"><span id="vWid"></span></div>
+      <div class="row"><button id="bHide">Hide</button><button id="bSolo">Solo (only this)</button><button id="bShowAll">Show all</button></div>
+      <div class="hint">🧩 Break apart turns a row of spikes or crystals (or a part you saved) into single pieces. 🫳 Mold squishes a dropped part around what it lands on. Drag a part onto the 📦 box at the top to keep it for later.</div>
+    </details>
+  </div>
+
+  <div class="pane" id="p-shape"><div class="how">👉 Tap a "maker" part (Basic Shapes &amp; Clay) to get its sliders here.</div><div id="shapeBox"></div></div>
+
+  <div class="pane" id="p-sculpt">
+    <div class="how">👉 Tap a part, then draw on it with your pen or finger, like clay.</div>
+    <div class="row"><button data-br="inflate" class="on">Inflate</button><button data-br="deflate">Deflate</button><button data-br="grab">Grab</button><button data-br="smooth">Smooth</button><button data-br="flatten">Flatten</button><button data-br="pinch">Pinch</button><button data-br="crease">Crease</button><button data-br="noise">Rough</button><button data-br="erase">Erase</button></div>
+    <div class="sl"><span>Brush</span><input id="sBrush" type="range" min=".1" max="3" step=".05" value=".6"><span></span></div>
+    <div class="sl"><span>Strength</span><input id="sStr" type="range" min=".05" max="1" step=".05" value=".4"><span></span></div>
+    <div class="row"><button id="bSubdiv">More detail</button><button id="bResetSculpt">Undo all sculpt</button><button id="bLP">🔷 Low-poly build</button></div>
+    <div id="lpBox" style="display:none">
+      <div class="hint">Low-poly: tap faces on a low-poly part to pick them (orange). Pull them out to grow new sections, like fingers from a palm.</div>
+      <div class="row"><button id="lpBlock">➕ Block</button><button id="lpTube">➕ Tube</button><button id="lpPull">⬆ Pull out</button><button id="lpPush">⬇ Push in</button><button id="lpConnect">🔗 Connect 2</button><button id="lpCut">✂ Cut loop</button><button id="lpCut2">✂ Other way</button></div>
+      <div class="row"><button id="lpBig">➕ Bigger</button><button id="lpSmall">➖ Smaller</button><button id="lpWeld">🧲 Weld points</button><button id="lpMirror">🪞 Mirror</button><button id="lpDel">🗑 Delete faces</button><button id="lpClear">Clear pick</button><button id="lpAll">Pick all</button></div>
+      <div class="row"><button data-lpm="0,1,0">⬆ Up</button><button data-lpm="0,-1,0">⬇ Down</button><button data-lpm="-1,0,0">⬅ Left</button><button data-lpm="1,0,0">➡ Right</button><button data-lpm="0,0,1">Forward</button><button data-lpm="0,0,-1">Back</button><button data-lpr="x,1">↻ Tilt</button><button data-lpr="x,-1">↺ Tilt</button><button data-lpr="y,1">↻ Twist</button><button data-lpr="z,1">↻ Roll</button></div>
+      <div class="sl"><span>Step</span><input id="sLP" type="range" min=".05" max="1.5" step=".05" value=".4"><span></span></div>
+    </div>
+    <details class="more"><summary>More ▾</summary>
+      <div class="row"><button id="bSymSculpt" class="on">Mirror sculpt</button><button id="bFingerView">Finger = turn view</button></div>
+      <div class="hint">S Pen: pen sculpts, fingers turn the view. "More detail" adds polygons so sculpting looks smooth.</div>
+    </details>
+  </div>
+
+  <div class="pane" id="p-paint">
+    <div id="paintNow"></div>
+    <div class="how">👉 Tap a part on the model, then tap a skin.</div>
+    <div class="row"><button id="bPaintAll">🎨 Paint all</button><button id="bPiecePaint">🎯 One piece only</button><button id="bPaintTwin" class="on">🪞 Both sides</button></div>
+    <div class="chips" id="matCats"></div>
+    <div class="grid" id="mats"></div>
+    <div class="step">🖌 Brushes</div>
+    <div class="row"><button data-pb="color">🖌 Color</button><input type="color" id="brushCol" value="#c03020" style="width:56px;height:40px;border:0;background:none"><button data-pb="skin">🧴 Skin</button><button data-pb="blend">🌫 Blend</button><button data-pb="blotch">🩸 Blotch</button><button id="bBrushErase">Clear paint</button></div>
+    <div id="pbRow" style="display:none"><div class="hint" id="pbHint"></div><div class="sl"><span>Brush size</span><input id="sPSize" type="range" min=".1" max="3" step=".05" value=".6"><span></span></div><div class="sl"><span>Strength</span><input id="sPStr" type="range" min=".05" max="1" step=".05" value=".5"><span></span></div></div>
+    <details class="more"><summary>✨ Effects: fade away, drip, glitter ▾</summary>
+      <div class="row"><button id="bFade">💨 Fade away</button><button id="bPDrip">💧 Drip</button><button id="bGlit">✨ Glitter fall</button></div>
+      <div class="row" id="glitRow" style="display:none"><div class="sl" style="flex:1"><span>Glitter amount</span><input id="sGlit" type="range" min=".05" max="1" step=".01" value=".5"><span></span></div></div>
+      <div class="row" id="fadeRow" style="display:none"><div class="sl" style="flex:1"><span>Fade amount</span><input id="sFade" type="range" min=".1" max=".95" step=".01" value=".5"><span id="vFade"></span></div><button id="bFadeStyle">Style: 💨 Dust</button><button id="bDust" class="on">Particles</button></div>
+      <div class="row" id="dripRow" style="display:none"><div class="sl" style="flex:1"><span>Drip amount</span><input id="sDrip" type="range" min=".05" max="1" step=".01" value=".5"><span id="vDrip"></span></div><button id="bMelt">🫠 Melt</button></div>
+    </details>
+    <details class="more"><summary>More ▾</summary>
+      <div class="row"><span>💡 Eye glow color</span><input type="color" id="eyeGlow" value="#ff5a1a" style="width:56px;height:40px;border:0;background:none"><button id="bEyeGlowReset">Default</button></div>
+      <div class="row"><span>Tint</span><input type="color" id="tint" value="#ffffff" style="width:56px;height:40px;border:0;background:none"><button id="bTintClear">Clear tint</button><button id="bPaintAllSame">All parts like this</button></div>
+      <div class="row"><button id="bPattern">Import pattern (image)…</button><input type="file" id="fPattern" hidden accept="image/*" multiple><button id="bPatternDel">Remove my pattern</button></div>
+      <div class="sl"><span>Pattern size</span><input id="sTile" type="range" min=".1" max="3" step=".05" value="1"><span></span></div>
+    </details>
+  </div>
+
+  <div class="pane" id="p-skel">
+    <div class="how">👉 Tap an orange joint to pick a bone. Parts on a bone move with it.</div>
+    <div class="row"><button id="bBones" class="on">Show bones</button><button id="bPose">Pose bones</button><button id="bJoint">Move joints</button><button id="bResetPose">Reset pose</button></div>
+    <div class="lbl">Jump to bone #</div>
+    <div class="cats" id="boneNums"></div>
+    <details class="more"><summary>Make your own skeleton ▾</summary>
+      <div class="numctl" id="numCtlSkel"></div>
+      <div class="sl"><span>Bone len</span><input id="sBone" type="range" min=".3" max="3" step=".01" value="1"><span id="vBone"></span></div>
+      <div class="row"><button id="bAddBone">＋ Extend bone</button><button id="bAddBranch">＋ Branch (extra limb/head)</button><button id="bDelBone">Delete bone</button><button id="bSaveSkel">💾 Save as my body type</button></div>
+      <div class="hint" id="boneHint">Tap an orange joint to pick a bone.</div>
+    </details>
+    <details class="more"><summary>Animations (preview) ▾</summary>
+      <div class="row"><button data-anim="none" class="on">Still</button><button data-anim="idle">Idle</button><button data-anim="walk">Walk</button><button data-anim="roar">Roar</button><button data-anim="fly">Fly</button><button data-anim="attack">Attack</button><button data-anim="swim">Slither</button></div>
+    </details>
+  </div>
+
+  <div class="pane" id="p-fx">
+    <div class="lbl">Camera</div>
+    <div class="row"><button data-cam="front">Front</button><button data-cam="side">Side</button><button data-cam="back">Back</button><button data-cam="top">Top</button><button id="bFrame">Fit to screen</button><button id="bNav">Arrow pad</button></div>
+    <div class="lbl">Look</div>
+    <div class="row"><button id="bGameLook">🎮 Game look (all 3)</button><button id="bLowLook">🔷 Low-poly look: off</button><button id="bToon">🎨 Toon shading</button><button id="bOutline">✏ Outlines</button><button id="bWire">Wireframe</button><button id="bXray">X-ray</button><button id="bScale">Size vs. city</button></div>
+    <div class="lbl">Effects</div>
+    <div class="row"><button id="bGlow" class="on">Glow (bloom)</button><button id="bFog">Fog</button><button id="bMist">Ground mist</button><button id="bAura">Aura</button><button id="bDrip">Ooze drips</button><button id="bSpin">Turntable</button><span>Aura / mist color</span><input type="color" id="fxCol" value="#8a2aff" style="width:56px;height:40px;border:0;background:none"></div>
+    <div class="lbl">Background</div>
+    <div class="row"><button data-bg="studio" class="on">Studio</button><button data-bg="neon">Neon city night</button><button data-bg="day">Daylight</button><button data-bg="hell">Hellfire</button><button data-bg="void">Void</button></div>
+  </div>
+</div>
+<div id="vtools"><button id="bFocus" class="on">🔍 Focus</button><button id="bFWin">🪟 Window</button></div>
+<div id="guide"></div>
+<div id="boxZone">📦 Drop here = put in Parts box</div>
+<img id="ghost" alt="">
+<div style="display:none"><button id="bSticky"></button><button id="bFocus2"></button><button id="bFWin2"></button><button id="bFWin3"></button><button id="bFWin4"></button></div>
+
+<script src="k-helpers.js"></script>
+<script src="textures-bark.js"></script>
+<script src="materials.js"></script>
+<script src="skeletons.js"></script>
+<script src="parts/base-body.js"></script>
+<script src="parts/basic.js"></script>
+<script src="parts/makers.js"></script>
+<script src="parts/creature-heads.js"></script>
+<script src="parts/creature-body.js"></script>
+<script src="parts/mech.js"></script>
+<script src="parts/weapons-magic.js"></script>
+<script src="parts/mecha-dragon.js"></script>
+<script src="parts/kaiju-kit.js"></script>
+<script src="parts/turtle-kit.js"></script>
+<script src="parts/dino-kit.js"></script>
+<script src="parts/sphinx.js"></script>
+<script src="parts/tails-wings.js"></script>
+<script src="parts/lowpoly.js"></script>
+<script src="parts/mech-faces.js"></script>
+<script src="parts/myth-creatures.js"></script>
+<script src="starters.js"></script>
+<script src="packs/index.js"></script>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+"three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module" src="forge-core.js"></script>
+</body>
+</html>
