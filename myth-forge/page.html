@@ -102,6 +102,8 @@
     <div class="chips" id="subs"></div>
     <div class="chips" id="tags"></div>
     <div class="grid" id="lib"></div>
+    <div class="lbl">Put it on bone # (or tap a dot on the model)</div>
+    <div class="chips" id="boneNumsAdd"></div>
     <div class="row"><button id="bModeBone" class="on">Snap to bone</button><button id="bModeSurf">Stick on surface</button><button id="bMirrorAdd" class="on">Mirror L/R</button></div>
     <div class="row"><button id="bAddCenter">Add without tapping</button><button id="bImport">Import file…</button><input type="file" id="fImport" hidden multiple accept=".glb,.gltf,.obj,.fbx,.zip"></div>
     <div class="hint" id="addHint">Pick a part, then tap a bone (orange dots) or the body. Limbs, tails, necks and wings line up with the bone; small parts stick to the surface.</div>
@@ -143,6 +145,8 @@
     <div class="lbl">Body type (empty skeleton)</div>
     <div class="chips" id="skels"></div>
     <div class="row"><button id="bBones" class="on">Show bones</button><button id="bPose">Pose bones</button><button id="bJoint">Move joints</button><button id="bResetPose">Reset pose</button><button id="bSaveSkel">💾 Save as my body type</button></div>
+    <div class="lbl">Jump to bone #</div>
+    <div class="cats" id="boneNums"></div>
     <div class="sl"><span>Bone len</span><input id="sBone" type="range" min=".3" max="3" step=".01" value="1"><span id="vBone"></span></div>
     <div class="row"><button id="bAddBone">＋ Extend bone</button><button id="bAddBranch">＋ Branch (extra limb/head)</button><button id="bDelBone">Delete bone</button></div>
     <div class="lbl">Animations (preview)</div>

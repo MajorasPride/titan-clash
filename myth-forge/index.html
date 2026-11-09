@@ -102,6 +102,8 @@
     <div class="chips" id="subs"></div>
     <div class="chips" id="tags"></div>
     <div class="grid" id="lib"></div>
+    <div class="lbl">Put it on bone # (or tap a dot on the model)</div>
+    <div class="chips" id="boneNumsAdd"></div>
     <div class="row"><button id="bModeBone" class="on">Snap to bone</button><button id="bModeSurf">Stick on surface</button><button id="bMirrorAdd" class="on">Mirror L/R</button></div>
     <div class="row"><button id="bAddCenter">Add without tapping</button><button id="bImport">Import file…</button><input type="file" id="fImport" hidden multiple accept=".glb,.gltf,.obj,.fbx,.zip"></div>
     <div class="hint" id="addHint">Pick a part, then tap a bone (orange dots) or the body. Limbs, tails, necks and wings line up with the bone; small parts stick to the surface.</div>
@@ -143,6 +145,8 @@
     <div class="lbl">Body type (empty skeleton)</div>
     <div class="chips" id="skels"></div>
     <div class="row"><button id="bBones" class="on">Show bones</button><button id="bPose">Pose bones</button><button id="bJoint">Move joints</button><button id="bResetPose">Reset pose</button><button id="bSaveSkel">💾 Save as my body type</button></div>
+    <div class="lbl">Jump to bone #</div>
+    <div class="cats" id="boneNums"></div>
     <div class="sl"><span>Bone len</span><input id="sBone" type="range" min=".3" max="3" step=".01" value="1"><span id="vBone"></span></div>
     <div class="row"><button id="bAddBone">＋ Extend bone</button><button id="bAddBranch">＋ Branch (extra limb/head)</button><button id="bDelBone">Delete bone</button></div>
     <div class="lbl">Animations (preview)</div>
@@ -281,10 +285,26 @@ function rebuildSkeleton() {
     const j = new THREE.Mesh(new THREE.SphereGeometry(.16, 12, 8), jointMat); j.renderOrder = 10; j.userData.bone = name; b.add(j); boneHelpers.push(j);
     const L = b.userData.len, st = new THREE.Mesh(new THREE.CylinderGeometry(.03, .09, L, 6).translate(0, L / 2, 0), stickMat); st.renderOrder = 9; st.userData.bone = name; b.add(st); boneHelpers.push(st);
   }
-  boneHelpers.forEach(h => h.visible = showBones); markBone();
+  boneOrder = P.bones.map(b => b[0]).sort((a, b) => { const ta = TAG_ORDER.indexOf(boneRow(a)[4]), tb = TAG_ORDER.indexOf(boneRow(b)[4]); return (ta < 0 ? 99 : ta) - (tb < 0 ? 99 : tb) || (a.endsWith('.R') - b.endsWith('.R')) || a.localeCompare(b, undefined, {numeric: true}); });
+  boneOrder.forEach((n, i) => { const sp = numberSprite(i + 1); sp.userData.bone = n; sp.position.set(.35, bones[n].userData.len * .5, 0); bones[n].add(sp); boneHelpers.push(sp); });
+  boneHelpers.forEach(h => h.visible = showBones); markBone(); boneNumsUI();
 }
-let selBone = null;
-function markBone() { boneHelpers.forEach(h => { if (h.geometry.type === 'SphereGeometry') h.material = h.userData.bone === selBone ? jointSelMat : jointMat; }); }
+let selBone = null, boneOrder = [];
+const TAG_ORDER = ['head', 'jaw', 'neck', 'chest', 'spine', 'armU', 'armF', 'hand', 'legU', 'legL', 'foot', 'tail', 'wingA', 'wingB', 'wingC', 'extra'];
+const niceBone = n => n.replace(/\.L$/, ' (L)').replace(/\.R$/, ' (R)').replace(/_x\d+/, '+').replace(/^./, c => c.toUpperCase());
+function numberSprite(n) { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); x.fillStyle = '#ff8a3a'; x.beginPath(); x.arc(32, 32, 28, 0, 7); x.fill();
+  x.lineWidth = 4; x.strokeStyle = '#111'; x.stroke(); x.fillStyle = '#111'; x.font = 'bold ' + (n > 9 ? 28 : 34) + 'px system-ui'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(n, 32, 34);
+  const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: tx, depthTest: false, transparent: true, sizeAttenuation: false, toneMapped: false})); sp.scale.set(.036, .036, 1); sp.renderOrder = 12; return sp; }
+function boneNumsUI() { for (const [id, add] of [['boneNums', false], ['boneNumsAdd', true]]) { const el = $(id); if (!el) continue; el.innerHTML = '';
+  boneOrder.forEach((n, i) => { const b = document.createElement('button'); b.textContent = (i + 1) + ' ' + niceBone(n); b.className = n === selBone ? 'on' : ''; if (add) b.style.fontSize = '12px';
+    b.onclick = () => goBone(n, add); el.append(b); }); } }
+function goBone(n, add) { selBone = n; markBone(); boneNumsUI(); syncBoneUI();
+  if (add && placing) { const lib = placing; placing = null; libUI(); const e = LIB[lib];
+    if (e.whole) return placeAt({object: {userData: {bone: n}}, point: new THREE.Vector3(), face: null});
+    return addPart(lib, n, [0, 0, 0], [0, 0, 0], isAlong(e) && modeBone ? undefined : 1); }
+  const b = bones[n]; if (b) { const w = new THREE.Vector3(); b.getWorldPosition(w); controls.target.copy(w); const d = Math.max(10, b.userData.len * 6); camera.position.copy(w).add(new THREE.Vector3(.55, .4, 1).normalize().multiplyScalar(d)); }
+  attachGizmo(); tip('Bone ' + (boneOrder.indexOf(n) + 1) + ': ' + niceBone(n) + (add ? ' — pick a part above, then tap this number again' : ''), 2500); }
+function markBone() { boneHelpers.forEach(h => { if (h.geometry && h.geometry.type === 'SphereGeometry') h.material = h.userData.bone === selBone ? jointSelMat : jointMat; }); }
 const boneRow = n => P.bones.find(b => b[0] === n);
 const twinName = n => n.endsWith('.L') ? n.slice(0, -2) + '.R' : n.endsWith('.R') ? n.slice(0, -2) + '.L' : null;
 
@@ -381,7 +401,7 @@ $('bModeBone').onclick = () => { modeBone = true; $('bModeBone').classList.add('
 $('bModeSurf').onclick = () => { modeBone = false; $('bModeSurf').classList.add('on'); $('bModeBone').classList.remove('on'); };
 $('bMirrorAdd').onclick = e => { mirrorAdd = !mirrorAdd; e.target.classList.toggle('on', mirrorAdd); };
 $('bAddCenter').onclick = () => { const lib = placing || visibleIds()[0]; if (!lib) return; placing = null; libUI();
-  const b = selBone || (P.bones.find(b => b[4] === 'chest') || P.bones[0])[0]; addPart(lib, b, [0, 0, 0], [0, 0, 0]); };
+  const b = (selBone && bones[selBone] && selBone) || (P.bones.find(b => b[4] === 'chest') || P.bones[0])[0]; addPart(lib, b, [0, 0, 0], [0, 0, 0]); };
 
 // ====================================================================== library UI
 let tagFilter = null, catsOpen = true;
@@ -603,7 +623,7 @@ function paintStroke(x, y) { const pt = partBy(sel), v = views[sel]; if (!pt || 
     const f = (1 - d2 / R2) * power, r = col.getX(i) + (c.r - col.getX(i)) * f, gg = col.getY(i) + (c.g - col.getY(i)) * f, b = col.getZ(i) + (c.b - col.getZ(i)) * f; col.setXYZ(i, r, gg, b); M[i] = [+r.toFixed(3), +gg.toFixed(3), +b.toFixed(3)]; }
   col.needsUpdate = true; }
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-function cast(x, y, objs) { ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); return ray.intersectObjects(objs, false)[0]; }
+function cast(x, y, objs) { ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); ray.camera = camera; return ray.intersectObjects(objs, false)[0]; }
 const visibleMeshes = () => Object.values(views).filter(v => v.G.visible).flatMap(v => v.meshes);
 const adjCache = new WeakMap();
 function adj(g) { if (adjCache.has(g)) return adjCache.get(g); const I = g.index.array, n = g.attributes.position.count, nb = Array.from({length: n}, () => []);
@@ -667,7 +687,7 @@ addEventListener('pointerup', e => {
   if (reattaching) { if (hitB) reattach(hitB.object.userData.bone); else tip('Tap an orange bone dot'); return; }
   if (placing) { const useBone = hitB && (!hitP || modeBone && isAlong(LIB[placing]) || hitB.distance < hitP.distance);
     const h = useBone ? hitB : hitP; if (!h) return tip(P.bones.length ? 'Tap a bone dot or the body' : 'Use "Add without tapping"'); return placeAt(h); }
-  if (tab === 'skel' && hitB) { selBone = hitB.object.userData.bone; markBone(); attachGizmo(); syncBoneUI(); return; }
+  if (tab === 'skel' && hitB) { selBone = hitB.object.userData.bone; markBone(); attachGizmo(); syncBoneUI(); boneNumsUI(); return; }
   if (hitP) { select(hitP.object.userData.uid); return; }
   if (hitB) { selBone = hitB.object.userData.bone; markBone(); syncBoneUI(); tip('Bone ' + selBone + ' (new parts go here with "Add without tapping")'); return; }
 });
@@ -908,7 +928,6 @@ addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; con
   try { for (const [name, buf] of await idbAll('imports')) await addImport(name, buf); } catch (e) {}
   await loadMine(); await loadPatterns();
   rebuildSkeleton(); rebuildParts(); applyFX(); libUI(); outliner(); updateOrbit(); frameAll();
-  if (!localStorage.getItem('titan-forge-cur') || !P.parts.length && !P.seen) { const md = STARTERS.find(s => s.id === 'mechadragon'); if (md) loadStarter(md); hist.length = 0; }
   tip(Object.keys(LIB).length + ' parts ready. Pick one and tap a bone dot.', 3500);
   window.FORGE = {P: () => P, LIB, addPart, bones: () => bones, views: () => views, select, rebuildParts};   // for testing
 })();
