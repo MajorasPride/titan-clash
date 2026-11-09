@@ -448,13 +448,13 @@ function pieces(id, params) {                                  // cached shared 
 }
 function prep(raw) { return raw.filter(p => p && p.geo && p.geo.attributes.position && p.geo.attributes.position.count).map(p => { let g = p.geo;
       for (const a of Object.keys(g.attributes)) if (!['position', 'normal'].includes(a)) g.deleteAttribute(a);
-      g = mergeVertices(g, 1e-4); g.computeVertexNormals(); return {geo: g, mat: p.mat || 'skin', matObj: p.matObj}; }); }
+      g = mergeVertices(g, 1e-4); g.computeVertexNormals(); return {geo: g, mat: p.mat || 'skin', matObj: p.matObj, num: p.num}; }); }
 function piecesOld(id) {
   const e = LIB[id]; if (!e) return [];
   if (!e._p) { let raw = []; try { raw = e.make(); } catch (err) { console.error(id, err); }
     e._p = raw.filter(p => p && p.geo && p.geo.attributes.position && p.geo.attributes.position.count).map(p => { let g = p.geo;
       for (const a of Object.keys(g.attributes)) if (!['position', 'normal'].includes(a)) g.deleteAttribute(a);
-      g = mergeVertices(g, 1e-4); g.computeVertexNormals(); return {geo: g, mat: p.mat || 'skin', matObj: p.matObj}; }); }
+      g = mergeVertices(g, 1e-4); g.computeVertexNormals(); return {geo: g, mat: p.mat || 'skin', matObj: p.matObj, num: p.num}; }); }
   return e._p;
 }
 
@@ -679,6 +679,7 @@ function buildPart(pt) {
   if (fR && pt.fade.dust !== false) views[pt.uid].dust = makeDust(pt, views[pt.uid], fR);
   if (pt.drip && !colorMode) views[pt.uid].drip = makeDrip(pt);
   if (pt.glit && !colorMode) views[pt.uid].glit = makeDust({fade: {amt: .95, style: 'glitter', mul: .4 + pt.glit.amt * 1.4}}, views[pt.uid], partRadius(pt));
+  if (window.V3) window.V3.kids(pt);
 }
 function applyOff(pt, M) { const o = pt.off; if (o) M.position.set(-o[0] * M.scale.x, -o[1] * M.scale.y, -o[2] * M.scale.z); else M.position.set(0, 0, 0); }
 const hash = s => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
@@ -835,6 +836,7 @@ function partRootW(lib) { if (rootWCache[lib]) return rootWCache[lib]; const bx 
 function decorScale(bone) { const m = bone && mainOn(bone); if (m) return +Math.min(2, Math.max(.4, m.lib.startsWith('base_') ? bodyInfo().W / 2.6 : m.s)).toFixed(3);
   return +Math.min(2, Math.max(.5, bodyInfo().W / 3.2)).toFixed(3); }
 function removeParts(list) { const kill = new Set(); list.forEach(p => { kill.add(p); const t = twinOf(p); if (t) kill.add(t); });
+  if (window.V3 && !window.V3.keepKids) for (let more = true; more;) { more = false; for (const k of P.parts) if (k.host && !kill.has(k) && [...kill].some(h => h.uid === k.host.u)) { kill.add(k); const t = twinOf(k); if (t) kill.add(t); more = true; } }
   P.parts = P.parts.filter(p => !kill.has(p)); kill.forEach(p => { if (views[p.uid]) { views[p.uid].G.removeFromParent(); killDrip(views[p.uid]); } }); return kill.size; }
 const SLOT = k => k === 'seg' || k === 'limb' || k === 'neck' || k === 'tail' ? 'chain' : k === 'hand' || k === 'foot' ? 'end' : k;
 function swapOut(fit) {                                         // a new main part replaces what was in its slot (base pieces + same-kind parts)
@@ -842,7 +844,7 @@ function swapOut(fit) {                                         // a new main pa
   const old = P.parts.filter(p => p.fit && !p.boxed && cover.has(p.bone) && MAIN_KINDS.has(p.fit.kind) && (SLOT(p.fit.kind) === sk || (sk === 'chain' && p.lib.startsWith('base_')) || (p.lib.startsWith('base_') && fit.kind === 'torso' && p.fit.kind === 'seg'))
     && !(fit.kind === 'torso' && SLOT(p.fit.kind) !== 'torso' && !p.lib.startsWith('base_')));
   // a limb/neck/tail part also clears base pieces on the rest of the bones it covers
-  return old.length ? removeParts(old.filter(p => !p.twin || P.parts.includes(p))) : 0; }
+  if (window.V3) window.V3.keepKids = true; try { return old.length ? removeParts(old.filter(p => !p.twin || P.parts.includes(p))) : 0; } finally { if (window.V3) window.V3.keepKids = false; } }
 function applyFit(pt, f) { pt.bone = f.bone; pt.p = f.p; pt.r = f.r; pt.s = f.s; pt.l = f.l; pt.w = 1; pt.fit = {...f.fit, tweaked: false}; }
 function refitPart(pt, force) { if (!pt.fit || (pt.fit.tweaked && !force) || pt.twin && P.parts.indexOf(partBy(pt.twin)) < P.parts.indexOf(pt) && partBy(pt.twin).fit) return false;
   const f = fitPart(pt.lib, pt.fit.drop && boneRow(pt.fit.drop) ? pt.fit.drop : pt.bone); if (!f) return false; applyFit(pt, f); buildPart(pt); syncTwin(pt); return true; }
@@ -885,15 +887,16 @@ function bodyUI() { const el = $('bodySl'); if (!el) return; el.innerHTML = '';
   for (const [k, name, lo, hi] of BODY_SL) { const row = document.createElement('div'); row.className = 'sl'; row.innerHTML = `<span>${name}</span><input type="range" min="${lo}" max="${hi}" step=".01" value="${bodyK(k)}"><span>${bodyK(k).toFixed(2)}</span>`;
     const inp = row.querySelector('input'), val = row.lastChild; inp.onpointerdown = () => snap(); inp.oninput = () => { P.body = P.body || {}; P.body[k] = +inp.value; val.textContent = (+inp.value).toFixed(2); applyBody(); }; el.append(row); } }
 function addPart(lib, bone, p, r, s) {
+  if (window.V3 && window.V3.tryAdd(lib, bone, p, r, s)) return;
   snap(); let pt, swapped = 0; const ff = s == null && modeBone !== false ? fitPart(lib, bone) : null;
   if (ff) { swapped = MAIN_KINDS.has(ff.fit.kind) ? swapOut(ff.fit) : 0; pt = newPart(lib, ff.bone, ff.p, ff.r, ff.s); pt.l = ff.l; pt.fit = ff.fit; bone = ff.bone; p = ff.p; }
   else { const fit = s == null ? (kindOf(LIB[lib]) === 'decor' ? [decorScale(bone), 1] : autoFit(lib, bone)) : [s, 1]; pt = newPart(lib, bone, p, r, fit[0]); pt.l = fit[1]; }
   P.parts.push(pt);
   const tb = bone && twinName(bone);
   if (mirrorAdd && (tb ? bones[tb] : Math.abs(p[0]) > .25)) { const t = newPart(lib, tb || bone, [0, 0, 0], [0, 0, 0]); t.twin = pt.uid; pt.twin = t.uid; if (pt.fit) t.fit = {...pt.fit, drop: twinName(pt.fit.drop) || pt.fit.drop, cover: pt.fit.cover.map(c => twinName(c) || c)}; P.parts.push(t); mirrorInto(pt, t); }
-  buildPart(pt); select(pt.uid); outliner(); saveCur();
+  buildPart(pt); if (window.V3) window.V3.afterAdd(pt); select(pt.uid); outliner(); saveCur();
   tip(LIB[lib].name + (swapped ? ' swapped in' : ' added') + (pt.twin ? ' (+ mirrored twin)' : '') + (LIB[lib].params ? ' — shape it with the sliders' : (window.MF_V2 ? ' — drag it to move it' : ' — Move tab to adjust')));
-  if (LIB[lib].params) { document.querySelector('.tabs [data-tab="shape"]').click(); if (!focusOn) $('bFocus').click(); }
+  if (LIB[lib].params && !(LIB[lib].tags || []).includes('kit')) { document.querySelector('.tabs [data-tab="shape"]').click(); if (!focusOn) $('bFocus').click(); }
   else if (typeof inWS !== 'undefined' && inWS) frameObj(views[pt.uid].G, 1.4);
 }
 // weapons on a hand bone: grip goes in the palm, blade/barrel points forward (one hand only; Mirror copy for dual wield)
@@ -902,6 +905,7 @@ function palmGrip(lib, bone) { const e = LIB[lib], row = bone && boneRow(bone); 
 function addWeaponToPalm(lib, bone) { const g = palmGrip(lib, bone); if (!g) return false; const m = mirrorAdd; mirrorAdd = false; addPart(lib, bone, g.p, g.r, 1); mirrorAdd = m;
   tip(LIB[lib].name + ' in the palm — Move tab › More › Mirror copy for the other hand', 3200); return true; }
 function placeAt(hit) {
+  if (window.V3 && hit && hit.point && !window.V3.at) { const q = toScreen(hit.point); window.V3.at = [q[0], q[1]]; }
   const lib = placing; placing = null; libUI();
   let boneName = null;
   if (hit.object.userData.bone) boneName = hit.object.userData.bone;
@@ -1068,6 +1072,7 @@ function writeBack(live) {
   if (gzTarget === 'bone') return boneWriteBack();
   if (gzTarget === 'joint') return jointWriteBack(live);
   const pt = partBy(sel), v = views[sel]; if (!pt || !v) return;
+  if (window.V3 && pt.host && gizmo.mode !== 'scale') window.V3.unplug(pt);
   if (pt.fit) pt.fit.tweaked = true; pt.p = v.G.position.toArray().map(x => +x.toFixed(3)); const e = new THREE.Euler().setFromQuaternion(v.G.quaternion); pt.r = [e.x, e.y, e.z].map(x => +(x / D).toFixed(1));
   if (gizmo.mode === 'scale') { const s = v.G.scale; pt.l = +((pt.l || 1) * s.y / pt.s).toFixed(3); pt.w = +((pt.w || 1) * (s.x + s.z) / 2 / pt.s).toFixed(3); v.G.scale.setScalar(pt.s); v.M.scale.set((pt.flip ? -1 : 1) * pt.w, pt.l, pt.w); applyOff(pt, v.M); }
   syncTwin(pt); syncEdit(true);
@@ -1084,13 +1089,13 @@ function syncEdit(soft) { const pt = partBy(sel);
   if (!pt) return; for (const [s, v, k] of [['sSize', 'vSize', 's'], ['sLen', 'vLen', 'l'], ['sWid', 'vWid', 'w']]) { if (!soft || document.activeElement !== $(s)) $(s).value = pt[k] || 1; $(v).textContent = (+(pt[k] || 1)).toFixed(2); }
   $('bHide').textContent = pt.hidden ? 'Show' : 'Hide'; $('bUnlink').style.display = pt.twin ? '' : 'none'; $('tint').value = pt.tint || '#ffffff'; fadeUI(pt); paintNowUI(); }
 for (const [s, k] of [['sSize', 's'], ['sLen', 'l'], ['sWid', 'w']]) { $(s).onpointerdown = () => snap();
-  $(s).oninput = e => { const pt = partBy(sel); if (!pt) return; if (pt.fit) pt.fit.tweaked = true; pt[k] = +e.target.value; buildPart(pt); syncTwin(pt); attachGizmo(); syncEdit(true); saveCur(); }; }
-$('bDup').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); const n = JSON.parse(JSON.stringify(pt)); n.uid = uid(); n.twin = null; n.p[0] += .6; P.parts.push(n); buildPart(n); select(n.uid); saveCur(); tip('Copy made'); };
+  $(s).oninput = e => { const pt = partBy(sel); if (!pt) return; if (pt.fit) pt.fit.tweaked = true; pt[k] = +e.target.value; if (window.V3 && k === 's') window.V3.resized(pt); buildPart(pt); syncTwin(pt); attachGizmo(); syncEdit(true); saveCur(); }; }
+$('bDup').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); const n = JSON.parse(JSON.stringify(pt)); n.uid = uid(); n.twin = null; n.host = null; n.p[0] += .6; P.parts.push(n); buildPart(n); select(n.uid); saveCur(); tip('Copy made'); };
 $('bFlip').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); pt.flip = !pt.flip; buildPart(pt); syncTwin(pt); attachGizmo(); saveCur(); };
 $('bMirrorPart').onclick = () => { const pt = partBy(sel); if (!pt || pt.twin) return tip(pt ? 'Already has a twin' : 'Pick a part'); snap(); const tb = pt.bone && twinName(pt.bone);
   const t = newPart(pt.lib, tb && bones[tb] ? tb : pt.bone, [0, 0, 0], [0, 0, 0]); t.twin = pt.uid; pt.twin = t.uid; P.parts.push(t); mirrorInto(pt, t); outliner(); saveCur(); tip('Mirrored twin made'); };
 $('bUnlink').onclick = () => { const pt = partBy(sel), t = twinOf(pt); if (!t) return; snap(); pt.twin = t.twin = null; syncEdit(); outliner(); saveCur(); tip('Twins unlinked'); };
-$('bDel').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); const t = twinOf(pt); P.parts = P.parts.filter(p => p !== pt && p !== t); [pt, t].forEach(x => x && views[x.uid] && views[x.uid].G.removeFromParent());
+$('bDel').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); const t = twinOf(pt); if (window.V3) removeParts([pt]); else { P.parts = P.parts.filter(p => p !== pt && p !== t); [pt, t].forEach(x => x && views[x.uid] && views[x.uid].G.removeFromParent()); }
   sel = null; attachGizmo(); outliner(); syncEdit(); saveCur(); tip('Deleted' + (t ? ' (and its twin)' : '')); };
 $('bHide').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); pt.hidden = !pt.hidden; buildPart(pt); syncTwin(pt); outliner(); syncEdit(); saveCur(); };
 $('bSolo').onclick = () => { if (!sel) return; soloUid = soloUid === sel ? null : sel; rebuildParts(); outliner(); tip(soloUid ? 'Only this part shown — tap again to undo' : 'All parts shown'); };
@@ -1680,7 +1685,7 @@ canvas.addEventListener('pointerdown', e => { if (!sticky || sculpting() || plac
   e.stopImmediatePropagation(); e.preventDefault(); snap(); select(uid0); gizmo.detach(); controls.enabled = false;
   const G = v.G; G.updateMatrixWorld(true); const wp = new THREE.Vector3(), wq = new THREE.Quaternion(); G.getWorldPosition(wp); G.getWorldQuaternion(wq);
   const ws = new THREE.Vector3(); G.getWorldScale(ws); scene.attach(G);
-  drag = {uid: uid0, id: e.pointerId, grab: h.point.clone().sub(wp), q0: wq.clone(), moved: false, hit: null};
+  drag = {uid: uid0, id: e.pointerId, grab: h.point.clone().sub(wp), q0: wq.clone(), moved: false, hit: null}; if (window.V3) { const dp = partBy(uid0); if (dp) window.V3.dragStart(dp.lib); }
   dragPlane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(new THREE.Vector3()).negate(), h.point); try { canvas.setPointerCapture(e.pointerId); } catch (x) {} }, true);
 canvas.addEventListener('pointermove', e => { if (!drag || e.pointerId !== drag.id) return; e.stopImmediatePropagation(); drag.moved = true; const G = views[drag.uid].G, pt = partBy(drag.uid);
   const h = stickyHit(e.clientX, e.clientY); drag.hit = h;
@@ -1688,7 +1693,9 @@ canvas.addEventListener('pointermove', e => { if (!drag || e.pointerId !== drag.
     if (!isAlong(LIB[pt.lib]) || pt.keep) G.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), n); else G.quaternion.copy(drag.q0); drag.n = n; }
   else { ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); if (ray.ray.intersectPlane(dragPlane, dragTmp)) G.position.copy(dragTmp).sub(drag.grab); G.quaternion.copy(drag.q0); } }, true);
 function endDrag(e) { if (!drag || (e && e.pointerId !== drag.id)) return; const d = drag; drag = null; controls.enabled = true; const pt = partBy(d.uid), v = views[d.uid]; if (!pt || !v) return;
+  if (window.V3) window.V3.dragEnd();
   if (!d.moved) { buildPart(pt); return; }
+  if (window.V3 && window.V3.dropMoved(pt, e ? e.clientX : 0, e ? e.clientY : 0)) { outliner(); boxUI(); saveCur(); return; }
   if (d.hit) { const tgt = partBy(d.hit.object.userData.uid), boneName = (tgt && tgt.bone) || null, B = (boneName && bones[boneName]) || skelRoot;
     v.G.updateMatrixWorld(true); B.updateMatrixWorld(true); const m = v.G.matrixWorld.clone().premultiply(B.matrixWorld.clone().invert()), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(); m.decompose(p, q, s);
     const eu = new THREE.Euler().setFromQuaternion(q); pt.bone = boneName; pt.p = p.toArray().map(x => +x.toFixed(3)); pt.r = [eu.x, eu.y, eu.z].map(x => +(x / D).toFixed(1));
@@ -1846,7 +1853,7 @@ if (window.MF_V2) {
   function nearestBoneOnScreen(x, y, max) { let best = null, bd = max; for (const [n, b] of Object.entries(bones)) { const [sx, sy, sz] = screenOf(b); if (sz > 1) continue; const d = Math.hypot(sx - x, sy - y); if (d < bd) { bd = d; best = n; } } return best; }
   function airPoint(x, y) { ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); const pl = new THREE.Plane().setFromNormalAndCoplanarPoint(camera.getWorldDirection(new THREE.Vector3()).negate(), controls.target), out = new THREE.Vector3();
     return ray.ray.intersectPlane(pl, out) ? out : controls.target.clone(); }
-  function dropLib(id, x, y) { const e = LIB[id]; if (!e) return; const sr = $('sheet').getBoundingClientRect(); if (y > sr.top && x > sr.left) return tip('Let go over the model to add it', 1800);
+  function dropLib(id, x, y) { const e = LIB[id]; if (!e) return; if (window.V3) window.V3.at = [x, y]; const sr = $('sheet').getBoundingClientRect(); if (y > sr.top && x > sr.left) return tip('Let go over the model to add it', 1800);
     const hitB = cast(x, y, boneHelpers.filter(h => h.visible)), hitP = cast(x, y, visibleMeshes()), noBones = !Object.keys(bones).length;
     if (modeBone && !noBones) { const h = hitB && (!hitP || isAlong(e) || hitB.distance < hitP.distance) ? hitB : hitP; if (h) { placing = id; return placeAt(h); }
       const nb = nearestBoneOnScreen(x, y, 110); if (!nb) return tip('Let go on the model or near an orange dot', 2200); if (!addWeaponToPalm(id, nb)) addPart(id, nb, [0, 0, 0], [0, 0, 0]); return; }
@@ -1854,9 +1861,9 @@ if (window.MF_V2) {
     // free + let go in the air: it stays right there
     const wp = airPoint(x, y), bn = nearestBone(wp), B = (bn && bones[bn]) || skelRoot; B.updateMatrixWorld(true); const lp = wp.clone().applyMatrix4(B.matrixWorld.clone().invert());
     const m = mirrorAdd; mirrorAdd = mirrorAdd && !noBones; addPart(id, bn, lp.toArray().map(v => +v.toFixed(3)), [0, 0, 0], e.whole ? 1 : kindOf(e) ? decorScale(bn) : 1); mirrorAdd = m; }
-  const endGD = () => { if (gd && gd.timer) clearTimeout(gd.timer); gd = null; window.__gdOn = false; ghost.style.display = 'none'; document.body.classList.remove('gdrag'); };
+  const endGD = () => { if (window.V3) window.V3.dragEnd(); if (gd && gd.timer) clearTimeout(gd.timer); gd = null; window.__gdOn = false; ghost.style.display = 'none'; document.body.classList.remove('gdrag'); };
   const startGD = () => { if (!gd || gd.on) return; gd.on = true; window.__gdOn = true; if (navigator.vibrate) try { navigator.vibrate(15); } catch (x) {}
-    ghost.src = gd.src || ''; ghost.style.display = 'block'; ghost.style.left = gd.x + 'px'; ghost.style.top = gd.y + 'px'; document.body.classList.add('gdrag'); tip('Drag it onto the model and let go', 2500); };
+    if (window.V3) window.V3.dragStart(gd.id); ghost.src = gd.src || ''; ghost.style.display = 'block'; ghost.style.left = gd.x + 'px'; ghost.style.top = gd.y + 'px'; document.body.classList.add('gdrag'); tip('Drag it onto the model and let go', 2500); };
   $('lib').addEventListener('pointerdown', e => { const b = e.target.closest('.item'), img = b && b.querySelector('img'); if (!img || !img.dataset.id || e.target.closest('.del,.fav')) return;
     gd = {id: img.dataset.id, x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, src: img.src, pid: e.pointerId, on: false};
     gd.timer = setTimeout(startGD, e.pointerType === 'mouse' ? 99999 : 260); });
@@ -1919,6 +1926,26 @@ if (window.MF_V2) {
     ['extra', 'Extra limbs', 'What goes on the extra limbs?', [C('Tentacles & Extra Limbs'), C('Tails'), C('Wings')], [C('Tentacles & Extra Limbs')], true],
     ['trunk', 'Armor + extras', 'Add some extras?', [C('Back & Armor Plates'), C('Accessories & Magic'), C('Cloth & Capes')], [C('Mech Arms & Legs', ['Shoulders']), C('Mech Details'), C('Cloth & Capes')], true, 'decor'],
     ['hand', 'Weapon', 'Give it a weapon?', [C('Weapons')], [C('Weapons')], true, 'weapon']];
+  if (window.MF_V3) {   // 🔌 plug steps: fill every free plug of that kind (eyes on every head, claws on every finger...). 'simple' = only shown in Complex builds
+    const ins = (after, rows) => { const i = PARTSTEPS.findIndex(r => r[1] === after); PARTSTEPS.splice(i + 1, 0, ...rows); };
+    ins('Head', [['head', 'Eyes', 'Which eyes?', [C('Eyes & Faces', ['🔌 Eyes', 'Eyes'])], [C('Mech Eyes & Faces')], true, 'plug:eye'],
+      ['head', 'Teeth', 'Teeth? (top and bottom)', [C('Jaws & Teeth', ['🔌 Tooth rows', 'Tooth Rows'])], [], true, 'plug:teeth', 'complex'],
+      ['head', 'Fangs', 'Big fangs or tusks?', [C('Jaws & Teeth', ['🔌 Fangs', 'Teeth & Tusks'])], [], true, 'plug:fang', 'complex'],
+      ['head', 'Tongue', 'A tongue?', [C('Jaws & Teeth', ['🔌 Tongues'])], [], true, 'plug:tongue', 'complex']]);
+    const hi = PARTSTEPS.findIndex(r => r[1] === 'Horns'); PARTSTEPS[hi] = ['head', 'Horns', 'Horns or antlers?', [C('Horns & Crests', ['🔌 Horns', 'Horns', 'Antlers'])], [C('Mech Eyes & Faces', ['Crests & Fins'])], true, 'plug:horn'];
+    ins('Horns', [['head', 'Ears', 'Ears or frills?', [C('Eyes & Faces', ['🔌 Ears', 'Ears'])], [], true, 'plug:ear', 'complex'],
+      ['head', 'Face bits', 'Brow, nose, cheeks or chin?', [C('Eyes & Faces', ['🔌 Face bits', 'Face Pieces'])], [], true, 'plug', 'complex'],
+      ['head', 'Crest / mane', 'A crest, a mane or antennae?', [C('Horns & Crests', ['🔌 Crests', 'Crests & Frills']), C('Heads & Skulls', ['🔌 Manes', 'Manes & Hair']), C('Eyes & Faces', ['🔌 Antennae'])], [], true, 'plug', 'complex']]);
+    ins('Hands', [['hand', 'Fingers', 'What kind of fingers?', [C('Hands & Claws', ['🔌 Fingers & toes'])], [C('Hands & Claws', ['🔌 Fingers & toes'])], true, 'plug:finger', 'complex'],
+      ['hand', 'Claws', 'Claws or nails on the fingers?', [C('Hands & Claws', ['🔌 Claws'])], [C('Hands & Claws', ['🔌 Claws'])], true, 'plug:claw', 'complex']]);
+    ins('Feet', [['foot', 'Toes', 'What kind of toes?', [C('Hands & Claws', ['🔌 Fingers & toes'])], [], true, 'plug:toe', 'complex'], ['foot', 'Toe claws', 'Claws on the toes?', [C('Hands & Claws', ['🔌 Claws'])], [], true, 'plug:claw', 'complex']]);
+    ins('Tail / tentacles', [['tail', 'Tail tip', 'What\'s on the end of the tail?', [C('Tails', ['🔌 Tail tips'])], [C('Tails', ['🔌 Tail tips'])], true, 'plug:tailtip'],
+      ['trunk', 'Back spikes', 'Spikes, plates or crystals down the back?', [C('Back & Armor Plates', ['🔌 Back spikes'])], [C('Back & Armor Plates', ['🔌 Back spikes'])], true, 'plug:back'],
+      ['trunk', 'Belly', 'Belly plates?', [C('Back & Armor Plates', ['🔌 Belly plates'])], [], true, 'plug:belly', 'complex'],
+      ['trunk', 'Glow spots', 'Glowing spots?', [C('Accessories & Magic', ['🎐 Jellyfish'])], [], true, 'plug:glow'],
+      ['trunk', 'Goo face', 'Grow a face out of the goo?', [C('Eyes & Faces', ['🫧 Ooze faces'])], [], true, 'plug:face'],
+      ['trunk', 'Mouths', 'Mouths in the goo?', [C('Jaws & Teeth', ['👄 Mouth stamps'])], [], true, 'plug:mouth'],
+      ['trunk', 'Swallowed', 'What did it swallow?', [C('Accessories & Magic', ['🫥 Swallowed'])], [], true, 'plug:inside']]); }
   const SHAPES = [['Normal', {}], ['Tall + slim', {height: 1.25, bulk: .8, legs: 1.15}], ['Big + bulky', {bulk: 1.45, height: 1.05, head: .9}], ['Short + stocky', {height: .8, bulk: 1.3, legs: .75}],
     ['Long neck + tail', {neck: 1.8, tail: 1.6}], ['Long arms', {arms: 1.45}], ['Big head', {head: 1.4}]];
   const SKINCATS = ['Skins & Scales', 'Lizards', 'Fur', 'Fish & Sea', 'Insects', 'Metal', 'Mech Paint', 'Alien Armor', 'Gems & Stone', 'Glow & Crystal', 'Neon', 'Fire', 'Cosmic & Special', 'Toys: plastic', 'Candy', 'Bark (Lynocs, CC0)'];
@@ -1962,17 +1989,20 @@ if (window.MF_V2) {
     angel: {Body: 'bd_torso_brawler', Neck: 'bd_neck_bull', Head: 'hd_head_eagle', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', Legs: 'bd_leg_beast', Wings: 'sx_wing_feather'}};
   const DEF_MECH = {Body: null, Neck: 'mn_neck_piston', Head: 'mk_head_vcrest', Arms: 'mk_arm_full', Hands: 'mk_hand_fist', Legs: 'mk_leg_full', Feet: 'mk_foot_armored', Wings: 'tw_wing_mech', 'Tail / tentacles': 'tw_tail_plated', 'Armor + extras': 'mk_sh_round'};
   const DEF_MECH_SK = {walker: {Head: 'mk_head_camera', Arms: 'mk_arm_missile', Legs: 'mk_leg_chicken'}, tank: {Head: 'mk_head_monoeye', Hands: 'mk_hand_claw'}};
-  const defFor = st => { const t = st.t; let id = BT.style === 'mech' ? (t === 'Body' ? fitsFor()[0] : {...DEF_MECH, ...(DEF_MECH_SK[P.skel] || {})}[t]) : (DEF[P.skel] || {})[t];
+  const defFor = st => { const t = st.t; if (window.MF_V3) { const v = window.V3.defFor(P.skel, t, BT.style, BT.level); if (v !== undefined) return v && LIB[v] ? v : null; } let id = BT.style === 'mech' ? (t === 'Body' ? fitsFor()[0] : {...DEF_MECH, ...(DEF_MECH_SK[P.skel] || {})}[t]) : (DEF[P.skel] || {})[t];
     if (!id && BT.style !== 'mech' && t === 'Body') id = fitsFor()[0]; return id && LIB[id] ? (lpParts && LIB[id].hasLpv ? LIB[id].hasLpv : id) : null; };
   const MECHY = id => /^(mk_|md_|bb_tank|bb_walker)/.test(id);
   const fitsFor = () => { let L = (BODY_FOR[P.skel] || []).filter(id => LIB[id]); const f = BT.style === 'mech' ? L.filter(MECHY) : BT.style === 'creature' ? L.filter(id => !MECHY(id)) : L; return f.length ? f : L; };
   const srcOf = st => BT.style === 'mech' ? (st.mech.length ? st.mech : st.cre) : BT.style === 'mix' ? [...st.mech, ...st.cre] : st.cre;
   const choicesOf = st => { const out = []; if (st.how === 'trunk' && fitsFor().length) out.push({fit: true, label: '⭐ Fits ' + ((SKEL[P.skel] || {}).name || 'this body').split(' (')[0].toLowerCase()}); for (const c of srcOf(st)) { const subs = [...new Set(Object.values(LIB).filter(e => e.group === c.g && !e.lpv && (!c.subs || c.subs.includes(e.sub))).map(e => e.sub))];
-    subs.forEach(sb => out.push({g: c.g, sub: sb, label: (BT.style === 'mix' && /^Mech /.test(c.g) ? '🤖 ' : '') + sb})); } return out; };
+    subs.forEach(sb => out.push({g: c.g, sub: sb, label: (BT.style === 'mix' && /^Mech /.test(c.g) ? '🤖 ' : '') + sb})); }
+    if (window.MF_V3) out.sort((a, b) => (b.fit ? 2 : /🔌/.test(b.sub || '') ? 1 : 0) - (a.fit ? 2 : /🔌/.test(a.sub || '') ? 1 : 0)); return out; };
   const partsOf = ch => ch.fit ? fitsFor().map(id => lpParts && LIB[id].hasLpv ? LIB[id].hasLpv : id) : Object.keys(LIB).filter(id => { const e = LIB[id]; return e.group === ch.g && e.sub === ch.sub && (lpParts ? !e.hasLpv : !e.lpv); });
   function btPlace(st, id, quiet) { if (BT.added.length) { removeParts(BT.added.map(partBy).filter(Boolean)); BT.added = []; }
     snap(); const before = new Set(P.parts.map(p => p.uid)), e = LIB[id], m = mirrorAdd, keepMode = modeBone; modeBone = true;
-    if (st.how === 'weapon') { const hands = famBones('hand'), h = hands.find(n => n.endsWith('.R')) || hands[0]; if (!h || !addWeaponToPalm(id, h)) addPart(id, (P.bones.find(r => r[4] === 'chest') || P.bones[0])[0], [0, 0, 0], [0, 0, 0]); }
+    if (window.MF_V3 && (st.how || '').startsWith('plug')) { mirrorAdd = true; window.V3.fillAll(id, (st.how || '').split(':')[1]); }
+    else if (window.MF_V3 && e.perSeg && st.fam !== 'trunk') { mirrorAdd = false; famBones(st.fam).forEach(b => addPart(id, b, [0, 0, 0], [0, 0, 0])); const fb = new Set(famBones(st.fam)); removeParts(P.parts.filter(p => p.lib.startsWith('base_') && fb.has(p.bone))); }
+    else if (st.how === 'weapon') { const hands = famBones('hand'), h = hands.find(n => n.endsWith('.R')) || hands[0]; if (!h || !addWeaponToPalm(id, h)) addPart(id, (P.bones.find(r => r[4] === 'chest') || P.bones[0])[0], [0, 0, 0], [0, 0, 0]); }
     else if (st.how === 'trunk' && e.perSeg) { mirrorAdd = false; P.bones.filter(r => TRUNK_TAGS.has(r[4])).forEach(r => addPart(id, r[0], [0, 0, 0], [0, 0, 0])); }
     else if (st.how === 'trunk' || st.how === 'decor') { const tb = st.fam === 'trunk' ? (P.bones.find(r => r[4] === 'chest') || P.bones.find(r => TRUNK_TAGS.has(r[4])) || P.bones[0])[0] : famRoots(st.fam)[0]; mirrorAdd = false; addPart(id, tb, [0, 0, 0], [0, 0, 0]); }
     else { const roots = famRoots(st.fam); mirrorAdd = false; roots.forEach(r => addPart(id, r, [0, 0, 0], [0, 0, 0])); const fb = new Set(famBones(st.fam)); removeParts(P.parts.filter(p => p.lib.startsWith('base_') && fb.has(p.bone))); }   // whatever goes on a limb replaces the mannequin there
@@ -1982,7 +2012,7 @@ if (window.MF_V2) {
     tip(e.name + ' on ✓' + (st.how === 'decor' ? ' — drag it where you want it' : ''), 2200); btShow(); }
   function btSteps() { const steps = [];
     steps.push({k: 'style'}); steps.push({k: 'body'}); steps.push({k: 'shape'});
-    for (const [fam, t, q, cre, mech, opt, how] of PARTSTEPS) { if (!hasFam(fam)) continue; const st = {k: 'part', fam, t, q, cre, mech, opt, how};
+    for (const [fam, t, q, cre, mech, opt, how, lvl] of PARTSTEPS) { if (!hasFam(fam) && !(how || '').startsWith('plug')) continue; if (lvl === 'complex' && BT.level === 'simple') continue; const st = {k: 'part', fam, t, q, cre, mech, opt, how};
       if (choicesOf(st).length) steps.push(st); }
     steps.push({k: 'move'}, {k: 'paint'}, {k: 'clean'}, {k: 'look'}, {k: 'save'}); BT.steps = steps; }
   function btShow() { const el = $('guide'); if (!BT.on) return; const st = BT.steps[BT.i], N = BT.steps.length; document.body.classList.add('guiding'); el.style.display = 'block'; el.classList.toggle('small', BT.small);
@@ -1993,7 +2023,10 @@ if (window.MF_V2) {
     const q = t => h('div', 'gp', t), row = cls => h('div', cls || 'gc'), btn = (r, t, f, on) => { const b = Object.assign(document.createElement('button'), {textContent: t, onclick: f}); if (on) b.className = 'on'; r.append(b); return b; };
     const nav = (nextLabel, extra) => { const r = row('gb'); btn(r, '✕', btEnd); if (BT.i) btn(r, '◀', () => btGo(BT.i - 1)); if (extra) extra(r); btn(r, nextLabel || 'Next ▶', () => BT.i === N - 1 ? btEnd(true) : btGo(BT.i + 1), true); };
     if (st.k === 'style') { q('A mech, a creature, or a mix of both? (You can always use any part later.)'); const r = row();
-      for (const [k, t] of [['mech', '🤖 Mech'], ['creature', '🐲 Creature'], ['mix', '🔀 Mix of both']]) btn(r, t, () => { BT.style = k; btGo(1); }, BT.style === k); nav(); return; }
+      for (const [k, t] of [['mech', '🤖 Mech'], ['creature', '🐲 Creature'], ['mix', '🔀 Mix of both']]) btn(r, t, () => { BT.style = k; btGo(1); }, BT.style === k);
+      if (window.MF_V3) { q('Simple = whole heads, hands and tails. Complex = every little part: skull + jaw, eyes, teeth, fingers, claws, toes, tail tips.'); const r2 = row();
+        for (const [k, t] of [['simple', '🟢 Simple'], ['complex', '🔴 Complex']]) btn(r2, t, () => { BT.level = k; try { localStorage.setItem('mf-btlevel', k); } catch (x) {} btSteps(); btShow(); }, BT.level === k); }
+      nav(); return; }
     if (st.k === 'body') { q('Which body (skeleton)? Every body comes with a grey mannequin to build on. Tap one:'); const r = row('gc scroll');
       btn(r, '✓ Keep the one I have', () => { btSteps(); btGo(2); }, true);
       for (const [k, sk] of Object.entries(SKEL)) { if (k === 'none') continue; btn(r, sk.name, () => { if (mineNow().length && !confirm('Start fresh on a ' + sk.name + '? Parts you added will be cleared (save first if you want them).')) return;
@@ -2025,20 +2058,22 @@ if (window.MF_V2) {
     if (st.k === 'look') { q('Titan Clash is low-poly with toon shading and outlines. See it that way?'); const r = row();
       btn(r, '🎮 Yes, game look', () => { if (!(P.fx.lowpoly && P.fx.toon)) $('bGameLook').click(); }, !!(P.fx.lowpoly && P.fx.toon)); btn(r, 'Not now', () => btGo(BT.i + 1)); nav(); return; }
     if (st.k === 'save') { q('You built a titan! 🎉 Save it so you can come back to it.'); const r = row(); btn(r, '💾 Save as…', () => $('mSave').click(), true); btn(r, '⬇ Download for the game (.glb)', () => $('mExport').click()); nav('🎉 Done'); return; } }
-  function btGo(i) { BT.i = Math.max(0, Math.min(BT.steps.length - 1, i)); BT.addedBy = BT.addedBy || {}; BT.added = (BT.addedBy[BT.i] || []).filter(u => partBy(u)); BT.pick = null; BT.small = false; const st = BT.steps[BT.i];
+  function btGo(i) { if (window.MF_V3) { const dir = i < BT.i ? -1 : 1; let st0 = BT.steps[i]; while (st0 && st0.k === 'part' && (st0.how || '').startsWith('plug') && !window.V3.plugsFor(st0.how)) { i += dir; st0 = BT.steps[i]; } }
+    BT.i = Math.max(0, Math.min(BT.steps.length - 1, i)); BT.addedBy = BT.addedBy || {}; BT.added = (BT.addedBy[BT.i] || []).filter(u => partBy(u)); BT.pick = null; BT.small = false; const st = BT.steps[BT.i];
     BT.defDone = BT.defDone || {}; if (st.k === 'part' && !BT.defDone[BT.i]) { BT.defDone[BT.i] = true; const d = defFor(st); if (d) btPlace(st, d, true); }
     document.body.classList.remove('gside'); btShow(); }
-  function btStart() { $('menu').classList.remove('open'); BT.on = true; BT.addedBy = {}; BT.defDone = {}; btSteps(); BT.style = P.skel === 'mech' || P.skel === 'walker' || P.skel === 'tank' ? 'mech' : 'creature'; btGo(0); }
+  function btStart() { $('menu').classList.remove('open'); BT.on = true; if (window.MF_V3) { try { BT.level = localStorage.getItem('mf-btlevel') || 'complex'; } catch (x) { BT.level = 'complex'; } } BT.addedBy = {}; BT.defDone = {}; btSteps(); BT.style = P.skel === 'mech' || P.skel === 'walker' || P.skel === 'tank' ? 'mech' : 'creature'; btGo(0); }
   function btEnd(won) { BT.on = false; $('guide').style.display = 'none'; document.body.classList.remove('guiding', 'gside'); if (won === true) tip('🎉 Titan built! Start › 🎓 Build together to make another', 4000); }
   $('bGuide').onclick = btStart; $('mGuide').onclick = btStart;
   // ⭐ Default builds: one finished creature per body type (Start tab), made from the same defaults
   function buildDefault(k, style) { if (P.parts.some(p => !p.lib.startsWith('base_')) && !confirm('Replace what is on screen with the default ' + (SKEL[k] || {}).name + '? (Save first if you want to keep it)')) return;
     snap(); P = blankProject(k); rebuildSkeleton(); buildBase(); rebuildParts(); BT.style = style || (/^(mech|walker|tank)$/.test(k) ? 'mech' : 'creature'); btSteps(); BT.addedBy = {};
-    BT.steps.forEach((st, i) => { if (st.k !== 'part') return; BT.i = i; BT.added = []; const d = defFor(st); if (d) btPlace(st, d, true); }); BT.i = 0; outliner(); applyFX(); bodyUI(); skelUI(); saveCur(); frameAll(); tip('⭐ Default ' + (SKEL[k] || {}).name + ' — change anything you like', 2600); }
+    const order = BT.steps.map((st, i) => i); if (window.MF_V3) order.sort((a, b) => ((BT.steps[a].how || '').startsWith('plug') ? 1 : 0) - ((BT.steps[b].how || '').startsWith('plug') ? 1 : 0) || a - b);
+    order.forEach(i => { const st = BT.steps[i]; if (st.k !== 'part') return; BT.i = i; BT.added = []; const d = defFor(st); if (d) btPlace(st, d, true); }); BT.i = 0; outliner(); applyFX(); bodyUI(); skelUI(); saveCur(); frameAll(); tip('⭐ Default ' + (SKEL[k] || {}).name + ' — change anything you like', 2600); }
   const defUI = () => { const el = $('defBuilds'); if (!el) return; el.innerHTML = ''; for (const [k, sk] of Object.entries(SKEL)) { if (k === 'none' || (!DEF[k] && !/^(mech|walker|tank)$/.test(k))) continue;
       el.append(Object.assign(document.createElement('button'), {textContent: sk.name, onclick: () => buildDefault(k)})); }
     el.append(Object.assign(document.createElement('button'), {textContent: '🤖 Mech (default)', onclick: () => buildDefault('mech', 'mech')})); }; defUI();
-  window.__def = buildDefault;
+  window.__def = buildDefault; if (window.MF_V3) window.__btx = {BT, DEF, BODY_FOR, PARTSTEPS, btSteps, btGo, btShow, defUI, C};
   const bdUI = () => document.querySelectorAll('[data-bd]').forEach(b => b.classList.toggle('on', b.dataset.bd === boneDetail));
   document.querySelectorAll('[data-bd]').forEach(b => b.onclick = () => { boneDetail = b.dataset.bd; try { localStorage.setItem('mf-bones', boneDetail); } catch (x) {} bdUI();
     tip({simple: '🦴 Simple bones: fewer bones, easy to build on', normal: 'Normal bones', complex: '🦴 Complex bones: more bends in the spine, neck and tail'}[boneDetail] + ' — used when you pick a body type', 2600); }); bdUI();

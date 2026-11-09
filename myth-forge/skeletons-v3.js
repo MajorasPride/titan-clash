@@ -1,0 +1,77 @@
+// Mythic Forge — new body types (Nov 9 2026, test page). Same bone format as skeletons.js: [name, parent, head xyz, tail xyz, tag, opts].
+(function () {
+  const T = window.FORGE_SKEL; if (!T) return;
+  const side = (b, s) => b.map(([n, p, h, t, tag, o]) => [n + (s > 0 ? '.L' : '.R'), p && p.endsWith('#') ? p.slice(0, -1) + (s > 0 ? '.L' : '.R') : p, [s * Math.abs(h[0]), h[1], h[2]], [s * Math.abs(t[0]), t[1], t[2]], tag, o]);
+  const both = b => [...side(b, 1), ...side(b, -1)];
+  const chain = (name, parent, pts, tag) => pts.slice(0, -1).map((h, i) => [name + (i + 1), i ? name + i : parent, h, pts[i + 1], tag]);
+  const HEAD = (n, par, h, len = 1.2, fwd = .3) => [[n, par, h, [h[0], h[1] + len, h[2] + fwd], 'head', {up: 1}], [n.replace('head', 'jaw') === n ? n + 'jaw' : n.replace('head', 'jaw'), n, [h[0], h[1] + .1, h[2] + .3], [h[0], h[1] - .1, h[2] + 1.3], 'jaw', {up: 1}]];
+  const quad = T.quad.bones;
+  // 🦁 Chimera: lion body, a goat head growing out of its back, a snake tail (put the 🐍 Snake head tip on the tail's end plug)
+  T.chimera = {name: 'Chimera (lion + goat + snake tail)', bones: [...quad.map(b => b[0] === 'neck' ? ['neck', 'chest', [0, 5.6, 2.2], [0, 7.2, 3.2], 'neck'] : b[0] === 'head' ? ['head', 'neck', [0, 7.2, 3.2], [0, 8.4, 3.6], 'head', {up: 1}] : b[0] === 'jaw' ? ['jaw', 'head', [0, 7.3, 3.5], [0, 7.0, 4.6], 'jaw', {up: 1}] : b),
+    ['goatneck', 'spine', [0, 5.8, 0], [0, 7.6, -.3], 'neck'], ['goathead', 'goatneck', [0, 7.6, -.3], [0, 8.6, 0], 'head', {up: 1}], ['goatjaw', 'goathead', [0, 7.7, 0], [0, 7.5, .9], 'jaw', {up: 1}]]};
+  // 🐲 Hydra with wing-arms: 2 legs, the arms are the wings, 3 necks, 2 tails
+  const wy = T.wyvern.bones.filter(b => !/^(neck|head|jaw|tail)/.test(b[0]));
+  T.hydra2 = {name: 'Hydra (2 legs, wing-arms, 3 heads)', bones: [...wy,
+    ...[[-1, 'L'], [0, 'M'], [1, 'R']].flatMap(([x, n]) => [['neck' + n, 'chest', [x * .5, 8.4, .2], [x * 1.4, 10.2, 1.0], 'neck'], ['neck' + n + '2', 'neck' + n, [x * 1.4, 10.2, 1.0], [x * 1.9, 11.6, 1.6], 'neck'],
+      ['head' + n, 'neck' + n + '2', [x * 1.9, 11.6, 1.6], [x * 1.9, 12.6, 2.0], 'head', {up: 1}], ['jaw' + n, 'head' + n, [x * 1.9, 11.7, 1.9], [x * 1.9, 11.5, 2.9], 'jaw', {up: 1}]]),
+    ...chain('tailA', 'hips', [[-.3, 5.1, -.6], [-.6, 4.4, -2], [-1.1, 3.6, -3.6], [-1.7, 2.8, -5], [-2.3, 2.1, -6.4]], 'tail'),
+    ...chain('tailB', 'hips', [[.3, 5.1, -.6], [.6, 4.4, -2], [1.1, 3.6, -3.6], [1.7, 2.8, -5], [2.3, 2.1, -6.4]], 'tail')]};
+  // 🦗 Mantis: tall front body, raptor arms (put 🔪 scythe arms on the hands), 4 walking legs, wings, abdomen
+  const bugLeg = (i, z, a, y = 3, reach = 3.6) => both([['leg' + i, 'body', [.7, y, z], [2.4, y + 1.6, z + a], 'legU'], ['leg' + i + 'b', 'leg' + i + '#', [2.4, y + 1.6, z + a], [reach, .3, z + a * 1.6], 'legL'], ['leg' + i + 'c', 'leg' + i + 'b#', [reach, .3, z + a * 1.6], [reach + .5, 0, z + a * 1.8], 'foot']]);
+  T.mantis = {name: 'Mantis (blade arms)', bones: [['body', null, [0, 3.2, -.8], [0, 3.6, .8], 'chest'], ['abdomen', 'body', [0, 3.4, -.8], [0, 3.0, -5.6], 'tail'], ['neck', 'body', [0, 3.6, .8], [0, 7.0, 2.0], 'neck'],
+    ['head', 'neck', [0, 7.0, 2.0], [0, 7.8, 2.6], 'head', {up: 1}], ['jaw', 'head', [0, 6.9, 2.4], [0, 6.6, 3.0], 'jaw', {up: 1}],
+    ...both([['shoulder', 'neck', [.4, 6.2, 1.8], [.9, 6.0, 2.0], 'armU'], ['upperarm', 'shoulder#', [.9, 6.0, 2.0], [1.1, 4.4, 3.4], 'armU'], ['forearm', 'upperarm#', [1.1, 4.4, 3.4], [1.0, 6.0, 4.4], 'armF'], ['hand', 'forearm#', [1.0, 6.0, 4.4], [.9, 5.0, 5.4], 'hand'],
+      ['antenna', 'head', [.25, 7.7, 2.5], [1.2, 10, 4.2], 'extra'], ['wing', 'body', [.5, 3.9, .2], [1.2, 4.3, -4.8], 'wingA']]), ...bugLeg(1, .2, .6), ...bugLeg(2, -.6, -.6)]};
+  // 🐝 Wasp: 4 wings (front + hind), front legs are arms (put 🔪 drill stinger arms on them), stinger abdomen
+  T.wasp = {name: 'Wasp / bee (4 wings)', bones: [['body', null, [0, 4, -.6], [0, 4.3, 1.2], 'chest'], ['waist', 'body', [0, 4, -.6], [0, 3.8, -1.4], 'tail'], ['abdomen', 'waist', [0, 3.8, -1.4], [0, 2.6, -5.2], 'tail'],
+    ['head', 'body', [0, 4.3, 1.2], [0, 5.3, 2.0], 'head', {up: 1}], ['jaw', 'head', [0, 4.1, 1.8], [0, 3.8, 2.5], 'jaw', {up: 1}],
+    ...both([['shoulder', 'body', [.5, 4.0, 1.0], [1.0, 3.9, 1.3], 'armU'], ['upperarm', 'shoulder#', [1.0, 3.9, 1.3], [1.8, 2.6, 2.4], 'armU'], ['forearm', 'upperarm#', [1.8, 2.6, 2.4], [1.6, 3.6, 3.8], 'armF'], ['hand', 'forearm#', [1.6, 3.6, 3.8], [1.5, 3.7, 4.8], 'hand'],
+      ['antenna', 'head', [.25, 5.2, 1.9], [1.1, 7.2, 3.6], 'extra'], ['wing', 'body', [.5, 4.6, .6], [5.6, 5.8, -.4], 'wingA'], ['hindwing', 'body', [.5, 4.4, -.1], [4.0, 4.6, -1.6], 'wingA']]), ...bugLeg(2, -.1, .1, 3.6, 3.2), ...bugLeg(3, -.6, -.6, 3.6, 3.2)]};
+  // 🦂 Upright bug (fossil blade-walker): stands on 2 legs, hook / scythe arms, short segmented tail
+  T.uprightbug = {name: 'Upright bug (2 legs, blade arms)', bones: [['hips', null, [0, 4.6, 0], [0, 5.6, .1], 'spine'], ['spine', 'hips', [0, 5.6, .1], [0, 7.0, .3], 'spine'], ['chest', 'spine', [0, 7.0, .3], [0, 8.4, .5], 'chest'],
+    ['neck', 'chest', [0, 8.4, .5], [0, 9.0, .9], 'neck'], ['head', 'neck', [0, 9.0, .9], [0, 10.0, 1.2], 'head', {up: 1}], ['jaw', 'head', [0, 9.0, 1.4], [0, 8.8, 2.0], 'jaw', {up: 1}],
+    ...both([['shoulder', 'chest', [.6, 8.2, .3], [1.4, 8.2, .3], 'armU'], ['upperarm', 'shoulder#', [1.4, 8.2, .3], [1.9, 6.6, .9], 'armU'], ['forearm', 'upperarm#', [1.9, 6.6, .9], [2.0, 7.6, 2.2], 'armF'], ['hand', 'forearm#', [2.0, 7.6, 2.2], [2.0, 7.0, 3.2], 'hand'],
+      ['thigh', 'hips', [.8, 4.6, 0], [1.2, 2.6, .8], 'legU'], ['shin', 'thigh#', [1.2, 2.6, .8], [1.1, .6, -.6], 'legL'], ['foot', 'shin#', [1.1, .6, -.6], [1.1, 0, .6], 'foot']]),
+    ...chain('tail', 'hips', [[0, 4.5, -.6], [0, 3.6, -1.8], [0, 2.6, -2.8], [0, 1.6, -3.4]], 'tail')]};
+  // 🐙 Kraken: huge mantle with fins, 8 arms + 2 long hunting tentacles
+  const kr = []; for (let i = 0; i < 8; i++) { const a = (i + .5) / 8 * Math.PI * 2, c = Math.cos(a), s = Math.sin(a); kr.push(...chain('arm' + i, 'body', [[s * .9, 2.2, 2.6 + c * .9], [s * 2.4, 1.2, 3.6 + c * 2.4], [s * 3.6, .7, 4.2 + c * 3.8], [s * 4.6, .5, 4.6 + c * 5.0], [s * 5.4, .9, 4.8 + c * 6.0]], 'tail')); }
+  for (const sd of [-1, 1]) kr.push(...chain('hunt' + (sd > 0 ? 'L' : 'R'), 'body', [[sd * .4, 2.4, 3.2], [sd * 1.0, 2.0, 5.2], [sd * 1.6, 1.6, 7.4], [sd * 2.0, 1.4, 9.6], [sd * 2.2, 1.6, 11.6], [sd * 2.2, 2.2, 13.2]], 'extra'));
+  T.kraken = {name: 'Kraken (8 arms + 2 hunting tentacles)', bones: [['body', null, [0, 2.6, 2.4], [0, 6.0, -4.6], 'chest'], ['head', 'body', [0, 2.6, 2.4], [0, 3.6, 3.0], 'head', {up: 1}], ['jaw', 'head', [0, 2.2, 2.8], [0, 1.9, 3.6], 'jaw', {up: 1}],
+    ...both([['fin', 'body', [.9, 5.4, -3.6], [3.2, 5.6, -4.8], 'wingA']]), ...kr]};
+  // 🎐 Jellyfish: a bell that floats, a ring of trailing tentacles, frilly oral arms in the middle (no face)
+  const jf = []; for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2, c = Math.cos(a), s = Math.sin(a), R = 3.1; jf.push(...chain('tent' + i, 'bell', [[s * R, 6.4, c * R], [s * (R + .2), 4.8, c * (R + .2)], [s * (R + .1), 3.2, c * (R + .1)], [s * R * .9, 1.6, c * R * .9], [s * R * .8, .3, c * R * .8]], 'tail')); }
+  for (let i = 0; i < 4; i++) { const a = (i + .5) / 4 * Math.PI * 2, c = Math.cos(a), s = Math.sin(a); jf.push(...chain('oral' + i, 'bell', [[s * .5, 6.6, c * .5], [s * 1.0, 5.0, c * 1.0], [s * 1.2, 3.4, c * 1.2], [s * 1.0, 1.8, c * 1.0]], 'extra')); }
+  T.jellyfish = {name: 'Jellyfish (bell + tentacles)', bones: [['bell', null, [0, 6.6, 0], [0, 10.2, 0], 'chest'], ...jf]};
+  // 🐢 Giant snapping turtle (4 legs) and a bipedal turtle (stands like a kaiju)
+  T.turtle = {name: 'Giant turtle (4 legs)', bones: [['hips', null, [0, 3.0, -2.4], [0, 3.4, -.6], 'spine'], ['chest', 'hips', [0, 3.4, -.6], [0, 3.3, 1.8], 'chest'],
+    ['neck', 'chest', [0, 3.2, 1.8], [0, 3.4, 3.2], 'neck'], ['neck2', 'neck', [0, 3.4, 3.2], [0, 3.6, 4.4], 'neck'], ['head', 'neck2', [0, 3.6, 4.4], [0, 4.4, 5.0], 'head', {up: 1}], ['jaw', 'head', [0, 3.7, 4.7], [0, 3.4, 5.8], 'jaw', {up: 1}],
+    ...both([['frontleg', 'chest', [1.8, 2.8, 1.4], [3.0, 1.8, 2.2], 'legU'], ['frontshin', 'frontleg#', [3.0, 1.8, 2.2], [3.2, .4, 2.4], 'legL'], ['frontfoot', 'frontshin#', [3.2, .4, 2.4], [3.4, 0, 3.4], 'foot'],
+      ['backleg', 'hips', [1.6, 2.7, -2.2], [2.8, 1.6, -2.6], 'legU'], ['backshin', 'backleg#', [2.8, 1.6, -2.6], [2.9, .4, -2.8], 'legL'], ['backfoot', 'backshin#', [2.9, .4, -2.8], [3.0, 0, -2.0], 'foot']]),
+    ...chain('tail', 'hips', [[0, 2.8, -2.8], [0, 2.4, -4.2], [0, 1.8, -5.6], [0, 1.2, -6.8], [0, .8, -7.8]], 'tail')]};
+  T.turtle2 = {name: 'Bipedal turtle (stands up)', bones: [...T.kaiju.bones.filter(b => !/^tail/.test(b[0])), ...chain('tail', 'hips', [[0, 4.4, -.8], [0, 3.4, -2.2], [0, 2.2, -3.2], [0, 1.2, -3.8]], 'tail')]};
+  // 🦅🐴 Hippogriff: eagle front (bird legs + wings), horse back
+  T.hippogriff = {name: 'Hippogriff (eagle front, horse back)', bones: [...quad.map(b => b[0] === 'neck' ? ['neck', 'chest', [0, 5.6, 2.2], [0, 7.4, 3.0], 'neck'] : b[0] === 'head' ? ['head', 'neck', [0, 7.4, 3.0], [0, 8.4, 3.4], 'head', {up: 1}] : b[0] === 'jaw' ? ['jaw', 'head', [0, 7.6, 3.4], [0, 7.4, 4.3], 'jaw', {up: 1}] : b),
+    ...both([['wing', 'chest', [.6, 6.0, 1.2], [3.2, 7.4, .6], 'wingA'], ['wingmid', 'wing#', [3.2, 7.4, .6], [6.2, 8.2, -.6], 'wingB'], ['wingtip', 'wingmid#', [6.2, 8.2, -.6], [9, 7.2, -2.2], 'wingC']])]};
+  // 🫧 Ooze: a core with wobbly pseudopods that reach out (faces grow anywhere on the goo)
+  const ps = []; for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2 + .3, c = Math.cos(a), s = Math.sin(a); ps.push(...chain('pod' + i, 'core', [[s * 1.6, 1.4, c * 1.6], [s * 2.8, 1.8 + (i % 2), c * 2.8], [s * 3.8, 2.6 + (i % 2) * 1.2, c * 3.8], [s * 4.4, 3.6 + (i % 2) * 1.6, c * 4.4]], 'extra')); }
+  T.ooze = {name: 'Ooze (core + pseudopods)', bones: [['core', null, [0, 0, 0], [0, 2.6, 0], 'spine'], ['top', 'core', [0, 2.6, 0], [0, 5.0, .2], 'chest'], ...ps]};
+  // 👁 Beholder: a floating orb with one big eye and a crown of eye stalks
+  const bh = []; for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2, c = Math.cos(a), s = Math.sin(a); bh.push(...chain('stalk' + i, 'orb', [[s * 1.4, 8.6, c * 1.2 - .6], [s * 2.2, 10.0, c * 2.0 - .8], [s * 2.6, 11.2, c * 2.4 - .6]], 'extra')); }
+  T.beholder = {name: 'Beholder (orb + eye stalks)', bones: [['orb', null, [0, 4.6, 0], [0, 8.6, 0], 'chest'], ['head', 'orb', [0, 6.4, 1.6], [0, 7.4, 2.0], 'head', {up: 1}], ['jaw', 'head', [0, 5.4, 1.8], [0, 5.0, 2.8], 'jaw', {up: 1}], ...bh]};
+  // ---- 🧬 mix halves: any front half + any back half (four-legged family), see forge-v3.js
+  window.FORGE_HALVES = ['quad', 'dragon', 'sphinx', 'chimera', 'hippogriff', 'centaur', 'hydra', 'turtle'];
+  // defaults for Build together / ⭐ default builds of the new body types (step title -> part id)
+  window.FORGE_DEF3 = {
+    chimera: {Body: 'bb_lion', Neck: 'bd_neck_maned', Head: 'hd_head_lion', Horns: 'hd_horn_ram', Legs: 'bd_leg_beast', 'Tail / tentacles': 'bb_snake', 'Tail tip': 'kl_tip_snakehead'},
+    hydra2: {Body: 'bd_torso_dragon', Neck: 'bd_neck_serpent', Head: 'hd_head_dragon', Legs: 'bd_leg_dragon', Wings: 'tw_wing_bat', 'Tail / tentacles': 'tw_tail_spiked'},
+    mantis: {Body: 'bd_torso_thorax', Neck: 'bd_neck_serpent', Head: 'hd_head_mantis', Arms: 'bd_arm_raptor', Hands: 'kl_arm_scythe', Legs: 'bd_leg_insect', Wings: 'tw_wing_insect', 'Tail / tentacles': 'bb_abdomen', 'Extra limbs': 'bb_antenna'},
+    wasp: {Body: 'bd_torso_thorax', Head: 'hd_head_ant', Arms: 'bd_arm_raptor', Hands: 'kl_arm_drill', Legs: 'bd_leg_insect', Wings: 'kw_insect_wasp', 'Tail / tentacles': 'bb_abdomen', 'Extra limbs': 'bb_antenna', 'Tail tip': 'kl_tip_stinger'},
+    uprightbug: {Body: 'bd_torso_thorax', Neck: 'bd_neck_serpent', Head: 'hd_head_ant', Arms: 'bd_arm_raptor', Hands: 'kl_arm_hook', Legs: 'bd_leg_insect', 'Tail / tentacles': 'kl_tailseg_ringed', 'Back spikes': 'kl_back_plate'},
+    kraken: {Body: 'kr_mantle', Head: 'hd_head_octopus', 'Tail / tentacles': 'kr_tentacle', 'Extra limbs': 'kr_tentacle', Wings: 'bb_fin'},
+    jellyfish: {Body: 'kj_bell', 'Tail / tentacles': 'kj_tentacle', 'Extra limbs': 'kj_oral', 'Glow spots': 'kj_spot'},
+    turtle: {Body: 'kc_shell_snapper', Neck: 'bd_neck_serpent', Head: 'kh_turtle', Legs: 'bd_leg_pillar', 'Tail / tentacles': 'kl_tailseg_plated', 'Back spikes': 'kl_back_spike'},
+    turtle2: {Body: 'kc_shell_snapper', Neck: 'bd_neck_bull', Head: 'kh_turtle', Arms: 'bd_arm_kaiju', Hands: 'kl_palm_kaiju', Legs: 'bd_leg_pillar', 'Tail / tentacles': 'kl_tailseg_plated'},
+    hippogriff: {Body: 'bb_horse', Neck: 'bd_neck_bird', Head: 'kh_bird', Legs: 'bd_leg_beast', Wings: 'kw_feather_simple', 'Tail / tentacles': 'tw_tail_whip'},
+    ooze: {Body: 'ko_goo', 'Extra limbs': 'ko_pod', 'Goo face': 'ko_face_wrong', Mouths: 'ko_mouth_toothy', Swallowed: 'ko_vic_skull'},
+    beholder: {Body: 'ko_orb', Head: 'kp_eye_big', 'Extra limbs': 'ko_eyestalk', Eyes: 'kp_eye_round', Mouths: 'ko_mouth_toothy'}};
+})();
