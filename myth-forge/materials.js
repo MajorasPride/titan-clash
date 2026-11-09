@@ -63,6 +63,34 @@
       for (let yy = 0; yy < S; yy++) for (let xx = 0; xx < S; xx++) { let d1 = 1e9, d2 = 1e9, k = 0; for (let i = 0; i < pts.length; i++) { let dx = Math.abs(xx - pts[i][0]), dy = Math.abs(yy - pts[i][1]); dx = Math.min(dx, S - dx); dy = Math.min(dy, S - dy); const d = dx * dx + dy * dy; if (d < d1) { d2 = d1; d1 = d; k = i; } else if (d < d2) d2 = d; }
         const edge = Math.sqrt(d2) - Math.sqrt(d1) < 5, o = (yy * S + xx) * 4, c = rgb[cIdx[k]], sh = .75 + .25 * Math.sin(xx * .05 + yy * .03);
         if (edge) { img.data[o] = img.data[o + 1] = img.data[o + 2] = 20; } else { img.data[o] = c[0] * sh; img.data[o + 1] = c[1] * sh; img.data[o + 2] = c[2] * sh; } img.data[o + 3] = 255; } x.putImageData(img, 0, 0); },
+    // ---- craft / toy-box textures (ours, made in code)
+    cardboard(x) { fill(x, '#d8d8d8'); for (let y = 0; y < S; y += 16) { const g = x.createLinearGradient(0, y, 0, y + 16); g.addColorStop(0, 'rgba(0,0,0,.10)'); g.addColorStop(.5, 'rgba(255,255,255,.12)'); g.addColorStop(1, 'rgba(0,0,0,.10)'); x.fillStyle = g; x.fillRect(0, y, S, 16); }
+      for (let i = 0; i < 2500; i++) { x.fillStyle = `rgba(${rnd() < .5 ? '0,0,0' : '255,255,255'},.08)`; x.fillRect(R(0, S), R(0, S), R(2, 9), 1); }
+      x.fillStyle = 'rgba(255,255,255,.35)'; x.fillRect(0, 300, S, 46); x.fillStyle = 'rgba(0,0,0,.12)'; x.fillRect(0, 300, S, 2); x.fillRect(0, 344, S, 2); noiseLayer(x, 30, 30, 90, ['#bbb', '#eee'], .15); },
+    polystyrene(x) { fill(x, '#e4e4e4'); for (let i = 0; i < 1400; i++) { const px = R(0, S), py = R(0, S), r = R(6, 13); wrap(x, () => { const g = x.createRadialGradient(px - r * .3, py - r * .3, 1, px, py, r); g.addColorStop(0, '#ffffff'); g.addColorStop(.8, '#e6e6e6'); g.addColorStop(1, '#b8b8b8');
+        x.fillStyle = g; x.beginPath(); x.arc(px, py, r, 0, 7); x.fill(); }); } },
+    sponge(x) { fill(x, '#e0e0e0'); noiseLayer(x, 120, 10, 40, ['#f4f4f4', '#c8c8c8'], .3); for (let i = 0; i < 900; i++) { const px = R(0, S), py = R(0, S), r = R(1.5, 7); x.fillStyle = `rgba(40,40,40,${R(.25, .6)})`; wrap(x, () => { x.beginPath(); x.ellipse(px, py, r, r * R(.6, 1), R(0, 3), 0, 7); x.fill(); }); } },
+    felt(x) { fill(x, '#cfcfcf'); x.lineCap = 'round'; for (let i = 0; i < 14000; i++) { const px = R(0, S), py = R(0, S), a = R(0, 7), l = R(3, 9), v = (R(150, 245)) | 0; x.strokeStyle = `rgba(${v},${v},${v},.35)`; x.lineWidth = R(.6, 1.4);
+        x.beginPath(); x.moveTo(px, py); x.quadraticCurveTo(px + R(-4, 4), py + R(-4, 4), px + Math.cos(a) * l, py + Math.sin(a) * l); x.stroke(); } },
+    knit(x) { fill(x, '#9a9a9a'); const w = 32, h = 28; for (let j = 0; j < S / h; j++) for (let i = 0; i < S / w; i++) { const cx = i * w + w / 2, cy = j * h;
+        for (const s of [-1, 1]) { const g = x.createLinearGradient(cx, cy, cx + s * w * .45, cy + h); g.addColorStop(0, '#e8e8e8'); g.addColorStop(1, '#a8a8a8'); x.fillStyle = g;
+          x.beginPath(); x.ellipse(cx + s * w * .24, cy + h * .55, w * .22, h * .62, s * -.5, 0, 7); x.fill(); x.strokeStyle = 'rgba(0,0,0,.35)'; x.lineWidth = 1.5; x.stroke(); } } },
+    burlap(x) { fill(x, '#a8a8a8'); for (let i = 0; i < S; i += 10) { const v = (R(170, 230)) | 0; x.fillStyle = `rgb(${v},${v},${v})`; x.fillRect(i + R(-1, 1), 0, R(5, 7), S); }
+      for (let j = 0; j < S; j += 10) for (let i = 0; i < S; i += 20) { const v = (R(160, 225)) | 0; x.fillStyle = `rgb(${v},${v},${v})`; x.fillRect(i + ((j / 10) % 2) * 10, j + R(-1, 1), 10, R(5, 7)); }
+      for (let i = 0; i < 1200; i++) { x.strokeStyle = 'rgba(255,255,255,.18)'; x.lineWidth = .7; const px = R(0, S), py = R(0, S); x.beginPath(); x.moveTo(px, py); x.lineTo(px + R(-8, 8), py + R(-8, 8)); x.stroke(); } },
+    denim(x) { fill(x, '#b0b0b0'); for (let k = -S; k < S * 2; k += 5) { x.strokeStyle = rnd() < .5 ? 'rgba(255,255,255,.22)' : 'rgba(0,0,0,.18)'; x.lineWidth = 2; x.beginPath(); x.moveTo(k, 0); x.lineTo(k + S * .45, S); x.stroke(); }
+      noiseLayer(x, 50, 30, 100, ['#fff', '#888'], .15); x.setLineDash([10, 7]); x.strokeStyle = '#e8c070'; x.lineWidth = 3; for (const y of [120, 132, 380, 392]) { x.beginPath(); x.moveTo(0, y); x.lineTo(S, y); x.stroke(); } x.setLineDash([]); },
+    patchwork(x) { const cols = ['#d84a3a', '#3a7ad8', '#e8c040', '#4aa85a', '#9a4ad0', '#e8883a', '#e8e0d0', '#3ab0b8'], n = 4, w = S / n;
+      for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { x.fillStyle = cols[(i * 3 + j * 5 + ((rnd() * 2) | 0)) % cols.length]; x.fillRect(i * w, j * w, w, w);
+        const k = (i + j) % 3; x.fillStyle = 'rgba(255,255,255,.18)'; if (k === 0) for (let d = 0; d < w; d += 16) x.fillRect(i * w + d, j * w, 7, w); else if (k === 1) for (let a = 0; a < 9; a++) { x.beginPath(); x.arc(i * w + R(10, w - 10), j * w + R(10, w - 10), R(4, 10), 0, 7); x.fill(); } }
+      for (let i = 0; i < 1500; i++) { x.fillStyle = 'rgba(0,0,0,.06)'; x.fillRect(R(0, S), R(0, S), 2, 2); }
+      x.setLineDash([9, 7]); x.strokeStyle = '#f4ecd8'; x.lineWidth = 3; for (let k = 0; k <= n; k++) for (const o of [-6, 6]) { x.beginPath(); x.moveTo(k * w + o, 0); x.lineTo(k * w + o, S); x.moveTo(0, k * w + o); x.lineTo(S, k * w + o); x.stroke(); } x.setLineDash([]);
+      x.strokeStyle = 'rgba(0,0,0,.45)'; x.lineWidth = 2; for (let k = 0; k <= n; k++) { x.beginPath(); x.moveTo(k * w, 0); x.lineTo(k * w, S); x.moveTo(0, k * w); x.lineTo(S, k * w); x.stroke(); } },
+    stitched(x) { G.felt(x); x.setLineDash([12, 8]); x.strokeStyle = 'rgba(255,255,255,.85)'; x.lineWidth = 3.5; for (const y of [64, 192, 320, 448]) { x.beginPath(); x.moveTo(0, y); for (let xx = 0; xx <= S; xx += 64) x.lineTo(xx, y + Math.sin(xx * .05) * 6); x.stroke(); } x.setLineDash([]);
+      for (let i = 0; i < 6; i++) { const px = R(40, S - 40), py = R(40, S - 40); x.strokeStyle = 'rgba(0,0,0,.4)'; x.lineWidth = 3; for (const d of [-1, 1]) { x.beginPath(); x.moveTo(px - 9, py - 9 * d); x.lineTo(px + 9, py + 9 * d); x.stroke(); } } },
+    paper(x) { fill(x, '#ececec'); const pts = [...Array(40)].map(() => [R(0, S), R(0, S)]); for (let i = 0; i < 90; i++) { const [a, b] = pts[(rnd() * pts.length) | 0], [c2, d] = pts[(rnd() * pts.length) | 0];
+        const g = x.createLinearGradient(a, b, c2, d); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(.5, rnd() < .5 ? 'rgba(0,0,0,.10)' : 'rgba(255,255,255,.35)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.strokeStyle = g; x.lineWidth = R(1, 3); x.beginPath(); x.moveTo(a, b); x.lineTo(c2, d); x.stroke(); }
+      noiseLayer(x, 60, 20, 80, ['#ddd', '#fff'], .2); },
     frost(x) { fill(x, '#eef4fa'); noiseLayer(x, 300, 3, 18, ['#ffffff', '#c8d4e0'], .35); },
     screen(x) { fill(x, '#ddd'); for (let y = 0; y < S; y += 4) { x.fillStyle = 'rgba(0,0,0,.25)'; x.fillRect(0, y, S, 2); } },
   };
@@ -102,6 +130,12 @@
     ['eye', 'Eyeball', 'Glow & Crystal', 'eye', 0xffffff, .15, 0], ['glow', 'Glow (fire)', 'Glow & Crystal', 'plain', 0xffb070, .3, 0, {emissive: 0xff5a1a, emissiveIntensity: 2}],
     ['glowblue', 'Glow (energy)', 'Glow & Crystal', 'plain', 0x8ae0ff, .3, 0, {emissive: 0x20a0ff, emissiveIntensity: 2}], ['glowgreen', 'Glow (toxic)', 'Glow & Crystal', 'plain', 0xaaff7a, .3, 0, {emissive: 0x40ff20, emissiveIntensity: 2}],
     ['glowpurple', 'Glow (dark magic)', 'Glow & Crystal', 'plain', 0xd08aff, .3, 0, {emissive: 0x8a20ff, emissiveIntensity: 2}], ['runeglow', 'Glowing runes', 'Glow & Crystal', 'runes', 0x444455, .5, .3, {emissive: 0x40c0ff, emissiveIntensity: 1.5, emap: true}],
+    ['cardboard', 'Cardboard', 'Craft (toy box)', 'cardboard', 0xb88a5a, .9, 0], ['cardwhite', 'White cardboard', 'Craft (toy box)', 'cardboard', 0xe8e2d6, .9, 0],
+    ['polystyrene', 'Polystyrene foam', 'Craft (toy box)', 'polystyrene', 0xf4f4f0, .85, 0], ['sponge', 'Sponge', 'Craft (toy box)', 'sponge', 0xe8c84a, .95, 0], ['floaty', 'Pink floaty foam', 'Craft (toy box)', 'sponge', 0xf09ac0, .95, 0],
+    ['felt', 'Felt', 'Craft (toy box)', 'felt', 0xc04a4a, 1, 0], ['feltgreen', 'Green felt', 'Craft (toy box)', 'felt', 0x4a9a5a, 1, 0], ['stitchfelt', 'Stitched felt', 'Craft (toy box)', 'stitched', 0x5a7ad0, 1, 0],
+    ['knit', 'Knitted wool', 'Craft (toy box)', 'knit', 0xd8b890, .95, 0], ['sack', 'Sackcloth (burlap)', 'Craft (toy box)', 'burlap', 0xb89a6a, 1, 0], ['denim', 'Denim', 'Craft (toy box)', 'denim', 0x4a6a9a, .9, 0],
+    ['patchwork', 'Patchwork quilt', 'Craft (toy box)', 'patchwork', 0xffffff, .95, 0], ['paper', 'Crumpled paper', 'Craft (toy box)', 'paper', 0xf0ece0, .9, 0],
+    ['toyrubber', 'Toy rubber', 'Craft (toy box)', 'plain', 0xe85a3a, .55, 0], ['toyplastic', 'Shiny toy plastic', 'Craft (toy box)', 'plain', 0x3a8ae8, .25, 0],
   ];
   const ALIAS = {paint2: 'paint2', fur: 'fur', feather: 'feather', stone: 'stone', wood: 'wood', cloth: 'cloth', leather: 'leather', chitin: 'chitin', glow: 'glow', screen: 'screen'};
   function makeMat(T, key, tint, tile) {

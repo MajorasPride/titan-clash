@@ -110,6 +110,7 @@
 <h3>3. Move it</h3>
 <ul><li>Move tab: tap a part, then drag the arrows (Move), rings (Turn) or boxes (Stretch). The Size slider makes it bigger or smaller.</li>
 <li><b>🧲 Sticky</b>: drag any part with your finger or pen and it sticks where you let go, like a toy. Drop it off the model and it goes in the <b>📦 Parts box</b> (top of the Add tab) for later.</li>
+<li><b>🫳 Mold</b> (on by default): a part you drop squishes around what it lands on, like pressing clay together. Sculpt › Undo all sculpt un-squishes it.</li>
 <li><b>🧩 Break apart</b>: turns a row of spikes or crystals into single pieces you can move one by one.</li></ul>
 <h3>4. Look closer</h3>
 <ul><li><b>🔍 Focus</b> shows only that part, big. <b>🪟 Focus window</b> keeps a small zoomed window on the part while you see the whole creature (drag in it to spin, pinch to zoom, Size S/M/L).</li>
@@ -171,7 +172,7 @@
   <div class="pane" id="p-edit">
     <div class="row"><button data-gz="translate" class="on">Move</button><button data-gz="rotate">Turn</button><button data-gz="scale">Stretch</button></div>
     <div class="sl"><span>Size</span><input id="sSize" type="range" min=".1" max="4" step=".01"><span id="vSize"></span></div>
-    <div class="row"><button id="bSticky">🧲 Sticky</button><button id="bBreak">🧩 Break apart</button><button id="bDup">Duplicate</button><button id="bFocus" class="on">🔍 Focus on this part</button><button id="bFWin">🪟 Focus window</button><button id="bDel">🗑 Delete</button></div>
+    <div class="row"><button id="bSticky">🧲 Sticky</button><button id="bMold">🫳 Mold</button><button id="bBreak">🧩 Break apart</button><button id="bDup">Duplicate</button><button id="bFocus" class="on">🔍 Focus on this part</button><button id="bFWin">🪟 Focus window</button><button id="bDel">🗑 Delete</button></div>
     <details class="more"><summary>More ▾</summary>
     <div class="row"><button id="bLocal">Local</button><button id="bSnap">Snap off</button></div>
       <div class="sl"><span>Length</span><input id="sLen" type="range" min=".3" max="3" step=".01"><span id="vLen"></span></div>
@@ -1079,11 +1080,35 @@ function endDrag(e) { if (!drag || (e && e.pointerId !== drag.id)) return; const
   if (d.hit) { const tgt = partBy(d.hit.object.userData.uid), boneName = (tgt && tgt.bone) || null, B = (boneName && bones[boneName]) || skelRoot;
     v.G.updateMatrixWorld(true); B.updateMatrixWorld(true); const m = v.G.matrixWorld.clone().premultiply(B.matrixWorld.clone().invert()), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(); m.decompose(p, q, s);
     const eu = new THREE.Euler().setFromQuaternion(q); pt.bone = boneName; pt.p = p.toArray().map(x => +x.toFixed(3)); pt.r = [eu.x, eu.y, eu.z].map(x => +(x / D).toFixed(1));
-    buildPart(pt); const tw = pt.twin && partBy(pt.twin); if (tw) { tw.bone = (boneName && twinName(boneName)) || boneName; mirrorInto(pt, tw); }
+    buildPart(pt); if (mold) moldOnto(pt, d.hit.point, d.n || new THREE.Vector3(0, 1, 0)); const tw = pt.twin && partBy(pt.twin); if (tw) { tw.bone = (boneName && twinName(boneName)) || boneName; mirrorInto(pt, tw); }
     if (navigator.vibrate) try { navigator.vibrate(18); } catch (x) {} tip('Stuck on ' + (tgt && LIB[tgt.lib] ? LIB[tgt.lib].name : 'the body'), 1400); }
   else { pt.boxed = true; pt.hidden = true; const tw = pt.twin && partBy(pt.twin); if (tw) { tw.twin = null; pt.twin = null; } buildPart(pt); sel = null; tip('Put in the Parts box (Add tab) — tap it there to stick it back on', 3000); }
   outliner(); boxUI(); saveCur(); }
 addEventListener('pointerup', endDrag, true); addEventListener('pointercancel', endDrag, true);
+let mold = true; try { mold = localStorage.getItem('mf-mold') !== '0'; } catch (x) {}
+$('bMold').classList.toggle('on', mold);
+$('bMold').onclick = () => { mold = !mold; $('bMold').classList.toggle('on', mold); try { localStorage.setItem('mf-mold', mold ? '1' : '0'); } catch (x) {} tip(mold ? 'Mold on: dropped parts squish around what they land on, like clay' : 'Mold off: parts stay their own shape', 2400); };
+// clay mold: press the dropped part onto the surface under it (bottom wraps the curve, buried bits squish out onto the surface)
+function moldOnto(pt, c, n) { const v = views[pt.uid]; if (!v) return; buildPartOwn(pt); v.G.updateMatrixWorld(true); n = n.clone().normalize();
+  const own = new Set(v.meshes), targets = visibleMeshes().filter(m => !own.has(m)); if (!targets.length) return;
+  const u = new THREE.Vector3().crossVectors(n, Math.abs(n.y) < .9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0)).normalize(), w2 = new THREE.Vector3().crossVectors(n, u);
+  let a0 = 1e9, a1 = -1e9, b0 = 1e9, b1 = -1e9, lo = 1e9, hi = -1e9; const W = new THREE.Vector3();
+  for (const m of v.meshes) { const p = m.geometry.attributes.position; for (let i = 0; i < p.count; i++) { W.fromBufferAttribute(p, i).applyMatrix4(m.matrixWorld).sub(c); const a = W.dot(u), b = W.dot(w2), h = W.dot(n);
+    a0 = Math.min(a0, a); a1 = Math.max(a1, a); b0 = Math.min(b0, b); b1 = Math.max(b1, b); lo = Math.min(lo, h); hi = Math.max(hi, h); } }
+  const N = 14, H = new Float32Array((N + 1) * (N + 1)), rc = new THREE.Raycaster(), size = Math.max(a1 - a0, b1 - b0, hi - lo, .05), up = hi + size;
+  for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) { const a = a0 + (a1 - a0) * i / N, b = b0 + (b1 - b0) * j / N, o = c.clone().addScaledVector(u, a).addScaledVector(w2, b).addScaledVector(n, up);
+    rc.set(o, n.clone().negate()); rc.far = up + size * 2; const h = rc.intersectObjects(targets, false)[0]; H[j * (N + 1) + i] = h ? h.point.clone().sub(c).dot(n) : NaN; }
+  const surf = (a, b) => { const fi = Math.max(0, Math.min(N - 1e-4, (a - a0) / Math.max(1e-6, a1 - a0) * N)), fj = Math.max(0, Math.min(N - 1e-4, (b - b0) / Math.max(1e-6, b1 - b0) * N)), i = fi | 0, j = fj | 0, ti = fi - i, tj = fj - j;
+    const q = [H[j * (N + 1) + i], H[j * (N + 1) + i + 1], H[(j + 1) * (N + 1) + i], H[(j + 1) * (N + 1) + i + 1]]; if (q.some(Number.isNaN)) { const ok = q.filter(x => !Number.isNaN(x)); return ok.length ? ok.reduce((s, x) => s + x, 0) / ok.length : NaN; }
+    return (q[0] * (1 - ti) + q[1] * ti) * (1 - tj) + (q[2] * (1 - ti) + q[3] * ti) * tj; };
+  const gap = Math.max(.05, size * .22), eps = size * .01, inv = new THREE.Matrix4(), L = new THREE.Vector3(); let moved = 0;
+  for (const m of v.meshes) { const mi = m.userData.mi, p = m.geometry.attributes.position; inv.copy(m.matrixWorld).invert(); pt.sculpt = pt.sculpt || {}; const S = pt.sculpt[mi] = pt.sculpt[mi] || {};
+    for (let i = 0; i < p.count; i++) { W.fromBufferAttribute(p, i).applyMatrix4(m.matrixWorld); const r = W.clone().sub(c), s = surf(r.dot(u), r.dot(w2)); if (Number.isNaN(s)) continue;
+      const d = r.dot(n) - s; let d2 = d; if (d < 0) d2 = eps + -d * .12; else if (d < gap) d2 = eps + d * d / gap; if (Math.abs(d2 - d) < 1e-5) continue;
+      W.addScaledVector(n, d2 - d); L.copy(W).applyMatrix4(inv); const ox = p.getX(i), oy = p.getY(i), oz = p.getZ(i), e = S[i] || [0, 0, 0];
+      S[i] = [+(e[0] + L.x - ox).toFixed(4), +(e[1] + L.y - oy).toFixed(4), +(e[2] + L.z - oz).toFixed(4)]; p.setXYZ(i, L.x, L.y, L.z); moved++; }
+    p.needsUpdate = true; m.geometry.computeVertexNormals(); m.geometry.computeBoundingSphere(); m.geometry.computeBoundingBox(); }
+  if (moved) tip('Molded on — Sculpt › Undo all sculpt to un-squish', 1600); }
 let unboxing = null;
 function boxUI() { const el = $('boxRow'); if (!el) return; el.innerHTML = ''; const box = P.parts.filter(p => p.boxed); $('boxWrap').style.display = box.length ? '' : 'none';
   for (const pt of box) { const b = document.createElement('button'); b.textContent = (LIB[pt.lib] ? LIB[pt.lib].name : 'part') + (pt.keep ? ' piece' : ''); b.className = unboxing === pt.uid ? 'on' : '';
