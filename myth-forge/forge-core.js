@@ -368,7 +368,7 @@ function writeBack(live) {
   if (gizmo.mode === 'scale') { const s = v.G.scale; pt.l = +((pt.l || 1) * s.y / pt.s).toFixed(3); pt.w = +((pt.w || 1) * (s.x + s.z) / 2 / pt.s).toFixed(3); v.G.scale.setScalar(pt.s); v.M.scale.set((pt.flip ? -1 : 1) * pt.w, pt.l, pt.w); applyOff(pt, v.M); }
   syncTwin(pt); syncEdit(true);
 }
-function attachGizmo() { gizmo.detach(); gzTarget = 'part';
+function attachGizmo() { gizmo.detach(); gzTarget = 'part'; if (sticky && tab === 'edit') return;
   if (tab === 'skel' && (poseMode || jointMode) && selBone && bones[selBone]) { gzTarget = poseMode ? 'bone' : 'joint'; gizmo.setMode(poseMode ? 'rotate' : 'translate'); gizmo.attach(bones[selBone]); return; }
   if (tab === 'edit' && sel && views[sel]) { gizmo.setMode(gzMode); gizmo.attach(views[sel].G); } }
 let gzMode = 'translate';
@@ -797,7 +797,7 @@ function splitOne(pt, groups) { const v = views[pt.uid]; v.G.updateMatrix(); con
 $('bBreak').onclick = () => { const pt = partBy(sel); if (!pt) return tip('Tap a part first'); const groups = pieceClusters(pt); if (groups.length < 2) return tip('This part is already one piece');
   snap(); const tw = pt.twin && partBy(pt.twin), a = splitOne(pt, groups); if (tw) { const b = splitOne(tw, pieceClusters(tw)); a.forEach((q, i) => { if (b[i]) { q.twin = b[i].uid; b[i].twin = q.uid; } }); }
   select(a[0].uid); outliner(); saveCur(); tip('Broke into ' + groups.length + ' pieces — turn on 🧲 Sticky and drag them anywhere', 3500); };
-let sticky = false, drag = null;
+var sticky = false, drag = null;
 function setSticky(on) { sticky = on; $('bSticky').classList.toggle('on', on); if (on) { gizmo.detach(); tip('Sticky on: drag a part with your finger or pen — it sticks where you let go. Drop it off the model to put it in the Parts box', 4200); } else attachGizmo(); }
 $('bSticky').onclick = () => setSticky(!sticky);
 const dragPlane = new THREE.Plane(), dragTmp = new THREE.Vector3();

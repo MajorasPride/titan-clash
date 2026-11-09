@@ -25,3 +25,6 @@ MajorasPride's creature + mech builder for Titan Clash. Open `index.html` (GitHu
 - Calmer screen: arrow pad hidden by default (`mf-nav`), lighter bones, less-used buttons under "More ▾" in each tab.
 - Weapons dropped on a hand bone go into the palm (grip in palm, pointing forward). How they hold weapons gets tuned later.
 - Guide: first-time tour (`mf-tour-done`), ⋯ → 🎓 tour and ❓ How to build.
+- 🫳 Mold (default on, `mf-mold`): a part dropped in Sticky mode squishes around the surface it lands on (moldOnto, stored as pt.sculpt).
+- Craft (toy box) materials: cardboard, polystyrene, sponge, floaty foam, felt, stitched felt, knit, sackcloth, denim, patchwork, paper, toy rubber/plastic (procedural, ours; look inspired by LittleBigPlanet).
+- Two chats can work on Myth Forge at once: always `git fetch` + rebase before pushing, and rebuild index.html after a merge.
