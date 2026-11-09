@@ -1071,6 +1071,7 @@ function importUI(){open(`<h3>Import</h3>
   <div class="msg" id="iMsg"></div></div>
  <div class="cat">FROM A 3D MODEL FILE</div><div class="msg">A .glb, .obj or .stl file: a phone scan of a toy (apps like Polycam or Scaniverse export these), a Meshy model, a Kenney kit piece. Voxel builds work too: .vox from MagicaVoxel, and .schem from Minecraft tools (each block color becomes its own part). It's sized to titan height, cel-shaded, and can be split into separate parts you can move and recolor.</div>
  <div class="row" style="justify-content:flex-start;align-items:center"><button class="b ${impSplit?'on':''}" id="iSplit">Split into parts</button><button class="b ${impKeep?'on':''}" id="iKeep">Keep its colors</button><span class="msg" style="margin:0">Height</span><input type="text" id="iH" value="${impH}" style="width:56px"></div>
+ <div class="cat">FROM YOUR MYTHIC FORGE LIBRARY</div><div class="msg">Creatures sent from Creature Forge (⋯ › Send to Level Builder) and builds you saved here.</div><div class="list" id="iLib">Loading…</div>
  <div class="row" style="justify-content:flex-start"><label class="b on">Choose model file<input type="file" id="iMod" accept=".glb,.gltf,.obj,.stl,.vox,.schem,.schematic" hidden></label></div><div class="msg" id="iMMsg"></div>
  <div class="row"><button class="b" id="cx">Close</button></div>`);
  $('cx').onclick=()=>{if(aiCtl)aiCtl.abort();close()};
@@ -1081,6 +1082,11 @@ function importUI(){open(`<h3>Import</h3>
  if(impCel){const c=$('iPrev'),k=Math.min(1,600/Math.max(impCel.width,impCel.height));c.width=impCel.width*k;c.height=impCel.height*k;c.getContext('2d').drawImage(impCel,0,0,c.width,c.height);
   $('iCut').onclick=()=>makePic('cut',false);$('iPuff').onclick=()=>makePic('cut',true);$('iFlat').onclick=()=>makePic('flat',false);$('iAI').onclick=aiBuild}
  $('iSplit').onclick=()=>{impSplit=!impSplit;importUI()};$('iKeep').onclick=()=>{impKeep=!impKeep;importUI()};$('iH').onchange=()=>{impH=Math.max(1,Math.min(200,+$('iH').value||16))};
+ (async()=>{const el=$('iLib');if(!el)return;let L=[];try{L=await StudioLib.all('models')}catch(e){}
+  if(!L.length){el.textContent='Nothing yet. In Creature Forge: ⋯ › Send to Level Builder.';return}el.innerHTML='';
+  L.slice(0,40).forEach(m=>{const b=document.createElement('button');b.className='b';b.style.cssText='display:flex;align-items:center;gap:8px;text-align:left;width:100%;margin:3px 0';
+   b.innerHTML=(m.img?`<img src="${m.img}" style="width:44px;height:44px;object-fit:cover;border-radius:6px">`:'')+`<span>${(m.name||'model').replace(/</g,'')} <span style="color:#aaa">· ${m.kind||''}</span></span>`;
+   b.onclick=async()=>{$('iMMsg').textContent='Loading '+m.name+'…';try{const np=await importModelFile(new File([m.glb],(m.name||'model').replace(/[^\w-]+/g,'-')+'.glb'),{split:false,height:+$('iH').value||impH,keepColors:true});np.forEach(p=>{parts.push(p);refresh(p)});select(np[0].id);push();close();toast('Added '+m.name)}catch(e){$('iMMsg').textContent="Couldn't load it: "+(e.message||e)}};el.append(b)})})();
  $('iMod').onchange=async()=>{const f=$('iMod').files[0];if(!f)return;$('iMMsg').textContent='Loading '+f.name+'…';
   try{const np=await importModelFile(f,{split:impSplit,height:+$('iH').value||impH,keepColors:impKeep});np.forEach(p=>{parts.push(p);refresh(p)});select(np[0].id);push();close();
    toast(np.length>1?`Imported in ${np.length} parts`:'Imported');$('bFocus').onclick()}

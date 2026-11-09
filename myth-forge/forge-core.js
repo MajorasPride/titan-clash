@@ -1892,3 +1892,32 @@ window.__sc = {open: scOpen, start: id => scStart(LESSONS.find(l => l.id === id)
 
 // Mythic Forge sections menu (tap the title): Creature Forge (here), Level Builder (studio/levels.html), more moving over from the old Studio
 $('bSections').onclick = e => { e.stopPropagation(); $('sections').classList.toggle('open'); }; document.addEventListener('click', e => { if (!e.target.closest('#sections') && e.target.id !== 'bSections') $('sections').classList.remove('open'); });
+
+// ====================================================================== shared Mythic Forge library (Nov 9): IndexedDB 'titan-studio' (studio/studio.js), same website = same storage for every section
+// models: creatures sent to the Level Builder (and builds saved there) · art: pictures / Sketch Pad drawings, used here as 🖼 stickers (decals)
+function snapPng(maxW = 256) { try { renderer.render(scene, camera); const c = renderer.domElement, k = document.createElement('canvas'), s = Math.min(1, maxW / Math.max(c.width, c.height)); k.width = c.width * s; k.height = c.height * s; k.getContext('2d').drawImage(c, 0, 0, k.width, k.height); return k.toDataURL('image/jpeg', .7); } catch (e) { return null; } }
+$('mToLevels').onclick = async () => { $('menu').classList.remove('open'); if (typeof StudioLib === 'undefined') return tip('Shared library not available');
+  const name = (prompt('Name it for the Level Builder', P.name && P.name !== 'New creature' ? P.name : 'My creature') || '').trim(); if (!name) return;
+  const {GLTFExporter} = await import('three/addons/exporters/GLTFExporter.js'); const was = showBones; boneHelpers.forEach(h => h.visible = false); gizmo.detach(); const img = snapPng();
+  new GLTFExporter().parse(skelRoot, glb => { boneHelpers.forEach(h => h.visible = was); attachGizmo();
+    StudioLib.put('models', {id: 'c_' + name.replace(/\W+/g, '_'), name, kind: 'Creature', glb, img, at: Date.now()}).then(() => tip('🏙 "' + name + '" is in the library — Level Builder › Import', 3200)).catch(() => tip('Could not save (device storage full?)')); },
+    () => tip('Export failed'), {binary: true, onlyVisible: true}); };
+// 🖼 stickers: flat picture parts that stick on the surface (+Y = out of the surface), see-through where the picture is
+function registerSticker(rec) { const id = 'stk_' + rec.id; if (LIB[id]) return id; const asp = rec.asp || 1, w = 1.6 * Math.sqrt(asp), hgt = 1.6 / Math.sqrt(asp);
+  const tex = new THREE.TextureLoader().load(rec.src); tex.colorSpace = THREE.SRGBColorSpace; const mat = new THREE.MeshStandardMaterial({map: tex, transparent: true, alphaTest: .25, side: THREE.DoubleSide, roughness: .7, polygonOffset: true, polygonOffsetFactor: -2});
+  LIB[id] = {id, group: 'My Parts', sub: 'Stickers', name: '🖼 ' + (rec.name || 'Sticker'), mine: true, tags: ['sticker', 'decal', 'drawing'], src: 'Your picture / drawing (yours)', fitKind: 'decor',
+    make: () => [{geo: new THREE.PlaneGeometry(w, hgt, 1, 1).rotateX(-Math.PI / 2).translate(0, .02, 0), mat: 'paint', matObj: mat}]}; return id; }
+async function stickerUI() { let art = []; try { art = await StudioLib.all('art'); } catch (e) {}
+  const ov = document.createElement('div'); ov.style.cssText = 'position:fixed;inset:0;z-index:22;background:rgba(10,10,14,.94);padding:60px 14px 14px;overflow:auto';
+  ov.innerHTML = '<h2 style="color:#ff8a3a;font:800 18px system-ui;margin:0 0 6px">🖼 Pick a sticker</h2><div class="hint" style="opacity:.8">Then tap the creature where it goes (Sticky: drag it after). Drawings from the Sketch Pad show up here once it moves into Mythic Forge.</div><div class="row"><button id="stkNew" class="on">＋ From a picture…</button><button id="stkX">Close</button></div><div class="grid" id="stkGrid"></div>';
+  document.body.append(ov); ov.querySelector('#stkX').onclick = () => ov.remove(); ov.querySelector('#stkNew').onclick = () => { ov.remove(); $('fSticker').click(); };
+  const g = ov.querySelector('#stkGrid'); if (!art.length) g.innerHTML = '<div class="hint">No pictures yet.</div>';
+  art.forEach(a => { const b = document.createElement('button'); b.className = 'item'; b.innerHTML = `<img src="${a.src}" style="object-fit:contain"><span>${(a.name || '').replace(/</g, '')}</span>`; b.onclick = () => { ov.remove(); placeSticker(a); }; g.append(b); }); }
+function placeSticker(rec) { const id = registerSticker(rec); tabBtn('add').click(); placing = id; if (typeof modeBone !== 'undefined') { modeBone = false; $('bModeSurf') && $('bModeSurf').classList.add('on'); $('bModeBone') && $('bModeBone').classList.remove('on'); }
+  libUI(); tip('Tap the creature where the sticker goes', 3500); }
+$('bSticker').onclick = stickerUI;
+$('fSticker').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; const src = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(f); });
+  const im = new Image(); await new Promise(r => { im.onload = r; im.src = src; }); const rec = {id: 'a' + Date.now().toString(36), name: f.name.replace(/\.[^.]+$/, '').slice(0, 24), src, asp: im.width / im.height};
+  try { await StudioLib.put('art', rec); } catch (x) {} placeSticker(rec); };
+// stickers already used in a saved creature: register them again on load
+(async () => { try { const art = await StudioLib.all('art'); art.forEach(registerSticker); if (P.parts.some(p => p.lib.startsWith('stk_'))) rebuildParts(); } catch (e) {} })();

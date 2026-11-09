@@ -193,7 +193,7 @@
 <div id="menu">
   <button id="mSculptGuide">🎓 Sculpt together</button><button id="mGuide">🎓 Build together (step by step)</button><button id="mHide">🙈 Hide all menus (tap ⤡ to bring back)</button><button id="mTour">🎓 Show me around (tour)</button><button id="mHelp">❓ How to build</button>
   <button id="mWork">🛠 Workshop: design a body part</button><button id="mNew">New creature…</button><button id="mSave">Save as…</button><button id="mLoad">Open saved…</button>
-  <button id="mExport">Download model (.glb for the game)</button><button id="mCopy">Copy project (to paste to Claude)</button>
+  <button id="mToLevels">🏙 Send to Level Builder (shared library)</button><button id="mExport">Download model (.glb for the game)</button><button id="mCopy">Copy project (to paste to Claude)</button>
   <button id="mPaste">Paste project…</button><button id="mCredits">Asset credits &amp; licenses</button>
 </div>
 <div id="wsBadge">WORKSHOP</div>
@@ -312,6 +312,7 @@
     <details class="more"><summary>More ▾</summary>
       <div class="row"><span>💡 Eye glow color</span><input type="color" id="eyeGlow" value="#ff5a1a" style="width:56px;height:40px;border:0;background:none"><button id="bEyeGlowReset">Default</button></div>
       <div class="row"><span>Tint</span><input type="color" id="tint" value="#ffffff" style="width:56px;height:40px;border:0;background:none"><button id="bTintClear">Clear tint</button><button id="bPaintAllSame">All parts like this</button></div>
+      <div class="row"><button id="bSticker">🖼 Sticker / decal (picture or drawing)…</button><input type="file" id="fSticker" hidden accept="image/*"></div>
       <div class="row"><button id="bPattern">Import pattern (image)…</button><input type="file" id="fPattern" hidden accept="image/*" multiple><button id="bPatternDel">Remove my pattern</button></div>
       <div class="sl"><span>Pattern size</span><input id="sTile" type="range" min=".1" max="3" step=".05" value="1"><span></span></div>
     </details>
@@ -359,6 +360,7 @@
 <img id="ghost" alt="">
 <div style="display:none"><button id="bSticky"></button><button id="bFocus2"></button><button id="bFWin2"></button><button id="bFWin3"></button><button id="bFWin4"></button></div>
 
+<script src="studio/studio.js"></script>
 <script src="k-helpers.js"></script>
 <script src="textures-bark.js"></script>
 <script src="materials.js"></script>
