@@ -70,6 +70,20 @@
   T.elemental = {name: '🌋 Elemental (floats, no legs)', bones: [...up(), ...armsAt(9.6), ...baseCh()]};
   T.sixarm = {name: '✨ Six-armed god (floats)', bones: [...up(), ...armsAt(9.7, 1.15), ...armsAt(8.9, 1.05, 'B', 'chest', .95), ...armsAt(8.1, .95, 'C', 'spine', .9), ...baseCh()]};
   T.hound2 = {name: '✨ Two-headed hound', bones: [...quad.filter(b => !['neck', 'head', 'jaw'].includes(b[0])), ...[[-1, 'L'], [1, 'R']].flatMap(([x, n]) => [['neck' + n, 'chest', [x * .5, 5.6, 2.2], [x * 1.1, 7.2, 3.2], 'neck'], ['head' + n, 'neck' + n, [x * 1.1, 7.2, 3.2], [x * 1.1, 8.2, 3.6], 'head', {up: 1}], ['jaw' + n, 'head' + n, [x * 1.1, 7.3, 3.5], [x * 1.1, 7.0, 4.5], 'jaw', {up: 1}]])]};
+  // 🦈 Fish / shark (rebuilt Nov 9): one trunk from the tail stalk to the head, a short tail stalk for the tail fin, and a bone for every fin
+  T.fish = {name: 'Fish / shark', bodyW: 2.3, bones: [['body', null, [0, 4, -3.0], [0, 4, -.4], 'spine'], ['chest', 'body', [0, 4, -.4], [0, 4, 3.0], 'chest'],
+    ['head', 'chest', [0, 3.8, 3.6], [0, 4.2, 5.65], 'head', {up: 1}], ['jaw', 'head', [0, 3.7, 3.9], [0, 3.5, 5.2], 'jaw', {up: 1}],
+    ...chain('tail', 'body', [[0, 4, -2.9], [0, 4.03, -3.9], [0, 4.06, -4.9], [0, 4.1, -5.9]], 'tail'),
+    ['dorsal', 'chest', [0, 5.0, .9], [0, 6.5, -.4], 'extra'], ['dorsal2', 'body', [0, 4.62, -2.0], [0, 5.15, -2.7], 'extra'], ['anal', 'body', [0, 3.4, -2.0], [0, 2.9, -2.7], 'extra'],
+    ...both([['fin', 'chest', [.9, 3.4, 1.9], [3.0, 2.3, .1], 'wingA'], ['pelvic', 'body', [.42, 3.2, -.9], [1.05, 2.6, -1.7], 'extra']])]};
+  T.bonyfish = {name: '🐟 Fish (tall, scaled)', bodyW: 1.5, bones: T.fish.bones.map(b => b.slice())};
+  // 🦞 Lobster: long shield body, two big claws, 4 pairs of walking legs, eye stalks, long feelers, a flat tail in 5 pieces that ends in a fan
+  const lobLeg = (i, z, a) => both([['leg' + i, 'body', [.7, 2.4, z], [2.1, 3.1, z + a], 'legU'], ['leg' + i + 'b', 'leg' + i + '#', [2.1, 3.1, z + a], [3.1, .8, z + a * 1.5], 'legL'], ['leg' + i + 'c', 'leg' + i + 'b#', [3.1, .8, z + a * 1.5], [3.4, 0, z + a * 1.7], 'foot']]);
+  T.lobster = {name: '🦞 Lobster / crayfish', bodyW: 2.2, bones: [['body', null, [0, 2.7, -1.4], [0, 2.8, 1.8], 'chest'], ['head', 'body', [0, 2.35, 1.75], [0, 2.8, 2.7], 'head', {up: 1}],
+    ...both([['eyestalk', 'head', [.34, 3.0, 2.2], [.6, 3.7, 2.6], 'neck'], ['antenna', 'head', [.3, 2.95, 2.7], [2.4, 5.2, 7.2], 'extra'],
+      ['clawarm', 'body', [.9, 2.5, 1.5], [2.5, 2.7, 2.9], 'armU'], ['clawfore', 'clawarm#', [2.5, 2.7, 2.9], [2.5, 2.9, 4.6], 'armF'], ['pincer', 'clawfore#', [2.5, 2.9, 4.6], [2.3, 2.9, 7.0], 'hand']]),
+    ...lobLeg(1, 1.0, .5), ...lobLeg(2, .35, .15), ...lobLeg(3, -.3, -.2), ...lobLeg(4, -.95, -.5),
+    ...chain('tail', 'body', [[0, 2.75, -1.35], [0, 2.75, -2.4], [0, 2.7, -3.4], [0, 2.6, -4.35], [0, 2.45, -5.2], [0, 2.25, -6.0]], 'tail')]};
   // default builds that use the same bones under a new name (each is its own ⭐ default build + Build together body)
   const alias = (k, name, from) => { T[k] = {name, bones: (typeof from === 'string' ? T[from].bones : from).map(b => b.slice())}; };
   alias('storm_el', '🌋 Storm elemental', 'elemental'); alias('wind_el', '🌋 Wind elemental', 'elemental'); alias('water_el', '🌋 Water elemental', 'elemental');
@@ -84,6 +98,9 @@
   window.FORGE_HALVES = ['quad', 'dragon', 'sphinx', 'chimera', 'hippogriff', 'centaur', 'hydra', 'turtle'];
   // defaults for Build together / ⭐ default builds of the new body types (step title -> part id)
   window.FORGE_DEF3 = {
+    fish: {Body: 'ks_shark_body', Head: 'kh_shark', Wings: 'ks_fin_pectoral', 'Extra limbs': 'ks_fin_dorsal', 'Tail / tentacles': 'ks_shark_tail', 'Tail tip': null, Eyes: 'ks_eye_shark', Teeth: 'kp_row_saw', 'Back spikes': null},
+    bonyfish: {Body: 'ks_fish_body', Head: 'kh_fish', Wings: 'ks_fin_round', 'Extra limbs': 'ks_fin_spiny', 'Tail / tentacles': 'ks_fish_tail', 'Tail tip': null, Eyes: 'ks_eye_fish', Teeth: null, 'Back spikes': null},
+    lobster: {Body: 'ks_lob_carapace', Neck: 'hd_eye_stalk', Head: 'ks_lob_face', Arms: 'ks_lob_arm', Hands: 'ks_lob_claw', Legs: 'ks_lob_leg', 'Tail / tentacles': 'ks_lob_seg', 'Tail tip': 'ks_lob_fan', 'Extra limbs': 'ks_lob_antenna', Eyes: null, 'Back spikes': null},
     chimera: {Body: 'bb_lion', Neck: 'bd_neck_maned', Head: 'hd_head_lion', Horns: 'hd_horn_ram', Legs: 'bd_leg_beast', 'Tail / tentacles': 'bb_snake', 'Tail tip': 'kl_tip_snakehead'},
     hydra2: {Body: 'bd_torso_dragon', Neck: 'bd_neck_serpent', Head: 'hd_head_dragon', Legs: 'bd_leg_dragon', Wings: 'tw_wing_bat', 'Tail / tentacles': 'tw_tail_spiked'},
     mantis: {Body: 'bd_torso_thorax', Neck: 'bd_neck_serpent', Head: 'hd_head_mantis', Arms: 'bd_arm_raptor', Hands: 'kl_arm_scythe', Legs: 'bd_leg_insect', Wings: 'tw_wing_insect', 'Tail / tentacles': 'bb_abdomen', 'Extra limbs': 'bb_antenna'},

@@ -119,6 +119,7 @@
   #vtools button.on{background:rgba(40,40,50,.88);color:var(--tx);border-color:#4c4c58}
   #btResume{position:fixed;left:50%;transform:translateX(-50%);top:62px;z-index:6;min-height:44px;padding:6px 16px;font-size:15px;font-weight:700;background:var(--ac);color:#141414;border:0;border-radius:22px;box-shadow:0 4px 14px #0008;max-width:92vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #vtools:not(.open) .vx{display:none} #vtools .vx{font-size:12px;min-height:32px;opacity:.95}
+  #vtools.shut button:not(.vk){display:none!important} #vtools .vk{align-self:flex-end;min-height:34px} #vtools #bVT{opacity:.85}
   #vtools button.lit{border-color:var(--ac,#ff8c32);color:#ffb070}
   #nav{top:140px}
   body.ws .top h1{display:none} body.ws .top button{padding:5px 7px}
@@ -252,7 +253,7 @@
 
   <div class="pane" id="p-edit">
     <div class="how" id="editHow"></div>
-    <div class="seg"><button id="bDragMode" class="on">✋ Drag</button><button id="bArrowMode">🎯 Arrows (fine-tune)</button></div>
+    <div class="seg"><button id="bPickMode" class="on">👆 Pick only</button><button id="bDragMode">✋ Drag</button><button id="bArrowMode">🎯 Arrows</button></div>
     <div class="row" id="gzRow" style="display:none"><button data-gz="translate" class="on">Move</button><button data-gz="rotate">Turn</button><button data-gz="scale">Stretch</button><button id="bLocal">Local</button><button id="bSnap">Snap off</button></div>
     <div class="row" id="axRow" style="display:none"><span class="hint" style="margin:0">Arrows:</span><button id="axX" class="on">🔴 Left-right</button><button id="axY" class="on">🟢 Up-down</button><button id="axZ" class="on">🔵 Front-back</button></div>
     <div class="sl"><span>Size</span><input id="sSize" type="range" min=".1" max="4" step=".01"><span id="vSize"></span></div>
@@ -304,9 +305,10 @@
     <div class="row"><button id="bPaintAll">🎨 Paint all</button><button id="bPiecePaint">🎯 One piece only</button><button id="bPaintTwin" class="on">🪞 Both sides</button></div>
     <div class="chips" id="matCats"></div>
     <div class="grid" id="mats"></div>
+    <div class="sl" style="grid-template-columns:96px 1fr 46px"><span>🔆 Brightness</span><input id="sBright" type="range" min=".4" max="1.2" step=".05" value=".85"><span id="vBright"></span></div>
     <div class="step">🖌 Brushes</div>
-    <div class="row"><button data-pb="color">🖌 Color</button><input type="color" id="brushCol" value="#c03020" style="width:56px;height:40px;border:0;background:none"><button data-pb="skin">🧴 Skin</button><button data-pb="blend">🌫 Blend</button><button data-pb="blotch">🩸 Blotch</button><button id="bBrushErase">Clear paint</button></div>
-    <div id="pbRow" style="display:none"><div class="hint" id="pbHint"></div><div class="sl"><span>Brush size</span><input id="sPSize" type="range" min=".1" max="3" step=".05" value=".6"><span></span></div><div class="sl"><span>Strength</span><input id="sPStr" type="range" min=".05" max="1" step=".05" value=".5"><span></span></div></div>
+    <div class="row"><button data-pb="color">🖌 Color</button><input type="color" id="brushCol" value="#c03020" style="width:56px;height:40px;border:0;background:none"><button data-pb="skin">🧴 Skin</button><button data-pb="blend">🌫 Blend</button><button data-pb="blotch">🩸 Blotch</button><button data-pb="spray">🥫 Spray can</button><button id="bBrushErase">Clear paint</button></div>
+    <div id="pbRow" style="display:none"><div class="hint" id="pbHint"></div><div class="sl"><span>Brush size</span><input id="sPSize" type="range" min=".1" max="3" step=".05" value=".6"><span></span></div><div class="sl"><span>Strength</span><input id="sPStr" type="range" min=".05" max="1" step=".05" value=".5"><span></span></div><div class="sl" id="sprayRow" style="display:none"><span>Mist</span><input id="sSpray" type="range" min="0" max="1" step=".05" value=".4"><span></span></div></div>
     <details class="more"><summary>✨ Effects: fade away, drip, glitter ▾</summary>
       <div class="row"><button id="bFade">💨 Fade away</button><button id="bPDrip">💧 Drip</button><button id="bGlit">✨ Glitter fall</button></div>
       <div class="row" id="glitRow" style="display:none"><div class="sl" style="flex:1"><span>Glitter amount</span><input id="sGlit" type="range" min=".05" max="1" step=".01" value=".5"><span></span></div></div>
@@ -350,7 +352,7 @@
     <div class="row"><button data-bg="studio" class="on">Studio</button><button data-bg="neon">Neon city night</button><button data-bg="day">Daylight</button><button data-bg="hell">Hellfire</button><button data-bg="void">Void</button></div>
   </div>
 </div>
-<div id="vtools"><button id="bFocus" class="on">🔍 Focus</button><button id="bJointV">🔗 Joint</button><button id="bTrash">🗑 Remove part</button><button id="bView">👁 View ▾</button><button id="bFWin" class="vx">🪟 Window</button><button id="bVBones" class="vx">🦴 Bones</button><button id="bVNums" class="vx"># Numbers</button></div>
+<div id="vtools"><button id="bVT" class="vk">🛠</button><button id="bPickV" class="vk">👆 Pick only</button><button id="bFocus" class="on">🔍 Focus</button><button id="bJointV">🔗 Joint</button><button id="bTrash">🗑 Remove part</button><button id="bView">👁 View ▾</button><button id="bFWin" class="vx">🪟 Window</button><button id="bVBones" class="vx">🦴 Bones</button><button id="bVNums" class="vx"># Numbers</button></div>
 <div id="guide"></div>
 <div id="sections"><div class="sh">MYTHIC FORGE</div>
   <a class="sec on">🐉 Creature Forge <small>titans, mechs, monsters, parts</small></a>

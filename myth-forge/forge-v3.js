@@ -111,8 +111,15 @@ function plugIn(lib, c, opts = {}) { const {h, pl} = c; if (c.used && !opts.keep
   buildPart(pt); return pt; }
 V3X.plugIn = plugIn;
 // called first thing in addPart: plug-able parts go into a plug when there is one
-V3X.tryAdd = (lib, bone, p, r, s) => { if (V3X.skip || (s != null && !V3X.force)) return false; const e = LIB[lib]; if (!e || !plugAsOf(e)) return false;
-  const c = findPlug(lib, bone, V3X.at && V3X.at[0], V3X.at && V3X.at[1]); V3X.at = null; if (!c) return false;
+// Dropped ON a part (V3X.hit = that part): it goes into a free matching plug of THAT part (or the part it is plugged into / parts plugged into it)
+// when one is close to the finger; if that part has no such plug it stays right where it was dropped, on that part. It never jumps to another body part.
+V3X.tryAdd = (lib, bone, p, r, s) => { const at = V3X.at, hitU = V3X.hit; V3X.at = null; V3X.hit = null; if (V3X.skip) return false; const e = LIB[lib]; if (!e || !plugAsOf(e)) return false;
+  let c = null;
+  if (hitU && at && partBy(hitU)) { const hp = partBy(hitU), grp = new Set([hitU]); if (hp.host) grp.add(hp.host.u); for (const k of P.parts) if (k.host && grp.has(k.host.u)) grp.add(k.uid);
+    let bd = 170; for (const q of scenePlugs(plugAsOf(e))) { if (!grp.has(q.h.uid)) continue; const [x, y, z] = toScreen(q.w); if (z > 1) continue; const d = Math.hypot(x - at[0], y - at[1]) + (q.used ? 60 : 0); if (d < bd) { bd = d; c = q; } }
+    if (!c) { V3X.stuck = (LIB[hp.lib] || {}).name || 'that part'; return false; } }
+  else { if (s != null && !V3X.force) return false; c = findPlug(lib, bone, at && at[0], at && at[1]); }
+  if (!c) return false;
   snap(); const pt = plugIn(lib, c); select(pt.uid); outliner(); saveCur(); tip('🔌 ' + e.name + ' plugged into the ' + (PLUG_NAMES[c.pl.t] || c.pl.t) + (pt.twin ? ' (both sides)' : ''), 2000); return true; };
 // a new main part (head swap etc.): plugged parts whose host is gone move onto it if it has the same plug, else onto a matching free plug, else they go
 V3X.adopt = pt => { const ps = plugsOf(pt.lib, pt); if (!ps.length) return; let moved = 0;
@@ -121,7 +128,7 @@ V3X.adopt = pt => { const ps = plugsOf(pt.lib, pt); if (!ps.length) return; let 
   if (moved) tip('🔌 ' + moved + ' part' + (moved > 1 ? 's' : '') + ' moved onto the new ' + (LIB[pt.lib] ? LIB[pt.lib].name : 'part'), 2200); };
 V3X.orphans = () => { const gone = P.parts.filter(k => k.host && !partBy(k.host.u)); if (gone.length) removeParts(gone); return gone.length; };
 // upper skull + its own jaw: add the matching jaw when a kit upper skull goes on (and remove the mannequin jaw)
-V3X.afterAdd = pt => { const e = LIB[pt.lib]; if (!e) return; if (e.upperOnly) { const jb = P.bones.filter(r => r[4] === 'jaw' && (r[1] === pt.bone)).map(r => r[0]);
+V3X.afterAdd = pt => { const e = LIB[pt.lib]; if (!e) return; if (V3X.stuck) { const nm = V3X.stuck; V3X.stuck = null; setTimeout(() => tip('Stuck on the ' + nm + ' right where you let go (no 🔌 spot for it there). ✋ Drag to slide it.', 3200), 30); } if (e.upperOnly) { const jb = P.bones.filter(r => r[4] === 'jaw' && (r[1] === pt.bone)).map(r => r[0]);
     removeParts(P.parts.filter(p => jb.includes(p.bone) && !p.host && (p.lib.startsWith('base_') || kindOf(LIB[p.lib]) === 'jaw')));
     if (e.jawFor && LIB[e.jawFor] && !P.parts.some(k => k.host && k.host.u === pt.uid && k.host.k === 'jaw')) { const c = {h: pt, pl: plugsOf(pt.lib, pt).find(q => q.id === 'jaw')}; if (c.pl) { const m = mirrorAdd; mirrorAdd = false; plugIn(e.jawFor, c); mirrorAdd = m; } } }
   V3X.adopt(pt); V3X.orphans(); };
@@ -158,14 +165,14 @@ window.__v3.ids = lib => P.parts.filter(p => !lib || p.lib === lib || (lib.test 
 // ====================================================================== 🎓 Build together: plug steps + matched kits per skeleton (V3)
 // fill every free plug of one kind (the step's kind, or the part's own kind)
 V3X.fillAll = (id, type, bones) => { const want = plugAsOf(LIB[id]) || type; if (!want) return 0; let n = 0;
-  for (let k = 0; k < 60; k++) { const free = scenePlugs(want).filter(c => !c.used && !c.pl.opt && c.h.lib !== id && (type ? c.pl.t === type : c.pl.t === want) && (!bones || bones.has(c.h.bone))).sort((a, b) => ((a.pl.side === 'L') + (a.h.bone || '').endsWith('.L') * 2) - ((b.pl.side === 'L') + (b.h.bone || '').endsWith('.L') * 2));
+  for (let k = 0; k < 60; k++) { const free = scenePlugs(want).filter(c => !c.used && !c.pl.opt && c.h.lib !== id && (type ? c.pl.t === type : c.pl.t === want) && (!bones || bones.has(c.h.bone)) && (!c.pl.segEnd || !P.bones.some(q => q[1] === c.h.bone && FAMILY[q[4]] === FAMILY[(boneRow(c.h.bone) || [])[4]]))).sort((a, b) => ((a.pl.side === 'L') + (a.h.bone || '').endsWith('.L') * 2) - ((b.pl.side === 'L') + (b.h.bone || '').endsWith('.L') * 2));
     if (!free.length) break; plugIn(id, free[0]); n++; } return n; };
 const STEP_T = {eye: 1, teeth: 1, fang: 1, tongue: 1, horn: 1, ear: 1, finger: 1, claw: 1, toe: 1, tailtip: 1, back: 1, belly: 1};
 V3X.plugsFor = how => { const t = (how || '').split(':')[1]; const all = scenePlugs(t || null); return t ? all.length : all.filter(c => /brow|nose|cheek|chin|crest|mane|antenna/.test(c.pl.t)).length; };
 // what's on the model right now
 const onModel = re => P.parts.find(p => !p.boxed && re.test(p.lib));
 const KIT_HEAD = {dragon: 'kh_dragon', wyvern: 'kh_dragon', hydra: 'kh_dragon', hydra2: 'kh_dragon', kaiju: 'kh_kaiju', biped: 'kh_kaiju', theropod: 'kh_kaiju', quad: 'kh_beast', centaur: 'kh_brute', chimera: 'kh_cat', hippogriff: 'kh_bird', bird: 'kh_bird',
-  serpent: 'kh_serpent', naga: 'kh_serpent', turtle: 'kh_turtle', turtle2: 'kh_turtle', brute: 'kh_brute', gorilla: 'kh_brute', fourarm: 'kh_brute', spider: 'kh_bug', insect: 'kh_bug', mantis: 'kh_bug', wasp: 'kh_bug', uprightbug: 'kh_bug', scorpion: 'kh_bug'};
+  serpent: 'kh_serpent', naga: 'kh_serpent', turtle: 'kh_turtle', turtle2: 'kh_turtle', brute: 'kh_brute', gorilla: 'kh_brute', fourarm: 'kh_brute', fish: 'kh_shark', bonyfish: 'kh_fish', spider: 'kh_bug', insect: 'kh_bug', mantis: 'kh_bug', wasp: 'kh_bug', uprightbug: 'kh_bug', scorpion: 'kh_bug'};
 const KIT_HAND = {kaiju: 'kl_palm_kaiju', biped: 'kl_palm_kaiju', theropod: 'kl_palm_kaiju', hydra2: 'kl_palm_beast', brute: 'kl_palm_human', gorilla: 'kl_palm_human', fourarm: 'kl_palm_human', angel: 'kl_palm_human', slim: 'kl_palm_human', naga: 'kl_palm_human', centaur: 'kl_palm_human', turtle2: 'kl_palm_kaiju', uprightbug: 'kl_arm_hook', mantis: 'kl_arm_scythe', wasp: 'kl_arm_drill'};
 const KIT_FOOT = {kaiju: 'kl_foot_kaiju', biped: 'kl_foot_kaiju', theropod: 'kl_foot_dragon', dragon: 'kl_foot_dragon', wyvern: 'kl_foot_dragon', hydra: 'kl_foot_dragon', hydra2: 'kl_foot_dragon', quad: 'kl_foot_paw', chimera: 'kl_foot_paw', sphinx: 'kl_foot_paw', centaur: 'kl_foot_paw',
   bird: 'kl_foot_bird', hippogriff: 'kl_foot_bird', brute: 'kl_foot_human', gorilla: 'kl_foot_human', slim: 'kl_foot_human', fourarm: 'kl_foot_human', angel: 'kl_foot_human', turtle: 'kl_foot_kaiju', turtle2: 'kl_foot_kaiju'};
@@ -181,8 +188,8 @@ V3X.defFor = (skel, t, style, level) => { const cx = level !== 'simple', mech = 
   const own = (V3X.DEF3[skel] || {})[t]; if (own !== undefined && !mech) return own;
   if (cx && mech) { if (t === 'Hands') return 'kl_palm_mech'; if (t === 'Tail / tentacles' && !/walker|tank/.test(skel)) return 'kl_tailseg_mech'; }
   const kitHead = onModel(/^kh_/), hk = kitHead && kitHead.lib.slice(3);
-  if (t === 'Eyes') return mech ? null : kitHead ? (hk === 'bug' ? 'kp_eye_compound' : /dragon|kaiju|serpent|croc/.test(hk) ? 'kp_eye_slit' : 'kp_eye_round') : null;
-  if (t === 'Teeth') return kitHead ? ({dragon: 'kp_row_fang', kaiju: 'kp_row_fang', beast: 'kp_row_fang', cat: 'kp_row_fang', croc: 'kp_row_saw', serpent: 'kp_row_needle', brute: 'kp_row_molar'}[hk] || null) : null;
+  if (t === 'Eyes') return mech ? null : kitHead ? (hk === 'shark' ? 'ks_eye_shark' : hk === 'fish' ? 'ks_eye_fish' : hk === 'bug' ? 'kp_eye_compound' : /dragon|kaiju|serpent|croc/.test(hk) ? 'kp_eye_slit' : 'kp_eye_round') : null;
+  if (t === 'Teeth') return kitHead ? ({shark: 'kp_row_saw', fish: 'kp_row_needle', dragon: 'kp_row_fang', kaiju: 'kp_row_fang', beast: 'kp_row_fang', cat: 'kp_row_fang', croc: 'kp_row_saw', serpent: 'kp_row_needle', brute: 'kp_row_molar'}[hk] || null) : null;
   if (t === 'Fangs') return kitHead && hk === 'cat' ? 'kp_fang_saber' : kitHead && hk === 'serpent' ? 'kp_fang_venom' : null;
   if (t === 'Tongue') return kitHead && hk === 'serpent' ? 'kp_tongue_fork' : null;
   if (t === 'Horns') return mech ? undefined : kitHead ? ({dragon: 'kp_horn_swept', kaiju: 'kp_horn_short', brute: 'kp_horn_hook'}[hk] || null) : undefined;
@@ -202,6 +209,7 @@ V3X.DEF3 = window.FORGE_DEF3 || {};
 // ====================================================================== new body types: defaults, ⭐ default builds, fitting bodies (V3)
 if (V3X.bt) { const {DEF, BODY_FOR, defUI} = V3X.bt; for (const [k, d] of Object.entries(window.FORGE_DEF3 || {})) { if (!DEF[k]) DEF[k] = d; }
   Object.assign(BODY_FOR, {chimera: ['bb_lion', 'bb_beast'], hydra2: ['bd_torso_dragon'], mantis: ['bd_torso_thorax'], wasp: ['bd_torso_thorax', 'bd_torso_spider'], uprightbug: ['bd_torso_thorax', 'bd_torso_brawler'], kraken: ['kr_mantle'],
+    fish: ['ks_shark_body', 'ks_fish_body', 'bb_fish'], bonyfish: ['ks_fish_body', 'ks_shark_body', 'bb_fish'], lobster: ['ks_lob_carapace', 'bd_torso_crab'],
     jellyfish: ['kj_bell'], turtle: ['kc_shell_snapper', 'tt_shell'], turtle2: ['kc_shell_snapper', 'tt_shell'], hippogriff: ['bb_horse', 'bb_beast'], ooze: ['ko_goo', 'ko_puddle', 'bb_blob'], beholder: ['ko_orb'], blob: ['ko_goo', 'bb_blob', 'bd_torso_slug', 'bd_torso_bloated']});
   try { defUI(); } catch (x) {} }
 // parts that keep their own size on the body (jellyfish bell)

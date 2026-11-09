@@ -15,6 +15,8 @@ const K = window.makeK(THREE), MATS = window.FORGE_MATS, SKEL = window.FORGE_SKE
 const tip = (t, ms = 2200) => { $('tip').textContent = t; clearTimeout(tip._t); tip._t = setTimeout(() => $('tip').textContent = '', ms); };
 const canvas = $('c'), renderer = new THREE.WebGLRenderer({canvas, antialias: true});
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.2;
+let BRIGHT = .85; try { const b = parseFloat(localStorage.getItem('mf-bright')); if (b >= .3 && b <= 1.3) BRIGHT = b; } catch (x) {}   // 🔆 Brightness (Paint tab): 1 = the old look
+renderer.toneMappingExposure = 1.2 * BRIGHT;
 const scene = new THREE.Scene();
 { // studio reflections: bright soft-box panels so chrome and metal shine
   const es = new THREE.Scene(), c = document.createElement('canvas'); c.width = 512; c.height = 256; const x = c.getContext('2d'), g = x.createLinearGradient(0, 0, 0, 256);
@@ -396,6 +398,7 @@ function bodyInfo() {                                           // trunk path, s
   // bodies with no arms or legs on the trunk (fish, octopus, blob, serpent): as wide as the trunk is long, so the body doesn't come out thin
   else if (!sh && !hp && !legRoots) W = Math.max(W, Math.min(len * .9, 4.5));
   if (P.bones.some(r => r[4] === 'wingA') && hp) W = Math.max(W, len * .8);
+  if (SKEL[P.skel] && SKEL[P.skel].bodyW) W = SKEL[P.skel].bodyW;   // body types that say how wide they are (shark, lobster)
   return {R, path, names, start, end, len, W, root: path[0][0]}; }
 function aimRot(R, from, endPt) {                               // rotation (deg, bone space of `from`) that points +Y at endPt
   const r = R[from], d = endPt.clone().sub(v3(r[2])); if (d.lengthSq() < 1e-6) return [0, 0, 0]; d.applyQuaternion(restQOf(r).invert()).normalize();
@@ -407,6 +410,10 @@ function torsoRot(R, from, endPt) { const r = R[from], Y = endPt.clone().sub(v3(
   let Z = F.multiplyScalar(1 - h).add(Dn.multiplyScalar(h)); if (Z.lengthSq() < 1e-6) Z = perp(new THREE.Vector3(0, 0, 1)); Z.normalize(); const X = new THREE.Vector3().crossVectors(Y, Z).normalize(); Z.crossVectors(X, Y);
   const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(X, Y, Z)).premultiply(restQOf(r).invert()), eu = new THREE.Euler().setFromQuaternion(q);
   return [eu.x, eu.y, eu.z].map(v => +(v / D).toFixed(1)); }
+// keel parts (shark tail, lobster tail segments): +Y along the bone(s), -Z = the back (world up), +Z = the belly
+function keelRot(R, from, endPt) { const r = R[from], Y = endPt.clone().sub(v3(r[2])); if (Y.lengthSq() < 1e-6) return [0, 0, 0]; Y.normalize();
+  let Z = new THREE.Vector3(0, -1, 0).addScaledVector(Y, Y.y); if (Z.lengthSq() < 1e-3) Z = new THREE.Vector3(0, 0, 1).addScaledVector(Y, -Y.z); Z.normalize(); const X = new THREE.Vector3().crossVectors(Y, Z).normalize(); Z.crossVectors(X, Y);
+  const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(X, Y, Z)).premultiply(restQOf(r).invert()), eu = new THREE.Euler().setFromQuaternion(q); return [eu.x, eu.y, eu.z].map(v => +(v / D).toFixed(1)); }
 function limbChain(R, bone) {                                   // bones of the same limb from `bone` outward (stops before hands/feet)
   const fam = FAMILY[R[bone][4]], out = [R[bone]]; for (;;) { const k = kidRows(out[out.length - 1][0]).filter(x => FAMILY[x[4]] === fam); if (k.length !== 1) break; out.push(k[0]); } return out; }
 function thickFor(B, tag, i = 0) { const W = B.W; return {armU: .3, armF: .26, legU: .38, legL: .3, neck: .3, tail: .42 * Math.pow(.84, i), extra: .2, spine: .5, chest: .55, wingA: .12, wingB: .1, wingC: .08, hand: .28, foot: .32, head: .45, jaw: .3}[tag] * W || W * .25; }
@@ -431,7 +438,7 @@ function fitPart(lib, bone) {
   if (kind === 'seg') {                                          // base-body piece: exactly this bone
     const r = R[bone], len = Math.max(.15, v3(r[2]).distanceTo(v3(r[3]))); let i = 0, c = r; while (c[1] && R[c[1]] && R[c[1]][4] === tag) { i++; c = R[c[1]]; }
     if (!c[1] && tag === 'tail') { i = 0; let d = r; for (;;) { const k = kidRows(d[0]).find(x => x[4] === tag); if (!k) break; i++; d = k; } }   // tail grows out of the root (naga): thick end is the body end
-    const T = FAMILY[tag] === 'trunk' ? thickFor(B, tag) * Math.pow(.93, i) : thickFor(B, tag, i); out.s = +(T / thick).toFixed(3); out.l = +(len / ((e.unitLen || plen) * out.s)).toFixed(3); return out; }
+    const T = FAMILY[tag] === 'trunk' ? thickFor(B, tag) * Math.pow(.93, i) : thickFor(B, tag, i); out.s = +(T / thick).toFixed(3); out.l = +(len / ((e.unitLen || plen) * out.s)).toFixed(3); if (e.keel) out.r = keelRot(R, bone, v3(r[3])); return out; }
   if (kind === 'head') {
     // a head dropped on the body, neck or jaw goes to the head slot it belongs to (the neck's own head, else the nearest head)
     if (FAMILY[tag] !== 'head' && (FAMILY[tag] === 'trunk' || FAMILY[tag] === 'neck' || FAMILY[tag] === 'jaw')) { const hb = headSlotFor(bone); if (hb) { bone = hb; out.bone = hb; out.fit.drop = hb; out.fit.cover = [hb]; } }
@@ -466,7 +473,7 @@ function fitPart(lib, bone) {
   if (kind === 'limb' && plen >= 3.2 && ch.length > 2) { let bestE = 1e9; lens.forEach((L, i) => { const e2 = Math.abs(Math.log(L / (plen * T / rw))); if (i && e2 < bestE) { bestE = e2; n = i + 1; } }); }
   const used = ch.slice(0, n), end = v3(used[used.length - 1][3]), len = v3(R[start][2]).distanceTo(end);
   let sz = len / plen, l = 1; const wNow = rw * sz; if (wNow > T * 1.7 || wNow < T * .55) { sz = Math.min(T * 1.7, Math.max(T * .55, wNow)) / rw; l = Math.min(2.5, Math.max(.4, len / (plen * sz))); sz = len / (plen * l); }
-  out.s = +sz.toFixed(3); out.l = +l.toFixed(3); out.r = aimRot(R, start, end); out.fit.cover = used.map(r => r[0]);
+  out.s = +sz.toFixed(3); out.l = +l.toFixed(3); out.r = e.keel ? keelRot(R, start, end) : aimRot(R, start, end); out.fit.cover = used.map(r => r[0]);
   if (e.group === 'Legs & Feet' && n === ch.length) kidRows(used[used.length - 1][0]).filter(k => FAMILY[k[4]] === 'foot').forEach(k => out.fit.cover.push(k[0]));   // these legs come with their own feet
   return out; }
 const rootWCache = {};
@@ -566,6 +573,7 @@ function addWeaponToPalm(lib, bone) { const g = palmGrip(lib, bone); if (!g) ret
   tip(LIB[lib].name + ' in the palm — Move tab › More › Mirror copy for the other hand', 3200); return true; }
 function placeAt(hit) {
   if (window.V3 && hit && hit.point && !window.V3.at) { const q = toScreen(hit.point); window.V3.at = [q[0], q[1]]; }
+  if (window.V3) window.V3.hit = (hit && hit.object && hit.object.userData.uid) || null;
   const lib = placing; placing = null; libUI();
   let boneName = null;
   if (hit.object.userData.bone) boneName = hit.object.userData.bone;
@@ -747,7 +755,7 @@ function writeBack(live) {
   if (gizmo.mode === 'scale') { const s = v.G.scale; pt.l = +((pt.l || 1) * s.y / pt.s).toFixed(3); pt.w = +((pt.w || 1) * (s.x + s.z) / 2 / pt.s).toFixed(3); v.G.scale.setScalar(pt.s); v.M.scale.set((pt.flip ? -1 : 1) * pt.w, pt.l, pt.w); applyOff(pt, v.M); }
   syncTwin(pt); syncEdit(true);
 }
-function attachGizmo() { gizmo.detach(); gzTarget = 'part'; if (sticky && tab === 'edit') return;
+function attachGizmo() { gizmo.detach(); gzTarget = 'part'; if ((sticky || selOnly) && tab === 'edit') return;
   if (tab === 'skel' && (poseMode || jointMode) && selBone && bones[selBone]) { gzTarget = poseMode ? 'bone' : 'joint'; gizmo.setMode(poseMode ? 'rotate' : 'translate'); gizmo.attach(bones[selBone]); return; }
   if (tab === 'edit' && sel && views[sel]) { gizmo.setMode(gzMode); gizmo.attach(views[sel].G); } }
 let gzMode = 'translate';
@@ -847,6 +855,8 @@ $('sFade').onchange = () => { fadeTargets().forEach(o => o.fade && buildPart(o))
 $('bDust').onclick = () => { const L = fadeTargets().filter(o => o.fade); if (!L.length) return; snap(); const on = L[0].fade.dust === false; L.forEach(o => { o.fade.dust = on; buildPart(o); }); fadeUI(L[0]); saveCur(); };
 $('eyeGlow').oninput = e => { P.fx.eyeGlow = e.target.value; applyEyeGlow(); };
 $('eyeGlow').onchange = () => saveCur();
+{ const sb = $('sBright'), vb = $('vBright'); if (sb) { const ui = () => { sb.value = BRIGHT; vb.textContent = Math.round(BRIGHT * 100) + '%'; }; ui();
+  sb.oninput = () => { BRIGHT = +sb.value; renderer.toneMappingExposure = 1.2 * BRIGHT; vb.textContent = Math.round(BRIGHT * 100) + '%'; try { localStorage.setItem('mf-bright', BRIGHT); } catch (x) {} }; } }
 $('bEyeGlowReset').onclick = () => { delete P.fx.eyeGlow; applyFX(); saveCur(); tip('Eye glow back to default'); };
 $('bTintClear').onclick = () => { $('tint').value = '#ffffff'; $('tint').onchange({target: $('tint')}); };
 $('bPaintTwin').onclick = e => { paintTwin = !paintTwin; e.target.classList.toggle('on', paintTwin); };
@@ -866,20 +876,26 @@ const sculpting = () => tab === 'sculpt' || (tab === 'paint' && brushPaint);
 $('bPen').onclick = e => { stylus = !stylus; e.target.classList.toggle('on', stylus); if (stylus) penSeen = true; updateOrbit();
   tip(stylus ? 'Stylus mode: pen sculpts / paints / taps, fingers only turn and zoom the view' : 'Stylus mode off', 3000); };
 let paintBrush = 'color', skinBrushMat = 'galaxy';
-const PB_TIP = {color: 'Color brush: draw on the part with the color next to it', skin: 'Skin brush: tap any skin below to pick it, then draw it on (one brushed skin per part)', blend: 'Blend: rub where two paints meet to mix them softly', blotch: 'Blotch: tap to splat paint (the color next to 🖌) that runs down the skin'};
-function pbUI() { document.querySelectorAll('[data-pb]').forEach(b => b.classList.toggle('on', brushPaint && b.dataset.pb === paintBrush)); $('pbRow').style.display = brushPaint ? '' : 'none';
+const PB_TIP = {color: 'Color brush: draw on the part with the color next to it', skin: 'Skin brush: tap any skin below to pick it, then draw it on (one brushed skin per part)', blend: 'Blend: rub where two paints meet to mix them softly', blotch: 'Blotch: tap to splat paint (the color next to 🖌) that runs down the skin', spray: 'Spray can: hold and move to spray the color next to 🖌. Soft mist at the edge, builds up the longer you hold. Mist slider = fine mist or speckles'};
+function pbUI() { document.querySelectorAll('[data-pb]').forEach(b => b.classList.toggle('on', brushPaint && b.dataset.pb === paintBrush)); $('pbRow').style.display = brushPaint ? '' : 'none'; if ($('sprayRow')) $('sprayRow').style.display = brushPaint && paintBrush === 'spray' ? '' : 'none';
   const nm = (MATS.LIST.find(l => l[0] === skinBrushMat) || [])[1]; $('pbHint').textContent = PB_TIP[paintBrush] + (paintBrush === 'skin' ? ' — now: ' + nm : ''); paintNowUI(); }
 document.querySelectorAll('[data-pb]').forEach(b => b.onclick = () => { const k = b.dataset.pb; brushPaint = !(brushPaint && paintBrush === k); paintBrush = k; pbUI(); updateOrbit();
   tip(brushPaint ? (sel ? PB_TIP[k] : 'Tap a part first, then draw on it') : 'Brush off', 2600); });
 $('bBrushErase').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); pt.vpaint = null; pt.layer = null; buildPart(pt); syncTwin(pt); saveCur(); tip('Brushed paint cleared'); };
 function paintStroke(x, y) { const pt = partBy(sel), v = views[sel]; if (!pt || !v) return; const hit = cast(x, y, v.meshes); if (!hit) return;
   if (paintBrush === 'blotch') return lastHit ? null : (lastHit = true, blotchStroke(pt, hit, x, y));
-  if (paintBrush !== 'color') return layerStroke(pt, hit, x, y);
+  if (paintBrush !== 'color' && paintBrush !== 'spray') return layerStroke(pt, hit, x, y);
   const mesh = hit.object, mi = mesh.userData.mi; pt.vpaint = pt.vpaint || {};
   if (!pt.vpaint[mi]) { pt.vpaint[mi] = {}; buildPart(pt); return paintStroke(x, y); }
   const g = mesh.geometry, p = g.attributes.position, col = g.attributes.color; if (!col) return; const local = mesh.worldToLocal(hit.point.clone()), ws = new THREE.Vector3(); mesh.getWorldScale(ws);
   const R = (+$('sPSize').value) / Math.abs(ws.y), R2 = R * R, power = Math.min(1, +$('sPStr').value * pressure), c = new THREE.Color($('brushCol').value), M = pt.vpaint[mi];
   const centers = [local]; if (symSculpt) centers.push(new THREE.Vector3(-local.x, local.y, local.z));
+  if (paintBrush === 'spray') {   // 🥫 spray can: wider cone, soft falloff, only some points get hit each moment (mist), a little at a time so it builds up
+    const mist = +$('sSpray').value, RS = R * 1.6, RS2 = RS * RS, pw = Math.min(1, +$('sPStr').value * pressure);
+    for (const ce of centers) for (let i = 0; i < p.count; i++) { const d2 = (p.getX(i) - ce.x) ** 2 + (p.getY(i) - ce.y) ** 2 + (p.getZ(i) - ce.z) ** 2; if (d2 > RS2) continue;
+      const fall = Math.pow(1 - d2 / RS2, 1.6); if (Math.random() > fall * (1 - mist * .85) + .04) continue; const f = Math.min(1, (.1 + .5 * mist) * pw * (.5 + Math.random()) * (.35 + fall));
+      const r = col.getX(i) + (c.r - col.getX(i)) * f, gg = col.getY(i) + (c.g - col.getY(i)) * f, b = col.getZ(i) + (c.b - col.getZ(i)) * f; col.setXYZ(i, r, gg, b); M[i] = [+r.toFixed(3), +gg.toFixed(3), +b.toFixed(3)]; }
+    col.needsUpdate = true; return; }
   for (const ce of centers) for (let i = 0; i < p.count; i++) { const d2 = (p.getX(i) - ce.x) ** 2 + (p.getY(i) - ce.y) ** 2 + (p.getZ(i) - ce.z) ** 2; if (d2 > R2) continue;
     const f = (1 - d2 / R2) * power, r = col.getX(i) + (c.r - col.getX(i)) * f, gg = col.getY(i) + (c.g - col.getY(i)) * f, b = col.getZ(i) + (c.b - col.getZ(i)) * f; col.setXYZ(i, r, gg, b); M[i] = [+r.toFixed(3), +gg.toFixed(3), +b.toFixed(3)]; }
   col.needsUpdate = true; }
@@ -1379,7 +1395,7 @@ function splitOne(pt, groups) { const v = views[pt.uid]; v.G.updateMatrix(); con
 $('bBreak').onclick = () => { const pt = partBy(sel); if (!pt) return tip('Tap a part first'); const groups = pieceClusters(pt); if (groups.length < 2) return tip('This part is already one piece');
   snap(); const tw = pt.twin && partBy(pt.twin), a = splitOne(pt, groups); if (tw) { const b = splitOne(tw, pieceClusters(tw)); a.forEach((q, i) => { if (b[i]) { q.twin = b[i].uid; b[i].twin = q.uid; } }); }
   select(a[0].uid); outliner(); saveCur(); tip('Broke into ' + groups.length + ' pieces — turn on 🧲 Sticky and drag them anywhere', 3500); };
-var sticky = false, drag = null;
+var sticky = false, drag = null, selOnly = false;   // selOnly = 👆 Pick only: tapping picks parts, nothing moves
 function setSticky(on) { sticky = on; $('bSticky').classList.toggle('on', on); if (on) { gizmo.detach(); tip('Sticky on: drag a part with your finger or pen — it sticks where you let go. Drop it off the model to put it in the Parts box', 4200); } else attachGizmo(); }
 $('bSticky').onclick = () => setSticky(!sticky);
 const dragPlane = new THREE.Plane(), dragTmp = new THREE.Vector3();
@@ -1538,16 +1554,24 @@ if (window.MF_V2) {
   syncTops();
 
   // ---- drag is the default way to move things; arrows are for fine-tuning
-  const dragUI = () => { $('bDragMode').classList.toggle('on', sticky); $('bArrowMode').classList.toggle('on', !sticky); $('gzRow').style.display = sticky ? 'none' : '';
-    $('editHow').innerHTML = sticky ? '👉 <b>Tap</b> a part to pick it, then <b>drag</b> it. Let go on the body = it sticks there. Let go in the air = it floats there.' : '👉 Tap a part, then drag the arrows (Move), rings (Turn) or boxes (Stretch).'; };
-  const setDrag = on => { sticky = on; $('bSticky').classList.toggle('on', on); attachGizmo(); dragUI(); };
+  const dragUI = () => { $('bPickMode').classList.toggle('on', selOnly); $('bDragMode').classList.toggle('on', sticky); $('bArrowMode').classList.toggle('on', !sticky && !selOnly); $('gzRow').style.display = sticky || selOnly ? 'none' : '';
+    const pv = $('bPickV'); if (pv) { pv.textContent = selOnly ? '👆 Pick only' : sticky ? '✋ Drag is on' : '🎯 Arrows on'; pv.classList.toggle('lit', !selOnly); }
+    $('editHow').innerHTML = selOnly ? '👉 <b>👆 Pick only</b>: tap a part to pick it. Nothing moves when you touch the model. Choose <b>✋ Drag</b> or <b>🎯 Arrows</b> when you want to move the picked part.' : sticky ? '👉 <b>Tap</b> a part to pick it, then <b>drag</b> it. Let go on the body = it sticks there. Let go in the air = it floats there.' : '👉 Tap a part, then drag the arrows (Move), rings (Turn) or boxes (Stretch).'; };
+  const setDrag = on => { selOnly = false; sticky = on; $('bSticky').classList.toggle('on', on); attachGizmo(); dragUI(); };
+  const setPick = () => { selOnly = true; sticky = false; $('bSticky').classList.remove('on'); attachGizmo(); dragUI(); };
   $('bDragMode').onclick = () => setDrag(true); $('bArrowMode').onclick = () => setDrag(false); $('bSticky').onclick = () => setDrag(!sticky);
-  setDrag(true);
+  $('bPickMode').onclick = () => { setPick(); tip('👆 Pick only: touching the model picks parts and turns the view. Nothing moves.', 2600); };
+  $('bPickV').onclick = () => { if (selOnly) { setDrag(true); tip('✋ Drag is on: drag the picked part to move it. Tap this button again to go back to 👆 Pick only.', 3200); } else { setPick(); tip('👆 Pick only: nothing moves when you touch the model', 2200); } };
+  setPick();   // 👆 Pick only is the default every time the page opens (Nov 9: "I'm just grabbing things and making it look weird")
+  // 🛠 the on-screen buttons fold away into one small button (remembered)
+  { const vt = $('vtools'), b = $('bVT'); let shut = true; try { shut = localStorage.getItem('mf-vt') !== 'open'; } catch (x) {}
+    const ui = () => { vt.classList.toggle('shut', shut); b.textContent = shut ? '🛠' : '🛠 ✕'; b.title = shut ? 'Show the on-screen buttons' : 'Hide the on-screen buttons'; };
+    b.onclick = () => { shut = !shut; try { localStorage.setItem('mf-vt', shut ? 'shut' : 'open'); } catch (x) {} ui(); }; ui(); }
   // hide any arrow / ring direction you don't want (red = left-right, green = up-down, blue = front-back); remembered
   let AX = {X: true, Y: true, Z: true}; try { AX = {...AX, ...JSON.parse(localStorage.getItem('mf-axes') || '{}')}; } catch (x) {}
-  const axUI = () => { for (const k of 'XYZ') { gizmo['show' + k] = AX[k]; $('ax' + k).classList.toggle('on', AX[k]); } $('axRow').style.display = sticky ? 'none' : ''; };
+  const axUI = () => { for (const k of 'XYZ') { gizmo['show' + k] = AX[k]; $('ax' + k).classList.toggle('on', AX[k]); } $('axRow').style.display = sticky || selOnly ? 'none' : ''; };
   for (const k of 'XYZ') $('ax' + k).onclick = () => { AX[k] = !AX[k]; if (!AX.X && !AX.Y && !AX.Z) { AX[k] = true; return tip('Keep at least one direction — or use ✋ Drag for no arrows', 2200); } try { localStorage.setItem('mf-axes', JSON.stringify(AX)); } catch (x) {} axUI(); };
-  const dragUI0 = dragUI; $('bDragMode').addEventListener('click', axUI); $('bArrowMode').addEventListener('click', axUI); axUI();
+  const dragUI0 = dragUI; for (const id of ['bDragMode', 'bArrowMode', 'bPickMode', 'bPickV']) $(id).addEventListener('click', axUI); axUI();
   // parts-box drop zone shows while dragging a part
   addEventListener('pointermove', () => { if (drag && drag.moved) $('boxZone').style.display = 'block'; }, true);
   addEventListener('pointerup', () => setTimeout(() => $('boxZone').style.display = 'none', 0), true);
@@ -1567,6 +1591,7 @@ if (window.MF_V2) {
     // free + let go in the air: it stays right there
     const wp = airPoint(x, y), bn = nearestBone(wp), B = (bn && bones[bn]) || skelRoot; B.updateMatrixWorld(true); const lp = wp.clone().applyMatrix4(B.matrixWorld.clone().invert());
     const m = mirrorAdd; mirrorAdd = mirrorAdd && !noBones; addPart(id, bn, lp.toArray().map(v => +v.toFixed(3)), [0, 0, 0], e.whole ? 1 : kindOf(e) ? decorScale(bn) : 1); mirrorAdd = m; }
+  window.__drop = dropLib;
   const endGD = () => { if (window.V3) window.V3.dragEnd(); if (gd && gd.timer) clearTimeout(gd.timer); gd = null; window.__gdOn = false; ghost.style.display = 'none'; document.body.classList.remove('gdrag'); };
   const startGD = () => { if (!gd || gd.on) return; gd.on = true; window.__gdOn = true; if (navigator.vibrate) try { navigator.vibrate(15); } catch (x) {}
     if (window.V3) window.V3.dragStart(gd.id); ghost.src = gd.src || ''; ghost.style.display = 'block'; ghost.style.left = gd.x + 'px'; ghost.style.top = gd.y + 'px'; document.body.classList.add('gdrag'); tip('Drag it onto the model and let go', 2500); };
@@ -1791,10 +1816,10 @@ if (window.MF_V2) {
   const BTKEY = 'mf-bt-resume';
   const btSave = () => { try { if (BT.paused) localStorage.setItem(BTKEY, JSON.stringify(BT.paused)); else localStorage.removeItem(BTKEY); } catch (x) {} };
   function btPill() { let el = $('btResume'); if (!el) { el = Object.assign(document.createElement('button'), {id: 'btResume'}); el.onclick = btResume; document.body.append(el); }
-    const p = BT.paused, ok = p && p.skel === P.skel && !BT.on; el.style.display = ok ? '' : 'none'; if (ok) el.textContent = '🎓 Back to ' + p.label + ' · ' + (p.i + 1) + '/' + p.n; }
+    const p = BT.paused, ok = false && p && p.skel === P.skel && !BT.on; el.style.display = ok ? '' : 'none';   /* Nov 9: no pill on screen any more (✕ closes all the way; Start › Build together carries on) */ if (ok) el.textContent = '🎓 Back to ' + p.label + ' · ' + (p.i + 1) + '/' + p.n; }
   function btEnd(won) { BT.on = false; $('guide').style.display = 'none'; document.body.classList.remove('guiding', 'gside');
     const st = BT.steps[BT.i]; BT.paused = won === true || !st || BT.i < 2 ? null : {i: BT.i, skel: P.skel, style: BT.style, level: BT.level, n: BT.steps.length, label: st.k === 'part' ? (st.label || st.t) : ({shape: 'Body shape', move: 'Move things', paint: 'Paint', clean: 'Clean up', look: 'Game look', save: 'Save'}[st.k] || 'your build')};
-    btSave(); btPill(); if (won === true) tip('🎉 Titan built! Start › 🎓 Build together to make another', 4000); else if (BT.paused) tip('Paused — tap 🎓 Back to ' + BT.paused.label + ' (top of the screen) to carry on', 3200); }
+    btSave(); btPill(); if (won === true) tip('🎉 Titan built! Start › 🎓 Build together to make another', 4000); else if (BT.paused) tip('Build together closed. To carry on later: Start › 🎓 Build together', 3200); }
   function btResume() { const p = BT.paused; if (!p || p.skel !== P.skel) return btStart(); $('menu').classList.remove('open'); BT.on = true; BT.style = p.style || BT.style; if (p.level) BT.level = p.level;
     BT.addedBy = BT.addedBy || {}; BT.defDone = BT.defDone || {}; btSteps(); BT.added = []; BT.paused = null; btSave(); btPill(); btGo(Math.min(p.i, BT.steps.length - 1)); }
   try { BT.paused = JSON.parse(localStorage.getItem(BTKEY) || 'null'); } catch (x) {} setTimeout(btPill, 400);

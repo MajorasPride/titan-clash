@@ -175,3 +175,14 @@ MajorasPride's plan (talked through in chat with plug-map pictures, then "start 
 - On-screen 🔗 Joint button id = `bJointV`; `bJoint` = Skeleton › Move joints only.
 - `frameAll()` fits width and height into the free area (top bar 50px, panel below on phone / at the side on wide screens).
 - Build method + next-up list + open questions: top of BUILD-LOG.md.
+
+## Nov 9, 2026 (4:30pm): pick only, plug drop rule, sea kit — TEST PAGE ONLY
+- **Move modes:** `selOnly` (👆 Pick only, default on load) / `sticky` (✋ Drag) / neither (🎯 Arrows). `attachGizmo` skips the gizmo for the first two. Buttons `bPickMode`, `bDragMode`, `bArrowMode` (Move tab) + on-screen `bPickV`. `#vtools.shut` hides everything but `.vk` buttons (`bVT`, `bPickV`); state in `mf-vt`.
+- **Drop rule (V3):** `placeAt` stores the part under the finger in `V3.hit`; `V3X.tryAdd` then only looks at plugs of that part, its host and its plugged children, within 170 px of the drop point; no match → normal surface placement on that part (`V3X.stuck` → tip in `afterAdd`). Without a hit part the old `findPlug` rule runs.
+- **Build together:** `btPill` never shows (✕ = closed); `BT.paused` is still saved and `btOpen` offers to carry on.
+- **Brightness:** `BRIGHT` (localStorage `mf-bright`, default .85) scales `renderer.toneMappingExposure` (1.2 x BRIGHT). Slider `sBright` in the Paint tab.
+- **Spray can:** `paintBrush === 'spray'` branch in `paintStroke` (random points inside 1.6x the brush radius, soft falloff, small steps); slider `sSpray` (row `sprayRow`).
+- **`parts/kit-sea.js`** (in build.py `V3_FILES`): ids `ks_*` + plug heads `kh_shark`, `kh_fish` (+ `_jaw`). Fins are `Wings`-group parts (`fitKind: 'wing'`): leading edge +Y, blade toward +X. `skeletons-v3.js`: `T.fish` replaced on the test page (live page still has the old fish bones from skeletons.js), `T.bonyfish`, `T.lobster`; defaults in `FORGE_DEF3`; `KIT_HEAD` / `BODY_FOR` entries in forge-v3.js.
+- **Fitter:** `SKEL[k].bodyW` overrides the body width in `bodyInfo`; `e.keel` → `keelRot` (seg + tail/limb path of `fitPart`): +Y along the bone, -Z world up. `V3X.fillAll` skips `segEnd` plugs on tail segments that have a next segment.
+- Test hook `window.__drop(id, x, y)` = drop a library part at a screen point.
+

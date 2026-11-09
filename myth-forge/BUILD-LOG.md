@@ -3,7 +3,7 @@
 Live: https://majoraspride.github.io/titan-clash/myth-forge/ · Newest first. Every change gets a line here (what was built + what still needs fixing).
 Deeper technical notes for Claude are in `README.md` (same folder).
 
-## 👉 START HERE (handoff for a new chat, updated Nov 9 2026, 3:40pm)
+## 👉 START HERE (handoff for a new chat, updated Nov 9 2026, 4:30pm)
 - **BUILD METHOD (MajorasPride, Nov 9 3pm). Follow this, it keeps chats cheap:**
   1. Read ONLY this START HERE section, then start working. Don't re-read the whole README / log / review unless the task needs it.
   2. Take the next item from **NEXT UP** and build it. Don't stop to ask. Where there's a choice, pick the recommended / safest option and write down what you picked.
@@ -12,7 +12,7 @@ Deeper technical notes for Claude are in `README.md` (same folder).
   5. Test in headless Chrome (phone 412x915 + PC 1920x1080), then update this section + add a log entry + fix README, commit, push. End the chat with a 3-line summary.
   6. Things CAN be cut from the big wishlist (he said so Nov 9); "never delete" is a Titan Clash rule. Still archive replaced code in `archive/`.
 - **NEXT UP (in order):**
-  1. ✅ Joint button, PC buttons, camera fit (done 3:40pm, test page — see entry below).
+  1. ✅ Joint button, PC buttons, camera fit (done 3:40pm, test page — see entry below). ✅ 4:30pm round (his phone feedback): 👆 Pick only, eyes stay on the part you drop them on, 🛠 fold-away buttons, Build together ✕ closes all the way, 🔆 Brightness, 🥫 Spray can, 🦈 shark / 🐟 fish rebuilt, 🦞 lobster (test page — entry below).
   2. Backup + saves: real save list (tap to open, rename, delete, overwrite asks first), Download / Load project file, one "Back up everything" button, check a pasted project before loading it, save version + upgrade step. In-app sheets instead of browser pop-ups for these.
   3. Fix the eight broken default builds (slim, fourarm, brute, theropod, hydra, hydra2, blob, turtle) — details in the review doc, section 2 item 10 + section 5.
   4. Make V3 (test.html) the one live page (his pick: after item 3). Needs his OK at that moment (Question 1).
@@ -21,6 +21,9 @@ Deeper technical notes for Claude are in `README.md` (same folder).
   7. Path/curve tool → wires + connectors → metaballs (all on the snake-body tech).
   8. Color zones → real paint layer stack. 9. Modifier stack → skin modifier. 10. Life (auto-animation, eyes, shape keys). 11. Game export. Content packs (teeth sets, clothes, hair) fit in between.
 - **QUESTIONS FOR MAJORASPRIDE (answer under each one; Claude keeps going meanwhile):**
+  0. (4:30pm) **"Some buttons don't work" — which ones?** A sweep pressed every button on the test page (phone size, about 500 of them, every tab + ⋯ menu): none was dead and none threw an error. So it is probably a touch problem on the real phone (button under something, or a tap read as a drag). Name 2-3 buttons + what tab they are on and it gets fixed first.
+  0b. (4:30pm) The 4:30pm round is on the test page only. OK to put it on the live page together with Question 1? (Recommended: yes.)
+  0c. (4:30pm) Build together ✕ now closes it completely (no orange "Back to…" button on screen). Carry on later from Start › 🎓 Build together. Keep it this way? (Default: yes.)
   1. The 3:40pm fixes (Joint button, PC buttons, camera fit) are on the test page only. OK to put them on the live page now? (Recommended: yes, they only fix broken things.)
   2. Name scrub: you picked "scrub it". It rewrites all commits, so no other chat may be pushing while it runs, and old commit links break. Say "scrub now" in a chat when nothing else is running. (GitHub may keep the old commits reachable by their id for a while; fully purging them needs a GitHub Support request from your account.)
   3. Art style rule: chunky toy / low-poly for everything? (Recommended: yes. Until answered, new parts follow it.)
@@ -35,6 +38,23 @@ Deeper technical notes for Claude are in `README.md` (same folder).
 - **Known rough spots to check with him (V3):** eye / tooth sizes on every kit head; finger + toe angles per palm / foot; spine vertebra pieces come in thin on the 🦴 Colossal bone titan (and its long hair didn't show in a test render); chained titan's belly maw looks like a floating ring (needs a sunken dark inside); cosmic god's extra arms hard to see from the front; many ⭐ elemental/god builds reuse the brute head + horns (give them their own heads); chimera's goat head uses the lion head; combine bakes the saved model as one solid piece; the 🪝 Hooked toggle for bee wings is in the Shape tab; Workshop 💾 Save part asks an extra question about plugs.
 - **Still open from before:** more Lynocs skins (item 6 below); merge the rest of Titan Clash Studio (Sketch Pad, FX Lab, Stage) into Mythic Forge (item 5); dragon / bat wing reads as a thin spar from some angles.
 - **His design rules:** original designs only (inspired by, never copies — no show / card / game character copies, no brand names); everything gets a low-poly version that looks good (faceted, polygon-art); oozes are unique and can grow their own face; jellyfish have no face; multi-head creatures are built head by head; never put his real name in the repo (MajorasPride).
+
+## Nov 9 2026 (4:30pm, TEST PAGE ONLY): pick only, eyes stay put, fold-away buttons, brightness, spray can, 🦈 shark + 🐟 fish rebuilt, 🦞 lobster
+His phone feedback: "tone down paint brightness setting", "some buttons don't work", "fish head isn't really there", "add a lobster", "a spray can setting so I can spray paint", "the fish body part builder needs a lot of help" (sent 5 shark reference pictures: side/top views, body + separate fins), "I want to go to default select, I'm just grabbing things and making it look weird", "I add eyes, they don't attach to the body part I wanted", "the right menu clutters the screen and I can't get rid of Build with me all the way".
+- **👆 Pick only is the default** (Move & size: 👆 Pick only | ✋ Drag | 🎯 Arrows; also the on-screen button). Touching the model picks parts and turns the view, nothing moves. Tap the on-screen button to switch to ✋ Drag and back. Resets to Pick only every time the page opens. Code: `selOnly`, `setPick`, `attachGizmo`.
+- **Eyes (and every other 🔌 part) stay on the part you drop them on.** Dropped on a part: it clicks into a free matching plug of that part if one is near your finger (170 px), else it sticks to that part right where you let go (tip says so). It no longer jumps to another body part. Code: `placeAt` sets `V3.hit`; `V3X.tryAdd`.
+- **🛠 fold-away on-screen buttons.** Only 🛠 and the 👆 Pick button stay on screen; 🛠 opens Focus / Joint / Remove part / View (remembered, `mf-vt`).
+- **Build together ✕ closes it all the way** — no orange pill left on screen. Start › 🎓 Build together still asks "carry on or start over".
+- **🔆 Brightness slider** (Paint tab, above the brushes): 40-120%, now 85% by default (100% = the old look), remembered on the device (`mf-bright`). It dims the whole 3D view (`renderer.toneMappingExposure`).
+- **🥫 Spray can** (Paint tab › Brushes): hold and move to spray the picked colour; soft mist edge, builds up; Brush size / Strength / new **Mist** slider (fine mist ↔ speckles). Same paint data as the Color brush (`pt.vpaint`), so Clear paint and undo work. Looks best on smooth parts; blocky parts need Sculpt › More detail.
+- **🦈 Fish / shark rebuilt** (`parts/kit-sea.js`, new bones in `skeletons-v3.js`): new skeleton = one trunk + head + jaw + 3-bone tail stalk + a bone for every fin (dorsal, 2nd dorsal, anal, 2 pectoral, 2 pelvic). Parts: Shark body (one piece, white belly, gill slits), Shark head (upper) + Shark jaw (plug head: eyes, teeth, fangs), Shark eye (black), Shark tail (crescent fin), Shark back fin, side fin, small fin. ⭐ Default Fish / shark now looks like a great-white-style shark (original, his pictures were only for shape).
+- **🐟 Fish (tall, scaled)** new body type + parts: Fish body, Fish head + jaw (gill covers), Fish eye, Fish tail (forked fan with rays), Spiny fin, Round fin.
+- **🦞 Lobster / crayfish** new body type + parts: carapace (horn, groove, spines), face (mouth parts, feelers), tail segment (one per tail bone) + tail fan, crusher claw (fat) + cutter claw (slim), claw arm, walking leg, long antenna. Skins: lobster red / dark / blue, shark grey / belly / fin, fish scales / fin.
+- New for the fitter: body types can say how wide they are (`bodyW` on the skeleton); `keel: 1` parts (shark tail, lobster tail segments) are always rolled back-side up (`keelRot`). Tail-tip steps only fill the LAST tail segment now (was one fan per segment).
+- **Buttons:** pressed every button on the test page in headless Chrome (phone size): no dead button, no error → asked him which ones (Question 0).
+- Tested headless (phone 412x915 + PC 1920x1080): all 69 body types' ⭐ default builds build with no errors; pick-only drag does not move a part, Drag does; eye dropped on the shark body stays on the body; spray paints; brightness saves; ✕ leaves nothing on screen. Not checked on his real phone.
+- To check with him: shark teeth are small and hard to see; a free-dropped eye comes in big (use Size); the lobster's walking legs are a bit chunky; fish head on the tall fish still looks a little shark-like from the side; gill slits read dark red.
+- Live `index.html` NOT rebuilt.
 
 ## Nov 9 2026 (3:40pm, TEST PAGE ONLY): Joint button, PC buttons, camera fit + build method
 - **🔗 Joint works again, and Move joints is back.** Two buttons shared the id `bJoint`. The on-screen one is now `bJointV` (page.html + its handler in forge-core.js). Tested: Skeleton › Move joints turns joint mode on; on-screen Joint asks for a part and doesn't touch Move joints.
