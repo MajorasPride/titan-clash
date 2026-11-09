@@ -1,0 +1,41 @@
+// Titan Forge skeleton templates. Each bone: [name, parent, head xyz, tail xyz, tag, opts]. World units: a titan is ~11 tall, facing +Z.
+// Tags drive the preview animations: spine, chest, neck, head, jaw, tail, armU/armF/hand, legU/legL/foot, wingA/wingB/wingC, extra.
+// opts.up = keep world axes (heads: +Y up, face +Z).
+(function () {
+  const sideL = b => b.map(([n, p, h, t, tag, o]) => [n + '.L', p && p.endsWith('#') ? p.slice(0, -1) + '.L' : p, [Math.abs(h[0]), h[1], h[2]], [Math.abs(t[0]), t[1], t[2]], tag, o]);
+  const sideR = b => b.map(([n, p, h, t, tag, o]) => [n + '.R', p && p.endsWith('#') ? p.slice(0, -1) + '.R' : p, [-Math.abs(h[0]), h[1], h[2]], [-Math.abs(t[0]), t[1], t[2]], tag, o]);
+  const both = b => [...sideL(b), ...sideR(b)];
+  const chain = (name, parent, pts, tag) => pts.slice(0, -1).map((h, i) => [name + (i + 1), i ? name + i : parent, h, pts[i + 1], tag]);
+  const T = {};
+  T.biped = {name: 'Biped kaiju', bones: [
+    ['hips', null, [0, 5.2, 0], [0, 6.2, 0], 'spine'], ['spine', 'hips', [0, 6.2, 0], [0, 7.4, .1], 'spine'], ['chest', 'spine', [0, 7.4, .1], [0, 8.6, .2], 'chest'],
+    ['neck', 'chest', [0, 8.6, .2], [0, 9.4, .6], 'neck'], ['head', 'neck', [0, 9.4, .6], [0, 10.6, .9], 'head', {up: 1}], ['jaw', 'head', [0, 9.5, .9], [0, 9.3, 1.9], 'jaw', {up: 1}],
+    ...both([['shoulder', 'chest', [.6, 8.4, .1], [1.5, 8.4, 0], 'armU'], ['upperarm', 'shoulder#', [1.5, 8.4, 0], [2.1, 6.9, .2], 'armU'], ['forearm', 'upperarm#', [2.1, 6.9, .2], [2.3, 5.5, .8], 'armF'], ['hand', 'forearm#', [2.3, 5.5, .8], [2.35, 4.7, 1.1], 'hand'],
+      ['thigh', 'hips', [.9, 5.2, 0], [1.1, 3.0, .4], 'legU'], ['shin', 'thigh#', [1.1, 3.0, .4], [1.1, .7, -.2], 'legL'], ['foot', 'shin#', [1.1, .7, -.2], [1.1, 0, 1.1], 'foot']]),
+    ...chain('tail', 'hips', [[0, 5.1, -.6], [0, 4.4, -2], [0, 3.6, -3.6], [0, 2.8, -5], [0, 2.1, -6.4], [0, 1.6, -7.6]], 'tail')]};
+  T.mech = {name: 'Mech / humanoid', bones: T.biped.bones.filter(b => !b[0].startsWith('tail')).map(b => b[0] === 'jaw' ? null : b).filter(Boolean)};
+  T.quad = {name: 'Four-legged beast', bones: [
+    ['hips', null, [0, 5, -2.2], [0, 5.3, -.8], 'spine'], ['spine', 'hips', [0, 5.3, -.8], [0, 5.5, .8], 'spine'], ['chest', 'spine', [0, 5.5, .8], [0, 5.6, 2.2], 'chest'],
+    ['neck', 'chest', [0, 5.6, 2.2], [0, 7, 3.4], 'neck'], ['head', 'neck', [0, 7, 3.4], [0, 7.6, 4.6], 'head', {up: 1}], ['jaw', 'head', [0, 6.9, 3.7], [0, 6.6, 4.9], 'jaw', {up: 1}],
+    ...both([['frontleg', 'chest', [1.2, 5, 2], [1.4, 2.8, 2.2], 'legU'], ['frontshin', 'frontleg#', [1.4, 2.8, 2.2], [1.4, .6, 2.1], 'legL'], ['frontfoot', 'frontshin#', [1.4, .6, 2.1], [1.4, 0, 2.9], 'foot'],
+      ['backleg', 'hips', [1.2, 4.8, -2.2], [1.4, 2.8, -1.6], 'legU'], ['backshin', 'backleg#', [1.4, 2.8, -1.6], [1.4, .7, -2.4], 'legL'], ['backfoot', 'backshin#', [1.4, .7, -2.4], [1.4, 0, -1.6], 'foot']]),
+    ...chain('tail', 'hips', [[0, 5, -2.4], [0, 4.6, -3.8], [0, 4, -5.2], [0, 3.3, -6.6], [0, 2.7, -8], [0, 2.3, -9.2]], 'tail')]};
+  const wings = both([['wing', 'chest#', [.6, 6.0, 1.2], [3.2, 7.4, .6], 'wingA'], ['wingmid', 'wing#', [3.2, 7.4, .6], [6.2, 8.2, -.6], 'wingB'], ['wingtip', 'wingmid#', [6.2, 8.2, -.6], [9, 7.2, -2.2], 'wingC']])
+    .map(b => (b[1] === 'chest.L' || b[1] === 'chest.R') ? [b[0], 'chest', ...b.slice(2)] : b);
+  T.dragon = {name: 'Dragon (4 legs + wings)', bones: [...T.quad.bones.map(b => b[0] === 'neck' ? ['neck', 'chest', [0, 5.6, 2.2], [0, 7.6, 3.2], 'neck'] : b[0] === 'head' ? ['head', 'neck', [0, 7.6, 3.2], [0, 8.2, 4.4], 'head', {up: 1}] : b[0] === 'jaw' ? ['jaw', 'head', [0, 7.5, 3.5], [0, 7.2, 4.8], 'jaw', {up: 1}] : b), ...wings]};
+  T.hydra = {name: 'Hydra (3 heads, 4 legs)', bones: [...T.quad.bones.filter(b => !['neck', 'head', 'jaw'].includes(b[0])),
+    ...[[-1.3, -1], [0, 0], [1.3, 1]].flatMap(([x, s], i) => { const n = ['L', 'M', 'R'][i]; return [['neck' + n, 'chest', [x * .5, 5.6, 2.2], [x * 1.6, 8.4, 3.4], 'neck'], ['head' + n, 'neck' + n, [x * 1.6, 8.4, 3.4], [x * 1.8, 9.2, 4.4], 'head', {up: 1}], ['jaw' + n, 'head' + n, [x * 1.6, 8.3, 3.7], [x * 1.7, 8.0, 4.9], 'jaw', {up: 1}]]; })]};
+  T.wyvern = {name: 'Wyvern / bird (2 legs + wings)', bones: [...T.biped.bones.filter(b => !/shoulder|upperarm|forearm|hand/.test(b[0])), ...both([['wing', 'chest', [.6, 8.2, 0], [3.4, 9.4, -.4], 'wingA'], ['wingmid', 'wing#', [3.4, 9.4, -.4], [6.4, 9.8, -1.4], 'wingB'], ['wingtip', 'wingmid#', [6.4, 9.8, -1.4], [9.2, 8.6, -2.6], 'wingC']])]};
+  T.serpent = {name: 'Serpent / sea monster', bones: [...chain('body', null, [[0, .8, -9], [0, .9, -7.5], [0, 1, -6], [0, 1.2, -4.5], [0, 1.6, -3], [0, 2.4, -1.6], [0, 3.6, -.4], [0, 5.2, .4], [0, 6.8, .8], [0, 8.2, 1]], 'spine'),
+    ['head', 'body9', [0, 8.2, 1], [0, 9.2, 1.6], 'head', {up: 1}], ['jaw', 'head', [0, 8.2, 1.3], [0, 7.9, 2.5], 'jaw', {up: 1}]].map(b => b[0] === 'body1' ? ['body1', null, b[2], b[3], 'spine'] : b)};
+  const spLeg = (i, z, a) => both([['leg' + i, 'body', [.8, 3.4, z], [3.2, 5, z + a], 'legU'], ['leg' + i + 'b', 'leg' + i + '#', [3.2, 5, z + a], [5, 2.4, z + a * 1.6], 'legL'], ['leg' + i + 'c', 'leg' + i + 'b#', [5, 2.4, z + a * 1.6], [5.6, 0, z + a * 2], 'foot']]);
+  T.spider = {name: 'Spider / bug (8 legs)', bones: [['body', null, [0, 3.4, -.6], [0, 3.6, 1.2], 'chest'], ['abdomen', 'body', [0, 3.6, -.6], [0, 4.6, -4.4], 'tail'], ['head', 'body', [0, 3.6, 1.2], [0, 4.4, 2.2], 'head', {up: 1}],
+    ['jaw', 'head', [0, 3.3, 1.9], [0, 2.8, 2.7], 'jaw', {up: 1}], ...spLeg(1, 1, 1.1), ...spLeg(2, .4, .3), ...spLeg(3, -.2, -.3), ...spLeg(4, -.6, -1.1),
+    ...both([['palp', 'head', [.4, 3.6, 2], [.8, 3, 3], 'armF']])]};
+  T.crab = {name: 'Crab / crustacean', bones: [['body', null, [0, 3.2, -1.2], [0, 3.6, 1.2], 'chest'], ['head', 'body', [0, 3.6, 1.2], [0, 4.2, 1.8], 'head', {up: 1}],
+    ...both([['eyestalk', 'head', [.4, 4, 1.6], [.6, 5.2, 1.8], 'neck'], ['clawarm', 'body', [1.4, 3.4, 1], [3.4, 4, 2.6], 'armU'], ['clawfore', 'clawarm#', [3.4, 4, 2.6], [3.6, 4.4, 4.6], 'armF'], ['pincer', 'clawfore#', [3.6, 4.4, 4.6], [3.6, 4.4, 6.2], 'hand']]),
+    ...spLeg(1, .6, .5).map(b => b), ...spLeg(2, -.4, -.1), ...spLeg(3, -1.4, -.7)]};
+  T.blob = {name: 'Blob / no legs', bones: [['body', null, [0, 0, 0], [0, 4, 0], 'spine'], ['top', 'body', [0, 4, 0], [0, 7, .3], 'chest'], ['head', 'top', [0, 7, .3], [0, 8.5, .6], 'head', {up: 1}]]};
+  T.none = {name: 'No skeleton (free build)', bones: [['root', null, [0, 0, 0], [0, 2, 0], 'spine']]};
+  window.FORGE_SKEL = T;
+})();
