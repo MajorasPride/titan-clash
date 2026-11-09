@@ -71,5 +71,16 @@
   add('kg_scythe', W, WS, 'Passage scythe staff', {tags: ['god', 'death', 'scythe', 'staff', 'weapon']}, () => [P(K.taper(K.bez(V3(0, -1, 0), V3(.2, 2, 0), V3(0, 5.5, 0)), .07, .05, 20, 8), 'wood'), P(at(K.taper(K.bez(V3(), V3(-1, .3, 0), V3(-2.4, -.6, 0)), .35, .01, 24, 6, .12), 0, 5.4, 0), 'darkmetal'), P(merge([ell(.18, .18, .18, 0, 5.6, 0, 12)]), 'glowpurple')]);
   add('kg_starjar', W, WS, 'Star jar (pours stars)', {tags: ['god', 'jar', 'urn', 'stars', 'city']}, () => [P(K.lathe([[.0, 0], [.35, .05], [.55, .4], [.5, .8], [.25, 1.0], [.3, 1.15], [.32, 1.2]], 20).translate(0, -.6, 0), 'goldantique'), P(K.taper(K.bez(V3(0, .6, .1), V3(.3, .2, .9), V3(.4, -4, 1.4)), .25, .4, 24, 10), 'starfield')]);
   add('kg_orb', W, WS, 'Galaxy orb (in the palm)', {tags: ['god', 'orb', 'galaxy', 'cosmic']}, () => [P(ell(.5, .5, .5, 0, .5, 0, 20), 'galaxy'), P(new T.TorusGeometry(.75, .04, 6, 32).rotateX(1.2).translate(0, .5, 0), 'glowblue')]);
+  // ================= 🦴 COLOSSAL BONE TITAN (original; a giant bare spine with ribs carrying a skinless upper body) =================
+  // vertebra: one per spine ('tail') bone, local +Z = up on a level spine; ribs arc down (-Z), a spike on top (+Z)
+  add('kt_vertebra', 'Tails', '🦴 Bone colossus', 'Giant vertebra + ribs', {fitKind: 'seg', unitLen: 1, perSeg: true, tags: ['bone', 'spine', 'ribs', 'colossus', 'titan', 'skeleton']}, () => {
+    const ribs = []; for (const s of [-1, 1]) for (const yy of [.3, .7]) ribs.push(K.taper(K.bez(V3(s * .3, yy, .1), V3(s * 1.6, yy - .05, .3), V3(s * 1.9, yy - .1, -1.6), V3(s * 1.1, yy - .1, -3.0)), .13, .05, 24, 8));
+    return [P(merge([new T.CylinderGeometry(.55, .6, .9, 14).translate(0, .5, 0), at(spike(1.4, .25, .3), 0, .5, .4, 90, 0, 0), ...[-1, 1].map(s => at(spike(.7, .14, 0), s * .45, .5, .1, 0, 0, s * -80))]), 'bonedirty', 1), P(merge(ribs), 'bonedirty', 2)]; });
+  add('kt_muscle_torso', 'Torsos & Bellies', '🦴 Bone colossus', 'Skinless titan chest (muscle + ribs)', {fitKind: 'torso', tags: ['muscle', 'skinless', 'titan', 'colossus']}, () => {
+    const body = K.noise(loft(Sy([[0, 1.2, 1.0], [1.4, 1.5, 1.1], [3.0, 1.8, 1.2], [4.4, 1.5, 1.0], [4.8, .9, .7]]), {axis: 'y', rad: 26, per: 4}), .07, 3);
+    const ribs = []; for (let i = 0; i < 5; i++) for (const s of [-1, 1]) ribs.push(K.taper(K.bez(V3(s * .2, 1.8 + i * .45, 1.25), V3(s * 1.3, 1.7 + i * .45, 1.05), V3(s * 1.75, 1.5 + i * .45, 0)), .1, .06, 14, 6));
+    const fibers = []; for (let i = 0; i < 14; i++) { const a = (i / 13 - .5) * 2.4; fibers.push(K.taper(K.bez(V3(Math.sin(a) * 1.4, .3, Math.cos(a) * 1.0), V3(Math.sin(a) * 1.75, 2.2, Math.cos(a) * 1.2), V3(Math.sin(a) * 1.4, 4.3, Math.cos(a) * 1.0)), .09, .05, 16, 5)); }
+    return [P(body, 'muscle', 1), P(merge(fibers), 'fleshraw', 2), P(merge(ribs), 'bonedirty', 3)]; });
+  add('kt_hair_long', 'Heads & Skulls', '🦴 Bone colossus', 'Long hanging hair', {plugAs: 'mane', tags: ['hair', 'long', 'titan']}, () => [P(merge([...Array(26).keys()].map(i => { const a = (i / 25 - .5) * 2.8, x = Math.sin(a) * .8; return K.taper(K.bez(V3(x, .6 + Math.cos(a) * .3, 0), V3(x * 1.3, -.8, -.6), V3(x * 1.1 + (i % 3 - 1) * .2, -3.6 - (i % 4) * .4, -.5)), .09, .03, 16, 5); })), 'ghosthair')]);
   return out;
 });

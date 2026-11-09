@@ -347,7 +347,7 @@ const ELEM = {lava: {n: '🌋 Lava', mat: 'lavacrack', bits: [['rock', 'lavarock
   forest: {n: '🌳 Forest', mat: 'bark3', bits: [['leaf', 'leaf', .55], ['vine', 'moss', .25]]}, water: {n: '🌊 Water', mat: 'ocean', bits: [['drop', 'waterclear', .4], ['swirl', 'foam', .25]]}, fire: {n: '🔥 Fire', mat: 'fire', bits: [['flame', 'fire', .6]]},
   ice: {n: '🧊 Ice', mat: 'ice', bits: [['shard', 'ice', .55]]}, wind: {n: '🌪 Wind', mat: 'fog', bits: [['swirl', 'fogdense', .5]]}, storm: {n: '⛈ Storm', mat: 'stormcloud', bits: [['bolt', 'lightning', .4], ['puff', 'stormcloud', .4]]},
   cosmic: {n: '🌌 Cosmic', mat: 'galaxy', bits: [['star', 'glow', .45], ['star', 'glowblue', .25]]}, gold: {n: '👑 Gold', mat: 'goldpolished', bits: [['shard', 'goldpolished', .3]]}, sand: {n: '🏜 Sand', mat: 'sand', bits: [['puff', 'sandstorm', .3]]},
-  void: {n: '🕳 Void', mat: 'void', bits: [['star', 'glowpurple', .35]]}};
+  void: {n: '🕳 Void', mat: 'void', bits: [['star', 'glowpurple', .35]]}, steam: {n: '♨ Steam', mat: 'muscle', bits: [['puff', 'fog', .45]]}};
 const bitGeo = {}; function bitG(k) { if (bitGeo[k]) return bitGeo[k]; const V = (x, y, z) => new THREE.Vector3(x, y, z); let g;
   if (k === 'rock') g = new THREE.DodecahedronGeometry(.5, 0).scale(1, .7, 1).translate(0, .15, 0);
   else if (k === 'flame') g = K.taper(K.bez(V(0, 0, 0), V(.2, .6, 0), V(-.1, 1.4, .05)), .32, .01, 10, 7);

@@ -75,6 +75,10 @@
   alias('storm_el', '🌋 Storm elemental', 'elemental'); alias('wind_el', '🌋 Wind elemental', 'elemental'); alias('water_el', '🌋 Water elemental', 'elemental');
   alias('fire_el', '🌋 Fire elemental', 'slim'); alias('ice_el', '🌋 Ice elemental', 'slim'); alias('lava_golem', '🌋 Lava golem', 'brute'); alias('stone_golem', '🌋 Stone golem', 'brute');
   alias('crystal_golem', '🌋 Crystal golem', 'brute'); alias('tree_giant', '🌋 Tree giant', 'brute'); alias('primordial', '🌋 Primordial titan (mixed elements)', 'kaiju');
+  // 🦴 Colossal bone titan: skinless upper body (no legs) on a huge level spine that trails behind (the spine is the 'tail' chain)
+  T.bone_colossus = {name: '🦴 Colossal bone titan (giant spine)', bones: [['hips', null, [0, 5.0, 0], [0, 6.2, .2], 'spine'], ['spine', 'hips', [0, 6.2, .2], [0, 7.6, .4], 'spine'], ['chest', 'spine', [0, 7.6, .4], [0, 9.2, .6], 'chest'],
+    ['neck', 'chest', [0, 9.2, .6], [0, 9.9, 1.0], 'neck'], ['head', 'neck', [0, 9.9, 1.0], [0, 11.1, 1.3], 'head', {up: 1}], ['jaw', 'head', [0, 10.0, 1.4], [0, 9.8, 2.3], 'jaw', {up: 1}], ...armsAt(9.0, 1.2, '', 'chest', 1.2),
+    ...chain('tail', 'hips', [...Array(11).keys()].map(i => [0, 4.6, -.6 - i * 1.7]), 'tail')]};
   alias('cosmic_god', '✨ Cosmic god (six arms)', 'sixarm'); alias('sea_god', '✨ Sea god', 'naga'); alias('death_god', '✨ God of passage (death)', 'slim'); alias('city_god', '✨ City god (star jar)', 'slim'); alias('chained_titan', '✨ Chained hunger titan', 'brute');
   // ---- 🧬 mix halves: any front half + any back half (four-legged family), see forge-v3.js
   window.FORGE_HALVES = ['quad', 'dragon', 'sphinx', 'chimera', 'hippogriff', 'centaur', 'hydra', 'turtle'];
@@ -109,6 +113,8 @@
     death_god: {Body: 'sp_torso_gaunt', Head: 'kg_face_cosmic', Arms: 'sp_arm_gaunt', Hands: 'sp_hand_claw', Legs: 'sp_leg_gaunt', _hood: 'kg_hood', _robe: 'kg_robe', _bigeye: 'kg_eye_galaxy', _weapon: 'kg_scythe', _mat: {head: 'starfield', trunk: 'void', arm: 'void', hand: 'void', leg: 'void'}},
     city_god: {Body: 'bd_torso_brawler', Head: 'kh_brute', Arms: 'kl_limb_skin_arm', Hands: 'kl_palm_human', Legs: 'kl_limb_skin', Feet: 'kl_foot_human', Eyes: 'ke_eye_elemental', _crown: 'kg_crown_gold', _halo: 'kg_halo', _robe: 'kg_robe', _weapon: 'kg_starjar', _mat: {trunk: 'ocean', arm: 'goldantique', leg: 'goldantique', head: 'goldantique'}},
     chained_titan: {Body: 'bd_torso_undead', Head: 'kh_brute', Arms: 'sp_arm_gaunt', Hands: 'sp_hand_claw', Legs: 'sp_leg_gaunt', Eyes: 'ke_eye_elemental', Teeth: 'kp_row_needle', _belly: 'kg_belly_maw', _shackles: 'kg_shackle', _chains: 'kg_chains', _mat: {all: 'ghost'}},
+    bone_colossus: {Body: 'kt_muscle_torso', Neck: 'bd_neck_bull', Head: 'kh_brute', Arms: 'kl_limb_skin_arm', Hands: 'kl_palm_human', 'Tail / tentacles': 'kt_vertebra', Eyes: 'ke_eye_elemental', Teeth: 'kp_row_fang', Horns: null, 'Crest / mane': 'kt_hair_long', Fingers: 'kl_finger_human', Claws: 'kl_claw_nail',
+      _mat: {head: 'muscle', jaw: 'muscle', neck: 'muscle', arm: 'muscle', hand: 'muscle'}, _elem: {head: 'steam', trunk: 'steam', arm: 'steam'}},
     hound2: {Body: 'bb_beast', Neck: 'bd_neck_maned', Head: 'kh_beast', Legs: 'kl_limb_fur', Feet: 'kl_foot_paw', Eyes: 'ke_eye_elemental', 'Tail / tentacles': 'tw_tail_whip', _mat: {all: 'void'}},
     elemental: {Body: 'bd_torso_brawler', Head: 'kh_brute', Arms: 'kl_limb_skin_arm', Hands: 'kl_palm_human', 'Tail / tentacles': 'ke_base_rocks', _elem: 'stone'},
     sixarm: {Body: 'bd_torso_brawler', Head: 'kh_brute', Arms: 'kl_limb_skin_arm', Hands: 'kl_palm_human', 'Tail / tentacles': 'ke_base_cosmic'},
