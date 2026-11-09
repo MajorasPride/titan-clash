@@ -648,7 +648,7 @@ $('bSnap').onclick = e => { const on = gizmo.translationSnap == null; gizmo.setT
 function syncEdit(soft) { const pt = partBy(sel);
   $('grab').textContent = pt ? (LIB[pt.lib] ? LIB[pt.lib].name : 'part') + (pt.bone ? ' · on ' + pt.bone : '') : (selBone && tab === 'skel' ? 'Bone: ' + selBone : 'Mythic Forge');
   if (!pt) return; for (const [s, v, k] of [['sSize', 'vSize', 's'], ['sLen', 'vLen', 'l'], ['sWid', 'vWid', 'w']]) { if (!soft || document.activeElement !== $(s)) $(s).value = pt[k] || 1; $(v).textContent = (+(pt[k] || 1)).toFixed(2); }
-  $('bHide').textContent = pt.hidden ? 'Show' : 'Hide'; $('bUnlink').style.display = pt.twin ? '' : 'none'; $('tint').value = pt.tint || '#ffffff'; fadeUI(pt); }
+  $('bHide').textContent = pt.hidden ? 'Show' : 'Hide'; $('bUnlink').style.display = pt.twin ? '' : 'none'; $('tint').value = pt.tint || '#ffffff'; fadeUI(pt); paintNowUI(); }
 for (const [s, k] of [['sSize', 's'], ['sLen', 'l'], ['sWid', 'w']]) { $(s).onpointerdown = () => snap();
   $(s).oninput = e => { const pt = partBy(sel); if (!pt) return; if (pt.fit) pt.fit.tweaked = true; pt[k] = +e.target.value; buildPart(pt); syncTwin(pt); attachGizmo(); syncEdit(true); saveCur(); }; }
 $('bDup').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); const n = JSON.parse(JSON.stringify(pt)); n.uid = uid(); n.twin = null; n.p[0] += .6; P.parts.push(n); buildPart(n); select(n.uid); saveCur(); tip('Copy made'); };
@@ -688,7 +688,16 @@ let matCat = MATS.LIST[0][2], paintTwin = true;
 function matsUI() { const cats = [...new Set(MATS.LIST.map(l => l[2]))]; $('matCats').innerHTML = '';
   for (const c of cats) { const b = document.createElement('button'); b.textContent = c; b.className = c === matCat ? 'on' : ''; b.onclick = () => { matCat = c; matsUI(); }; $('matCats').append(b); }
   $('mats').innerHTML = ''; for (const [k, name, c] of MATS.LIST) { if (c !== matCat) continue; const b = document.createElement('button'); b.className = 'item';
-    b.innerHTML = `<img src="${matThumb(k)}" alt=""><span>${name}</span>`; b.onclick = () => paint(k); $('mats').append(b); } }
+    b.innerHTML = `<img src="${matThumb(k)}" alt=""><span>${name}</span>`; b.dataset.k = k; b.onclick = () => paint(k); $('mats').append(b); } paintNowUI(); }
+// which skin is on the selected part (and which one the 🧴 Skin brush paints) — shown at the top of the Paint tab and outlined in the grid
+const matName = k => (MATS.LIST.find(l => l[0] === k) || [k, k])[1];
+function paintNowUI() { const el = $('paintNow'); if (!el) return; const pt = partBy(sel);
+  { const mk = pt && (pt.matAll || (pt.mat && pt.mat.find(x => x)) || (pieces(pt.lib, pt.params)[0] || {}).mat), c = mk && (MATS.LIST.find(l => l[0] === mk) || [])[2]; if (c && c !== matCat && tab === 'paint' && pt.uid !== paintNowUI.last) { paintNowUI.last = pt.uid; matCat = c; return matsUI(); } if (pt) paintNowUI.last = pt.uid; }
+  const main = pt ? (pt.matAll || (pt.mat && pt.mat.find(x => x)) || (pieces(pt.lib, pt.params)[0] || {}).mat) : null, mixed = pt && !pt.matAll && pt.mat && new Set(pt.mat.filter(Boolean)).size > 1;
+  const br = brushPaint && paintBrush === 'skin' ? skinBrushMat : null, lay = pt && pt.layer ? pt.layer.mat : null;
+  el.innerHTML = !pt ? '🎨 Tap a part to see its skin' + (paintAll ? ' — 🎨 Paint all is ON (skins go on every part)' : '') :
+    `<img src="${matThumb(main)}" alt=""><div><b>${LIB[pt.lib] ? LIB[pt.lib].name : 'Part'}</b>${pt.twin && paintTwin ? ' (+ other side)' : ''}<br>Skin: <b>${matName(main)}</b>${mixed ? ' + other pieces' : ''}${lay ? '<br>Brushed on: <b>' + matName(lay) + '</b>' : ''}${br ? '<br>🧴 Brush paints: <b>' + matName(br) + '</b>' : ''}${paintAll ? '<br><b>🎨 Paint all is ON</b>' : ''}</div>`;
+  document.querySelectorAll('#mats .item').forEach(b => { b.classList.toggle('cur', !!main && b.dataset.k === main); b.classList.toggle('brush', !!br && b.dataset.k === br); }); }
 let matR = null; const matThumbs = {};
 function matThumb(k) { if (matThumbs[k]) return matThumbs[k]; try { if (!matR) { matR = new THREE.WebGLRenderer({antialias: true, alpha: true, preserveDrawingBuffer: true}); matR.setSize(120, 120); matR.toneMapping = THREE.ACESFilmicToneMapping; }
   const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xffffff, 0x303040, 1.3)); const L = new THREE.DirectionalLight(0xffffff, 2.6); L.position.set(2, 3, 4); sc.add(L);
@@ -702,9 +711,9 @@ function paint(k) { if (brushPaint && paintBrush === 'skin') { skinBrushMat = k;
   if (paintAll) { snap(); for (const o of P.parts) if (!o.boxed) { o.matAll = k; o.mat = null; buildPart(o); } saveCur(); return tip(MATS.LIST.find(l => l[0] === k)[1] + ' on the whole creature'); }
   const pt = partBy(sel); if (!pt) return tip('Tap a part first, or turn on 🎨 Paint all'); snap();
   if (piecePaint) { if (!lastPick || lastPick.uid !== sel) return tip('Tap the piece on the model first'); const g = pieceClusters(pt, true).find(x => x.ids.includes(lastPick.mi)), ids = g ? g.ids : [lastPick.mi];
-    const n = pieces(pt.lib, pt.params).length; pt.mat = pt.mat || Array(n).fill(null); ids.forEach(i => pt.mat[i] = k); buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); return tip(MATS.LIST.find(l => l[0] === k)[1] + ' on that piece only'); }
-  pt.matAll = k; pt.mat = null; buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); tip(MATS.LIST.find(l => l[0] === k)[1] + ' applied'); }
-$('bPaintAll').onclick = e => { paintAll = !paintAll; e.target.classList.toggle('on', paintAll); if (paintAll) { piecePaint = false; $('bPiecePaint').classList.remove('on'); } tip(paintAll ? 'Paint all on: a material or tint now goes on every part' : 'Paint all off: paints the part you tap', 2600); };
+    const n = pieces(pt.lib, pt.params).length; pt.mat = pt.mat || Array(n).fill(null); ids.forEach(i => pt.mat[i] = k); buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); paintNowUI(); return tip(MATS.LIST.find(l => l[0] === k)[1] + ' on that piece only'); }
+  pt.matAll = k; pt.mat = null; buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); paintNowUI(); tip(MATS.LIST.find(l => l[0] === k)[1] + ' applied to ' + (LIB[pt.lib] ? LIB[pt.lib].name : 'the part') + (pt.twin && paintTwin ? ' (both sides)' : '')); }
+$('bPaintAll').onclick = e => { paintAll = !paintAll; e.target.classList.toggle('on', paintAll); paintNowUI(); if (paintAll) { piecePaint = false; $('bPiecePaint').classList.remove('on'); } tip(paintAll ? 'Paint all on: a material or tint now goes on every part' : 'Paint all off: paints the part you tap', 2600); };
 $('tint').onchange = e => { if (paintAll) { snap(); for (const o of P.parts) if (!o.boxed) { o.tint = e.target.value; buildPart(o); } return saveCur(); } const pt = partBy(sel); if (!pt) return; snap(); pt.tint = e.target.value; buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); };
 function fadeUI(pt) { pt = pt || partBy(sel); const on = !!(pt && pt.fade); $('bFade').classList.toggle('on', on); $('fadeRow').style.display = on ? '' : 'none';
   if (on) { $('sFade').value = pt.fade.amt; $('vFade').textContent = (+pt.fade.amt).toFixed(2); $('bDust').classList.toggle('on', pt.fade.dust !== false); $('bFadeStyle').textContent = {burn: 'Style: 🔥 Burn', glitter: 'Style: ✨ Glitter'}[pt.fade.style] || 'Style: 💨 Dust'; }
@@ -750,7 +759,7 @@ $('bPen').onclick = e => { stylus = !stylus; e.target.classList.toggle('on', sty
 let paintBrush = 'color', skinBrushMat = 'galaxy';
 const PB_TIP = {color: 'Color brush: draw on the part with the color next to it', skin: 'Skin brush: tap any skin below to pick it, then draw it on (one brushed skin per part)', blend: 'Blend: rub where two paints meet to mix them softly'};
 function pbUI() { document.querySelectorAll('[data-pb]').forEach(b => b.classList.toggle('on', brushPaint && b.dataset.pb === paintBrush)); $('pbRow').style.display = brushPaint ? '' : 'none';
-  const nm = (MATS.LIST.find(l => l[0] === skinBrushMat) || [])[1]; $('pbHint').textContent = PB_TIP[paintBrush] + (paintBrush === 'skin' ? ' — now: ' + nm : ''); }
+  const nm = (MATS.LIST.find(l => l[0] === skinBrushMat) || [])[1]; $('pbHint').textContent = PB_TIP[paintBrush] + (paintBrush === 'skin' ? ' — now: ' + nm : ''); paintNowUI(); }
 document.querySelectorAll('[data-pb]').forEach(b => b.onclick = () => { const k = b.dataset.pb; brushPaint = !(brushPaint && paintBrush === k); paintBrush = k; pbUI(); updateOrbit();
   tip(brushPaint ? (sel ? PB_TIP[k] : 'Tap a part first, then draw on it') : 'Brush off', 2600); });
 $('bBrushErase').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); pt.vpaint = null; pt.layer = null; buildPart(pt); syncTwin(pt); saveCur(); tip('Brushed paint cleared'); };
@@ -927,7 +936,7 @@ function loadStarter(st) { const keep = mirrorAdd; snap(); P = blankProject(st.s
     const o = flag && typeof flag === 'object' ? flag : {solo: flag === 'solo'}; let pt = null;
     if (s === 'fit') { const f = fitPart(lib, bone); if (f) { pt = newPart(lib, f.bone, f.p, f.r, f.s); pt.l = f.l; pt.fit = f.fit; } }
     if (!pt) { const fit = s === 'decor' ? [decorScale(bone), 1] : s == null || s === 'fit' ? autoFit(lib, bone) : Array.isArray(s) ? s : [s, 1]; pt = newPart(lib, bone, p, r, fit[0]); pt.l = fit[1]; }
-    if (o.mat) pt.matAll = o.mat; if (o.tint) pt.tint = o.tint; if (o.fade) pt.fade = {amt: o.fade, dust: true};
+    if (o.mat) pt.matAll = o.mat; if (o.tint) pt.tint = o.tint; if (o.fade) pt.fade = {amt: o.fade, dust: true}; if (o.glit) pt.glit = {amt: o.glit};
     P.parts.push(pt); buildPart(pt); const tb = twinName(pt.bone);
     if (!o.solo && (tb ? bones[tb] : Math.abs(p[0]) > .25)) { const t = newPart(lib, tb || pt.bone, [0, 0, 0], [0, 0, 0]); t.twin = pt.uid; pt.twin = t.uid;
       if (pt.fit) t.fit = {...pt.fit, drop: twinName(pt.fit.drop) || pt.fit.drop, cover: pt.fit.cover.map(c => twinName(c) || c)}; P.parts.push(t); mirrorInto(pt, t); } }

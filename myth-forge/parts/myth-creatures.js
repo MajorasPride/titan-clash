@@ -563,5 +563,28 @@
     return out(L);
   });
 
+  // ======================================================================= CHERRY BLOSSOM (Nov 9): blossom crowns + petals for a cherry blossom tree monster
+  function flower(r) { const L = []; for (let k = 0; k < 5; k++) { const a = k / 5 * TAU; L.push(place(sheet((u, w) => { const x = (w - .5) * 2 * r * .55 * sin(PI * min(1, u * 1.1)); return V3(x, u * r, .25 * r * u * u - .1 * r * (x / r) * (x / r)); }, 4, 3, r * .05), V3(0, 0, 0), V3(cos(a), sin(a), .35), [0, 0, 1])); } return L; }
+  function blossomBall(c, R, n, seedv) { rs(seedv); const out2 = []; for (let i = 0; i < n; i++) { const d = V3(rr(-1, 1), rr(-.4, 1), rr(-1, 1)).normalize(), p = v(c).addScaledVector(d, R * rr(.55, 1)), f = flower(rr(.13, .22));
+      const m = pm(p, d, [rr(-1, 1), rr(-1, 1), rr(-1, 1)]); f.forEach(g => g.applyMatrix4(m)); out2.push(...f); } return out2; }
+  add('tf_blossom_crown', HC, 'Treefolk', 'Cherry blossom crown', ['treefolk', 'cherry blossom', 'sakura', 'flowers', 'crown', 'pink'], () => {
+    const L = [], br = branchy([0, 0, 0], [0, 1, 0], 1.0, .2, 2, {spread: 42, kids: 3}); L.push(...br.list.map(g => [g, 'cherrybark']));
+    br.tips.forEach((t, i) => { L.push([bush(rr(.45, .65), t.p.x, t.p.y + .15, t.p.z, .35), 'blossom']); L.push(...blossomBall(t.p.clone().add(V3(0, .15, 0)), .7, 14, 200 + i).map(g => [g, i % 3 ? 'blossom' : 'blossomwhite'])); });
+    L.push([bush(.9, 0, 1.9, 0, .3), 'blossom']); L.push(...blossomBall(V3(0, 1.9, 0), 1.0, 22, 299).map(g => [g, 'blossomdeep']));
+    return out(L);
+  }, {glit: true});
+  add('tf_blossom_branch', AM, 'Treefolk', 'Blossom branch (stick on)', ['treefolk', 'cherry blossom', 'sakura', 'branch', 'flowers'], () => {
+    const L = [], br = branchy([0, 0, 0], [0, 1, .3], .8, .1, 2, {spread: 35, kids: 2}); L.push(...br.list.map(g => [g, 'cherrybark']));
+    br.tips.forEach((t, i) => L.push(...blossomBall(t.p, .3, 6, 400 + i).map(g => [g, 'blossom']))); return out(L);
+  }, {surface: true});
+  add('tf_face_blossom', HS, 'Treefolk Faces', 'Sleeping blossom face', ['treefolk', 'cherry blossom', 'sakura', 'calm', 'spirit'], () => {
+    const L = []; L.push([wood(ell(.9, 1.2, .85, 0, 1.15, 0, 34, 24), 9, .06, .04, 1.6), 'cherrybark']);
+    for (const s2 of [-1, 1]) L.push([sweep([[s2 * .14, 1.22, .82], [s2 * .3, 1.17, .86], [s2 * .46, 1.22, .8]], .03, {seg: 12, rad: 6}), 'darkwood']);
+    L.push([sweep([[-.12, .72, .82], [0, .68, .85], [.12, .72, .82]], .025, {seg: 10, rad: 6}), 'darkwood']);
+    L.push(...blossomBall(V3(.45, 1.95, .2), .35, 9, 501).map(g => [g, 'blossom']), ...blossomBall(V3(-.35, 2.0, -.1), .3, 7, 502).map(g => [g, 'blossomwhite']));
+    for (const s2 of [-1, 1]) L.push([ell(.1, .06, .03, s2 * .42, .95, .74, 10, 6), 'blossomdeep']);
+    return out(L);
+  });
+
   return P;
 });

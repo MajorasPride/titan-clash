@@ -442,6 +442,9 @@ vec3 hue(float h){ return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.
     ['brutearmor', 'Brute armor (rough)', 'Alien Armor', 'hexpanel', 0x4a3c3a, .55, .7], ['bruteplate', 'Brute plate (blue-grey)', 'Alien Armor', 'brushed', 0x4a5868, .45, .8],
     ['infection', 'Infection flesh (glowing veins)', 'Alien Armor', 'octopus', 0xb0a060, .5, 0, {fx: 37, keep: 1}], ['infectiondark', 'Infection flesh (rotten)', 'Alien Armor', 'octopus', 0x6a6a3a, .6, 0, {fx: 37, keep: 1}],
     ['energysword', 'Plasma energy (blue)', 'Alien Armor', 'plain', 0x8ad0ff, .2, 0, {emissive: 0x3a9aff, emissiveIntensity: 2.2}], ['plasmagreen', 'Plasma energy (green)', 'Alien Armor', 'plain', 0xaaff8a, .2, 0, {emissive: 0x4aff3a, emissiveIntensity: 2}],
+    ['blossom', 'Cherry blossom pink', 'Plants & Fungus', 'leaf', 0xffb8d0, .6, 0, {side: 2, emissive: 0x401020, emissiveIntensity: .3}], ['blossomwhite', 'White blossom', 'Plants & Fungus', 'leaf', 0xfff0f4, .6, 0, {side: 2}],
+    ['blossomdeep', 'Deep pink blossom', 'Plants & Fungus', 'leaf', 0xf06a9a, .6, 0, {side: 2}], ['blossomglow', 'Spirit blossom (glow)', 'Plants & Fungus', 'leaf', 0xffc8e0, .5, 0, {side: 2, emissive: 0xff4a9a, emissiveIntensity: .9}],
+    ['cherrybark', 'Cherry bark (dark red)', 'Plants & Fungus', 'img:bark9', 0x8a5a5a, .8, 0],
     ['toyrubber', 'Toy rubber', 'Craft (toy box)', 'plain', 0xe85a3a, .55, 0], ['toyplastic', 'Shiny toy plastic', 'Craft (toy box)', 'plain', 0x3a8ae8, .25, 0],
   ];
   const ALIAS = {paint2: 'paint2', fur: 'fur', feather: 'feather', stone: 'stone', wood: 'wood', cloth: 'cloth', leather: 'leather', chitin: 'chitin', glow: 'glow', screen: 'screen'};

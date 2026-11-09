@@ -65,4 +65,10 @@ window.FORGE_STARTERS = [
     ['hd_head_dragon', 'head', [0, 0, 0], [0, 0, 0], 'fit', {mat: 'sandgold'}], ['hd_jaw_dragon', 'jaw', [0, 0, 0], [0, 0, 0], 'fit', {mat: 'sandgold'}],
     ['bd_leg_dragon', 'frontleg.L', [0, 0, 0], [0, 0, 0], 'fit', {mat: 'sandblack'}], ['bd_leg_dragon', 'backleg.L', [0, 0, 0], [0, 0, 0], 'fit', {mat: 'sandblack'}],
     ['tw_tail_reptile', 'tail1', [0, 0, 0], [0, 0, 0], 'fit', {solo: true, mat: 'sand', fade: .45}], ['sd_wing_sand', 'wing.L', [0, 0, 0], [0, 0, 0], 'fit']]},
+  {id: 'cherryblossom', name: 'Cherry Blossom Treefolk', skel: 'treefolk', fx: {glow: true, bg: 'day', aura: true, col: '#ffb8d0'}, parts: [
+    ['tf_trunk', 'hips', [0, 0, 0], [0, 0, 0], 'fit', {mat: 'cherrybark'}], ['tf_face_blossom', 'head', [0, 0, 0], [0, 0, 0], 'fit'],
+    ['tf_arm_branch', 'upperarm.L', [0, 0, 0], [0, 0, 0], 'fit', {mat: 'cherrybark'}], ['tf_hand_twig', 'hand.L', [0, 0, 0], [0, 0, 0], 'fit', {mat: 'cherrybark'}],
+    ['tf_leg_root', 'thigh.L', [0, 0, 0], [0, 0, 0], 'fit', {mat: 'cherrybark'}], ['tf_foot_roots', 'foot.L', [0, 0, 0], [0, 0, 0], 'fit', {mat: 'cherrybark'}],
+    ['tf_blossom_crown', 'branch.L', [0, 0, 0], [0, 0, 0], 1.5, {glit: .5}], ['tf_blossom_crown', 'head', [0, 1.6, -.2], [0, 0, 0], 1.7, {solo: true, glit: .6}],
+    ['tf_blossom_branch', 'chest', [.9, .6, .8], [0, 0, -40], 1, 'solo']]},
 ];
