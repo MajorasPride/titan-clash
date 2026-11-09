@@ -43,7 +43,7 @@ MajorasPride's creature + mech builder for Titan Clash. Open `index.html` (GitHu
 - `parts/tails-wings.js`: first real tails (reptile, spiked, club, plated, fin, whip stinger) and wings (bat/dragon, insect, mech blade).
 - Tested with headless Chrome on 15 body types + mech/kaiju/dragon builds.
 
-## Nov 9, 2026: 🧑 Hero tab (character creator)
+## Nov 9, 2026: 🧑 Hero tab (character creator) — REMOVED same night, archived in archive/hero-creator-v1.js + archive/hero-creator-core-v1.js. MajorasPride wants an asset-based character creator later instead.
 - Our own RPG-style character creator (idea from Dragon's Dogma 2's creator; nothing copied). `hero.js` = options/presets (`window.FORGE_HERO`) + hero_* maker parts (group "Hero Creator"). forge-core.js section "hero creator": `buildHero()`, `heroUI()`.
 - P.hero holds every choice. buildHero(): slim humanoid skeleton (+ tail for Beastfolk), frame/height/limb sliders via P.bodyBase + applyBody(), then rebuilds all hero_* parts with params = P.hero (other parts the user added stay).
 - Races: Human, Elf, Beastfolk (fur, muzzle, mane, tail, beast ears), Orc (tusks), Mech (armor body, visor). Sections: Race, Body, Face (14 sliders), Hair (11 styles + beards + color), Outfit (tops, legs, feet, extras), Colors, Presets (Knight, Ranger, Mage, Beast Warrior, Orc Brute, Pilot, Mech, Random).
