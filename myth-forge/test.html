@@ -118,6 +118,9 @@
   #vtools button{min-height:36px;padding:4px 10px;font-size:13px;background:rgba(40,40,50,.88);max-width:46vw}
   #vtools button.on{background:rgba(40,40,50,.88);color:var(--tx);border-color:#4c4c58}
   #nav{top:140px}
+  details.pick{background:#22222a;border-radius:10px;padding:2px 8px;margin:6px 0}
+  details.pick>summary{list-style:none;cursor:pointer;font:700 14px system-ui;padding:10px 2px}details.pick>summary::-webkit-details-marker{display:none}
+  details.pick[open]>summary{color:var(--ac2)}
   body.full #vtools{display:none}
   #boxZone{position:fixed;left:50%;top:56px;transform:translateX(-50%);z-index:9;display:none;background:#2a3a6a;border:2px dashed #9ab8ff;color:#e8f0ff;font:800 14px system-ui;padding:12px 22px;border-radius:14px}
   #ghost{position:fixed;z-index:30;width:84px;height:84px;border-radius:12px;transform:translate(-50%,-70%);pointer-events:none;display:none;opacity:.9;box-shadow:0 6px 20px rgba(0,0,0,.6);outline:2px solid var(--ac);background:#22222a}
@@ -125,7 +128,10 @@
   .item{-webkit-touch-callout:none}
   body.gdrag #sheet{opacity:.55}
   #guide{position:fixed;left:6px;right:6px;top:52px;z-index:7;display:none;background:rgba(30,26,20,.96);border:1px solid var(--ac);border-radius:12px;padding:8px 10px;max-width:520px;margin:0 auto;font-size:13.5px;line-height:1.35;box-shadow:0 4px 18px rgba(0,0,0,.5)}
-  #guide{max-height:52vh;overflow:auto}#guide.small{max-height:none}
+  body.guiding:not(.gside) #sheet{display:none}
+  body.guiding:not(.gside) #guide{top:auto;bottom:0;left:0;right:0;max-width:none;border-radius:14px 14px 0 0;max-height:56vh;overflow:auto;padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+  body.guiding:not(.gside) #vtools{bottom:calc(56vh + 8px)} body.guiding:not(.gside) #tip{bottom:calc(56vh + 60px)}
+  #guide.small{max-height:none}
   #guide .gh{display:flex;align-items:center;gap:6px}#guide .gh b{flex:1}#guide .mini{min-height:30px;padding:0 10px}
   #guide .gp{margin:4px 0 6px}#guide .go{font-size:11px;opacity:.6}
   #guide .gc{display:flex;gap:5px;flex-wrap:wrap;margin:4px 0}#guide .gc button{min-height:34px;padding:4px 10px;font-size:13px}
@@ -202,17 +208,13 @@
   </div>
 
   <div class="pane" id="p-start">
-    <button class="next" id="bGuide" style="margin-top:4px">🎓 Build together: a mech or kaiju, step by step</button>
-    <div class="step">1 · Pick a starter to remix…</div>
-    <div class="chips wrap" id="starters"></div>
-    <div class="step">…or an empty body type</div>
-    <div class="chips wrap" id="skels"></div>
-    <div class="step">…or build a part on its own (no skeleton)</div>
-    <div class="row"><button id="bWS2">🛠 Workshop: make a part by itself</button></div>
-    <div class="step">2 · Body shape <span class="hint">(every part refits)</span></div>
-    <div id="bodySl"></div>
-    <div class="row"><button id="bBase">🧱 Base body on/off</button><button id="bRefitAll">↻ Fit all parts</button></div>
-    <button class="next" id="bGoBuild">Next: add parts →</button>
+    <button class="next" id="bGuide" style="margin-top:2px">🎓 Build together (step by step)</button>
+    <div class="row"><button id="bWS2" style="flex:1">🛠 Workshop: make one part by itself</button></div>
+    <details class="pick"><summary>🧸 Remix a ready-made creature ▾</summary><div class="chips wrap" id="starters"></div></details>
+    <details class="pick"><summary>🦴 Start from an empty body ▾</summary><div class="hint">Comes with a grey mannequin to build on.</div><div class="chips wrap" id="skels"></div></details>
+    <details class="pick" open><summary>🎚 Body shape ▾</summary><div id="bodySl"></div>
+      <div class="row"><button id="bBase">🧱 Base body on/off</button><button id="bRefitAll">↻ Fit all parts</button></div></details>
+    <button class="next" id="bGoBuild" style="background:#33333d;color:var(--tx);border-color:#4c4c58">Next: add parts →</button>
   </div>
 
   <div class="pane on" id="p-add">
@@ -300,10 +302,11 @@
   <div class="pane" id="p-skel">
     <div class="how">👉 Tap an orange joint to pick a bone. Parts on a bone move with it.</div>
     <div class="row"><button id="bBones" class="on">Show bones</button><button id="bPose">Pose bones</button><button id="bJoint">Move joints</button><button id="bResetPose">Reset pose</button></div>
+    <div class="lbl">Bone numbers</div>
+    <div class="numctl" id="numCtlSkel"></div>
     <div class="lbl">Jump to bone #</div>
     <div class="cats" id="boneNums"></div>
     <details class="more"><summary>Make your own skeleton ▾</summary>
-      <div class="numctl" id="numCtlSkel"></div>
       <div class="sl"><span>Bone len</span><input id="sBone" type="range" min=".3" max="3" step=".01" value="1"><span id="vBone"></span></div>
       <div class="row"><button id="bAddBone">＋ Extend bone</button><button id="bAddBranch">＋ Branch (extra limb/head)</button><button id="bDelBone">Delete bone</button><button id="bSaveSkel">💾 Save as my body type</button></div>
       <div class="hint" id="boneHint">Tap an orange joint to pick a bone.</div>
@@ -324,7 +327,7 @@
     <div class="row"><button data-bg="studio" class="on">Studio</button><button data-bg="neon">Neon city night</button><button data-bg="day">Daylight</button><button data-bg="hell">Hellfire</button><button data-bg="void">Void</button></div>
   </div>
 </div>
-<div id="vtools"><button id="bFocus" class="on">🔍 Focus</button><button id="bFWin">🪟 Window</button></div>
+<div id="vtools"><button id="bFocus" class="on">🔍 Focus</button><button id="bFWin">🪟 Window</button><button id="bVBones">🦴 Bones</button><button id="bVNums"># Numbers</button></div>
 <div id="guide"></div>
 <div id="boxZone">📦 Drop here = put in Parts box</div>
 <img id="ghost" alt="">
@@ -350,6 +353,7 @@
 <script src="parts/lowpoly.js"></script>
 <script src="parts/mech-faces.js"></script>
 <script src="parts/myth-creatures.js"></script>
+<script src="parts/mech-necks.js"></script>
 <script src="starters.js"></script>
 <script src="packs/index.js"></script>
 <script type="importmap">
@@ -1809,6 +1813,10 @@ if (window.MF_V2) {
     const d = Object.assign(document.createElement('span'), {className: 'del', textContent: '🗑'}); d.style.cssText = 'position:absolute;top:2px;left:4px;font-size:15px';
     d.onclick = async ev => { ev.stopPropagation(); if (!confirm('Delete your part "' + LIB[id].name + '"?')) return; await idb('myparts', 'readwrite', st => st.delete(id)); delete LIB[id]; libUI(); }; b.append(d); }); }).observe($('lib'), {childList: true});
 
+  // ---- quick bones / bone-number buttons on screen (numbers: All -> Picked only -> Off; fade slider is in ⚙ › Skeleton)
+  const vnUI = () => { const L = {all: '# All numbers', pick: '# Picked only', off: '# Numbers off'}; $('bVNums').textContent = L[NUMS.mode]; $('bVBones').textContent = showBones ? '🦴 Hide bones' : '🦴 Show bones'; };
+  $('bVNums').onclick = () => { NUMS.mode = {all: 'pick', pick: 'off', off: 'all'}[NUMS.mode]; saveNums(); numCtlUI(); if (typeof applyNums === 'function') applyNums(); vnUI(); };
+  $('bVBones').onclick = () => { $('bBones').click(); vnUI(); }; $('bBones').addEventListener('click', vnUI); vnUI();
   // ---- copy / paste parts (works between creatures, saves and the Workshop)
   const CLIP = 'mf-clip';
   $('bCopy').onclick = () => { const pt = partBy(sel); if (!pt) return tip('Tap a part first'); try { localStorage.setItem(CLIP, JSON.stringify([pt])); } catch (x) { return tip('Too big to copy'); } tip('Copied ' + (LIB[pt.lib] ? LIB[pt.lib].name : 'part') + ' — 📋 Paste it anywhere, even in another creature', 2600); pasteUI(); };
@@ -1837,7 +1845,7 @@ if (window.MF_V2) {
   const C = (g, subs) => ({g, subs});   // a parts source: group + (optional) only these subs
   const PARTSTEPS = [   // [family, title, question, creature sources, mech sources, optional, how to place]
     ['trunk', 'Body', 'What kind of body?', [C('Torsos & Bellies')], [C('Mech Torso & Core', ['Chests', 'Frames'])], false, 'trunk'],
-    ['neck', 'Neck', 'What kind of neck?', [C('Necks & Spines', ['Necks'])], [C('Necks & Spines', ['Necks'])], true],
+    ['neck', 'Neck', 'What kind of neck?', [C('Necks & Spines', ['Necks'])], [C('Necks & Spines', ['Mech Necks'])], true],
     ['head', 'Head', 'What kind of head?', [C('Heads & Skulls')], [C('Mech Heads')], false],
     ['jaw', 'Jaw', 'Jaw or mouth?', [C('Jaws & Teeth', ['Lower Jaws', 'Maws & Mandibles', 'Beaks'])], [], true],
     ['head', 'Face', 'Eyes or a face?', [C('Eyes & Faces')], [C('Mech Eyes & Faces')], true, 'decor'],
@@ -1873,7 +1881,7 @@ if (window.MF_V2) {
   function btShow() { const el = $('guide'); if (!BT.on) return; const st = BT.steps[BT.i], N = BT.steps.length; document.body.classList.add('guiding'); el.style.display = 'block'; el.classList.toggle('small', BT.small);
     el.innerHTML = ''; const h = (tag, cls, html) => { const x = document.createElement(tag); if (cls) x.className = cls; if (html != null) x.innerHTML = html; el.append(x); return x; };
     const head = h('div', 'gh'); const titles = {style: 'What are we building?', body: 'Pick a body', shape: 'Body shape', move: 'Move things around', paint: 'Paint it', clean: 'Clean up', look: 'Game look', save: 'Save it'};
-    head.innerHTML = `<b>🎓 ${BT.i + 1}/${N} · ${st.k === 'part' ? st.t : titles[st.k]}</b>`; const mini = Object.assign(document.createElement('button'), {className: 'mini', textContent: BT.small ? '▾' : '▴', onclick: () => { BT.small = !BT.small; btShow(); }}); head.append(mini);
+    head.innerHTML = `<b>🎓 ${BT.i + 1}/${N} · ${st.k === 'part' ? st.t : titles[st.k]}</b>`; const mini = Object.assign(document.createElement('button'), {className: 'mini', textContent: BT.small ? '▾' : '▴', onclick: () => { BT.small = !BT.small; document.body.classList.toggle('gside', BT.small); btShow(); }}); head.append(mini);
     if (BT.small) return;
     const q = t => h('div', 'gp', t), row = cls => h('div', cls || 'gc'), btn = (r, t, f, on) => { const b = Object.assign(document.createElement('button'), {textContent: t, onclick: f}); if (on) b.className = 'on'; r.append(b); return b; };
     const nav = (nextLabel, extra) => { const r = row('gb'); btn(r, '✕', btEnd); if (BT.i) btn(r, '◀', () => btGo(BT.i - 1)); if (extra) extra(r); btn(r, nextLabel || 'Next ▶', () => BT.i === N - 1 ? btEnd(true) : btGo(BT.i + 1), true); };
@@ -1885,7 +1893,7 @@ if (window.MF_V2) {
         snap(); P = blankProject(k); rebuildSkeleton(); buildBase(); rebuildParts(); outliner(); applyFX(); bodyUI(); saveCur(); frameAll(); btSteps(); btGo(2); }, P.skel === k); } nav(); return; }
     if (st.k === 'shape') { q('What shape should it be? (Fine-tune any time with the sliders in 🏁 Start.)'); const r = row();
       for (const [t, v] of SHAPES) btn(r, t, () => { snap(); P.body = {...v}; applyBody(); bodyUI(); }, JSON.stringify(P.body || {}) === JSON.stringify(v));
-      btn(r, '🎚 Sliders', () => tabBtn('start').click()); nav(); return; }
+      btn(r, '🎚 Sliders', () => { tabBtn('start').click(); BT.small = true; document.body.classList.add('gside'); btShow(); }); nav(); return; }
     if (st.k === 'part') { const chs = choicesOf(st), roots = st.how ? [] : famRoots(st.fam);
       q(st.q + (roots.length > 1 ? ` <span class="go">(goes on all ${roots.length})</span>` : '') + (st.opt ? ' <span class="go">optional</span>' : '')); const r = row();
       if (!BT.pick || !chs.some(c => c.g === BT.pick.g && c.sub === BT.pick.sub)) BT.pick = chs[0];
@@ -1894,10 +1902,10 @@ if (window.MF_V2) {
       ids.slice(0, 12).forEach(id => { const b = document.createElement('button'), im = document.createElement('img'); im.src = thumb(id); b.append(im, Object.assign(document.createElement('span'), {textContent: LIB[id].name}));
         if (BT.added.some(u => (partBy(u) || {}).lib === id)) b.className = 'on'; b.onclick = () => btPlace(st, id); grid.append(b); });
       const tools = row(); btn(tools, '🎲 Surprise me', () => btPlace(st, ids[Math.random() * ids.length | 0]));
-      btn(tools, '✋ I\'ll drag one on myself', () => { openCat(BT.pick.g, BT.pick.sub); BT.small = true; btShow(); });
+      btn(tools, '✋ I\'ll drag one on myself', () => { openCat(BT.pick.g, BT.pick.sub); BT.small = true; document.body.classList.add('gside'); btShow(); });
       nav(BT.added.length ? 'Next ▶' : 'Skip ▶'); return; }
     if (st.k === 'move') { q('Anything look off? Tap a part (orange outline), then drag it. Let go on the body = sticks. Let go in the air = floats. Size slider and 🎯 Arrows are in ✋ Move & size.');
-      const r = row(); btn(r, '✋ Open Move & size', () => { tabBtn('edit').click(); BT.small = true; btShow(); }); nav(); return; }
+      const r = row(); btn(r, '✋ Open Move & size', () => { tabBtn('edit').click(); BT.small = true; document.body.classList.add('gside'); btShow(); }); nav(); return; }
     if (st.k === 'paint') { q('What should it be made of? Tap a kind, then a skin — it goes on every part. (Paint single parts later in 🎨 Paint.)'); const r = row('gc scroll');
       BT.skin = BT.skin || SKINCATS[0]; SKINCATS.forEach(c => btn(r, c, () => { BT.skin = c; btShow(); }, BT.skin === c));
       const g = row('gc scroll'); MATS.LIST.filter(l => l[2] === BT.skin).forEach(l => { const b = btn(g, l[1], () => { snap(); P.parts.forEach(p => { p.matAll = l[0]; p.mat = null; }); rebuildParts(); saveCur(); tip(l[1] + ' on everything', 1800); });
@@ -1909,9 +1917,9 @@ if (window.MF_V2) {
       btn(r, '🎮 Yes, game look', () => { if (!(P.fx.lowpoly && P.fx.toon)) $('bGameLook').click(); }, !!(P.fx.lowpoly && P.fx.toon)); btn(r, 'Not now', () => btGo(BT.i + 1)); nav(); return; }
     if (st.k === 'save') { q('You built a titan! 🎉 Save it so you can come back to it.'); const r = row(); btn(r, '💾 Save as…', () => $('mSave').click(), true); btn(r, '⬇ Download for the game (.glb)', () => $('mExport').click()); nav('🎉 Done'); return; } }
   function btGo(i) { BT.i = Math.max(0, Math.min(BT.steps.length - 1, i)); BT.added = []; BT.pick = null; BT.small = false; const st = BT.steps[BT.i];
-    if (st.k === 'part' || st.k === 'style' || st.k === 'body' || st.k === 'shape') { $('sheet').classList.add('min'); } btShow(); }
+    document.body.classList.remove('gside'); btShow(); }
   function btStart() { $('menu').classList.remove('open'); BT.on = true; btSteps(); BT.style = P.skel === 'mech' || P.skel === 'walker' || P.skel === 'tank' ? 'mech' : 'creature'; btGo(0); }
-  function btEnd(won) { BT.on = false; $('guide').style.display = 'none'; document.body.classList.remove('guiding'); $('sheet').classList.remove('min'); if (won === true) tip('🎉 Titan built! Start › 🎓 Build together to make another', 4000); }
+  function btEnd(won) { BT.on = false; $('guide').style.display = 'none'; document.body.classList.remove('guiding', 'gside'); if (won === true) tip('🎉 Titan built! Start › 🎓 Build together to make another', 4000); }
   $('bGuide').onclick = btStart; $('mGuide').onclick = btStart;
   // ---- first-time tour for the new layout
   TOUR.length = 0; TOUR.push(

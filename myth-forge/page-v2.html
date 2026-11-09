@@ -118,6 +118,9 @@
   #vtools button{min-height:36px;padding:4px 10px;font-size:13px;background:rgba(40,40,50,.88);max-width:46vw}
   #vtools button.on{background:rgba(40,40,50,.88);color:var(--tx);border-color:#4c4c58}
   #nav{top:140px}
+  details.pick{background:#22222a;border-radius:10px;padding:2px 8px;margin:6px 0}
+  details.pick>summary{list-style:none;cursor:pointer;font:700 14px system-ui;padding:10px 2px}details.pick>summary::-webkit-details-marker{display:none}
+  details.pick[open]>summary{color:var(--ac2)}
   body.full #vtools{display:none}
   #boxZone{position:fixed;left:50%;top:56px;transform:translateX(-50%);z-index:9;display:none;background:#2a3a6a;border:2px dashed #9ab8ff;color:#e8f0ff;font:800 14px system-ui;padding:12px 22px;border-radius:14px}
   #ghost{position:fixed;z-index:30;width:84px;height:84px;border-radius:12px;transform:translate(-50%,-70%);pointer-events:none;display:none;opacity:.9;box-shadow:0 6px 20px rgba(0,0,0,.6);outline:2px solid var(--ac);background:#22222a}
@@ -125,7 +128,10 @@
   .item{-webkit-touch-callout:none}
   body.gdrag #sheet{opacity:.55}
   #guide{position:fixed;left:6px;right:6px;top:52px;z-index:7;display:none;background:rgba(30,26,20,.96);border:1px solid var(--ac);border-radius:12px;padding:8px 10px;max-width:520px;margin:0 auto;font-size:13.5px;line-height:1.35;box-shadow:0 4px 18px rgba(0,0,0,.5)}
-  #guide{max-height:52vh;overflow:auto}#guide.small{max-height:none}
+  body.guiding:not(.gside) #sheet{display:none}
+  body.guiding:not(.gside) #guide{top:auto;bottom:0;left:0;right:0;max-width:none;border-radius:14px 14px 0 0;max-height:56vh;overflow:auto;padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+  body.guiding:not(.gside) #vtools{bottom:calc(56vh + 8px)} body.guiding:not(.gside) #tip{bottom:calc(56vh + 60px)}
+  #guide.small{max-height:none}
   #guide .gh{display:flex;align-items:center;gap:6px}#guide .gh b{flex:1}#guide .mini{min-height:30px;padding:0 10px}
   #guide .gp{margin:4px 0 6px}#guide .go{font-size:11px;opacity:.6}
   #guide .gc{display:flex;gap:5px;flex-wrap:wrap;margin:4px 0}#guide .gc button{min-height:34px;padding:4px 10px;font-size:13px}
@@ -202,17 +208,13 @@
   </div>
 
   <div class="pane" id="p-start">
-    <button class="next" id="bGuide" style="margin-top:4px">🎓 Build together: a mech or kaiju, step by step</button>
-    <div class="step">1 · Pick a starter to remix…</div>
-    <div class="chips wrap" id="starters"></div>
-    <div class="step">…or an empty body type</div>
-    <div class="chips wrap" id="skels"></div>
-    <div class="step">…or build a part on its own (no skeleton)</div>
-    <div class="row"><button id="bWS2">🛠 Workshop: make a part by itself</button></div>
-    <div class="step">2 · Body shape <span class="hint">(every part refits)</span></div>
-    <div id="bodySl"></div>
-    <div class="row"><button id="bBase">🧱 Base body on/off</button><button id="bRefitAll">↻ Fit all parts</button></div>
-    <button class="next" id="bGoBuild">Next: add parts →</button>
+    <button class="next" id="bGuide" style="margin-top:2px">🎓 Build together (step by step)</button>
+    <div class="row"><button id="bWS2" style="flex:1">🛠 Workshop: make one part by itself</button></div>
+    <details class="pick"><summary>🧸 Remix a ready-made creature ▾</summary><div class="chips wrap" id="starters"></div></details>
+    <details class="pick"><summary>🦴 Start from an empty body ▾</summary><div class="hint">Comes with a grey mannequin to build on.</div><div class="chips wrap" id="skels"></div></details>
+    <details class="pick" open><summary>🎚 Body shape ▾</summary><div id="bodySl"></div>
+      <div class="row"><button id="bBase">🧱 Base body on/off</button><button id="bRefitAll">↻ Fit all parts</button></div></details>
+    <button class="next" id="bGoBuild" style="background:#33333d;color:var(--tx);border-color:#4c4c58">Next: add parts →</button>
   </div>
 
   <div class="pane on" id="p-add">
@@ -300,10 +302,11 @@
   <div class="pane" id="p-skel">
     <div class="how">👉 Tap an orange joint to pick a bone. Parts on a bone move with it.</div>
     <div class="row"><button id="bBones" class="on">Show bones</button><button id="bPose">Pose bones</button><button id="bJoint">Move joints</button><button id="bResetPose">Reset pose</button></div>
+    <div class="lbl">Bone numbers</div>
+    <div class="numctl" id="numCtlSkel"></div>
     <div class="lbl">Jump to bone #</div>
     <div class="cats" id="boneNums"></div>
     <details class="more"><summary>Make your own skeleton ▾</summary>
-      <div class="numctl" id="numCtlSkel"></div>
       <div class="sl"><span>Bone len</span><input id="sBone" type="range" min=".3" max="3" step=".01" value="1"><span id="vBone"></span></div>
       <div class="row"><button id="bAddBone">＋ Extend bone</button><button id="bAddBranch">＋ Branch (extra limb/head)</button><button id="bDelBone">Delete bone</button><button id="bSaveSkel">💾 Save as my body type</button></div>
       <div class="hint" id="boneHint">Tap an orange joint to pick a bone.</div>
@@ -324,7 +327,7 @@
     <div class="row"><button data-bg="studio" class="on">Studio</button><button data-bg="neon">Neon city night</button><button data-bg="day">Daylight</button><button data-bg="hell">Hellfire</button><button data-bg="void">Void</button></div>
   </div>
 </div>
-<div id="vtools"><button id="bFocus" class="on">🔍 Focus</button><button id="bFWin">🪟 Window</button></div>
+<div id="vtools"><button id="bFocus" class="on">🔍 Focus</button><button id="bFWin">🪟 Window</button><button id="bVBones">🦴 Bones</button><button id="bVNums"># Numbers</button></div>
 <div id="guide"></div>
 <div id="boxZone">📦 Drop here = put in Parts box</div>
 <img id="ghost" alt="">
@@ -350,6 +353,7 @@
 <script src="parts/lowpoly.js"></script>
 <script src="parts/mech-faces.js"></script>
 <script src="parts/myth-creatures.js"></script>
+<script src="parts/mech-necks.js"></script>
 <script src="starters.js"></script>
 <script src="packs/index.js"></script>
 <script type="importmap">

@@ -1450,6 +1450,10 @@ if (window.MF_V2) {
     const d = Object.assign(document.createElement('span'), {className: 'del', textContent: '🗑'}); d.style.cssText = 'position:absolute;top:2px;left:4px;font-size:15px';
     d.onclick = async ev => { ev.stopPropagation(); if (!confirm('Delete your part "' + LIB[id].name + '"?')) return; await idb('myparts', 'readwrite', st => st.delete(id)); delete LIB[id]; libUI(); }; b.append(d); }); }).observe($('lib'), {childList: true});
 
+  // ---- quick bones / bone-number buttons on screen (numbers: All -> Picked only -> Off; fade slider is in ⚙ › Skeleton)
+  const vnUI = () => { const L = {all: '# All numbers', pick: '# Picked only', off: '# Numbers off'}; $('bVNums').textContent = L[NUMS.mode]; $('bVBones').textContent = showBones ? '🦴 Hide bones' : '🦴 Show bones'; };
+  $('bVNums').onclick = () => { NUMS.mode = {all: 'pick', pick: 'off', off: 'all'}[NUMS.mode]; saveNums(); numCtlUI(); if (typeof applyNums === 'function') applyNums(); vnUI(); };
+  $('bVBones').onclick = () => { $('bBones').click(); vnUI(); }; $('bBones').addEventListener('click', vnUI); vnUI();
   // ---- copy / paste parts (works between creatures, saves and the Workshop)
   const CLIP = 'mf-clip';
   $('bCopy').onclick = () => { const pt = partBy(sel); if (!pt) return tip('Tap a part first'); try { localStorage.setItem(CLIP, JSON.stringify([pt])); } catch (x) { return tip('Too big to copy'); } tip('Copied ' + (LIB[pt.lib] ? LIB[pt.lib].name : 'part') + ' — 📋 Paste it anywhere, even in another creature', 2600); pasteUI(); };
@@ -1478,7 +1482,7 @@ if (window.MF_V2) {
   const C = (g, subs) => ({g, subs});   // a parts source: group + (optional) only these subs
   const PARTSTEPS = [   // [family, title, question, creature sources, mech sources, optional, how to place]
     ['trunk', 'Body', 'What kind of body?', [C('Torsos & Bellies')], [C('Mech Torso & Core', ['Chests', 'Frames'])], false, 'trunk'],
-    ['neck', 'Neck', 'What kind of neck?', [C('Necks & Spines', ['Necks'])], [C('Necks & Spines', ['Necks'])], true],
+    ['neck', 'Neck', 'What kind of neck?', [C('Necks & Spines', ['Necks'])], [C('Necks & Spines', ['Mech Necks'])], true],
     ['head', 'Head', 'What kind of head?', [C('Heads & Skulls')], [C('Mech Heads')], false],
     ['jaw', 'Jaw', 'Jaw or mouth?', [C('Jaws & Teeth', ['Lower Jaws', 'Maws & Mandibles', 'Beaks'])], [], true],
     ['head', 'Face', 'Eyes or a face?', [C('Eyes & Faces')], [C('Mech Eyes & Faces')], true, 'decor'],
@@ -1514,7 +1518,7 @@ if (window.MF_V2) {
   function btShow() { const el = $('guide'); if (!BT.on) return; const st = BT.steps[BT.i], N = BT.steps.length; document.body.classList.add('guiding'); el.style.display = 'block'; el.classList.toggle('small', BT.small);
     el.innerHTML = ''; const h = (tag, cls, html) => { const x = document.createElement(tag); if (cls) x.className = cls; if (html != null) x.innerHTML = html; el.append(x); return x; };
     const head = h('div', 'gh'); const titles = {style: 'What are we building?', body: 'Pick a body', shape: 'Body shape', move: 'Move things around', paint: 'Paint it', clean: 'Clean up', look: 'Game look', save: 'Save it'};
-    head.innerHTML = `<b>🎓 ${BT.i + 1}/${N} · ${st.k === 'part' ? st.t : titles[st.k]}</b>`; const mini = Object.assign(document.createElement('button'), {className: 'mini', textContent: BT.small ? '▾' : '▴', onclick: () => { BT.small = !BT.small; btShow(); }}); head.append(mini);
+    head.innerHTML = `<b>🎓 ${BT.i + 1}/${N} · ${st.k === 'part' ? st.t : titles[st.k]}</b>`; const mini = Object.assign(document.createElement('button'), {className: 'mini', textContent: BT.small ? '▾' : '▴', onclick: () => { BT.small = !BT.small; document.body.classList.toggle('gside', BT.small); btShow(); }}); head.append(mini);
     if (BT.small) return;
     const q = t => h('div', 'gp', t), row = cls => h('div', cls || 'gc'), btn = (r, t, f, on) => { const b = Object.assign(document.createElement('button'), {textContent: t, onclick: f}); if (on) b.className = 'on'; r.append(b); return b; };
     const nav = (nextLabel, extra) => { const r = row('gb'); btn(r, '✕', btEnd); if (BT.i) btn(r, '◀', () => btGo(BT.i - 1)); if (extra) extra(r); btn(r, nextLabel || 'Next ▶', () => BT.i === N - 1 ? btEnd(true) : btGo(BT.i + 1), true); };
@@ -1526,7 +1530,7 @@ if (window.MF_V2) {
         snap(); P = blankProject(k); rebuildSkeleton(); buildBase(); rebuildParts(); outliner(); applyFX(); bodyUI(); saveCur(); frameAll(); btSteps(); btGo(2); }, P.skel === k); } nav(); return; }
     if (st.k === 'shape') { q('What shape should it be? (Fine-tune any time with the sliders in 🏁 Start.)'); const r = row();
       for (const [t, v] of SHAPES) btn(r, t, () => { snap(); P.body = {...v}; applyBody(); bodyUI(); }, JSON.stringify(P.body || {}) === JSON.stringify(v));
-      btn(r, '🎚 Sliders', () => tabBtn('start').click()); nav(); return; }
+      btn(r, '🎚 Sliders', () => { tabBtn('start').click(); BT.small = true; document.body.classList.add('gside'); btShow(); }); nav(); return; }
     if (st.k === 'part') { const chs = choicesOf(st), roots = st.how ? [] : famRoots(st.fam);
       q(st.q + (roots.length > 1 ? ` <span class="go">(goes on all ${roots.length})</span>` : '') + (st.opt ? ' <span class="go">optional</span>' : '')); const r = row();
       if (!BT.pick || !chs.some(c => c.g === BT.pick.g && c.sub === BT.pick.sub)) BT.pick = chs[0];
@@ -1535,10 +1539,10 @@ if (window.MF_V2) {
       ids.slice(0, 12).forEach(id => { const b = document.createElement('button'), im = document.createElement('img'); im.src = thumb(id); b.append(im, Object.assign(document.createElement('span'), {textContent: LIB[id].name}));
         if (BT.added.some(u => (partBy(u) || {}).lib === id)) b.className = 'on'; b.onclick = () => btPlace(st, id); grid.append(b); });
       const tools = row(); btn(tools, '🎲 Surprise me', () => btPlace(st, ids[Math.random() * ids.length | 0]));
-      btn(tools, '✋ I\'ll drag one on myself', () => { openCat(BT.pick.g, BT.pick.sub); BT.small = true; btShow(); });
+      btn(tools, '✋ I\'ll drag one on myself', () => { openCat(BT.pick.g, BT.pick.sub); BT.small = true; document.body.classList.add('gside'); btShow(); });
       nav(BT.added.length ? 'Next ▶' : 'Skip ▶'); return; }
     if (st.k === 'move') { q('Anything look off? Tap a part (orange outline), then drag it. Let go on the body = sticks. Let go in the air = floats. Size slider and 🎯 Arrows are in ✋ Move & size.');
-      const r = row(); btn(r, '✋ Open Move & size', () => { tabBtn('edit').click(); BT.small = true; btShow(); }); nav(); return; }
+      const r = row(); btn(r, '✋ Open Move & size', () => { tabBtn('edit').click(); BT.small = true; document.body.classList.add('gside'); btShow(); }); nav(); return; }
     if (st.k === 'paint') { q('What should it be made of? Tap a kind, then a skin — it goes on every part. (Paint single parts later in 🎨 Paint.)'); const r = row('gc scroll');
       BT.skin = BT.skin || SKINCATS[0]; SKINCATS.forEach(c => btn(r, c, () => { BT.skin = c; btShow(); }, BT.skin === c));
       const g = row('gc scroll'); MATS.LIST.filter(l => l[2] === BT.skin).forEach(l => { const b = btn(g, l[1], () => { snap(); P.parts.forEach(p => { p.matAll = l[0]; p.mat = null; }); rebuildParts(); saveCur(); tip(l[1] + ' on everything', 1800); });
@@ -1550,9 +1554,9 @@ if (window.MF_V2) {
       btn(r, '🎮 Yes, game look', () => { if (!(P.fx.lowpoly && P.fx.toon)) $('bGameLook').click(); }, !!(P.fx.lowpoly && P.fx.toon)); btn(r, 'Not now', () => btGo(BT.i + 1)); nav(); return; }
     if (st.k === 'save') { q('You built a titan! 🎉 Save it so you can come back to it.'); const r = row(); btn(r, '💾 Save as…', () => $('mSave').click(), true); btn(r, '⬇ Download for the game (.glb)', () => $('mExport').click()); nav('🎉 Done'); return; } }
   function btGo(i) { BT.i = Math.max(0, Math.min(BT.steps.length - 1, i)); BT.added = []; BT.pick = null; BT.small = false; const st = BT.steps[BT.i];
-    if (st.k === 'part' || st.k === 'style' || st.k === 'body' || st.k === 'shape') { $('sheet').classList.add('min'); } btShow(); }
+    document.body.classList.remove('gside'); btShow(); }
   function btStart() { $('menu').classList.remove('open'); BT.on = true; btSteps(); BT.style = P.skel === 'mech' || P.skel === 'walker' || P.skel === 'tank' ? 'mech' : 'creature'; btGo(0); }
-  function btEnd(won) { BT.on = false; $('guide').style.display = 'none'; document.body.classList.remove('guiding'); $('sheet').classList.remove('min'); if (won === true) tip('🎉 Titan built! Start › 🎓 Build together to make another', 4000); }
+  function btEnd(won) { BT.on = false; $('guide').style.display = 'none'; document.body.classList.remove('guiding', 'gside'); if (won === true) tip('🎉 Titan built! Start › 🎓 Build together to make another', 4000); }
   $('bGuide').onclick = btStart; $('mGuide').onclick = btStart;
   // ---- first-time tour for the new layout
   TOUR.length = 0; TOUR.push(
