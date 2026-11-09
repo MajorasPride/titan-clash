@@ -116,7 +116,7 @@
 <ul><li><b>🔍 Focus</b> shows only that part, big. <b>🪟 Focus window</b> keeps a small zoomed window on the part while you see the whole creature (drag in it to spin, pinch to zoom, Size S/M/L).</li>
 <li>One finger turns the view, two fingers pinch and move. Double-tap centers there. FX / View tab → Arrow pad if you want the buttons.</li></ul>
 <h3>5. Shape, sculpt and paint</h3>
-<ul><li>Shape tab: sliders for "maker" parts. Sculpt tab: push and pull like clay (S Pen sculpts, fingers turn the view). Paint tab: tap a material, or 🖌 brush paint.</li></ul>
+<ul><li>Shape tab: sliders for "maker" parts. Sculpt tab: push and pull like clay (S Pen sculpts, fingers turn the view). Paint tab: tap a material, or 🖌 brush paint. 🎯 One piece only: tap one spike / crystal / bit on the model, then a material, and only that piece changes.</li></ul>
 <h3>6. Bone numbers</h3>
 <ul><li>Every bone has a number. Under More: <b># All</b>, <b># Picked</b> (only the bone you're on plus the numbers you type, like 2, 28) or <b># Off</b>, and Fade.</li></ul>
 <h3>7. Save and use it</h3>
@@ -196,6 +196,7 @@
   </div>
 
   <div class="pane" id="p-paint">
+    <div class="row"><button id="bPiecePaint">🎯 One piece only</button></div>
     <div class="chips" id="matCats"></div>
     <div class="grid" id="mats"></div>
     <div class="row"><button id="bBrushPaint">🖌 Brush paint</button><input type="color" id="brushCol" value="#c03020" style="width:56px;height:40px;border:0;background:none"><button id="bBrushErase">Clear paint</button></div>

@@ -424,7 +424,12 @@ function matThumb(k) { if (matThumbs[k]) return matThumbs[k]; try { if (!matR) {
   const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xffffff, 0x303040, 1.3)); const L = new THREE.DirectionalLight(0xffffff, 2.6); L.position.set(2, 3, 4); sc.add(L);
   sc.add(new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), MATS.makeMat(THREE, k))); const cam = new THREE.PerspectiveCamera(30, 1, .1, 20); cam.position.set(0, 0, 4.2);
   matR.render(sc, cam); return matThumbs[k] = matR.domElement.toDataURL('image/webp', .8); } catch (e) { return ''; } }
-function paint(k) { const pt = partBy(sel); if (!pt) return tip('Tap a part first (or ☰ list)'); snap(); pt.matAll = k; pt.mat = null; buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); tip(MATS.LIST.find(l => l[0] === k)[1] + ' applied'); }
+var piecePaint = false, lastPick = null;
+$('bPiecePaint').onclick = () => { piecePaint = !piecePaint; $('bPiecePaint').classList.toggle('on', piecePaint); tip(piecePaint ? 'One piece: tap a spike / crystal / bit on the model, then tap a material' : 'Whole part gets painted', 2600); };
+function paint(k) { const pt = partBy(sel); if (!pt) return tip('Tap a part first (or ☰ list)'); snap();
+  if (piecePaint) { if (!lastPick || lastPick.uid !== sel) return tip('Tap the piece on the model first'); const g = pieceClusters(pt, true).find(x => x.ids.includes(lastPick.mi)), ids = g ? g.ids : [lastPick.mi];
+    const n = pieces(pt.lib, pt.params).length; pt.mat = pt.mat || Array(n).fill(null); ids.forEach(i => pt.mat[i] = k); buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); return tip(MATS.LIST.find(l => l[0] === k)[1] + ' on that piece only'); }
+  pt.matAll = k; pt.mat = null; buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); tip(MATS.LIST.find(l => l[0] === k)[1] + ' applied'); }
 $('tint').onchange = e => { const pt = partBy(sel); if (!pt) return; snap(); pt.tint = e.target.value; buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); };
 $('bTintClear').onclick = () => { $('tint').value = '#ffffff'; $('tint').onchange({target: $('tint')}); };
 $('bPaintTwin').onclick = e => { paintTwin = !paintTwin; e.target.classList.toggle('on', paintTwin); };
@@ -520,7 +525,7 @@ addEventListener('pointerup', e => {
   if (placing) { const useBone = hitB && (!hitP || modeBone && isAlong(LIB[placing]) || hitB.distance < hitP.distance);
     const h = useBone ? hitB : hitP; if (!h) return tip(P.bones.length ? 'Tap a bone dot or the body' : 'Use "Add without tapping"'); return placeAt(h); }
   if (tab === 'skel' && hitB) { selBone = hitB.object.userData.bone; markBone(); attachGizmo(); syncBoneUI(); boneNumsUI(); return; }
-  if (hitP) { select(hitP.object.userData.uid); return; }
+  if (hitP) { lastPick = {uid: hitP.object.userData.uid, mi: hitP.object.userData.mi}; select(hitP.object.userData.uid); if (piecePaint && tab === 'paint') tip('Piece picked — tap a material', 1400); return; }
   if (hitB) { selBone = hitB.object.userData.bone; markBone(); syncBoneUI(); boneNumsUI(); catForBone(selBone); tip('Bone ' + (boneOrder.indexOf(selBone) + 1) + ': ' + niceBone(selBone) + ' — showing parts for it'); return; }
 });
 
@@ -782,9 +787,11 @@ function fwRender() { if (!FW.on) return; const v = sel && views[sel], pt = sel 
   renderer.setScissorTest(false); renderer.setViewport(0, 0, innerWidth, innerHeight); hidden.forEach(o => o.visible = true); if (hlWas !== null) hl.visible = hlWas; }
 
 // ====================================================================== toy mode: break a part into its pieces, drag parts and they stick where you drop them, parts box
-function pieceClusters(pt) { const pcs = pieces(pt.lib, pt.params), boxes = pcs.map(pc => { pc.geo.computeBoundingBox(); const b = pc.geo.boundingBox.clone(), s = b.getSize(new THREE.Vector3()).length(); return b.expandByScalar(Math.max(.005, s * .01)); });
+function pieceClusters(pt, strict) { const pcs = pieces(pt.lib, pt.params), boxes = pcs.map(pc => { pc.geo.computeBoundingBox(); const b = pc.geo.boundingBox.clone(), s = b.getSize(new THREE.Vector3()).length(); return b.expandByScalar(Math.max(.005, s * .01)); });
   const par = pcs.map((_, i) => i), f = i => par[i] === i ? i : (par[i] = f(par[i]));
-  for (let i = 0; i < pcs.length; i++) for (let j = i + 1; j < pcs.length; j++) if (boxes[i].intersectsBox(boxes[j])) par[f(i)] = f(j);
+  const ctr = boxes.map(b => b.getCenter(new THREE.Vector3())), wid = boxes.map(b => { const s = b.getSize(new THREE.Vector3()); return Math.min(s.x, s.z); });
+  const linked = (i, j) => boxes[i].intersectsBox(boxes[j]) && (!strict || Math.hypot(ctr[i].x - ctr[j].x, ctr[i].z - ctr[j].z) < .5 * Math.min(wid[i], wid[j]) + 1e-3);
+  for (let i = 0; i < pcs.length; i++) for (let j = i + 1; j < pcs.length; j++) if (linked(i, j)) par[f(i)] = f(j);
   const groups = {}; pcs.forEach((_, i) => { if (pt.keep && !pt.keep.includes(i)) return; (groups[f(i)] = groups[f(i)] || []).push(i); });
   return Object.values(groups).map(ids => { const b = new THREE.Box3(); ids.forEach(i => b.union(boxes[i])); const cc = b.getCenter(new THREE.Vector3()); return {ids, off: [+cc.x.toFixed(3), +b.min.y.toFixed(3), +cc.z.toFixed(3)]}; }); }
 function splitOne(pt, groups) { const v = views[pt.uid]; v.G.updateMatrix(); const out = [];
