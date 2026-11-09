@@ -2004,26 +2004,29 @@ if (window.MF_V2) {
   const partsOf = ch => ch.fit ? fitsFor().map(id => lpParts && LIB[id].hasLpv ? LIB[id].hasLpv : id) : Object.keys(LIB).filter(id => { const e = LIB[id]; return e.group === ch.g && e.sub === ch.sub && (lpParts ? !e.hasLpv : !e.lpv); });
   function btPlace(st, id, quiet) { if (BT.added.length) { removeParts(BT.added.map(partBy).filter(Boolean)); BT.added = []; }
     snap(); const before = new Set(P.parts.map(p => p.uid)), e = LIB[id], m = mirrorAdd, keepMode = modeBone; modeBone = true;
-    if (window.MF_V3 && (st.how || '').startsWith('plug') && window.V3.plugAsOf(e)) { mirrorAdd = true; window.V3.fillAll(id, (st.how || '').split(':')[1]); }
-    else if (window.MF_V3 && (st.how || '').startsWith('plug') && st.fam !== 'trunk') { mirrorAdd = false; window.V3.skip = true; famRoots(st.fam).forEach(r => addPart(id, r, [0, 0, 0], [0, 0, 0])); window.V3.skip = false; }   // pieces without a plug (mech visors…) go on every head
+    const rootsOf = fam => { if (!st.root) return famRoots(fam); if (fam === 'jaw') return P.bones.filter(r => r[1] === st.root && r[4] === 'jaw').map(r => r[0]); return [st.root]; };
+    if (window.MF_V3 && (st.how || '').startsWith('plug') && window.V3.plugAsOf(e)) { mirrorAdd = true; window.V3.fillAll(id, (st.how || '').split(':')[1], st.root ? new Set([st.root, ...rootsOf('jaw')]) : null); }
+    else if (window.MF_V3 && (st.how || '').startsWith('plug') && st.fam !== 'trunk') { mirrorAdd = false; window.V3.skip = true; rootsOf(st.fam).forEach(r => addPart(id, r, [0, 0, 0], [0, 0, 0])); window.V3.skip = false; }   // pieces without a plug (mech visors…) go on every head
     else if (window.MF_V3 && e.perSeg && st.fam !== 'trunk') { mirrorAdd = false; famBones(st.fam).forEach(b => addPart(id, b, [0, 0, 0], [0, 0, 0])); const fb = new Set(famBones(st.fam)); removeParts(P.parts.filter(p => p.lib.startsWith('base_') && fb.has(p.bone))); }
     else if (st.how === 'weapon') { const hands = famBones('hand'), h = hands.find(n => n.endsWith('.R')) || hands[0]; if (!h || !addWeaponToPalm(id, h)) addPart(id, (P.bones.find(r => r[4] === 'chest') || P.bones[0])[0], [0, 0, 0], [0, 0, 0]); }
     else if (st.how === 'trunk' && e.perSeg) { mirrorAdd = false; P.bones.filter(r => TRUNK_TAGS.has(r[4])).forEach(r => addPart(id, r[0], [0, 0, 0], [0, 0, 0])); }
-    else if (st.how === 'trunk' || st.how === 'decor') { mirrorAdd = false; if (st.fam === 'trunk') addPart(id, (P.bones.find(r => r[4] === 'chest') || P.bones.find(r => TRUNK_TAGS.has(r[4])) || P.bones[0])[0], [0, 0, 0], [0, 0, 0]); else famRoots(st.fam).forEach(r => addPart(id, r, [0, 0, 0], [0, 0, 0])); }   // every head gets it (hydras, two-headed hounds…)
-    else { const roots = famRoots(st.fam); mirrorAdd = false; roots.forEach(r => addPart(id, r, [0, 0, 0], [0, 0, 0])); const fb = new Set(famBones(st.fam)); removeParts(P.parts.filter(p => p.lib.startsWith('base_') && fb.has(p.bone))); }   // whatever goes on a limb replaces the mannequin there
+    else if (st.how === 'trunk' || st.how === 'decor') { mirrorAdd = false; if (st.fam === 'trunk') addPart(id, (P.bones.find(r => r[4] === 'chest') || P.bones.find(r => TRUNK_TAGS.has(r[4])) || P.bones[0])[0], [0, 0, 0], [0, 0, 0]); else rootsOf(st.fam).forEach(r => addPart(id, r, [0, 0, 0], [0, 0, 0])); }   // every head gets it (hydras, two-headed hounds…)
+    else { const roots = rootsOf(st.fam); mirrorAdd = false; roots.forEach(r => addPart(id, r, [0, 0, 0], [0, 0, 0])); const fb = new Set(famBones(st.fam)); removeParts(P.parts.filter(p => p.lib.startsWith('base_') && fb.has(p.bone))); }   // whatever goes on a limb replaces the mannequin there
     mirrorAdd = m; modeBone = keepMode; BT.added = P.parts.filter(p => !before.has(p.uid)).map(p => p.uid); (BT.addedBy = BT.addedBy || {})[BT.i] = BT.added;
-    if (st.t === 'Head') { const jaws = new Set(P.bones.filter(r => r[4] === 'jaw').map(r => r[0])); removeParts(P.parts.filter(p => p.lib.startsWith('base_') && jaws.has(p.bone))); }   // heads come with their own lower jaw
+    if (st.t === 'Head') { const jaws = new Set(st.root ? rootsOf('jaw') : P.bones.filter(r => r[4] === 'jaw').map(r => r[0])); removeParts(P.parts.filter(p => p.lib.startsWith('base_') && jaws.has(p.bone))); }   // heads come with their own lower jaw
     rebuildParts(); outliner(); saveCur(); if (quiet) return;
     tip(e.name + ' on ✓' + (st.how === 'decor' ? ' — drag it where you want it' : ''), 2200); btShow(); }
   function btSteps() { const steps = [];
     steps.push({k: 'style'}); steps.push({k: 'body'}); steps.push({k: 'shape'});
-    for (const [fam, t, q, cre, mech, opt, how, lvl] of PARTSTEPS) { if (!hasFam(fam) && !(how || '').startsWith('plug')) continue; if (lvl === 'complex' && BT.level === 'simple') continue; const st = {k: 'part', fam, t, q, cre, mech, opt, how};
-      if (choicesOf(st).length) steps.push(st); }
+    const heads = famRoots('head'), multi = heads.length > 1, isHeadRow = r => r[0] === 'jaw' || (r[0] === 'head' && r[1] !== 'Weapon');
+    const rowSteps = (rows, root, n) => { for (const [fam, t, q, cre, mech, opt, how, lvl] of rows) { if (!hasFam(fam) && !(how || '').startsWith('plug')) continue; if (lvl === 'complex' && BT.level === 'simple') continue;
+      const st = {k: 'part', fam, t, q, cre, mech, opt, how}; if (root) { st.root = root; st.label = t + ' · head ' + n + ' of ' + heads.length; } if (choicesOf(st).length) steps.push(st); } };
+    let doneHeads = false; for (const row of PARTSTEPS) { if (multi && isHeadRow(row)) { if (doneHeads) continue; doneHeads = true; heads.forEach((h, i) => rowSteps(PARTSTEPS.filter(isHeadRow), h, i + 1)); continue; } rowSteps([row]); }
     steps.push({k: 'move'}, {k: 'paint'}, {k: 'clean'}, {k: 'look'}, {k: 'save'}); BT.steps = steps; }
   function btShow() { const el = $('guide'); if (!BT.on) return; const st = BT.steps[BT.i], N = BT.steps.length; document.body.classList.add('guiding'); el.style.display = 'block'; el.classList.toggle('small', BT.small);
     el.innerHTML = ''; const h = (tag, cls, html) => { const x = document.createElement(tag); if (cls) x.className = cls; if (html != null) x.innerHTML = html; el.append(x); return x; };
     const head = h('div', 'gh'); const titles = {style: 'What are we building?', body: 'Pick a body', shape: 'Body shape', move: 'Move things around', paint: 'Paint it', clean: 'Clean up', look: 'Game look', save: 'Save it'};
-    head.innerHTML = `<b>🎓 ${BT.i + 1}/${N} · ${st.k === 'part' ? st.t : titles[st.k]}</b>`; const mini = Object.assign(document.createElement('button'), {className: 'mini', textContent: BT.small ? '▾' : '▴', onclick: () => { BT.small = !BT.small; document.body.classList.toggle('gside', BT.small); btShow(); }}); head.append(mini);
+    head.innerHTML = `<b>🎓 ${BT.i + 1}/${N} · ${st.k === 'part' ? (st.label || st.t) : titles[st.k]}</b>`; const mini = Object.assign(document.createElement('button'), {className: 'mini', textContent: BT.small ? '▾' : '▴', onclick: () => { BT.small = !BT.small; document.body.classList.toggle('gside', BT.small); btShow(); }}); head.append(mini);
     if (BT.small) return;
     const q = t => h('div', 'gp', t), row = cls => h('div', cls || 'gc'), btn = (r, t, f, on) => { const b = Object.assign(document.createElement('button'), {textContent: t, onclick: f}); if (on) b.className = 'on'; r.append(b); return b; };
     const nav = (nextLabel, extra) => { const r = row('gb'); btn(r, '✕', btEnd); if (BT.i) btn(r, '◀', () => btGo(BT.i - 1)); if (extra) extra(r); btn(r, nextLabel || 'Next ▶', () => BT.i === N - 1 ? btEnd(true) : btGo(BT.i + 1), true); };
@@ -2049,6 +2052,9 @@ if (window.MF_V2) {
         if (BT.added.some(u => (partBy(u) || {}).lib === id)) b.className = 'on'; b.onclick = () => btPlace(st, id); grid.append(b); });
       const tools = row(); if (BT.added.length) btn(tools, '🚫 None', () => { removeParts(BT.added.map(partBy).filter(Boolean)); BT.added = []; BT.addedBy[BT.i] = []; rebuildParts(); outliner(); saveCur(); btShow(); });
       btn(tools, '🎲 Surprise me', () => btPlace(st, ids[Math.random() * ids.length | 0]));
+      if (st.root && BT.added.length) btn(tools, '📋 Same on every head', () => { const libs = [...new Set(BT.added.map(partBy).filter(Boolean).filter(p => !p.host || !BT.added.includes(p.host.u)).map(p => p.lib))], keepI = BT.i, keepA = BT.added;
+        BT.steps.forEach((o, j) => { if (j === keepI || o.root === st.root || o.t !== st.t || !o.root) return; BT.i = j; BT.added = (BT.addedBy[j] || []).filter(u => partBy(u)); libs.forEach((lib, n) => { if (n) BT.added = []; btPlace(o, lib, true); }); });
+        BT.i = keepI; BT.added = keepA; rebuildParts(); outliner(); saveCur(); tip('📋 Copied to every head', 1800); btShow(); });
       btn(tools, '✋ I\'ll drag one on myself', () => { if (BT.pick.fit) openCat(LIB[fitsFor()[0]].group); else openCat(BT.pick.g, BT.pick.sub); BT.small = true; document.body.classList.add('gside'); btShow(); });
       nav(BT.added.length ? 'Next ▶' : 'Skip ▶'); return; }
     if (st.k === 'move') { q('Anything look off? Tap a part (orange outline), then drag it. Let go on the body = sticks. Let go in the air = floats. Size slider and 🎯 Arrows are in ✋ Move & size.');

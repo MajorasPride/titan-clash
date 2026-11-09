@@ -157,8 +157,8 @@ window.__v3.ids = lib => P.parts.filter(p => !lib || p.lib === lib || (lib.test 
 
 // ====================================================================== 🎓 Build together: plug steps + matched kits per skeleton (V3)
 // fill every free plug of one kind (the step's kind, or the part's own kind)
-V3X.fillAll = (id, type) => { const want = plugAsOf(LIB[id]) || type; if (!want) return 0; let n = 0;
-  for (let k = 0; k < 60; k++) { const free = scenePlugs(want).filter(c => !c.used && !c.pl.opt && c.h.lib !== id && (type ? c.pl.t === type : c.pl.t === want)).sort((a, b) => ((a.pl.side === 'L') + (a.h.bone || '').endsWith('.L') * 2) - ((b.pl.side === 'L') + (b.h.bone || '').endsWith('.L') * 2));
+V3X.fillAll = (id, type, bones) => { const want = plugAsOf(LIB[id]) || type; if (!want) return 0; let n = 0;
+  for (let k = 0; k < 60; k++) { const free = scenePlugs(want).filter(c => !c.used && !c.pl.opt && c.h.lib !== id && (type ? c.pl.t === type : c.pl.t === want) && (!bones || bones.has(c.h.bone))).sort((a, b) => ((a.pl.side === 'L') + (a.h.bone || '').endsWith('.L') * 2) - ((b.pl.side === 'L') + (b.h.bone || '').endsWith('.L') * 2));
     if (!free.length) break; plugIn(id, free[0]); n++; } return n; };
 const STEP_T = {eye: 1, teeth: 1, fang: 1, tongue: 1, horn: 1, ear: 1, finger: 1, claw: 1, toe: 1, tailtip: 1, back: 1, belly: 1};
 V3X.plugsFor = how => { const t = (how || '').split(':')[1]; const all = scenePlugs(t || null); return t ? all.length : all.filter(c => /brow|nose|cheek|chin|crest|mane|antenna/.test(c.pl.t)).length; };
