@@ -102,7 +102,7 @@
 <div id="help"><button class="x" id="helpX">✕ Close</button>
 <h2>How to build in Mythic Forge</h2>
 <h3>1. Start</h3>
-<ul><li>Skeleton tab → <b>Starters</b>: Hero Mech, Basalt Kaiju or Snapjaw Turtle Brute. Pull them apart and remix.</li>
+<ul><li>Skeleton tab → <b>Starters</b>: Hero Mech, Basalt Kaiju or Sailback Spinosaur (turtle shells and parts are in the Turtle Kit category). Pull them apart and remix.</li>
 <li>Or pick a <b>Body type</b> for an empty skeleton and build from nothing.</li></ul>
 <h3>2. Add parts</h3>
 <ol><li>Add tab → pick a category, then tap a part.</li><li>Tap an orange dot (a bone) or the body. Limbs, tails, necks and wings line up with the bone. Small parts stick on the surface.</li>
@@ -252,6 +252,7 @@
 <script src="parts/mecha-dragon.js"></script>
 <script src="parts/kaiju-kit.js"></script>
 <script src="parts/turtle-kit.js"></script>
+<script src="parts/dino-kit.js"></script>
 <script src="parts/sphinx.js"></script>
 <script src="starters.js"></script>
 <script src="packs/index.js"></script>
@@ -296,7 +297,7 @@ let useBloom = true;
 
 // ====================================================================== parts library
 const LIB = {}, GROUP_ORDER = ['Basic Shapes & Clay', 'Part Makers (sliders)', 'Heads & Skulls', 'Jaws & Teeth', 'Horns & Crests', 'Eyes & Faces', 'Necks & Spines', 'Torsos & Bellies', 'Arms & Shoulders', 'Hands & Claws',
-  'Legs & Feet', 'Tails', 'Wings', 'Back & Armor Plates', 'Tentacles & Extra Limbs', 'Bones & Skeleton', 'Mech Heads', 'Mech Torso & Core', 'Mech Arms & Legs', 'Mech Details', 'Mecha Dragon', 'Kaiju Kit', 'Turtle Kit', 'Weapons', 'Accessories & Magic', 'Free Packs (CC0)', 'My Imports'];
+  'Legs & Feet', 'Tails', 'Wings', 'Back & Armor Plates', 'Tentacles & Extra Limbs', 'Bones & Skeleton', 'Mech Heads', 'Mech Torso & Core', 'Mech Arms & Legs', 'Mech Details', 'Mecha Dragon', 'Kaiju Kit', 'Turtle Kit', 'Dino Kit', 'Weapons', 'Accessories & Magic', 'Free Packs (CC0)', 'My Imports'];
 const MY = 'My Parts';
 const ALONG = new Set(['Necks & Spines', 'Arms & Shoulders', 'Legs & Feet', 'Tails', 'Wings', 'Tentacles & Extra Limbs', 'Mech Arms & Legs', 'Heads & Skulls', 'Mech Heads', 'Torsos & Bellies', 'Mech Torso & Core', 'Hands & Claws']);
 const isAlong = e => e.along != null ? e.along : ALONG.has(e.group) || (e.group === 'Mecha Dragon' && /Head|Neck|Wings|Limbs/.test(e.sub)) || e.id === 'md_chest' || e.id === 'md_belly';
@@ -1159,7 +1160,7 @@ function tourShow() { const s = TOUR[tourI], el = $('tour'), card = el.querySele
   card.querySelector('h4').textContent = s.t; card.querySelector('p').textContent = s.p; const bs = card.querySelector('.btns'); bs.innerHTML = '';
   bs.append(Object.assign(document.createElement('span'), {className: 'dots', textContent: (tourI + 1) + ' / ' + TOUR.length}));
   const add = (t, f, on) => { const b = document.createElement('button'); b.textContent = t; if (on) b.className = 'on'; b.onclick = f; bs.append(b); };
-  if (s.start) { for (const [t, id] of [['🤖 Mech', 'heromech'], ['🦖 Kaiju', 'basaltkaiju'], ['🐢 Turtle', 'snapjaw']]) add(t, () => { const st = STARTERS.find(x => x.id === id); if (st) { loadStarter(st); skelUI(); } tourI++; tourShow(); }, true);
+  if (s.start) { for (const [t, id] of [['🤖 Mech', 'heromech'], ['🦖 Kaiju', 'basaltkaiju'], ['🦕 Dino', 'sailback']]) add(t, () => { const st = STARTERS.find(x => x.id === id); if (st) { loadStarter(st); skelUI(); } tourI++; tourShow(); }, true);
     add('Keep what I have', () => { tourI++; tourShow(); }); add('Skip tour', tourEnd); }
   else { add('Skip', tourEnd); if (tourI > 0) add('Back', () => { tourI--; tourShow(); }); add(tourI === TOUR.length - 1 ? 'Done' : 'Next', () => { if (tourI === TOUR.length - 1) tourEnd(); else { tourI++; tourShow(); } }, true); }
   requestAnimationFrame(() => { const t = s.sel && document.querySelector(s.sel); if (t) { t.scrollIntoView({block: 'nearest', inline: 'nearest'}); const r = t.getBoundingClientRect(), pad = 6;

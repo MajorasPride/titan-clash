@@ -16,12 +16,14 @@ window.FORGE_STARTERS = [
     ['kj_dorsal_l', 'chest', [0, .45, -1.0], [-55, 0, 0], 1], ['kj_dorsal_l', 'spine', [0, .9, -1.25], [-60, 0, 0], 1], ['kj_dorsal_m', 'hips', [0, .6, -1.45], [-70, 0, 0], 1],
     ['kj_dorsal_s', 'neck', [0, .35, -.85], [-55, 0, 0], 1], ['kj_dorsal_m', 'tail1', [0, 1.0, -.95], [-75, 0, 0], .9], ['kj_dorsal_s', 'tail2', [0, 1.1, -.82], [-75, 0, 0], 1],
     ['kj_dorsal_s', 'tail3', [0, 1.1, .7], [75, 0, 0], .85], ['kj_dorsal_s', 'tail4', [0, 1.1, .56], [75, 0, 0], .7], ['kj_dorsal_s', 'tail5', [0, 1.0, .44], [75, 0, 0], .55]]},
-  {id: 'snapjaw', name: 'Snapjaw Turtle Brute', skel: 'brute', fx: {glow: true, bg: 'day', aura: false}, parts: [
-    ['tt_torso', 'hips', [0, 0, 0], [0, 0, 0], [1.1, 1.15]], ['tt_shell', 'spine', [0, .9, -.85], [-90, 0, 0], 1.1], ['tt_plastron', 'spine', [0, .5, 1.35], [90, 0, 0], 1],
-    ['tt_neck', 'neck', [0, 0, 0], [0, 0, 0], 1], ['tt_head', 'head', [0, -.1, -.1], [0, 0, 0], 1.3], ['tt_jaw', 'jaw', [0, -.05, -.25], [0, 0, 0], 1.3],
-    ['tt_limb', 'upperarm.L', [0, 0, 0], [0, 0, 0], [1.1, 1.15]], ['tt_limb', 'forearm.L', [0, 0, 0], [0, 0, 0], [1.0, 1.1]], ['tt_hand', 'hand.L', [0, 0, 0], [0, 0, 0], 1.1],
-    ['tt_limb', 'thigh.L', [0, 0, 0], [0, 0, 0], [1.3, 1.0]], ['tt_limb', 'shin.L', [0, 0, 0], [0, 0, 0], [1.15, 1.1]], ['tt_foot', 'foot.L', [0, 0, 0], [0, 0, 0], 1.15],
-    ['tt_tail', 'hips', [0, .2, -1.3], [-120, 0, 0], 1, 'solo']]},
+  {id: 'sailback', name: 'Sailback Spinosaur', skel: 'theropod', fx: {glow: true, bg: 'day', aura: false}, parts: [
+    ['dn_body', 'hips', [0, 0, 0], [0, 0, 0], 1], ['dn_neck', 'neck', [0, 0, 0], [0, 0, 0], 1], ['dn_head', 'head', [0, 0, 0], [0, 0, 0], 1], ['dn_jaw', 'jaw', [0, 0, 0], [0, 0, 0], 1],
+    ['dn_sail', 'spine', [0, .5, -1.25], [-90, 0, 0], 1],
+    ['dn_thigh', 'thigh.L', [0, 0, 0], [0, 0, 0], 1], ['dn_shin', 'shin.L', [0, 0, 0], [0, 0, 0], 1], ['dn_foot', 'foot.L', [0, 0, 0], [0, 0, 0], 1],
+    ['dn_upperarm', 'upperarm.L', [0, 0, 0], [0, 0, 0], 1], ['dn_forearm', 'forearm.L', [0, 0, 0], [0, 0, 0], 1], ['dn_hand', 'hand.L', [0, 0, 0], [0, 0, 0], 1],
+    ['dn_tail', 'tail1', [0, 0, 0], [0, 0, 0], [1.05, 1.9]], ['dn_tail', 'tail2', [0, 0, 0], [0, 0, 0], [.9, 2.25]], ['dn_tail', 'tail3', [0, 0, 0], [0, 0, 0], [.74, 2.8]],
+    ['dn_tail', 'tail4', [0, 0, 0], [0, 0, 0], [.6, 3.4]], ['dn_tail', 'tail5', [0, 0, 0], [0, 0, 0], [.47, 3.9]], ['dn_tail', 'tail6', [0, 0, 0], [0, 0, 0], [.36, 4.5]],
+    ['dn_tail_fin', 'tail4', [0, .9, .45], [90, 0, 0], .8, 'solo']]},
   {id: 'mechadragon', name: 'Mecha Dragon', skel: 'dragon', fx: {glow: true, bg: 'neon', col: '#3a8aff', aura: true}, parts: [
     ['md_belly', 'hips', [0, 0, 0], [0, 180, 0], 1.05], ['md_chest', 'spine', [0, 0, 0], [0, 180, 0], .95], ['md_neck', 'neck', [0, 0, 0], [0, 0, 0], null],
     ['md_head', 'head', [0, -.3, -.4], [0, 0, 0], 1.4], ['md_jaw', 'jaw', [0, -.05, -.1], [8, 0, 0], 1.4], ['md_tail', 'tail1', [0, 0, 0], [0, 0, 0], null],

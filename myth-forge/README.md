@@ -31,3 +31,5 @@ MajorasPride's creature + mech builder for Titan Clash. Open `index.html` (GitHu
 - Craft (toy box) materials: cardboard, polystyrene, sponge, floaty foam, felt, stitched felt, knit, sackcloth, denim, patchwork, paper, toy rubber/plastic (procedural, ours; look inspired by LittleBigPlanet).
 - Two chats can work on Myth Forge at once: always `git fetch` + rebase before pushing, and rebuild index.html after a merge.
 - Double-tap a part in the Add grid = add it right away (quickAdd): picked bone, else the first bone whose category fits; weapons into the right hand's palm.
+- Starters now: Hero Mech, Basalt Kaiju, Sailback Spinosaur (dino-kit.js on the 'theropod' body type), Mecha Dragon. Turtle Kit stays as parts only.
+- Asked for next: Beholder body type; easy make-your-own skeleton / remove bones (tools are under Skeleton › More now); 3-headed dragon body type with wing-arms (arms are the wings), 2 legs, 2 tails.
