@@ -59,3 +59,5 @@ MajorasPride's creature + mech builder for Titan Clash. Open `index.html` (GitHu
 ## Credits
 - Texture Pack by Lynocs (CC0 1.0) — Tree Bark. Thank you, Lynocs!
 - Quaternius packs (CC0) — see packs/index.js.
+
+- **Candy** skins (Nov 9, ours, made in code): candy cane, peppermint swirl, pink frosting + sprinkles, chocolate glaze + sprinkles, chocolate bar, cotton candy, marshmallow, honeycomb toffee, waffle cone, licorice, jelly bean, caramel, rainbow lollipop, vanilla frosting, gummy (red/green/blue/orange, see-through), rock candy, hard candy. No free 3D candy texture pack worth using turned up (mostly 2D candy icons), so these are original.

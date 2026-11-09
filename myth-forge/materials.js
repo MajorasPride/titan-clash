@@ -102,6 +102,30 @@
         x.strokeStyle = `rgba(${v},${v},${v},.5)`; x.lineWidth = R(1.5, 3.5); wrap(x, () => { x.beginPath(); x.moveTo(px, py); x.quadraticCurveTo(px + Math.cos(a) * l * .5 + R(-6, 6), py + Math.sin(a) * l * .5, px + Math.cos(a) * l, py + Math.sin(a) * l); x.stroke(); }); } },
     fur_over(x, k = 1) { x.lineCap = 'round'; for (let i = 0; i < 5000; i++) { const px = R(0, S), py = R(0, S), l = R(6, 16) * k, a = R(1.3, 1.8), v = rnd() < .5 ? '255,255,255' : '0,0,0';
         x.strokeStyle = `rgba(${v},.13)`; x.lineWidth = R(1, 2); x.beginPath(); x.moveTo(px, py); x.lineTo(px + Math.cos(a) * l, py + Math.sin(a) * l); x.stroke(); } },
+    // ---- candy (ours, made in code)
+    candycane(x) { fill(x, '#f6f2f0'); x.fillStyle = '#d81e2a'; for (let k = -S; k < S * 2; k += 64) { x.beginPath(); x.moveTo(k, 0); x.lineTo(k + 26, 0); x.lineTo(k + 26 + S, S); x.lineTo(k + S, S); x.fill(); }
+      x.fillStyle = '#2a9a4a'; for (let k = -S + 32; k < S * 2; k += 128) { x.beginPath(); x.moveTo(k, 0); x.lineTo(k + 8, 0); x.lineTo(k + 8 + S, S); x.lineTo(k + S, S); x.fill(); } noiseLayer(x, 30, 40, 120, ['#fff'], .12); },
+    peppermint(x) { fill(x, '#f6f2f0'); const n = 2, w = S / n; for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const cx = i * w + w / 2, cy = j * w + w / 2;
+        for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; x.fillStyle = k % 2 ? '#f6f2f0' : '#d81e2a'; x.beginPath(); x.moveTo(cx, cy); for (let t = 0; t <= 1.001; t += .1) { const r = t * w * .46, aa = a + t * 1.2; x.lineTo(cx + Math.cos(aa) * r, cy + Math.sin(aa) * r); }
+          for (let t = 1; t >= 0; t -= .1) { const r = t * w * .46, aa = a + Math.PI / 4 + t * 1.2; x.lineTo(cx + Math.cos(aa) * r, cy + Math.sin(aa) * r); } x.fill(); } } },
+    sprinkles(x, base) { fill(x, base || '#f4a8c8'); noiseLayer(x, 40, 30, 90, ['#fff', '#e888b0'], .2); const cols = ['#ff4040', '#40a0ff', '#ffe040', '#40d070', '#ffffff', '#b060ff', '#ff9a30'];
+      for (let i = 0; i < 520; i++) { const px = R(0, S), py = R(0, S), a = R(0, 3.2); x.strokeStyle = cols[(rnd() * cols.length) | 0]; x.lineWidth = 6; x.lineCap = 'round'; wrap(x, () => { x.beginPath(); x.moveTo(px, py); x.lineTo(px + Math.cos(a) * 14, py + Math.sin(a) * 14); x.stroke(); }); } },
+    glazed(x) { G.sprinkles(x, '#6a3a1e'); },
+    chocolate(x) { fill(x, '#5a3018'); const n = 4, w = S / n; for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const px = i * w, py = j * w, g = x.createLinearGradient(px, py, px + w, py + w);
+        g.addColorStop(0, '#8a5230'); g.addColorStop(.5, '#6a3a1e'); g.addColorStop(1, '#3a1c0c'); x.fillStyle = g; x.fillRect(px + 8, py + 8, w - 16, w - 16); x.fillStyle = '#7a4626'; x.fillRect(px + 20, py + 20, w - 40, w - 40); } },
+    cottoncandy(x) { fill(x, '#f8c8e0'); noiseLayer(x, 260, 15, 70, ['#ffffff', '#b8d8ff', '#ffb0d8', '#e8c8ff'], .35); x.lineCap = 'round'; for (let i = 0; i < 2500; i++) { x.strokeStyle = 'rgba(255,255,255,.25)'; x.lineWidth = 1; const px = R(0, S), py = R(0, S); x.beginPath(); x.moveTo(px, py); x.quadraticCurveTo(px + R(-20, 20), py + R(-20, 20), px + R(-30, 30), py + R(-30, 30)); x.stroke(); } },
+    marshmallow(x) { fill(x, '#fbf4f0'); noiseLayer(x, 160, 10, 60, ['#ffffff', '#f0e0e4', '#fde8ee'], .4); for (let i = 0; i < 3000; i++) { x.fillStyle = 'rgba(255,255,255,.5)'; x.fillRect(R(0, S), R(0, S), 2, 2); } },
+    honeycomb(x) { fill(x, '#b8701a'); const r = 30; for (let j = -1; j < S / (r * 1.5) + 1; j++) for (let i = -1; i < S / (r * 1.73) + 1; i++) { const cx = i * r * 1.73 + (j % 2) * r * .86, cy = j * r * 1.5;
+        x.beginPath(); for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3 + Math.PI / 6; x.lineTo(cx + Math.cos(a) * r * .82, cy + Math.sin(a) * r * .82); } x.closePath();
+        const g = x.createRadialGradient(cx, cy, 2, cx, cy, r); g.addColorStop(0, '#ffd870'); g.addColorStop(1, '#e09a28'); x.fillStyle = g; x.fill(); } },
+    waffle(x) { fill(x, '#d8a058'); x.strokeStyle = '#a86a28'; x.lineWidth = 14; for (let k = -S; k < S * 2; k += 64) { x.beginPath(); x.moveTo(k, 0); x.lineTo(k + S, S); x.stroke(); x.beginPath(); x.moveTo(k, S); x.lineTo(k + S, 0); x.stroke(); }
+      noiseLayer(x, 80, 10, 40, ['#f0c070', '#9a5a20'], .25); },
+    licorice(x) { fill(x, '#141012'); for (let k = -S; k < S * 2; k += 40) { const g = x.createLinearGradient(k, 0, k + 40, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.5, 'rgba(255,255,255,.18)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g;
+        x.save(); x.transform(1, 0, .6, 1, 0, 0); x.fillRect(k - S, 0, 40, S); x.restore(); } },
+    jellybean(x) { fill(x, '#ffffff'); noiseLayer(x, 50, 30, 100, ['#f0f0f0', '#ffffff'], .3); for (let i = 0; i < 700; i++) { x.fillStyle = `rgba(${rnd() < .5 ? '120,20,60' : '255,255,255'},.55)`; x.beginPath(); x.arc(R(0, S), R(0, S), R(1.5, 4), 0, 7); x.fill(); } },
+    caramel(x) { fill(x, '#c8781e'); noiseLayer(x, 120, 20, 90, ['#f0a040', '#8a4a10', '#ffd080'], .35); x.strokeStyle = 'rgba(255,220,150,.35)'; for (let i = 0; i < 40; i++) { x.lineWidth = R(2, 6); x.beginPath(); let px = R(0, S), py = R(0, S); x.moveTo(px, py); for (let k = 0; k < 5; k++) { px += R(-40, 40); py += R(10, 40); x.lineTo(px, py); } x.stroke(); } },
+    lollipop(x) { const cols = ['#ff4a4a', '#ffa030', '#ffe840', '#50d060', '#40a8ff', '#a060ff']; for (let k = -S, i = 0; k < S * 2; k += 32, i++) { x.fillStyle = cols[((i % cols.length) + cols.length) % cols.length]; x.beginPath(); x.moveTo(k, 0); x.lineTo(k + 32, 0); x.lineTo(k + 32 + S, S); x.lineTo(k + S, S); x.fill(); } },
+    frosting(x) { fill(x, '#f8f0e8'); x.strokeStyle = 'rgba(200,170,150,.35)'; x.lineWidth = 3; for (let y = 10; y < S; y += 22) { x.beginPath(); for (let xx = 0; xx <= S; xx += 16) x.lineTo(xx, y + Math.sin(xx * .05 + y) * 8); x.stroke(); } noiseLayer(x, 60, 20, 80, ['#ffffff'], .3); },
     frost(x) { fill(x, '#eef4fa'); noiseLayer(x, 300, 3, 18, ['#ffffff', '#c8d4e0'], .35); },
     screen(x) { fill(x, '#ddd'); for (let y = 0; y < S; y += 4) { x.fillStyle = 'rgba(0,0,0,.25)'; x.fillRect(0, y, S, 2); } },
   };
@@ -199,6 +223,26 @@ vec3 hue(float h){ return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.
     ['opal', 'Opal', 'Cosmic & Special', 'plain', 0xffffff, .2, .1, {fx: 9}], ['solar', 'Sun plasma', 'Cosmic & Special', 'plain', 0xffffff, .6, 0, {fx: 10}],
     ['cybergrid', 'Cyber grid', 'Cosmic & Special', 'plain', 0xffffff, .4, .5, {fx: 11}], ['cosmicfur', 'Cosmic fur', 'Cosmic & Special', 'fur', 0xffffff, .8, 0, {fx: 1, sky: 1, furmix: 1}],
     ['bark1', 'Bark 1', 'Bark (Lynocs, CC0)', 'img:bark1', 0xffffff, .85, 0], ['bark2', 'Bark 2', 'Bark (Lynocs, CC0)', 'img:bark2', 0xffffff, .85, 0], ['bark3', 'Bark 3', 'Bark (Lynocs, CC0)', 'img:bark3', 0xffffff, .85, 0], ['bark4', 'Bark 4', 'Bark (Lynocs, CC0)', 'img:bark4', 0xffffff, .85, 0], ['bark5', 'Bark 5', 'Bark (Lynocs, CC0)', 'img:bark5', 0xffffff, .85, 0], ['bark6', 'Bark 6', 'Bark (Lynocs, CC0)', 'img:bark6', 0xffffff, .85, 0], ['bark7', 'Bark 7', 'Bark (Lynocs, CC0)', 'img:bark7', 0xffffff, .85, 0], ['bark8', 'Bark 8', 'Bark (Lynocs, CC0)', 'img:bark8', 0xffffff, .85, 0], ['bark9', 'Bark 9', 'Bark (Lynocs, CC0)', 'img:bark9', 0xffffff, .85, 0], ['bark10', 'Bark 10', 'Bark (Lynocs, CC0)', 'img:bark10', 0xffffff, .85, 0],
+    ['candycane', 'Candy cane', 'Candy', 'candycane', 0xffffff, 0.25, 0],
+    ['peppermint', 'Peppermint swirl', 'Candy', 'peppermint', 0xffffff, 0.15, 0],
+    ['sprinkles', 'Pink frosting + sprinkles', 'Candy', 'sprinkles', 0xffffff, 0.5, 0],
+    ['glazed', 'Chocolate glaze + sprinkles', 'Candy', 'glazed', 0xffffff, 0.25, 0],
+    ['chocolate', 'Chocolate bar', 'Candy', 'chocolate', 0xffffff, 0.35, 0],
+    ['cottoncandy', 'Cotton candy', 'Candy', 'cottoncandy', 0xffb8de, 0.95, 0],
+    ['marshmallow', 'Marshmallow', 'Candy', 'marshmallow', 0xe8dcd8, 0.9, 0],
+    ['honeycomb', 'Honeycomb toffee', 'Candy', 'honeycomb', 0xffffff, 0.3, 0],
+    ['waffle', 'Waffle cone', 'Candy', 'waffle', 0xffffff, 0.8, 0],
+    ['licorice', 'Licorice', 'Candy', 'licorice', 0xffffff, 0.2, 0],
+    ['jellybean', 'Jelly bean (tint it)', 'Candy', 'jellybean', 0xff6a9a, 0.25, 0],
+    ['caramel', 'Caramel', 'Candy', 'caramel', 0xffffff, 0.2, 0],
+    ['lollipop', 'Rainbow lollipop', 'Candy', 'lollipop', 0xffffff, 0.15, 0],
+    ['frosting', 'Vanilla frosting', 'Candy', 'frosting', 0xe8dccc, 0.6, 0],
+    ['gummyred', 'Gummy (red)', 'Candy', 'plain', 0xff2a3a, 0.12, 0, {transparent: true, opacity: .82}],
+    ['gummygreen', 'Gummy (green)', 'Candy', 'plain', 0x40e050, 0.12, 0, {transparent: true, opacity: .82}],
+    ['gummyblue', 'Gummy (blue)', 'Candy', 'plain', 0x3a8aff, 0.12, 0, {transparent: true, opacity: .82}],
+    ['gummyorange', 'Gummy (orange)', 'Candy', 'plain', 0xffa020, 0.12, 0, {transparent: true, opacity: .82}],
+    ['rockcandy', 'Rock candy', 'Candy', 'crystal', 0xf0a8f0, 0.08, 0.1, {transparent: true, opacity: .9}],
+    ['hardcandy', 'Hard candy (tint it)', 'Candy', 'plain', 0xffd040, 0.05, 0, {transparent: true, opacity: .88}],
     ['toyrubber', 'Toy rubber', 'Craft (toy box)', 'plain', 0xe85a3a, .55, 0], ['toyplastic', 'Shiny toy plastic', 'Craft (toy box)', 'plain', 0x3a8ae8, .25, 0],
   ];
   const ALIAS = {paint2: 'paint2', fur: 'fur', feather: 'feather', stone: 'stone', wood: 'wood', cloth: 'cloth', leather: 'leather', chitin: 'chitin', glow: 'glow', screen: 'screen'};
