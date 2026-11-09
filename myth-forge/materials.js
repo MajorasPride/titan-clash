@@ -135,6 +135,10 @@
     ['felt', 'Felt', 'Craft (toy box)', 'felt', 0xc04a4a, 1, 0], ['feltgreen', 'Green felt', 'Craft (toy box)', 'felt', 0x4a9a5a, 1, 0], ['stitchfelt', 'Stitched felt', 'Craft (toy box)', 'stitched', 0x5a7ad0, 1, 0],
     ['knit', 'Knitted wool', 'Craft (toy box)', 'knit', 0xd8b890, .95, 0], ['sack', 'Sackcloth (burlap)', 'Craft (toy box)', 'burlap', 0xb89a6a, 1, 0], ['denim', 'Denim', 'Craft (toy box)', 'denim', 0x4a6a9a, .9, 0],
     ['patchwork', 'Patchwork quilt', 'Craft (toy box)', 'patchwork', 0xffffff, .95, 0], ['paper', 'Crumpled paper', 'Craft (toy box)', 'paper', 0xf0ece0, .9, 0],
+    ['heroskin', 'Hero skin (tint it)', 'Hero', 'skin', 0xf4ece6, .62, 0], ['herofur', 'Hero fur (tint it)', 'Hero', 'fur', 0xf2ede6, .9, 0], ['herohair', 'Hair (tint it)', 'Hero', 'fur', 0xf6f2ec, .5, 0],
+    ['herolip', 'Lips', 'Hero', 'skin', 0xd8a8a0, .5, 0], ['herocloth', 'Cloth (tint it)', 'Hero', 'plain', 0xf2f2f2, .88, 0], ['heroleather', 'Leather (tint it)', 'Hero', 'leather', 0xe8dcd0, .62, 0],
+    ['herometal', 'Armor metal (tint it)', 'Hero', 'plain', 0xf2f4f8, .32, .8], ['eyebrown', 'Brown eye', 'Hero', 'plain', 0x5a3a20, .2, 0], ['eyeblue', 'Blue eye', 'Hero', 'plain', 0x3a7ac0, .2, 0],
+    ['eyegreen', 'Green eye', 'Hero', 'plain', 0x3a8a4a, .2, 0], ['eyegrey', 'Grey eye', 'Hero', 'plain', 0x8a949e, .2, 0],
     ['toyrubber', 'Toy rubber', 'Craft (toy box)', 'plain', 0xe85a3a, .55, 0], ['toyplastic', 'Shiny toy plastic', 'Craft (toy box)', 'plain', 0x3a8ae8, .25, 0],
   ];
   const ALIAS = {paint2: 'paint2', fur: 'fur', feather: 'feather', stone: 'stone', wood: 'wood', cloth: 'cloth', leather: 'leather', chitin: 'chitin', glow: 'glow', screen: 'screen'};
