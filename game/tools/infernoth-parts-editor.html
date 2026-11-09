@@ -39,6 +39,9 @@
   .sw2{width:26px;height:26px;border-radius:6px;border:2px solid #555;padding:0}
   #out{position:fixed;left:8px;right:8px;top:60px;height:100px;display:none;background:#000;color:#ffd9b0;border:1px solid #e0782a;border-radius:8px;font-size:10px;z-index:5}
   #ring{position:fixed;border:2px solid #ff4b4b;border-radius:50%;pointer-events:none;display:none;transform:translate(-50%,-50%);z-index:2}
+  .libcats{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start}.libcats button{flex:none;font-size:12px;padding:8px 10px}
+  .libgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:5px;max-height:30vh;overflow:auto;margin:3px 0}
+  .libb{display:flex;flex-direction:column;align-items:center;padding:4px;font-size:11px;gap:2px}.libb img{width:64px;height:64px}
   .hint{opacity:.6;font-size:10px;text-align:center}
 </style>
 </head>
@@ -52,11 +55,20 @@
 <textarea id="out" readonly></textarea>
 <div id="panel">
   <div id="title">Tap a part</div>
-  <div class="tabs"><button data-tab="parts" class="on">Parts</button><button data-tab="move">Move</button><button data-tab="sculpt">Sculpt</button><button data-tab="paint">Paint</button><button data-tab="view">View</button></div>
+  <div class="tabs"><button data-tab="parts" class="on">Parts</button><button data-tab="lib">Library</button><button data-tab="move">Move</button><button data-tab="sculpt">Sculpt</button><button data-tab="paint">Paint</button><button data-tab="view">View</button></div>
 
   <div class="pane on" id="t-parts">
     <div class="btns"><button data-src="A">Model 1</button><button data-src="B">Model 2</button><button data-src="C">v0.3</button><button data-src="off">Remove</button></div>
     <div class="btns"><button id="bDup">Duplicate</button><button id="bDel">Delete copy</button><button id="bFlip">Flip (mirror)</button><button id="bSym">Copy to other side</button><button id="bResetPart">Reset part</button></div>
+  </div>
+
+  <div class="pane" id="t-lib">
+    <div class="btns libcats" id="libCats"></div>
+    <div class="libgrid" id="libGrid"></div>
+    <div class="btns"><button id="bLibFront">Add without tapping</button><button id="bImport">Import file…</button><button id="bImpDel">Remove import</button>
+      <input type="file" id="fImport" hidden multiple accept=".glb,.gltf,.obj,.fbx,.zip"></div>
+    <div class="hint" id="libNote"></div>
+    <div class="hint">Pick a part, then tap the body: it snaps onto the surface. Import takes .glb .gltf .obj .fbx, or a whole .zip pack.</div>
   </div>
 
   <div class="pane" id="t-move">
@@ -197,6 +209,7 @@ function buildSlot(i) {
   if (views[i]) root.remove(views[i].G);
   const st = ST.slots[i], G = new THREE.Group(); root.add(G); views[i] = {G, m: null};
   if (st.src === 'off') return;
+  if (st.lib) return buildLib(i, st, G);
   const S = SRC[st.src], k = st.k, inf = S.info[k]; if (!inf) return;
   const anchor = SRC[ST.base].info[k] || inf, auto = st.src === ST.base ? 1 : anchor.size / inf.size;
   let m;
@@ -215,36 +228,42 @@ function buildSlot(i) {
 function rebuildAll() { views.forEach(v => v && root.remove(v.G)); views = []; ST.slots.forEach((_, i) => buildSlot(i)); attachGizmo(); }
 
 // ================= outliner + panels =================
-const slotName = st => PARTS[st.k] + (st.copy ? ' copy ' + st.copy : '');
+const slotName = st => st.lib ? ((LIB[st.lib] || {name: 'Missing import'}).name + ' ' + st.copy) : PARTS[st.k] + (st.copy ? ' copy ' + st.copy : '');
 function outliner() {
   const el = $('outliner'); el.innerHTML = '';
   for (const [cat, ids] of CATS) { const h = document.createElement('h3'); h.textContent = cat; el.append(h);
     ST.slots.forEach((st, i) => { if (!ids.includes(st.k)) return; const d = document.createElement('div'); if (i === sel) d.className = 'sel';
       d.innerHTML = `<span class="sw" style="background:#${COLS[st.k].toString(16).padStart(6, '0')}"></span>${slotName(st)}<span class="src">${{A: 'M1', B: 'M2', C: 'v0.3', off: '–'}[st.src]}</span>`;
       d.onclick = () => { select(i); if (innerWidth < 700) { $('outliner').classList.remove('open'); $('bList').classList.remove('on'); } }; el.append(d); }); }
+  if (ST.slots.some(s => s.lib)) { const h = document.createElement('h3'); h.textContent = 'ADDED PARTS'; el.append(h);
+    ST.slots.forEach((st, i) => { if (!st.lib) return; const d = document.createElement('div'); if (i === sel) d.className = 'sel';
+      d.innerHTML = `<span class="sw" style="background:#ffd25a"></span>${slotName(st)}<span class="src">${st.lib.startsWith('imp:') ? 'file' : 'lib'}</span>`;
+      d.onclick = () => { select(i); if (innerWidth < 700) { $('outliner').classList.remove('open'); $('bList').classList.remove('on'); } }; el.append(d); }); }
 }
 function syncUI() { const st = ST.slots[sel]; if (!st) return;
   $('title').textContent = `${slotName(st)} — ${st.src === 'off' ? 'removed' : SRC[st.src].name}${st.flip ? ' (flipped)' : ''}`;
   document.querySelectorAll('[data-src]').forEach(b => b.classList.toggle('on', b.dataset.src === st.src));
   $('sc').value = st.s; $('tint').value = st.tint; $('bBase').textContent = 'Base: ' + SRC[ST.base].name;
-  $('bDel').style.display = st.copy ? '' : 'none'; $('bSym').style.display = MIRROR[st.k] != null ? '' : 'none'; }
+  $('bDel').style.display = st.copy ? '' : 'none'; $('bSym').style.display = MIRROR[st.k] != null ? '' : 'none';
+  const L = !!st.lib; document.querySelector('[data-src="A"]').parentElement.style.display = L ? 'none' : '';
+  if (L) { $('bSym').style.display = ''; $('bDel').textContent = 'Delete part'; } else $('bDel').textContent = 'Delete copy'; }
 function select(i) { if (i !== sel && navigator.vibrate) try { navigator.vibrate(12); } catch (e) {} sel = i; if (iso) rebuildAll(); else attachGizmo(); outliner(); syncUI(); }
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
   document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
   document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.id === 't-' + b.dataset.tab));
-  tab = b.dataset.tab; attachGizmo(); updateOrbit(); });
+  tab = b.dataset.tab; if (tab !== 'lib' && placing) { placing = null; } if (tab === 'lib') libGridUI(); attachGizmo(); updateOrbit(); });
 let tab = 'parts';
 
 // parts tab
 document.querySelectorAll('[data-src]').forEach(b => b.onclick = () => { snap(); const st = ST.slots[sel]; st.src = b.dataset.src; st.p = [0, 0, 0]; st.r = [0, 0, 0]; st.s = 1; buildSlot(sel); attachGizmo(); outliner(); syncUI(); save(); });
 $('bDup').onclick = () => { snap(); const st = ST.slots[sel], n = JSON.parse(JSON.stringify(st)); n.copy = Math.max(0, ...ST.slots.filter(s => s.k === st.k).map(s => s.copy)) + 1; n.p[0] += 1.5;
   ST.slots.push(n); sel = ST.slots.length - 1; buildSlot(sel); attachGizmo(); outliner(); syncUI(); save(); tip('Duplicated — move it with the Move tab'); };
-$('bDel').onclick = () => { if (!ST.slots[sel].copy) return; snap(); ST.slots.splice(sel, 1); sel = 0; rebuildAll(); outliner(); syncUI(); save(); };
+$('bDel').onclick = () => { if (!ST.slots[sel].copy && !ST.slots[sel].lib) return; snap(); ST.slots.splice(sel, 1); sel = 0; rebuildAll(); outliner(); syncUI(); save(); };
 $('bFlip').onclick = () => { snap(); ST.slots[sel].flip = !ST.slots[sel].flip; buildSlot(sel); attachGizmo(); syncUI(); save(); };
-$('bSym').onclick = () => { const st = ST.slots[sel], o = ST.slots.findIndex(s => s.k === MIRROR[st.k] && !s.copy); if (o < 0) return; snap();
+$('bSym').onclick = () => { if (ST.slots[sel].lib) return libMirror(); const st = ST.slots[sel], o = ST.slots.findIndex(s => s.k === MIRROR[st.k] && !s.copy); if (o < 0) return; snap();
   const t = ST.slots[o]; t.src = st.src; t.p = [-st.p[0], st.p[1], st.p[2]]; t.r = [st.r[0], -st.r[1], -st.r[2]]; t.s = st.s; t.tint = st.tint;
   buildSlot(o); save(); tip('Copied to ' + PARTS[t.k]); };
-$('bResetPart').onclick = () => { snap(); const st = ST.slots[sel]; ST.slots[sel] = {...newSlot(st.k, st.src), copy: st.copy}; buildSlot(sel); attachGizmo(); syncUI(); save(); };
+$('bResetPart').onclick = () => { if (ST.slots[sel].lib) { snap(); const st = ST.slots[sel]; st.s = 1; st.tint = '#ffffff'; st.cut.L = []; buildSlot(sel); attachGizmo(); syncUI(); save(); return; } snap(); const st = ST.slots[sel]; ST.slots[sel] = {...newSlot(st.k, st.src), copy: st.copy}; buildSlot(sel); attachGizmo(); syncUI(); save(); };
 
 // move tab: gizmo
 const gizmo = new TransformControls(camera, canvas); scene.add(gizmo); gizmo.setSize(matchMedia('(pointer:coarse)').matches ? 1.5 : .9);
@@ -310,7 +329,7 @@ function stroke(x, y) {
   const st = ST.slots[sel], S = SRC[st.src], local = v.m.worldToLocal(hit.point.clone());
   const R = (+$('brush').value) / (S.k * v.G.scale.x), R2 = R * R, power = Math.min(1, +$('str').value * pressure);
   if (brush === 'erase') return eraseAt(st, S, local, R2);
-  if (S.code) return tip('Sculpt works on Model 1 / Model 2 parts');
+  if (S.code) return tip('Sculpt works on Model 1 / Model 2 parts (use Erase on others)');
   const p = S.geo.attributes.position, n = S.geo.attributes.normal, D = ST.sculpt[st.src];
   const centers = [local]; if (mirrorX) centers.push(new THREE.Vector3(2 * S.cx - local.x, local.y, local.z));
   let hitN = null; if (brush === 'flatten') { hitN = hit.face.normal.clone(); }
@@ -333,6 +352,7 @@ function stroke(x, y) {
   if (moved.size) { p.needsUpdate = true; S.geo.computeVertexNormals(); }
 }
 function eraseAt(st, S, local, R2) {
+  if (st.lib) return libErase(st, local, R2);
   const cut = new Set(st.cut[st.src]); let n = 0;
   if (S.code) S.meshes[st.k].forEach((pm, mi) => { const F = pm.geo.userData.full, P = pm.geo.attributes.position;
     for (let t = 0; t < F.length / 3; t++) { const key = mi + ':' + t; if (cut.has(key)) continue; let cx = 0, cy = 0, cz = 0;
@@ -362,9 +382,194 @@ addEventListener('pointerup', e => {
   touches.delete(e.pointerId);
   if (stroking) { stroking = false; save(); }
   else if (down && !gizmo.dragging && Math.hypot(e.clientX - down[0], e.clientY - down[1]) < 6) {
-    const hit = cast(e.clientX, e.clientY, views.map(v => v && v.m)); if (hit) { let o = hit.object; while (o && o.userData.slot == null) o = o.parent; if (o) { select(o.userData.slot); tip(slotName(ST.slots[o.userData.slot]) + ' selected'); } } }
+    const hit = cast(e.clientX, e.clientY, views.map(v => v && v.m)); if (placing) { if (hit) libPlace(hit); else tip('Tap on the body itself'); } else if (hit) { let o = hit.object; while (o && o.userData.slot == null) o = o.parent; if (o) { select(o.userData.slot); tip(slotName(ST.slots[o.userData.slot]) + ' selected'); } } }
   down = null;
 });
+
+
+// ================= PARTS LIBRARY (snap-on parts) =================
+// Original parts are built here in code (ours: free to use anywhere, no license needed).
+// Imported files (.glb .gltf .obj .fbx .zip) are kept in this browser (IndexedDB) and show up under "Imported".
+SRC.L = {name: 'Library', k: 1, code: true};
+const LM = {                                                   // library materials (tint multiplies these)
+  bone:    () => new THREE.MeshStandardMaterial({color: 0xe8dcc0, roughness: .75}),
+  horn:    () => new THREE.MeshStandardMaterial({color: 0x4a3e36, roughness: .55}),
+  crystal: () => new THREE.MeshStandardMaterial({color: 0x8fd4ff, emissive: 0x2a7aff, emissiveIntensity: .55, roughness: .15, metalness: .1, flatShading: true}),
+  scale:   () => new THREE.MeshStandardMaterial({color: 0x5a4a40, roughness: .6}),
+  dark:    () => new THREE.MeshStandardMaterial({color: 0x24242a, roughness: .5}),
+  metal:   () => new THREE.MeshStandardMaterial({color: 0xb8c0cc, roughness: .35, metalness: .6}),
+  paint:   () => new THREE.MeshStandardMaterial({color: 0xe8e8ee, roughness: .4, metalness: .2}),
+  accent:  () => new THREE.MeshStandardMaterial({color: 0xe0782a, roughness: .45, metalness: .2}),
+  glow:    () => new THREE.MeshStandardMaterial({color: 0xffb070, emissive: 0xff5a1a, emissiveIntensity: 1.4, roughness: .3}),
+  skin:    () => new THREE.MeshStandardMaterial({color: 0x6a3a3a, roughness: .8, side: THREE.DoubleSide}),
+};
+const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+const bez = (...p) => p.length === 3 ? new THREE.QuadraticBezierCurve3(...p) : new THREE.CubicBezierCurve3(...p);
+// tube that thins out along a curve (horns, claws, fangs, tentacles)
+function taper(curve, r0, r1, seg = 24, rad = 10, flat = 1) {
+  const pos = [], idx = [], fr = curve.computeFrenetFrames(seg, false);
+  for (let i = 0; i <= seg; i++) { const t = i / seg, c = curve.getPointAt(t), r = r0 + (r1 - r0) * Math.pow(t, .9);
+    for (let j = 0; j < rad; j++) { const a = j / rad * Math.PI * 2, N = fr.normals[i], B = fr.binormals[i];
+      pos.push(c.x + (N.x * Math.cos(a) * flat + B.x * Math.sin(a)) * r, c.y + (N.y * Math.cos(a) * flat + B.y * Math.sin(a)) * r, c.z + (N.z * Math.cos(a) * flat + B.z * Math.sin(a)) * r); } }
+  for (let i = 0; i < seg; i++) for (let j = 0; j < rad; j++) { const a = i * rad + j, b = i * rad + (j + 1) % rad, c = a + rad, d = b + rad; idx.push(a, c, b, b, c, d); }
+  const tip = curve.getPointAt(1), bas = curve.getPointAt(0), ti = pos.length / 3; pos.push(tip.x, tip.y, tip.z); const bi = ti + 1; pos.push(bas.x, bas.y, bas.z);
+  for (let j = 0; j < rad; j++) { idx.push(seg * rad + j, seg * rad + (j + 1) % rad, ti); idx.push((j + 1) % rad, j, bi); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+const shape = pts => { const s = new THREE.Shape(); pts.forEach(([x, y], i) => i ? s.lineTo(x, y) : s.moveTo(x, y)); s.closePath(); return s; };
+const extr = (pts, depth = .2, bev = .06) => { const g = new THREE.ExtrudeGeometry(shape(pts), {depth, bevelEnabled: bev > 0, bevelThickness: bev, bevelSize: bev, bevelSegments: 2}); g.translate(0, 0, -depth / 2); return g; };
+const crystalGeo = (r = .35, h = 2) => new THREE.LatheGeometry([V2(0, 0), V2(r, h * .12), V2(r, h * .72), V2(0, h)], 6);
+function V2(x, y) { return new THREE.Vector2(x, y); }
+const at = (g, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, s = 1) => { const m = new THREE.Matrix4().compose(V3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), V3(s, s, s)); return g.applyMatrix4(m); };
+const P = (geo, mat) => ({geo, mat});                          // one piece = geometry + material key
+const D = Math.PI / 180;
+// every part points up (+Y) from its base at (0,0,0): "snap to surface" lines +Y up with the body surface
+const LIB = {
+  // ---------- kaiju ----------
+  hornCurve:  {cat: 'Horns', name: 'Curved horn', make: () => [P(taper(bez(V3(0, 0, 0), V3(0, 1.4, .1), V3(0, 2, -1.2)), .32, .02), 'horn')]},
+  hornSpike:  {cat: 'Horns', name: 'Spike horn', make: () => [P(taper(bez(V3(0, 0, 0), V3(0, 1, 0), V3(0, 2.2, .05)), .3, .01, 12), 'horn')]},
+  hornRam:    {cat: 'Horns', name: 'Ram horn', make: () => { const c = new THREE.CatmullRomCurve3([...Array(14).keys()].map(i => { const a = i * .48, r = 1.1 - i * .055; return V3(i * .07, Math.sin(a) * r, -(1 - Math.cos(a)) * r); })); return [P(taper(c, .38, .05, 40), 'horn')]; }},
+  hornBranch: {cat: 'Horns', name: 'Antler', make: () => [P(taper(bez(V3(0, 0, 0), V3(0, 1.2, -.3), V3(.1, 2.4, -.2)), .2, .03), 'bone'), P(taper(bez(V3(0, .9, -.2), V3(.4, 1.2, .2), V3(.7, 1.6, .3)), .11, .02, 12), 'bone'), P(taper(bez(V3(.05, 1.6, -.25), V3(-.4, 1.9, .1), V3(-.6, 2.3, .2)), .09, .02, 12), 'bone')]},
+  claw:       {cat: 'Claws + teeth', name: 'Claw', make: () => [P(taper(bez(V3(0, 0, 0), V3(0, .9, .2), V3(0, 1.3, 1)), .22, .01, 20, 10, .55), 'bone')]},
+  talons:     {cat: 'Claws + teeth', name: 'Talon set (3)', make: () => [-.35, 0, .35].map((x, i) => P(at(taper(bez(V3(0, 0, 0), V3(0, .7, .15), V3(0, 1, .8)), .16, .01, 16, 8, .55), x, 0, 0, 0, 0, (i - 1) * -12 * D, i === 1 ? 1.15 : 1), 'bone'))},
+  fang:       {cat: 'Claws + teeth', name: 'Fang', make: () => [P(taper(bez(V3(0, 0, 0), V3(0, .6, 0), V3(0, 1, .15)), .14, .01, 12, 8), 'bone')]},
+  toothRow:   {cat: 'Claws + teeth', name: 'Tooth row', make: () => [...Array(7).keys()].map(i => { const a = (i - 3) * 14 * D, s = 1 - Math.abs(i - 3) * .12; return P(at(taper(bez(V3(0, 0, 0), V3(0, .3, 0), V3(0, .5, .06)), .09, .01, 8, 6), Math.sin(a) * 1.2, 0, Math.cos(a) * 1.2 - 1.2, 0, 0, 0, s), 'bone'); })},
+  crystal:    {cat: 'Crystals + armor', name: 'Crystal', make: () => [P(crystalGeo(.35, 2), 'crystal')]},
+  crystalBig: {cat: 'Crystals + armor', name: 'Crystal cluster', make: () => [P(crystalGeo(.4, 2.4), 'crystal'), P(at(crystalGeo(.25, 1.4), .3, 0, .1, 0, 0, -25 * D), 'crystal'), P(at(crystalGeo(.22, 1.1), -.3, 0, -.1, 10 * D, 0, 30 * D), 'crystal'), P(at(crystalGeo(.18, .9), 0, 0, .35, 30 * D, 0, 0), 'crystal')]},
+  backPlate:  {cat: 'Crystals + armor', name: 'Back plate', make: () => [P(at(extr([[0, 0], [.7, .4], [.55, 1.4], [0, 2], [-.55, 1.4], [-.7, .4]], .12, .06), 0, 0, 0, -12 * D), 'scale')]},
+  spikeRow:   {cat: 'Crystals + armor', name: 'Spike row (5)', make: () => [...Array(5).keys()].map(i => P(at(new THREE.ConeGeometry(.22 - i * .025, 1.3 - i * .18, 7), 0, (1.3 - i * .18) / 2, -i * .55, -15 * D), 'horn'))},
+  scales:     {cat: 'Crystals + armor', name: 'Scale patch', make: () => { const a = []; for (let r = 0; r < 3; r++) for (let c = 0; c < 4 - (r % 2); c++) a.push(P(at(new THREE.SphereGeometry(.3, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), (c - 1.5 + (r % 2) * .5) * .5, 0, -r * .42, -20 * D, 0, 0, 1).scale(1, .35, 1.2), 'scale')); return a; }},
+  frill:      {cat: 'Head', name: 'Frill / fin', make: () => { const pts = [[0, 0]]; for (let i = 0; i <= 8; i++) { const a = (-70 + i * 17.5) * D, r = i % 2 ? 1.7 : 2.1; pts.push([Math.sin(a) * r, Math.cos(a) * r]); } return [P(extr(pts, .05, .02), 'skin'), ...[-60, -30, 0, 30, 60].map(d => P(at(taper(bez(V3(0, 0, 0), V3(0, 1, 0), V3(0, 2.05, 0)), .06, .02, 8, 6), 0, 0, 0, 0, 0, -d * D), 'bone'))]; }},
+  skull:      {cat: 'Head', name: 'Skull helmet', make: () => { const dome = at(new THREE.SphereGeometry(1, 20, 12, 0, Math.PI * 2, 0, Math.PI * .55)).scale(1, .75, 1.35);
+    return [P(dome, 'bone'), P(at(new THREE.SphereGeometry(.26, 12, 8), .45, .35, .95).scale(1, 1, .6), 'dark'), P(at(new THREE.SphereGeometry(.26, 12, 8), -.45, .35, .95).scale(1, 1, .6), 'dark'),
+      P(at(extr([[-.5, 0], [.5, 0], [.3, 1.3], [-.3, 1.3]], .16, .05), 0, .15, 1.1, 80 * D), 'bone'), P(at(new THREE.TorusGeometry(.9, .12, 8, 20, Math.PI), 0, .55, .7, -20 * D), 'bone')]; }},
+  brow:       {cat: 'Head', name: 'Brow ridge', make: () => [P(at(new THREE.TorusGeometry(.8, .16, 8, 18, Math.PI * .8), 0, 0, 0, 0, 0, 18 * D), 'scale')]},
+  eye:        {cat: 'Head', name: 'Glowing eye', make: () => [P(new THREE.SphereGeometry(.3, 16, 10).translate(0, .15, 0), 'glow'), P(new THREE.BoxGeometry(.06, .4, .06).translate(0, .15, .27), 'dark')]},
+  tailClub:   {cat: 'Tail + wings', name: 'Tail club', make: () => { const a = [P(at(new THREE.IcosahedronGeometry(.8, 1), 0, .8, 0), 'bone')]; for (const v of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, 0, 1], [0, 0, -1], [.7, .7, 0], [-.7, .7, 0]]) { const n = V3(...v).normalize(), g = new THREE.ConeGeometry(.16, .6, 6).translate(0, .3, 0); g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(V3(0, 1, 0), n)); a.push(P(g.translate(n.x * .75, .8 + n.y * .75, n.z * .75), 'horn')); } return a; }},
+  tailBlade:  {cat: 'Tail + wings', name: 'Tail blade', make: () => [P(extr([[0, 0], [.35, .4], [.6, 1.6], [.2, 2.6], [0, 1.4], [-.2, .5]], .06, .03), 'bone')]},
+  wing:       {cat: 'Tail + wings', name: 'Bat wing', make: () => { const tips = [[2.6, 2.4], [3.2, .9], [2.6, -.6]], a = [P(extr([[0, 0], [.2, 1.3], ...tips.flatMap(([x, y], i) => [[x, y], [x * .7 - .1, y * .6 - .3]]).slice(0, -1), [.8, -.9]], .03, 0), 'skin')];
+    tips.forEach(([x, y]) => a.push(P(taper(bez(V3(.1, 1, 0), V3(x * .5, y * .7 + .6, 0), V3(x, y, 0)), .1, .02, 12, 6), 'bone'))); return a; }},
+  tentacle:   {cat: 'Tail + wings', name: 'Tentacle', make: () => [P(taper(new THREE.CatmullRomCurve3([V3(0, 0, 0), V3(.3, 1, .2), V3(-.3, 2, 0), V3(.2, 3, -.4), V3(.6, 3.6, .1)]), .32, .03, 40, 12), 'skin')]},
+  // ---------- mech ----------
+  plate:      {cat: 'Mech armor', name: 'Armor plate', make: () => [P(extr([[-.7, 0], [.7, 0], [.8, .2], [.8, 1.6], [.55, 1.85], [-.55, 1.85], [-.8, 1.6], [-.8, .2]], .14, .05), 'paint'), P(new THREE.BoxGeometry(1.1, .05, .06).translate(0, 1.2, .14), 'dark'), P(new THREE.BoxGeometry(.05, .7, .06).translate(.4, .55, .14), 'dark')]},
+  pauldron:   {cat: 'Mech armor', name: 'Shoulder armor', make: () => [P(at(new THREE.SphereGeometry(1, 20, 10, 0, Math.PI * 2, 0, Math.PI * .45)).scale(1.1, .9, 1), 'paint'), P(at(new THREE.TorusGeometry(.99, .07, 6, 28), 0, .14, 0, Math.PI / 2).scale(1.1, 1, 1), 'accent'), P(new THREE.BoxGeometry(.25, .5, .9).translate(0, .85, 0), 'accent')]},
+  knee:       {cat: 'Mech armor', name: 'Knee guard', make: () => [P(extr([[-.5, 0], [.5, 0], [.55, .9], [0, 1.5], [-.55, .9]], .2, .07), 'paint'), P(extr([[-.2, .5], [.2, .5], [0, 1.1]], .05, .02).translate(0, 0, .16), 'accent')]},
+  vfin:       {cat: 'Mech armor', name: 'V-fin antenna', make: () => [P(extr([[0, 0], [1.6, 1.3], [1.7, 1.25], [.2, -.05], [-.2, -.05], [-1.7, 1.25], [-1.6, 1.3]], .06, .02), 'accent'), P(new THREE.CylinderGeometry(.15, .15, .14, 12).rotateX(Math.PI / 2).translate(0, .05, .05), 'glow')]},
+  bladeFin:   {cat: 'Mech armor', name: 'Blade fin', make: () => [P(extr([[0, 0], [.35, 0], [.2, 2.4], [.05, 2.6]], .06, .02), 'metal')]},
+  shield:     {cat: 'Mech armor', name: 'Kite shield', make: () => [P(extr([[0, -1.6], [1, .2], [.9, 1.3], [0, 1.6], [-.9, 1.3], [-1, .2]], .14, .06).translate(0, 1.6, 0), 'paint'), P(extr([[0, -1.1], [.6, .25], [0, 1.1], [-.6, .25]], .05, .02).translate(0, 1.6, .16), 'accent')]},
+  thruster:   {cat: 'Mech detail', name: 'Thruster', make: () => [P(new THREE.LatheGeometry([V2(.35, 0), V2(.42, .2), V2(.42, .5), V2(.6, 1.1), V2(.55, 1.12), V2(.3, .55)], 18), 'metal'), P(new THREE.CircleGeometry(.5, 18).rotateX(-Math.PI / 2).translate(0, .95, 0), 'glow')]},
+  vent:       {cat: 'Mech detail', name: 'Vent', make: () => { const a = [P(new THREE.BoxGeometry(1.2, .25, .8).translate(0, .12, 0), 'metal')]; for (let i = 0; i < 5; i++) a.push(P(new THREE.BoxGeometry(1, .12, .06).translate(0, .25, -.3 + i * .15), 'dark')); return a; }},
+  piston:     {cat: 'Mech detail', name: 'Piston', make: () => [P(new THREE.CylinderGeometry(.16, .16, 1.2, 12).translate(0, .6, 0), 'metal'), P(new THREE.CylinderGeometry(.09, .09, 1.3, 10).translate(0, 1.6, 0), 'paint'), P(new THREE.CylinderGeometry(.2, .2, .15, 12).translate(0, .07, 0), 'dark')]},
+  visor:      {cat: 'Mech detail', name: 'Visor', make: () => [P(new THREE.BoxGeometry(1.2, .3, .3).translate(0, .15, 0), 'dark'), P(new THREE.BoxGeometry(1, .12, .05).translate(0, .16, .16), 'glow')]},
+  barrel:     {cat: 'Mech detail', name: 'Gun barrel', make: () => [P(new THREE.CylinderGeometry(.22, .25, .6, 14).translate(0, .3, 0), 'dark'), P(new THREE.CylinderGeometry(.12, .12, 2, 12).translate(0, 1.5, 0), 'metal'), P(new THREE.CylinderGeometry(.18, .16, .3, 12).translate(0, 2.5, 0), 'dark')]},
+};
+const LIBCATS = () => [...new Set(Object.values(LIB).map(e => e.cat))];
+let libCat = 'Horns', placing = null;
+function libPieces(id) { const e = LIB[id]; if (!e) return [];
+  if (!e._p) e._p = e.make().map(p => { const g = p.geo.index ? p.geo : (() => { const n = p.geo.clone(); n.setIndex([...Array(n.attributes.position.count).keys()]); return n; })();
+    g.userData.full = Array.from(g.index.array); return {geo: g, mat: typeof p.mat === 'string' ? LM[p.mat]() : p.mat}; });
+  return e._p; }
+function buildLib(i, st, G) {
+  const m = new THREE.Group(), cut = new Set(st.cut.L || []);
+  libPieces(st.lib).forEach((pc, mi) => { const F = pc.geo.userData.full, idx = [];
+    for (let t = 0; t < F.length / 3; t++) if (!cut.has(mi + ':' + t)) idx.push(F[t * 3], F[t * 3 + 1], F[t * 3 + 2]);
+    const g = new THREE.BufferGeometry(); for (const a in pc.geo.attributes) g.setAttribute(a, pc.geo.attributes[a]); g.setIndex(idx);
+    const mat = colorMode ? new THREE.MeshStandardMaterial({color: 0xffd25a, roughness: .6}) : pc.mat.clone(); mat.side = THREE.DoubleSide; mat.wireframe = wire;
+    if (xray) { mat.transparent = true; mat.opacity = .45; mat.depthWrite = false; } if (!colorMode && mat.color) mat.color.multiply(new THREE.Color(st.tint));
+    const mesh = new THREE.Mesh(g, mat); mesh.userData.slot = i; m.add(mesh); });
+  if (st.flip) m.scale.x = -1;
+  G.add(m); views[i].m = m; G.position.set(...st.p); G.rotation.set(...st.r.map(d => d * Math.PI / 180)); G.scale.setScalar(st.s);
+  G.userData = {anchor: new THREE.Vector3(), auto: 1}; G.visible = !iso || i === sel;
+}
+function libErase(st, local, R2) {
+  const cut = new Set(st.cut.L || []); let n = 0;
+  libPieces(st.lib).forEach((pc, mi) => { const F = pc.geo.userData.full, Pp = pc.geo.attributes.position;
+    for (let t = 0; t < F.length / 3; t++) { const key = mi + ':' + t; if (cut.has(key)) continue; let cx = 0, cy = 0, cz = 0;
+      for (let j = 0; j < 3; j++) { const v = F[t * 3 + j]; cx += Pp.getX(v) / 3; cy += Pp.getY(v) / 3; cz += Pp.getZ(v) / 3; }
+      if ((cx - local.x) ** 2 + (cy - local.y) ** 2 + (cz - local.z) ** 2 < R2) { cut.add(key); n++; } } });
+  if (n) { st.cut.L = [...cut]; buildSlot(sel); }
+}
+function libNew(id, p, r) { snap(); const n = Math.max(0, ...ST.slots.filter(s => s.lib === id).map(s => s.copy || 0)) + 1;
+  const st = {k: -1, src: 'L', lib: id, p, r, s: 1, flip: false, tint: '#ffffff', cut: {A: [], B: [], C: [], L: []}, copy: n};
+  ST.slots.push(st); sel = ST.slots.length - 1; buildSlot(sel); outliner(); syncUI(); save();
+  document.querySelector('.tabs [data-tab="move"]').click(); }
+function libPlace(hit) { const id = placing; placing = null; libGridUI();
+  const n = hit.face.normal.clone().transformDirection(hit.object.matrixWorld).normalize();
+  const e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(V3(0, 1, 0), n));
+  libNew(id, hit.point.toArray().map(x => +x.toFixed(3)), [e.x, e.y, e.z].map(x => +(x * 180 / Math.PI).toFixed(1)));
+  tip(LIB[id].name + ' snapped on — fine-tune it with Move'); }
+function libMirror() { const st = ST.slots[sel]; snap();
+  const n = JSON.parse(JSON.stringify(st)); n.p[0] = -n.p[0]; n.r = [n.r[0], -n.r[1], -n.r[2]]; n.flip = !n.flip;
+  n.copy = Math.max(0, ...ST.slots.filter(s => s.lib === st.lib).map(s => s.copy || 0)) + 1;
+  ST.slots.push(n); buildSlot(ST.slots.length - 1); outliner(); save(); tip('Mirrored copy made on the other side'); }
+// ---- thumbnails (small pictures for the library buttons) ----
+let thumbR = null; const thumbs = {};
+function thumb(id) { if (thumbs[id]) return thumbs[id];
+  try { if (!thumbR) { thumbR = new THREE.WebGLRenderer({antialias: true, alpha: true, preserveDrawingBuffer: true}); thumbR.setSize(96, 96); }
+    const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xffffff, 0x404050, 2)); const L = new THREE.DirectionalLight(0xffffff, 1.6); L.position.set(3, 5, 4); sc.add(L);
+    const g = new THREE.Group(); libPieces(id).forEach(pc => g.add(new THREE.Mesh(pc.geo, pc.mat))); sc.add(g);
+    const b = new THREE.Box3().setFromObject(g), c = b.getCenter(V3()), s = Math.max(...b.getSize(V3()).toArray()) || 1;
+    const cam = new THREE.PerspectiveCamera(35, 1, .01, 100); cam.position.copy(c).add(V3(s * 1.3, s * .9, s * 1.8)); cam.lookAt(c);
+    thumbR.render(sc, cam); return thumbs[id] = thumbR.domElement.toDataURL(); } catch (e) { return ''; } }
+function libGridUI() {
+  const cats = [...LIBCATS()]; if (!cats.includes(libCat)) libCat = cats[0];
+  $('libCats').innerHTML = ''; cats.forEach(c => { const b = document.createElement('button'); b.textContent = c; b.className = c === libCat ? 'on' : ''; b.onclick = () => { libCat = c; libGridUI(); }; $('libCats').append(b); });
+  const gr = $('libGrid'); gr.innerHTML = '';
+  for (const [id, e] of Object.entries(LIB)) { if (e.cat !== libCat) continue; const b = document.createElement('button'); b.className = 'libb' + (placing === id ? ' on' : '');
+    b.innerHTML = `<img src="${thumb(id)}" alt=""><span>${e.name}</span>`;
+    b.onclick = () => { placing = placing === id ? null : id; libGridUI(); if (placing) tip('Now tap the body where the ' + e.name + ' goes', 4000); }; gr.append(b); }
+  $('libNote').textContent = LIB_SOURCE(libCat);
+}
+const LIB_SOURCE = cat => cat.startsWith('Imported') ? 'From your file: check its license before using it in the game (CC0 = free, CC BY = add a credit).' : 'Made in code for Titan Clash: ours, free to use anywhere.';
+$('bLibFront').onclick = () => { const id = placing || Object.keys(LIB).find(k => LIB[k].cat === libCat); placing = null; const head = (SRC[ST.base].info || [])[0];
+  libNew(id, head ? [head.world.x, head.world.y + 1, head.world.z] : [0, 9, 0], [0, 0, 0]); tip(LIB[id].name + ' added at the head — move it into place'); };
+// ---- imports (kept in this browser) ----
+const IDB = () => new Promise((res, rej) => { const r = indexedDB.open('tc-parts-imports', 1); r.onupgradeneeded = () => r.result.createObjectStore('files'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+async function idbAll() { const db = await IDB(); return new Promise(res => { const out = [], tx = db.transaction('files').objectStore('files').openCursor();
+  tx.onsuccess = e => { const c = e.target.result; if (c) { out.push([c.key, c.value]); c.continue(); } else res(out); }; tx.onerror = () => res(out); }); }
+async function idbPut(name, buf) { const db = await IDB(); return new Promise(res => { const tx = db.transaction('files', 'readwrite'); tx.objectStore('files').put(buf, name); tx.oncomplete = res; tx.onerror = res; }); }
+async function idbDel(name) { const db = await IDB(); return new Promise(res => { const tx = db.transaction('files', 'readwrite'); tx.objectStore('files').delete(name); tx.oncomplete = res; }); }
+const ext = n => n.toLowerCase().split('.').pop(), base = n => n.split('/').pop();
+async function parseModel(name, buf, files) {                  // -> three.js scene or null
+  const e = ext(name), mgr = new THREE.LoadingManager(), urls = {};
+  if (files) mgr.setURLModifier(u => { const k = decodeURIComponent(base(u)); if (files[k]) return urls[k] || (urls[k] = URL.createObjectURL(new Blob([files[k]]))); return u; });
+  try {
+    if (e === 'glb' || e === 'gltf') return await new Promise((res, rej) => new GLTFLoader(mgr).parse(e === 'gltf' ? new TextDecoder().decode(buf) : buf, '', g => res(g.scene), rej));
+    if (e === 'obj') { const {OBJLoader} = await import('three/addons/loaders/OBJLoader.js'); return new OBJLoader(mgr).parse(new TextDecoder().decode(buf)); }
+    if (e === 'fbx') { const {FBXLoader} = await import('three/addons/loaders/FBXLoader.js'); return new FBXLoader(mgr).parse(buf, ''); }
+  } catch (err) { console.warn(name, err); } return null; }
+function sceneToPieces(root) {                                  // split into pieces, sized to ~3 units tall, base at 0
+  root.updateMatrixWorld(true); const out = [];
+  root.traverse(o => { if (!o.isMesh) return; let g = o.geometry.clone(); g.applyMatrix4(o.matrixWorld); for (const a of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(a)) g.deleteAttribute(a);
+    if (!g.index) g.setIndex([...Array(g.attributes.position.count).keys()]); if (!g.attributes.normal) g.computeVertexNormals();
+    const mats = Array.isArray(o.material) ? o.material : [o.material], I = g.index.array;
+    const groups = g.groups.length ? g.groups : [{start: 0, count: I.length, materialIndex: 0}];
+    for (const gr of groups) { const s = new THREE.BufferGeometry(); for (const a in g.attributes) s.setAttribute(a, g.attributes[a]); s.setIndex(Array.from(I.slice(gr.start, gr.start + gr.count)));
+      const m = (mats[gr.materialIndex] || mats[0] || new THREE.MeshStandardMaterial()).clone(); if (m.skinning) m.skinning = false; out.push({geo: s, mat: m}); } });
+  if (!out.length) return out;
+  const b = new THREE.Box3(); out.forEach(p => { p.geo.computeBoundingBox(); b.union(p.geo.boundingBox); });
+  const sz = b.getSize(V3()), k = 3 / (Math.max(sz.x, sz.y, sz.z) || 1), c = b.getCenter(V3());
+  out.forEach(p => { p.geo.translate(-c.x, -b.min.y, -c.z); p.geo.scale(k, k, k); p.geo.userData.full = Array.from(p.geo.index.array); }); return out; }
+async function addImport(name, buf) {                          // registers library entries for one stored file
+  const cat = 'Imported: ' + base(name).replace(/\.[^.]+$/, '').slice(0, 18);
+  if (ext(name) === 'zip') { const {unzipSync} = await import('three/addons/libs/fflate.module.js'); const z = unzipSync(new Uint8Array(buf)), files = {};
+    for (const k in z) files[base(k)] = z[k].buffer.slice(z[k].byteOffset, z[k].byteOffset + z[k].byteLength);
+    const models = Object.keys(z).filter(k => ['glb', 'gltf', 'obj', 'fbx'].includes(ext(k)) && !k.includes('__MACOSX'));
+    const pref = ['glb', 'gltf', 'fbx', 'obj'], best = {};             // same model in several formats: keep one
+    for (const k of models) { const id = base(k).replace(/\.[^.]+$/, ''); if (!best[id] || pref.indexOf(ext(k)) < pref.indexOf(ext(best[id]))) best[id] = k; }
+    let n = 0; for (const [id, k] of Object.entries(best)) { const sc = await parseModel(k, files[base(k)], files); if (!sc) continue; const pcs = sceneToPieces(sc); if (!pcs.length) continue;
+      LIB['imp:' + name + ':' + id] = {cat, name: id.slice(0, 22), make: null, _p: pcs, file: name}; n++; } return n; }
+  const sc = await parseModel(name, buf); if (!sc) return 0; const pcs = sceneToPieces(sc); if (!pcs.length) return 0;
+  LIB['imp:' + name] = {cat, name: base(name).replace(/\.[^.]+$/, '').slice(0, 22), make: null, _p: pcs, file: name}; return 1; }
+async function loadImports() { try { for (const [name, buf] of await idbAll()) await addImport(name, buf); } catch (e) { console.warn(e); } }
+$('bImport').onclick = () => $('fImport').click();
+$('fImport').onchange = async e => { for (const f of e.target.files) { tip('Reading ' + f.name + '…', 20000); const buf = await f.arrayBuffer();
+    const n = await addImport(f.name, buf); if (!n) { tip("Couldn't read " + f.name + ' (try .glb, .gltf, .obj, .fbx or a .zip of them)', 5000); continue; }
+    await idbPut(f.name, buf); libCat = Object.values(LIB).find(x => x.file === f.name).cat; tip(n + ' model' + (n > 1 ? 's' : '') + ' added from ' + f.name, 3500); }
+  e.target.value = ''; libGridUI(); };
+$('bImpDel').onclick = async () => { const e = Object.values(LIB).find(x => x.cat === libCat && x.file); if (!e) return tip('Pick an Imported group first');
+  if (ST.slots.some(s => LIB[s.lib] && LIB[s.lib].file === e.file)) return tip('Delete the parts that use this file first');
+  await idbDel(e.file); for (const k in LIB) if (LIB[k].file === e.file) delete LIB[k]; libGridUI(); tip('Removed ' + e.file + ' from this browser'); };
 
 // ================= keyboard (PC, Blender style) =================
 addEventListener('keydown', e => {
@@ -381,8 +586,8 @@ function resize() { renderer.setSize(innerWidth, innerHeight, false); camera.asp
 addEventListener('resize', resize); resize();
 updateOrbit();
 tip('Loading models…', 8000);
-Promise.all([prepAI('A'), prepAI('B'), prepC()]).then(() => {
-  ST.sculpt = ST.sculpt || {A: {}, B: {}}; ST.slots.forEach(s => s.cut.C = s.cut.C || []);
+Promise.all([prepAI('A'), prepAI('B'), prepC(), loadImports()]).then(() => {
+  ST.sculpt = ST.sculpt || {A: {}, B: {}}; ST.slots.forEach(s => { s.cut.C = s.cut.C || []; s.cut.L = s.cut.L || []; });
   applySculpt('A'); applySculpt('B'); rebuildAll(); outliner(); syncUI(); tip('Tap a part to select it', 2500);
 });
 renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
