@@ -49,3 +49,9 @@ MajorasPride's creature + mech builder for Titan Clash. Open `index.html` (GitHu
 - Races: Human, Elf, Beastfolk (fur, muzzle, mane, tail, beast ears), Orc (tusks), Mech (armor body, visor). Sections: Race, Body, Face (14 sliders), Hair (11 styles + beards + color), Outfit (tops, legs, feet, extras), Colors, Presets (Knight, Ranger, Mage, Beast Warrior, Orc Brute, Pilot, Mech, Random).
 - Colors use tint on near-white "hero" materials (heroskin, herofur, herohair, herocloth, heroleather, herometal) so swatches give the exact color. Eyes/hair/hood share the head's fit so they line up. Skin under full clothing is left out (no z-fighting).
 - Idea for later (MajorasPride): a Robotech-style robot. He shared a BattleTech-style mech sheet as reference — make an original design inspired by that boxy look, not a copy.
+
+## Nov 9, 2026 (late): skins + Paint all
+- New material categories in materials.js: **Fur** (zebra, giraffe, dalmatian, wolf, calico, shaggy, snow, black, fox; plus the old fur, tiger, leopard) and **Cosmic & Special** (galaxy, starfield, nebula, constellations, aurora, void, hologram, oil slick, opal, sun plasma, cyber grid, cosmic fur).
+- Cosmic skins are shader effects (`ex.fx`, FX_GLSL/FX_MAIN in materials.js). `sky: 1` skins sample space by view direction so the stars stay put while the model moves (the classic "galaxy skin" look). Animated via `MATS.tick(t)` called from animate().
+- 🎨 Paint all (Paint tab): a material or tint goes on every part at once.
+- Pending: MajorasPride uploaded a stylized Tree Bark pack (10 sets: diffuseOriginal/normal/height/ao bmp + preview png). Not added yet — waiting on where it came from / its license (repo is public).

@@ -91,9 +91,57 @@
     paper(x) { fill(x, '#ececec'); const pts = [...Array(40)].map(() => [R(0, S), R(0, S)]); for (let i = 0; i < 90; i++) { const [a, b] = pts[(rnd() * pts.length) | 0], [c2, d] = pts[(rnd() * pts.length) | 0];
         const g = x.createLinearGradient(a, b, c2, d); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(.5, rnd() < .5 ? 'rgba(0,0,0,.10)' : 'rgba(255,255,255,.35)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.strokeStyle = g; x.lineWidth = R(1, 3); x.beginPath(); x.moveTo(a, b); x.lineTo(c2, d); x.stroke(); }
       noiseLayer(x, 60, 20, 80, ['#ddd', '#fff'], .2); },
+    zebra(x) { fill(x, '#f0f0f0'); x.fillStyle = '#151515'; for (let i = 0; i < 16; i++) { const x0 = i * 32 + R(-5, 5); x.beginPath(); x.moveTo(x0, 0);
+        for (let y = 0; y <= S; y += 32) x.lineTo(x0 + Math.sin(y * .02 + i) * 14 + R(-4, 4), y); for (let y = S; y >= 0; y -= 32) x.lineTo(x0 + 9 + R(0, 9) + Math.sin(y * .02 + i) * 14, y); x.fill(); } G.fur_over(x); },
+    giraffe(x) { fill(x, '#f2e6c8'); const pts = [...Array(26)].map(() => [R(0, S), R(0, S)]); x.fillStyle = '#8a4a1e';
+      for (const [a, b] of pts) wrap(x, () => { x.beginPath(); for (let k = 0; k < 7; k++) { const an = k / 7 * 7, r = R(30, 46); x.lineTo(a + Math.cos(an) * r, b + Math.sin(an) * r); } x.fill(); }); G.fur_over(x); },
+    dalmatian(x) { fill(x, '#f4f4f4'); for (let i = 0; i < 60; i++) { const px = R(0, S), py = R(0, S), r = R(5, 16); x.fillStyle = '#111'; wrap(x, () => { x.beginPath(); x.ellipse(px, py, r, r * R(.7, 1), R(0, 3), 0, 7); x.fill(); }); } G.fur_over(x); },
+    wolf(x) { const g = x.createLinearGradient(0, 0, 0, S); g.addColorStop(0, '#3a3a3a'); g.addColorStop(.5, '#9a9a9a'); g.addColorStop(1, '#f0f0f0'); x.fillStyle = g; x.fillRect(0, 0, S, S); G.fur_over(x, 1.4); },
+    calico(x) { fill(x, '#f4f0ea'); for (const c of ['#d8803a', '#1a1a1a']) for (let i = 0; i < 9; i++) { const px = R(0, S), py = R(0, S); x.fillStyle = c; wrap(x, () => { x.beginPath(); for (let k = 0; k < 10; k++) { const an = k / 10 * 7, r = R(30, 70); x.lineTo(px + Math.cos(an) * r, py + Math.sin(an) * r); } x.fill(); }); } G.fur_over(x); },
+    shaggy(x) { fill(x, '#8a8a8a'); x.lineCap = 'round'; for (let i = 0; i < 6000; i++) { const px = R(0, S), py = R(0, S), l = R(22, 48), a = R(1.35, 1.75) + Math.sin(px * .02) * .2, v = (R(100, 255)) | 0;
+        x.strokeStyle = `rgba(${v},${v},${v},.5)`; x.lineWidth = R(1.5, 3.5); wrap(x, () => { x.beginPath(); x.moveTo(px, py); x.quadraticCurveTo(px + Math.cos(a) * l * .5 + R(-6, 6), py + Math.sin(a) * l * .5, px + Math.cos(a) * l, py + Math.sin(a) * l); x.stroke(); }); } },
+    fur_over(x, k = 1) { x.lineCap = 'round'; for (let i = 0; i < 5000; i++) { const px = R(0, S), py = R(0, S), l = R(6, 16) * k, a = R(1.3, 1.8), v = rnd() < .5 ? '255,255,255' : '0,0,0';
+        x.strokeStyle = `rgba(${v},.13)`; x.lineWidth = R(1, 2); x.beginPath(); x.moveTo(px, py); x.lineTo(px + Math.cos(a) * l, py + Math.sin(a) * l); x.stroke(); } },
     frost(x) { fill(x, '#eef4fa'); noiseLayer(x, 300, 3, 18, ['#ffffff', '#c8d4e0'], .35); },
     screen(x) { fill(x, '#ddd'); for (let y = 0; y < S; y += 4) { x.fillStyle = 'rgba(0,0,0,.25)'; x.fillRect(0, y, S, 2); } },
   };
+  // ---- cosmic & special skins (shader effects, ours). "sky" skins are a window into space: the stars stay put while the model moves, like galaxy skins in games.
+  const FX_T = {value: 0};
+  const FX_GLSL = `
+float h3(vec3 p){ p = fract(p * 0.3183099 + .1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+float vn(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(h3(i), h3(i + vec3(1,0,0)), f.x), mix(h3(i + vec3(0,1,0)), h3(i + vec3(1,1,0)), f.x), f.y), mix(mix(h3(i + vec3(0,0,1)), h3(i + vec3(1,0,1)), f.x), mix(h3(i + vec3(0,1,1)), h3(i + vec3(1,1,1)), f.x), f.y), f.z); }
+float fbm(vec3 p){ float a = .5, s = 0.0; for (int i = 0; i < 5; i++) { s += a * vn(p); p = p * 2.03 + 1.7; a *= .5; } return s; }
+float stars(vec3 d, float dens, float t){ vec3 c = floor(d), f = fract(d) - .5; float h = h3(c); vec3 o = vec3(h3(c + 3.1), h3(c + 7.7), h3(c + 1.3)) - .5;
+  float r = length(f - o * .6); return step(1.0 - dens, h) * smoothstep(.13, .0, r) * (.55 + .45 * sin(t * 3.0 + h * 40.0)); }
+vec3 hue(float h){ return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0); }
+`;
+  const FX_MAIN = `{
+  vec3 Vd = normalize(vViewPosition); float ndv = abs(dot(normalize(normal), Vd)), fr = pow(1.0 - ndv, 2.0);
+  vec3 q = uSky > .5 ? normalize(vWP - cameraPosition) * 3.0 + vWP * .02 : vTP * .45; float t = uT; vec3 fx = vec3(0.0); float base = .012;
+  if (uFx == 1) { float n = fbm(q * 1.5 + vec3(0.0, 0.0, t * .03)), n2 = fbm(q * 3.2 + 5.0);
+    fx = vec3(.006, .004, .02) + vec3(.3, .06, .5) * smoothstep(.5, .85, n) + vec3(.05, .25, .7) * smoothstep(.62, .9, n2) * .8 + vec3(.9, .3, .6) * smoothstep(.75, .95, n) * .5;
+    fx += vec3(1.0) * (stars(q * 20.0, .07, t) * 3.0 + stars(q * 55.0, .12, t * 1.3) * 1.5) + vec3(.45, .3, 1.0) * fr * .35; }
+  else if (uFx == 2) { fx = vec3(.002, .002, .008) + vec3(1.0) * (stars(q * 18.0, .06, t) * 3.5 + stars(q * 45.0, .1, t * 1.4) * 1.8 + stars(q * 110.0, .16, t * .7) * .8) + vec3(.3, .4, .9) * fr * .12; }
+  else if (uFx == 3) { float n = fbm(q * 1.2 + t * .02), m = fbm(q * 2.4 - 3.0);
+    fx = vec3(.01, .0, .02) + vec3(1.0, .2, .5) * smoothstep(.48, .85, n) + vec3(.1, .7, .9) * smoothstep(.58, .9, m) * .8 + vec3(1.0) * stars(q * 25.0, .08, t) * 2.5; }
+  else if (uFx == 4) { fx = vec3(.004, .004, .014) + vec3(.01, .02, .06) * fbm(q * 2.0); vec3 c = floor(q * 6.0), f = fract(q * 6.0) - .5; float h = h3(c);
+    fx += vec3(1.0, .8, .35) * (stars(q * 6.0, .55, t) * 4.0 + stars(q * 30.0, .1, t) * 1.5);
+    float ln = smoothstep(.02, .0, abs(f.x + f.y * (h - .5) * 2.0) * .5) * step(.6, h) * step(abs(f.y), .45); fx += vec3(.9, .7, .3) * ln * .5; }
+  else if (uFx == 5) { float y = q.y * .8 + fbm(q * .8 + vec3(0.0, t * .15, 0.0)) * 2.0; float b = pow(abs(sin(y * 3.0 + t * .4)), 6.0);
+    fx = vec3(.0, .006, .012) + mix(vec3(.1, 1.0, .5), vec3(.6, .2, 1.0), .5 + .5 * sin(y + t * .3)) * b * 1.4 + vec3(1.0) * stars(q * 30.0, .05, t) * .6; }
+  else if (uFx == 6) { float sw = fbm(vec3(atan(q.x, q.z) * 2.0 + t * .3, q.y * 1.5, length(q.xz) - t * .2));
+    fx = vec3(.0) + vec3(.55, .1, 1.0) * pow(fr, 1.5) * 2.2 + vec3(.9, .3, 1.0) * smoothstep(.62, .8, sw) * .5 * fr; base = .02; }
+  else if (uFx == 7) { float sc = .5 + .5 * sin(vWP.y * 60.0 - t * 4.0); fx = hue(fr * 1.4 + vWP.y * .08 + t * .1) * (.25 + fr * 1.6) + vec3(.2, .9, 1.0) * sc * .18; base = .25; }
+  else if (uFx == 8) { float n = fbm(q * 1.4); fx = hue(n * 2.0 + fr * 1.5 + t * .02) * (.12 + fr * .9); base = .03; }
+  else if (uFx == 9) { float n = fbm(q * 3.0); vec3 c = floor(q * 14.0); fx = hue(h3(c) + fr + n) * smoothstep(.55, .9, vn(q * 14.0)) * .45 + hue(fr * 1.2 + n) * fr * .25; base = .6; }
+  else if (uFx == 10) { float n = fbm(q * 2.0 + vec3(0.0, -t * .4, t * .1)), m = fbm(q * 5.0 - vec3(0.0, t * .8, 0.0));
+    fx = mix(vec3(1.0, .25, .0), vec3(1.0, .9, .3), smoothstep(.4, .75, n)) * (.8 + m) * 1.3 + vec3(1.0, .6, .2) * fr; base = .3; }
+  else if (uFx == 11) { vec3 g = abs(fract(q * 2.0) - .5); float ln = smoothstep(.04, .0, min(min(g.x, g.y), g.z) - .0); float pulse = .5 + .5 * sin(q.y * 3.0 - t * 2.0);
+    fx = vec3(.0, .02, .04) + vec3(.1, .9, 1.0) * ln * (.6 + pulse) + vec3(.9, .2, 1.0) * fr * .5; base = .05; }
+  if (uFur > .5) fx *= .55 + diffuseColor.r * .9;
+  diffuseColor.rgb = (uFur > .5 ? diffuseColor.rgb * .2 : vec3(base)) + fx * .1; totalEmissiveRadiance += fx * diffuse;
+}`;
   const texCache = {};
   function tex(T, kind) { if (texCache[kind]) return texCache[kind]; const [c, x] = cv(); seed = 7 + kind.length * 131; (G[kind] || G.plain)(x, kind === 'bigscales');
     if (kind === 'bigscales') G.scales(x, true); const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.colorSpace = T.SRGBColorSpace; t.anisotropy = 4; return texCache[kind] = t; }
@@ -139,6 +187,15 @@
     ['herolip', 'Lips', 'Hero', 'skin', 0xd8a8a0, .5, 0], ['herocloth', 'Cloth (tint it)', 'Hero', 'plain', 0xf2f2f2, .88, 0], ['heroleather', 'Leather (tint it)', 'Hero', 'leather', 0xe8dcd0, .62, 0],
     ['herometal', 'Armor metal (tint it)', 'Hero', 'plain', 0xf2f4f8, .32, .8], ['eyebrown', 'Brown eye', 'Hero', 'plain', 0x5a3a20, .2, 0], ['eyeblue', 'Blue eye', 'Hero', 'plain', 0x3a7ac0, .2, 0],
     ['eyegreen', 'Green eye', 'Hero', 'plain', 0x3a8a4a, .2, 0], ['eyegrey', 'Grey eye', 'Hero', 'plain', 0x8a949e, .2, 0],
+    ['zebra', 'Zebra', 'Fur', 'zebra', 0xffffff, .85, 0], ['giraffe', 'Giraffe', 'Fur', 'giraffe', 0xffffff, .85, 0], ['dalmatian', 'Dalmatian', 'Fur', 'dalmatian', 0xffffff, .85, 0],
+    ['wolf', 'Wolf (dark back, light belly)', 'Fur', 'wolf', 0xd8d0c8, .9, 0], ['calico', 'Calico', 'Fur', 'calico', 0xffffff, .88, 0], ['shaggy', 'Shaggy long fur', 'Fur', 'shaggy', 0x9a7a5a, .95, 0],
+    ['whitefur', 'Snow fur', 'Fur', 'fur', 0xf4f4f4, .9, 0], ['blackfur', 'Black fur', 'Fur', 'fur', 0x2a2a2e, .85, 0], ['redfox', 'Fox fur', 'Fur', 'fur', 0xd0682a, .88, 0],
+    ['galaxy', 'Galaxy', 'Cosmic & Special', 'plain', 0xffffff, .35, .1, {fx: 1, sky: 1}], ['starfield', 'Starfield', 'Cosmic & Special', 'plain', 0xffffff, .3, .1, {fx: 2, sky: 1}],
+    ['nebula', 'Nebula', 'Cosmic & Special', 'plain', 0xffffff, .4, 0, {fx: 3, sky: 1}], ['constellation', 'Constellations (gold)', 'Cosmic & Special', 'plain', 0xffffff, .3, .3, {fx: 4, sky: 1}],
+    ['aurora', 'Aurora', 'Cosmic & Special', 'plain', 0xffffff, .5, 0, {fx: 5}], ['void', 'Void / black hole', 'Cosmic & Special', 'plain', 0xffffff, .25, .2, {fx: 6}],
+    ['hologram', 'Hologram', 'Cosmic & Special', 'plain', 0xffffff, .2, .3, {fx: 7}], ['oilslick', 'Oil slick (rainbow sheen)', 'Cosmic & Special', 'plain', 0xffffff, .15, .9, {fx: 8}],
+    ['opal', 'Opal', 'Cosmic & Special', 'plain', 0xffffff, .2, .1, {fx: 9}], ['solar', 'Sun plasma', 'Cosmic & Special', 'plain', 0xffffff, .6, 0, {fx: 10}],
+    ['cybergrid', 'Cyber grid', 'Cosmic & Special', 'plain', 0xffffff, .4, .5, {fx: 11}], ['cosmicfur', 'Cosmic fur', 'Cosmic & Special', 'fur', 0xffffff, .8, 0, {fx: 1, sky: 1, furmix: 1}],
     ['toyrubber', 'Toy rubber', 'Craft (toy box)', 'plain', 0xe85a3a, .55, 0], ['toyplastic', 'Shiny toy plastic', 'Craft (toy box)', 'plain', 0x3a8ae8, .25, 0],
   ];
   const ALIAS = {paint2: 'paint2', fur: 'fur', feather: 'feather', stone: 'stone', wood: 'wood', cloth: 'cloth', leather: 'leather', chitin: 'chitin', glow: 'glow', screen: 'screen'};
@@ -157,10 +214,14 @@
           diffuseColor.rgb *= mix(tpc.rgb, vec3(1.0), tpEm);`)
         .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance *= mix(1.0, smoothstep(0.35, 0.9, dot(tpc.rgb, vec3(.333))) * 2.5, tpEm); totalEmissiveRadiance *= mix(vec3(1.0), tpc.rgb, tpEc);');
     };
+    if (ex.fx && (ex.sky || ex.fx === 5 || ex.fx === 6 || ex.fx === 10 || ex.fx === 11)) { m.envMapIntensity = .12; m.roughness = Math.max(m.roughness, .75); m.metalness = 0; }   // space skins: dark and deep, not shiny-washed
+    if (ex.fx) { const prev = m.onBeforeCompile; m.onBeforeCompile = sh => { prev(sh); sh.uniforms.uT = FX_T; sh.uniforms.uFx = {value: ex.fx}; sh.uniforms.uSky = {value: ex.sky ? 1 : 0}; sh.uniforms.uFur = {value: ex.furmix ? 1 : 0};
+      sh.vertexShader = 'varying vec3 vWP;\n' + sh.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n vWP = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+      sh.fragmentShader = 'varying vec3 vWP; uniform float uT; uniform int uFx; uniform float uSky; uniform float uFur;\n' + FX_GLSL + sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' + FX_MAIN); }; }
     m.customProgramCacheKey = () => 'tp-' + key + '-' + (tile || 1);
     return m;
   }
   function addPattern(T, key, name, img) { const t = new T.Texture(img); t.needsUpdate = true; t.wrapS = t.wrapT = T.RepeatWrapping; t.colorSpace = T.SRGBColorSpace; t.anisotropy = 4; texCache['pat:' + key] = t;
     if (!LIST.find(l => l[0] === key)) LIST.push([key, name, 'My Patterns', 'pat:' + key, 0xffffff, .6, 0]); }
-  window.FORGE_MATS = {LIST, makeMat, tex, ALIAS, addPattern};
+  window.FORGE_MATS = {LIST, makeMat, tex, ALIAS, addPattern, tick: t => { FX_T.value = t; }};
 })();

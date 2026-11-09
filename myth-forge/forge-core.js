@@ -664,11 +664,14 @@ function matThumb(k) { if (matThumbs[k]) return matThumbs[k]; try { if (!matR) {
   matR.render(sc, cam); return matThumbs[k] = matR.domElement.toDataURL('image/webp', .8); } catch (e) { return ''; } }
 var piecePaint = false, lastPick = null;
 $('bPiecePaint').onclick = () => { piecePaint = !piecePaint; $('bPiecePaint').classList.toggle('on', piecePaint); tip(piecePaint ? 'One piece: tap a spike / crystal / bit on the model, then tap a material' : 'Whole part gets painted', 2600); };
-function paint(k) { const pt = partBy(sel); if (!pt) return tip('Tap a part first (or ☰ list)'); snap();
+let paintAll = false;
+function paint(k) { if (paintAll) { snap(); for (const o of P.parts) if (!o.boxed) { o.matAll = k; o.mat = null; buildPart(o); } saveCur(); return tip(MATS.LIST.find(l => l[0] === k)[1] + ' on the whole creature'); }
+  const pt = partBy(sel); if (!pt) return tip('Tap a part first, or turn on 🎨 Paint all'); snap();
   if (piecePaint) { if (!lastPick || lastPick.uid !== sel) return tip('Tap the piece on the model first'); const g = pieceClusters(pt, true).find(x => x.ids.includes(lastPick.mi)), ids = g ? g.ids : [lastPick.mi];
     const n = pieces(pt.lib, pt.params).length; pt.mat = pt.mat || Array(n).fill(null); ids.forEach(i => pt.mat[i] = k); buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); return tip(MATS.LIST.find(l => l[0] === k)[1] + ' on that piece only'); }
   pt.matAll = k; pt.mat = null; buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); tip(MATS.LIST.find(l => l[0] === k)[1] + ' applied'); }
-$('tint').onchange = e => { const pt = partBy(sel); if (!pt) return; snap(); pt.tint = e.target.value; buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); };
+$('bPaintAll').onclick = e => { paintAll = !paintAll; e.target.classList.toggle('on', paintAll); if (paintAll) { piecePaint = false; $('bPiecePaint').classList.remove('on'); } tip(paintAll ? 'Paint all on: a material or tint now goes on every part' : 'Paint all off: paints the part you tap', 2600); };
+$('tint').onchange = e => { if (paintAll) { snap(); for (const o of P.parts) if (!o.boxed) { o.tint = e.target.value; buildPart(o); } return saveCur(); } const pt = partBy(sel); if (!pt) return; snap(); pt.tint = e.target.value; buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); };
 $('bTintClear').onclick = () => { $('tint').value = '#ffffff'; $('tint').onchange({target: $('tint')}); };
 $('bPaintTwin').onclick = e => { paintTwin = !paintTwin; e.target.classList.toggle('on', paintTwin); };
 $('bPaintAllSame').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); for (const o of P.parts) if (o.lib === pt.lib) { o.matAll = pt.matAll; o.mat = pt.mat; o.tint = pt.tint; buildPart(o); } saveCur(); tip('Every ' + LIB[pt.lib].name + ' painted the same'); };
@@ -820,6 +823,7 @@ $('bDelBone').onclick = () => { if (!selBone) return; const r = boneRow(selBone)
 document.querySelectorAll('[data-anim]').forEach(b => b.onclick = () => { anim = b.dataset.anim; animT = 0; document.querySelectorAll('[data-anim]').forEach(x => x.classList.toggle('on', x === b));
   if (anim === 'none') Object.values(bones).forEach(bn => { bn.quaternion.copy(bn.userData.poseQ); bn.position.copy(bn.userData.basePos || bn.position); }); });
 function animate(dt) {
+  if (MATS.tick) MATS.tick(performance.now() / 1000);
   if (anim === 'none') return; animT += dt; const t = animT, Q = new THREE.Quaternion(), E = new THREE.Euler();
   for (const b of Object.values(bones)) { const {tag} = b.userData, side = b.name.endsWith('.L') ? 1 : b.name.endsWith('.R') ? -1 : 0; let x = 0, y = 0, z = 0;
     const idx = +(b.name.match(/(\d+)/) || [0, 0])[1] || 0, front = /front|arm|shoulder|leg1|leg3/.test(b.name) ? 1 : -1;
