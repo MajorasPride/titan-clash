@@ -479,7 +479,7 @@
     const plate = sheet((u, w) => { const a = (w - .5) * PI * 1.05; return V3(sin(a) * .95, u * 1.05 - .02, cos(a) * .55 + .12); }, 10, 16, .07);
     const belly = ell(.7, .55, .38, 0, .5, -.05, 18, 12);
     return out([[plate, 'chitinred'], [belly, 'chitin'], [sweep([[-.95, .95, .12], [0, .98, .68], [.95, .95, .12]], .05, {seg: 16, rad: 6}), 'chitin']]);
-  }, {fitKind: 'seg', unitLen: 1});
+  }, {fitKind: 'seg', unitLen: 1, perSeg: true});
   add('cp_leg', LF, 'Centipede', 'Centipede leg', ['centipede', 'leg', 'bug', 'spiky'], () => out([
     [limb([[0, 0, 0], [0, 1.3, .25], [0, 1.4, .3], [0, 2.8, -.1], [0, 3.4, -.3]], [.16, .12, .12, .08, .02], {seg: 36, rad: 8}), 'chitinred'], [ell(.14, .16, .14, 0, 1.35, .28, 10, 8), 'chitin']]));
   add('cp_head', HS, 'Centipede', 'Centipede head', ['centipede', 'head', 'antennae', 'bug'], () => {

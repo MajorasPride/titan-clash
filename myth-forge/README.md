@@ -136,3 +136,9 @@ Looked at how Nomad Sculpt (phone) and Blender sculpt mode do it; he picked all 
 - More clay (`parts/clay-more.js`, prefix `bc_`, Basic Shapes & Clay › Body clay / Mech clay): head blob, snout, horn base, claw base, finger, hand, foot, muscle arm, leg, tail, tentacle, wing plate, dense chest, shell, mech block, armor plate, tube, wedge — all dense for smooth sculpting.
 - ⤢ is now real browser full screen (hides the address bar on his phone). The old "hide all menus" is ⋯ › 🙈 Hide all menus. Workshop top bar hides the title so ⋯ stays on screen.
 - Tested headless: every lesson's Show me changes the model; no page errors.
+
+## Nov 9, 2026 (4:40am): fitting round 1 — bodies on every body type
+- `torsoRot()` (fit system): torsos get +Y along the trunk AND a fixed roll: the part's +Z (front) faces world forward on upright trunks and turns into the belly (world down) on flat trunks, blended by how much the trunk points along Z. Rule for every torso part: +Z = front/chest = belly when lying flat; back fins / plates on -Z.
+- `bodyInfo()` W: bug bodies (>= 6 legU on a trunk of <= 2 bones that's flat) W = max(W, leg reach x 2 x .4, len x 1.15); bodies with no arms / legs W = max(W, min(len x .9, 4.5)).
+- Parts can say `perSeg: true` (Build together puts them on every trunk bone; with `fitKind: 'seg', unitLen: 1`): `cp_segment`, new `bb_snakeseg`. `bb_snake` has `fitKind: 'tail'` (follows the spine as one straight piece; for naga / straight serpents).
+- `BODY_FOR` (v2 section) = the ⭐ bodies per body type. Test hooks `__fresh(k)`, `__fits()`, `__bones()` + `/tmp`-style headless contact sheet of all 30 body types were used to check.
