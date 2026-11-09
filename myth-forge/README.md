@@ -122,3 +122,6 @@ MajorasPride found the screen confusing and asked: drag shapes, make it easier t
 - Build together now sits at the bottom where the menu is (the menu hides instead of sliding down; he said the menu going down felt weird). "I'll do it myself" / ▴ shrinks the guide to a bar at the top and brings the menu back (`body.gside`).
 - Start tab cleaned up (he said it was jumbled): 🎓 Build together, 🛠 Workshop, then fold-outs: 🧸 Remix a ready-made creature, 🦴 Start from an empty body, 🎚 Body shape.
 - On-screen buttons (right side): 🔍 Focus, 🪟 Window, 🦴 Show/Hide bones, # numbers (All → Picked only → Off). Fade slider + "show these #s" are in ⚙ › Skeleton & pose › Bone numbers (moved out of More).
+
+## Nov 9, 2026 (3:10am): NEW UI IS LIVE
+MajorasPride OK'd it ("update it now, we might have changes later"). `page.html` is now the new layout (it still sets `window.MF_V2 = 1`, so the v2 code paths in forge-core.js are the live ones; the non-v2 branches are the old behaviour). The old layout is archived in `archive/page-v1-old-layout.html` (to bring it back: copy it to page.html and rebuild). `build.py` writes `index.html` and an identical `test.html` so the old test link still works. Mech necks are live too.
