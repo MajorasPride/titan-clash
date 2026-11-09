@@ -1,4 +1,6 @@
-# Myth Forge (myth-forge/)
+# Mythic Forge (myth-forge/)
+
+Renamed from Myth Forge on Nov 8, 2026 (MajorasPride's call). The folder and link stay `myth-forge/` so old links keep working.
 
 MajorasPride's creature + mech builder for Titan Clash. Open `index.html` (GitHub Pages link or double-click). Not used by the game directly: it exports `.glb` models (⋯ → Download model) that Claude then puts into the game.
 
@@ -28,3 +30,4 @@ MajorasPride's creature + mech builder for Titan Clash. Open `index.html` (GitHu
 - 🫳 Mold (default on, `mf-mold`): a part dropped in Sticky mode squishes around the surface it lands on (moldOnto, stored as pt.sculpt).
 - Craft (toy box) materials: cardboard, polystyrene, sponge, floaty foam, felt, stitched felt, knit, sackcloth, denim, patchwork, paper, toy rubber/plastic (procedural, ours; look inspired by LittleBigPlanet).
 - Two chats can work on Myth Forge at once: always `git fetch` + rebase before pushing, and rebuild index.html after a merge.
+- Double-tap a part in the Add grid = add it right away (quickAdd): picked bone, else the first bone whose category fits; weapons into the right hand's palm.

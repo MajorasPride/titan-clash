@@ -235,6 +235,15 @@ $('bAddCenter').onclick = () => { const lib = placing || visibleIds()[0]; if (!l
   const b = (selBone && bones[selBone] && selBone) || (P.bones.find(b => b[4] === 'chest') || P.bones[0])[0]; addPart(lib, b, [0, 0, 0], [0, 0, 0]); };
 
 // ====================================================================== library UI
+// double-tap a part in the grid = add it right away: on the picked bone, else the first bone that fits its category (weapons go in a hand)
+let lastLibTap = {};
+function quickAdd(id) { const e = LIB[id]; if (!e) return;
+  if (e.whole) { const m = mirrorAdd; mirrorAdd = false; addPart(id, null, [0, 0, 0], [0, 0, 0], 1); mirrorAdd = m; return; }
+  const names = P.bones.map(b => b[0]), side = n => n.endsWith('.R') ? 1 : 0;
+  if (e.group === 'Weapons') { const h = names.find(n => (boneRow(n) || [])[4] === 'hand' && n.endsWith('.R')) || names.find(n => (boneRow(n) || [])[4] === 'hand'); if (h && addWeaponToPalm(id, h)) return; }
+  let b = selBone && bones[selBone] ? selBone : null;
+  if (!b) { const fit = names.filter(n => groupForBone(n)[0] === e.group).sort((x, y) => side(x) - side(y)); b = fit[0] || (P.bones.find(r => r[4] === 'chest') || P.bones[0])[0]; }
+  addPart(id, b, [0, 0, 0], [0, 0, 0]); tip(e.name + ' added on ' + niceBone(b) + ' — double-tap parts to add them fast', 2400); }
 let tagFilter = null, catsOpen = true;
 let gFilter = GROUP_ORDER.find(g => Object.values(LIB).some(e => e.group === g)) || 'Basic Shapes & Clay', sFilter = null, query = '';
 const userTags = (() => { try { return JSON.parse(localStorage.getItem('titan-forge-tags') || '{}'); } catch (e) { return {}; } })();
@@ -262,7 +271,8 @@ function libUI() {
     const img = document.createElement('img'); img.dataset.id = id; img.alt = ''; const fav = (userTags[id] || []).includes('fav'), st = Object.assign(document.createElement('span'), {textContent: fav ? '⭐' : '☆'}); st.style.cssText = 'position:absolute;top:2px;right:4px;font-size:16px';
     st.onclick = ev => { ev.stopPropagation(); const t = new Set(userTags[id] || []); t.has('fav') ? t.delete('fav') : t.add('fav'); userTags[id] = [...t]; localStorage.setItem('titan-forge-tags', JSON.stringify(userTags)); libUI(); };
     b.style.position = 'relative'; b.append(img, Object.assign(document.createElement('span'), {textContent: e.name}), st);
-    b.onclick = () => { placing = placing === id ? null : id; libUI(); boneNumsUI(); if (placing) tip(isAlong(e) && modeBone ? `Tap a bone dot for the ${e.name}` : `Tap the body where the ${e.name} goes`, 4000); };
+    b.onclick = ev => { const now = ev.timeStamp; if (lastLibTap.id === id && now - lastLibTap.t < 450) { lastLibTap = {}; placing = null; libUI(); boneNumsUI(); return quickAdd(id); } lastLibTap = {id, t: now};
+      placing = placing === id ? null : id; libUI(); boneNumsUI(); if (placing) tip(isAlong(e) && modeBone ? `Tap a bone dot for the ${e.name}` : `Tap the body where the ${e.name} goes`, 4000); };
     gr.append(b); thumbObs.observe(img); }
   if (!visibleIds().length && gFilter !== 'Free Packs (CC0)') gr.innerHTML = gFilter === MY ? '<div class="hint">Your own parts land here. Open ⋯ → 🛠 Create Asset (Workshop), build a hand, wing, head… then 💾 Save part.</div>' : '<div class="hint">Nothing here yet.</div>';
 }
@@ -376,7 +386,7 @@ document.querySelectorAll('[data-gz]').forEach(b => b.onclick = () => { gzMode =
 $('bLocal').onclick = e => { gizmo.setSpace(gizmo.space === 'world' ? 'local' : 'world'); e.target.classList.toggle('on', gizmo.space === 'local'); };
 $('bSnap').onclick = e => { const on = gizmo.translationSnap == null; gizmo.setTranslationSnap(on ? .25 : null); gizmo.setRotationSnap(on ? 15 * D : null); e.target.textContent = on ? 'Snap on' : 'Snap off'; e.target.classList.toggle('on', on); };
 function syncEdit(soft) { const pt = partBy(sel);
-  $('grab').textContent = pt ? (LIB[pt.lib] ? LIB[pt.lib].name : 'part') + (pt.bone ? ' · on ' + pt.bone : '') : (selBone && tab === 'skel' ? 'Bone: ' + selBone : 'Myth Forge');
+  $('grab').textContent = pt ? (LIB[pt.lib] ? LIB[pt.lib].name : 'part') + (pt.bone ? ' · on ' + pt.bone : '') : (selBone && tab === 'skel' ? 'Bone: ' + selBone : 'Mythic Forge');
   if (!pt) return; for (const [s, v, k] of [['sSize', 'vSize', 's'], ['sLen', 'vLen', 'l'], ['sWid', 'vWid', 'w']]) { if (!soft || document.activeElement !== $(s)) $(s).value = pt[k] || 1; $(v).textContent = (+(pt[k] || 1)).toFixed(2); }
   $('bHide').textContent = pt.hidden ? 'Show' : 'Hide'; $('bUnlink').style.display = pt.twin ? '' : 'none'; $('tint').value = pt.tint || '#ffffff'; }
 for (const [s, k] of [['sSize', 's'], ['sLen', 'l'], ['sWid', 'w']]) { $(s).onpointerdown = () => snap();
@@ -873,7 +883,7 @@ $('mHelp').onclick = () => { $('menu').classList.remove('open'); $('help').class
 $('helpX').onclick = () => $('help').classList.remove('open');
 const tabBtn = t => document.querySelector('.tabs [data-tab="' + t + '"]');
 const TOUR = [
-  {t: 'Welcome to Myth Forge', p: 'Build monsters and mechs like a toy: snap parts on, drag them around, sculpt and paint. Pick something to start with:', start: true},
+  {t: 'Welcome to Mythic Forge', p: 'Build monsters and mechs like a toy: snap parts on, drag them around, sculpt and paint. Pick something to start with:', start: true},
   {sel: '.tabs [data-tab="add"]', pre: () => tabBtn('add').click(), t: 'Add parts', p: 'The Add tab has every part. Tap a category, then a part.'},
   {sel: '#lib', pre: () => tabBtn('add').click(), t: 'Snap it on', p: 'After picking a part, tap an orange dot (a bone) or the body. It snaps on. Mirror L/R adds the other side too.'},
   {sel: '.tabs [data-tab="edit"]', pre: () => tabBtn('edit').click(), t: 'Move', p: 'Tap any part on the model, then use Move / Turn / Stretch and the Size slider.'},
