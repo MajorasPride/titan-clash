@@ -16,7 +16,7 @@
       plug('teethU', 'teeth', [0, H[1] - .02, H[2] + .25], [0, -1, 0], 'frame', {s: mouthLen, r: [0, 0, 180]}),
       ...pair('fangU', 'fang', c.fang, [0, -1, .15], 'out', {s: c.fangS || .7}), plug('mane', 'mane', c.mane || [0, c.horn[1] * .55, c.upper[0][0] + .1], [0, 0, -1], 'frame', {s: c.maneS || .55}),
       ...pair('cheek', 'cheek', c.cheek || [c.eye[0] * .9, c.eye[1] * .55, c.eye[2] + .55], [1, 0, .3], 'out', {s: .6}),
-      plug('back1', 'back', [0, c.crest[1] - .05, c.crest[2] - .1], [0, .6, -1], 'out', {s: .5})];
+      plug('back1', 'back', [0, c.crest[1] - .05, c.crest[2] - .1], [0, .6, -1], 'out', {s: .5}), plug('crown', 'crown', [0, c.crest[1] + .02, (c.brow[2] + c.crest[2]) / 2], [0, 1, 0], 'frame', {s: .9})];
     const jplugs = [plug('teeth', 'teeth', [0, jw.rim || .04, .25], [0, 1, 0], 'frame', {s: mouthLen}), ...pair('fang', 'fang', c.fangJ || [c.fang[0], .04, mouthLen + .05], [0, 1, .1], 'out', {s: (c.fangS || .7) * .85}),
       plug('tongue', 'tongue', [0, (jw.rim || .04) - .06, .15], [0, 0, 1], 'frame', {s: mouthLen * .6}), plug('chin', 'chin', [0, jw.chin || -.25, mouthLen + .15], [0, -.6, .8], 'frame', {s: .7})];
     const upGeo = () => { const gs = [loft(S(up), {rad: 32, per: 5, noise: c.noise || [.012, 5]})]; if (c.extra) gs.push(...c.extra()); return gs; };

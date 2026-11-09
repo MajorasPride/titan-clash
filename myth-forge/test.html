@@ -391,6 +391,7 @@
 <script src="parts/kit-wings.js"></script>
 <script src="parts/kit-creatures.js"></script>
 <script src="parts/kit-lowpoly.js"></script>
+<script src="parts/kit-elementals.js"></script>
 <script src="skeletons-v3.js"></script>
 <script src="packs/index.js"></script>
 <script type="importmap">
@@ -2080,7 +2081,7 @@ if (window.MF_V2) {
   function buildDefault(k, style) { if (P.parts.some(p => !p.lib.startsWith('base_')) && !confirm('Replace what is on screen with the default ' + (SKEL[k] || {}).name + '? (Save first if you want to keep it)')) return;
     snap(); P = blankProject(k); rebuildSkeleton(); buildBase(); rebuildParts(); BT.style = style || (/^(mech|walker|tank)$/.test(k) ? 'mech' : 'creature'); btSteps(); BT.addedBy = {};
     const order = BT.steps.map((st, i) => i); if (window.MF_V3) order.sort((a, b) => ((BT.steps[a].how || '').startsWith('plug') ? 1 : 0) - ((BT.steps[b].how || '').startsWith('plug') ? 1 : 0) || a - b);
-    order.forEach(i => { const st = BT.steps[i]; if (st.k !== 'part') return; BT.i = i; BT.added = []; const d = defFor(st); if (d) btPlace(st, d, true); }); BT.i = 0; outliner(); applyFX(); bodyUI(); skelUI(); saveCur(); frameAll(); tip('⭐ Default ' + (SKEL[k] || {}).name + ' — change anything you like', 2600); }
+    order.forEach(i => { const st = BT.steps[i]; if (st.k !== 'part') return; BT.i = i; BT.added = []; const d = defFor(st); if (d) btPlace(st, d, true); }); BT.i = 0; if (window.V3 && window.V3.afterDefault) window.V3.afterDefault(k); outliner(); applyFX(); bodyUI(); skelUI(); saveCur(); frameAll(); tip('⭐ Default ' + (SKEL[k] || {}).name + ' — change anything you like', 2600); }
   const defUI = () => { const el = $('defBuilds'); if (!el) return; el.innerHTML = ''; for (const [k, sk] of Object.entries(SKEL)) { if (k === 'none' || (!DEF[k] && !/^(mech|walker|tank)$/.test(k))) continue;
       el.append(Object.assign(document.createElement('button'), {textContent: sk.name, onclick: () => buildDefault(k)})); }
     el.append(Object.assign(document.createElement('button'), {textContent: '🤖 Mech (default)', onclick: () => buildDefault('mech', 'mech')})); }; defUI();
@@ -2361,13 +2362,14 @@ $('fSticker').onchange = async e => { const f = e.target.files[0]; e.target.valu
 // stickers already used in a saved creature: register them again on load
 (async () => { try { const art = await StudioLib.all('art'); art.forEach(registerSticker); if (P.parts.some(p => p.lib.startsWith('stk_'))) rebuildParts(); } catch (e) {} })();
 
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 // ====================================================================== 🔌 V3 (Nov 9 2026, TEST PAGE ONLY: window.MF_V3): connectors (plugs)
 // Inlined after forge-core.js into test.html by build.py, so it shares its scope (P, LIB, views, buildPart, addPart...).
 // A plug is a spot on a part where another part clicks in: {id, t: type, p, d, o: 'frame' | 'out', s, r, up: 'world', side, pairOf}.
 // Parts say what they plug into with `plugAs` (or it's worked out from their group). A plugged part keeps pt.host = {u: host uid, k: plug id, b: base size}
 // and follows its host whenever the host is rebuilt (moved, refit, swapped). Moving it by hand unplugs it (it stays where you put it).
 const V3X = window.V3 = {bt: window.__btx};
-const PLUG_NAMES = {eye: 'eye', horn: 'horn', ear: 'ear', brow: 'brow', nose: 'nose', crest: 'crest', teeth: 'teeth', fang: 'fang', tongue: 'tongue', chin: 'chin', mane: 'mane', cheek: 'cheek', back: 'back / spikes', jaw: 'jaw',
+const PLUG_NAMES = {crown: 'crown', bigeye: 'big eye', eye: 'eye', horn: 'horn', ear: 'ear', brow: 'brow', nose: 'nose', crest: 'crest', teeth: 'teeth', fang: 'fang', tongue: 'tongue', chin: 'chin', mane: 'mane', cheek: 'cheek', back: 'back / spikes', jaw: 'jaw',
   finger: 'finger', claw: 'claw', toe: 'toe', tailtip: 'tail tip', antenna: 'antenna', belly: 'belly plate', feather: 'feather', combine: 'combine', any: 'any part', glow: 'glow spot', face: 'face', mouth: 'mouth', inside: 'inside', tentacle: 'tentacle', oral: 'oral arm', weapon: 'weapon', armor: 'armor'};
 function plugAsOf(e) { if (!e) return null; if (e.plugAs !== undefined) return e.plugAs; const g = e.group, s = e.sub || '', id = e.id || '';
   if (g === 'Eyes & Faces') { if (s === 'Eyes') return /third|cluster/.test(id) ? 'brow' : 'eye'; if (s === 'Ears') return 'ear';
@@ -2402,7 +2404,7 @@ function autoPlugs(lib) { if (autoCache[lib]) return autoCache[lib]; const e = L
       pr('crest', 'crest', support(S, [0, 1, -.6], p => Math.abs(p.x) < W * .12), [0, 1, -.35], 'out', {s: H / 2});
       pairOf('cheek', 'cheek', support(S, [1, -.1, .35], p => p.x > 0 && p.y < ym + H * .6), [1, 0, .3], 'out', {s: H / 3});
       pr('mane', 'mane', new THREE.Vector3(0, ym + H * .45, zb + L * .12), [0, 0, -1], 'frame', {s: W / 3.2});
-      pr('chin', 'chin', support(S, [0, -.7, .7], p => Math.abs(p.x) < W * .15), [0, -.6, .8], 'frame', {s: W / 2.5}); }
+      pr('chin', 'chin', support(S, [0, -.7, .7], p => Math.abs(p.x) < W * .15), [0, -.6, .8], 'frame', {s: W / 2.5}); pr('crown', 'crown', support(S, [0, 1, 0]), [0, 1, 0], 'frame', {s: W / 1.8}); }
     else if (kind === 'jaw') { pr('teeth', 'teeth', new THREE.Vector3(0, b.max.y - .02, b.min.z + L * .08), [0, 1, 0], 'frame', {s: L * .85});
       pr('tongue', 'tongue', new THREE.Vector3(0, b.max.y - .08, b.min.z + L * .1), [0, 0, 1], 'frame', {s: L * .5}); pr('chin', 'chin', support(S, [0, -.7, .7]), [0, -.6, .8], 'frame', {s: W / 2.2}); }
     else if (kind === 'torso') { for (let i = 0; i < 4; i++) { const yy = b.min.y + H * (.22 + i * .19), p = support(S, [0, 0, -1], q => Math.abs(q.y - yy) < H * .08 && Math.abs(q.x) < W * .15); pr('back' + (i + 1), 'back', p, [0, 0, -1], 'out', {s: W / 3, back: [0, -1, 0]}); }
@@ -2566,7 +2568,7 @@ if (V3X.bt) { const {DEF, BODY_FOR, defUI} = V3X.bt; for (const [k, d] of Object
     jellyfish: ['kj_bell'], turtle: ['kc_shell_snapper', 'tt_shell'], turtle2: ['kc_shell_snapper', 'tt_shell'], hippogriff: ['bb_horse', 'bb_beast'], ooze: ['ko_goo', 'ko_puddle', 'bb_blob'], beholder: ['ko_orb'], blob: ['ko_goo', 'bb_blob', 'bd_torso_slug', 'bd_torso_bloated']});
   try { defUI(); } catch (x) {} }
 // parts that keep their own size on the body (jellyfish bell)
-const _afterAdd = V3X.afterAdd; V3X.afterAdd = pt => { const e = LIB[pt.lib]; if (e && e.ownSize && pt.fit) { pt.s = e.ownSize; pt.l = 1; pt.fit.tweaked = true; buildPart(pt); syncTwin(pt); } _afterAdd(pt); };
+const _afterAdd = V3X.afterAdd; V3X.afterAdd = pt => { const e = LIB[pt.lib]; if (e && e.ownSize && !pt.fit && !pt.host) { pt.s = e.ownSize; buildPart(pt); syncTwin(pt); } if (e && e.ownSize && pt.fit) { pt.s = e.ownSize; pt.l = 1; pt.fit.tweaked = true; buildPart(pt); syncTwin(pt); } _afterAdd(pt); };
 
 // ====================================================================== 🔢 paint by number + 🫧 ooze & horror tools + 🤖 mech it (panel at the top of 🎨 Paint)
 const numsOf = pt => { const out = new Map(); pieces(pt.lib, pt.params).forEach((pc, mi) => { if (pc.num == null) return; if (!out.has(pc.num)) out.set(pc.num, []); out.get(pc.num).push(mi); }); return out; };
@@ -2703,6 +2705,54 @@ for (const [a, b] of [['kj_bell', 'kj_bell_lp'], ['kj_tentacle', 'kj_ribbon_lp']
 // 🔷 facet shading slider (View tab › Low-poly look row)
 (() => { const b = $('bLowLook'); if (!b) return; const r = document.createElement('div'); r.className = 'row'; r.innerHTML = '<span class="hint" style="margin:0">🔷 Facet shading</span><input type="range" id="sFacet" min="0" max=".5" step=".02" style="flex:1">'; b.parentElement.after(r);
   $('sFacet').value = facetAmt; $('sFacet').oninput = e => { facetAmt = +e.target.value; try { localStorage.setItem('mf-facet', facetAmt); } catch (x) {} rebuildParts(); }; })();
+
+// ====================================================================== 🌋 Element on any part (V3): swaps the skin + grows element bits on the part (flames, rocks, crystals, leaves, ice, lightning, stars...)
+const ELEM = {lava: {n: '🌋 Lava', mat: 'lavacrack', bits: [['rock', 'lavarock', .5], ['flame', 'fire', .35]]}, stone: {n: '🪨 Stone', mat: 'stone', bits: [['rock', 'stone', .6]]}, crystal: {n: '💎 Crystal', mat: 'stone', bits: [['shard', 'gemgreen', .55]]},
+  forest: {n: '🌳 Forest', mat: 'bark3', bits: [['leaf', 'leaf', .55], ['vine', 'moss', .25]]}, water: {n: '🌊 Water', mat: 'ocean', bits: [['drop', 'waterclear', .4], ['swirl', 'foam', .25]]}, fire: {n: '🔥 Fire', mat: 'fire', bits: [['flame', 'fire', .6]]},
+  ice: {n: '🧊 Ice', mat: 'ice', bits: [['shard', 'ice', .55]]}, wind: {n: '🌪 Wind', mat: 'fog', bits: [['swirl', 'fogdense', .5]]}, storm: {n: '⛈ Storm', mat: 'stormcloud', bits: [['bolt', 'lightning', .4], ['puff', 'stormcloud', .4]]},
+  cosmic: {n: '🌌 Cosmic', mat: 'galaxy', bits: [['star', 'glow', .45], ['star', 'glowblue', .25]]}, gold: {n: '👑 Gold', mat: 'goldpolished', bits: [['shard', 'goldpolished', .3]]}, sand: {n: '🏜 Sand', mat: 'sand', bits: [['puff', 'sandstorm', .3]]},
+  void: {n: '🕳 Void', mat: 'void', bits: [['star', 'glowpurple', .35]]}};
+const bitGeo = {}; function bitG(k) { if (bitGeo[k]) return bitGeo[k]; const V = (x, y, z) => new THREE.Vector3(x, y, z); let g;
+  if (k === 'rock') g = new THREE.DodecahedronGeometry(.5, 0).scale(1, .7, 1).translate(0, .15, 0);
+  else if (k === 'flame') g = K.taper(K.bez(V(0, 0, 0), V(.2, .6, 0), V(-.1, 1.4, .05)), .32, .01, 10, 7);
+  else if (k === 'shard') g = new THREE.ConeGeometry(.22, 1.3, 5).translate(0, .6, 0);
+  else if (k === 'leaf') g = new THREE.IcosahedronGeometry(.5, 0).scale(1, .45, .8).translate(0, .2, 0);
+  else if (k === 'vine') g = K.taper(K.bez(V(0, 0, 0), V(.4, .3, .2), V(.8, .1, .5)), .06, .02, 10, 5);
+  else if (k === 'drop') g = new THREE.SphereGeometry(.22, 8, 6).scale(1, 1.4, 1).translate(0, .4, 0);
+  else if (k === 'swirl') g = new THREE.TorusGeometry(.45, .07, 5, 18, Math.PI * 1.4).rotateX(Math.PI / 2).translate(0, .3, 0);
+  else if (k === 'bolt') { const pts = []; for (let i = 0; i <= 6; i++) pts.push(V((i % 2 ? .25 : -.25) * (1 - i / 8), i * .3, (i % 3 - 1) * .15)); g = K.taper(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0), .06, .015, 24, 5); }
+  else if (k === 'puff') g = new THREE.IcosahedronGeometry(.55, 1).translate(0, .25, 0);
+  else g = new THREE.OctahedronGeometry(.18, 0).scale(.5, 2.2, .5).translate(0, .3, 0);   // star sparkle
+  return bitGeo[k] = g; }
+function elemBits(pt, v) { const el = ELEM[pt.elem]; if (!el) return; const S = samples(pt.lib, pt.params); if (!S.pts.length) return; const b = partBoxOf(pt.lib, pt.params), diag = b.getSize(new THREE.Vector3()).length(); let seed = hash(pt.uid) || 1; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const G = new THREE.Group(); G.userData.elem = 1;
+  for (const [kind, mat, dens] of el.bits) { const n = Math.round(Math.min(40, Math.max(3, diag * 5 * dens))), gs = [];
+    for (let i = 0; i < n; i++) { const j = Math.floor(rnd() * S.pts.length), p = S.pts[j], nn = S.nrm[j].clone().normalize(); if (kind === 'flame' && nn.y < -.2) continue; const g = bitG(kind).clone(), s = diag * .07 * (.6 + rnd() * .8);
+      g.scale(s, s, s); g.rotateY(rnd() * 6.28); g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), nn)); g.translate(p.x - nn.x * s * .1, p.y - nn.y * s * .1, p.z - nn.z * s * .1); const ng = g.index ? g.toNonIndexed() : g; ng.computeVertexNormals(); const q = new THREE.BufferGeometry(); q.setAttribute('position', ng.attributes.position); q.setAttribute('normal', ng.attributes.normal); gs.push(q); }
+    if (!gs.length) continue; const m = new THREE.Mesh(mergeGeometries(gs), matFor(mat, pt.tint, pt.tile)); m.raycast = () => {}; G.add(m); }
+  v.M.add(G); }
+const _post2 = V3X.post; V3X.post = pt => { _post2(pt); const v = views[pt.uid]; if (v && pt.elem && !colorMode) try { elemBits(pt, v); } catch (x) { console.warn('elem', x); } };
+function setElem(list, k) { snap(); for (const pt of list) for (const x of [pt, twinOf(pt)]) { if (!x) continue; if (k) { if (x.elemPrev === undefined) x.elemPrev = x.matAll || null; x.elem = k; x.matAll = ELEM[k].mat; x.mat = null; } else { x.elem = null; if (x.elemPrev !== undefined) { x.matAll = x.elemPrev; delete x.elemPrev; } } buildPart(x); } saveCur(); }
+V3X.setElem = setElem;
+// ⭐ default builds: elements, skins and god pieces (crown, halo, robe, hood, big eye, collar, weapon, belly maw, shackles, chains) from FORGE_DEF3 '_' keys
+const famKey = pt => { const r = boneRow(pt.bone); if (!r) return 'trunk'; const f = FAMILY[r[4]] || 'trunk', side = pt.bone.endsWith('.L') ? '.L' : pt.bone.endsWith('.R') ? '.R' : ''; return [f + side, f]; };
+V3X.afterDefault = k => { const d = (window.FORGE_DEF3 || {})[k]; if (!d) return; const main = P.parts.filter(p => !p.host || /^(back|tailtip|jaw|finger|toe|ear|claw)$/.test((plugsOf((partBy(p.host.u) || {}).lib || '', partBy(p.host.u)).find(q => q.id === p.host.k) || {}).t || ''));
+  const pick = (map, pt) => { if (typeof map === 'string') return map; const [a, b] = famKey(pt); return map[a] ?? map[b] ?? map.all; };
+  if (d._mat) for (const pt of P.parts) { const m = pick(d._mat, pt); if (m && !(LIB[pt.lib] && /eye|Weapons/.test(LIB[pt.lib].group + (LIB[pt.lib].plugAs || '')))) { pt.matAll = m; pt.mat = null; } }
+  if (d._elem) for (const pt of main) { const e = pick(d._elem, pt); if (e && ELEM[e]) { pt.elemPrev = pt.matAll || null; pt.elem = e; pt.matAll = ELEM[e].mat; pt.mat = null; } }
+  const m = mirrorAdd; mirrorAdd = true; const headB = (P.bones.find(r => r[4] === 'head') || [])[0], chestB = (P.bones.find(r => r[4] === 'chest') || [])[0], hipsB = (P.bones.find(r => r[0] === 'hips') || P.bones[0])[0], neckB = (P.bones.find(r => r[4] === 'neck') || [])[0];
+  const plugAll = (id, type) => { if (id && LIB[id]) V3X.fillAll(id, type); };
+  plugAll(d._bigeye, 'bigeye'); plugAll(d._crown, 'crown'); plugAll(d._halo, 'mane'); plugAll(d._belly, 'belly');
+  const deco = (id, bone) => { if (id && LIB[id] && bone) { V3X.skip = true; const mm = mirrorAdd; mirrorAdd = false; addPart(id, bone, [0, 0, 0], [0, 0, 0], LIB[id].ownSize || undefined); mirrorAdd = mm; V3X.skip = false; } };
+  deco(d._hood, headB); deco(d._robe, hipsB); deco(d._neck, neckB); deco(d._chains, chestB);
+  if (d._shackles) for (const r of P.bones.filter(r => r[4] === 'hand' && !r[0].endsWith('.L'))) { V3X.skip = true; addPart(d._shackles, r[0], [0, 0, 0], [0, 0, 0]); V3X.skip = false; }
+  if (d._weapon) { const h = P.bones.find(r => r[4] === 'hand' && r[0].endsWith('.R')); if (h) addWeaponToPalm(d._weapon, h[0]); }
+  mirrorAdd = m; rebuildParts(); };
+// 🌋 Element row in the Paint tab panel
+const _v3p = v3PaintUI; v3PaintUI = function () { _v3p(); const el = $('v3paint'), pt = partBy(sel); if (!el || !pt) return; const h = document.createElement('div'); h.className = 'step'; h.innerHTML = '🌋 <b>Element</b> — make ' + (paintAll ? 'every part' : 'this part') + ' out of an element (mix them: lava head, water arm…)'; el.prepend(h);
+  const r = document.createElement('div'); r.className = 'row'; r.style.flexWrap = 'wrap'; h.after(r); const list = () => paintAll ? P.parts.filter(p => !p.boxed && !p.host) : [pt];
+  r.append(Object.assign(document.createElement('button'), {textContent: '🚫 None', className: pt.elem ? '' : 'on', onclick: () => { setElem(list(), null); v3PaintUI(); }}));
+  for (const [k, e] of Object.entries(ELEM)) r.append(Object.assign(document.createElement('button'), {textContent: e.n, className: pt.elem === k ? 'on' : '', onclick: () => { setElem(list(), k); v3PaintUI(); tip(e.n + (paintAll ? ' on everything' : ''), 1400); }})); };
 
 </script>
 </body>
