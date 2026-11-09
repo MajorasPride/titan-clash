@@ -825,20 +825,21 @@ function stroke(x, y) {
   const pt = partBy(sel), v = views[sel]; if (!pt || !v) return; const hit = cast(x, y, v.meshes); if (!hit) return;
   const mesh = hit.object, mi = mesh.userData.mi, g = mesh.geometry, p = g.attributes.position, nrm = g.attributes.normal;
   const local = mesh.worldToLocal(hit.point.clone()), ws = new THREE.Vector3(); mesh.getWorldScale(ws);
-  const R = (+$('sBrush').value) / Math.abs(ws.y), R2 = R * R, power = Math.min(1, +$('sStr').value * pressure);
+  const R = (+$('sBrush').value) * penSize() / Math.abs(ws.y), R2 = R * R, power = Math.min(1, +$('sStr').value * pressure);
   if (brush === 'erase') { const I = g.index.array, cut = new Set(pt.cut || []); let n = 0;
     for (let t = 0; t < I.length / 3; t++) { let cx = 0, cy = 0, cz = 0; for (let j = 0; j < 3; j++) { const vv = I[t * 3 + j]; cx += p.getX(vv) / 3; cy += p.getY(vv) / 3; cz += p.getZ(vv) / 3; }
       if ((cx - local.x) ** 2 + (cy - local.y) ** 2 + (cz - local.z) ** 2 < R2) { cut.add(mi + ':' + t); n++; } }
     if (n) { if (pt.cut && pt.cut.length) tip('Erase is one-time per stroke here', 800); pt.cut = [...cut]; buildPart(pt); syncTwin(pt); } return; }
   if (g === pieces(pt.lib, pt.params)[mi].geo) { buildPartOwn(pt); return stroke(x, y); }
   pt.sculpt = pt.sculpt || {}; const S = pt.sculpt[mi] = pt.sculpt[mi] || {};
+  if (NEWB.has(brush)) return stroke2(pt, mesh, mi, g, local, R, power, hit);
   const centers = [local]; if (symSculpt) centers.push(new THREE.Vector3(-local.x, local.y, local.z));
   const hn = hit.face.normal.clone(); let drag = null; if (brush === 'grab') { if (lastHit) drag = local.clone().sub(lastHit); lastHit = local.clone(); if (!drag) return; }
   const nb = (brush === 'smooth') ? adj(g) : null, moved = new Map();
   for (const [ci, c] of centers.entries()) for (let i = 0; i < p.count; i++) {
     const dx = p.getX(i) - c.x, dy = p.getY(i) - c.y, dz = p.getZ(i) - c.z, d2 = dx * dx + dy * dy + dz * dz; if (d2 > R2) continue;
-    const f = (1 - d2 / R2) ** 2 * power, mv = new THREE.Vector3(), N = new THREE.Vector3(nrm.getX(i), nrm.getY(i), nrm.getZ(i));
-    if (brush === 'inflate' || brush === 'deflate') mv.copy(N).multiplyScalar(f * R * .1 * (brush === 'inflate' ? 1 : -1));
+    const f = fall(d2 / R2) * power, mv = new THREE.Vector3(), N = new THREE.Vector3(nrm.getX(i), nrm.getY(i), nrm.getZ(i));
+    if (brush === 'inflate' || brush === 'deflate') mv.copy(N).multiplyScalar(f * R * .1 * (brush === 'inflate' ? 1 : -1) * (sInv ? -1 : 1));
     else if (brush === 'smooth') { let ax = 0, ay = 0, az = 0, k = 0; for (const o of nb[i]) { ax += p.getX(o); ay += p.getY(o); az += p.getZ(o); k++; } if (!k) continue; mv.set(ax / k - p.getX(i), ay / k - p.getY(i), az / k - p.getZ(i)).multiplyScalar(Math.min(1, f * 1.6)); }
     else if (brush === 'flatten') { const H = hn.clone(); if (ci) H.x = -H.x; mv.copy(H).multiplyScalar(-(dx * H.x + dy * H.y + dz * H.z) * f); }
     else if (brush === 'pinch') mv.set(-dx, -dy, -dz).multiplyScalar(f * .15);
@@ -846,8 +847,7 @@ function stroke(x, y) {
     else if (brush === 'noise') mv.copy(N).multiplyScalar(K.vnoise(p.getX(i) * 6, p.getY(i) * 6, p.getZ(i) * 6) * f * R * .12);
     else if (brush === 'grab') { mv.copy(drag).multiplyScalar(f / power); if (ci) mv.x = -mv.x; }
     const prev = moved.get(i); moved.set(i, prev ? prev.add(mv) : mv); }
-  for (const [i, mv] of moved) { p.setXYZ(i, p.getX(i) + mv.x, p.getY(i) + mv.y, p.getZ(i) + mv.z); const o = S[i] || [0, 0, 0]; S[i] = [o[0] + mv.x, o[1] + mv.y, o[2] + mv.z].map(v => +v.toFixed(4)); }
-  if (moved.size) { p.needsUpdate = true; g.computeVertexNormals(); g.computeBoundingSphere(); }
+  applyMoves(pt, mi, g, moved);
 }
 function buildPartOwn(pt) { pt.sculpt = pt.sculpt || {}; const v = views[pt.uid]; v.meshes.forEach(m => { const mi = m.userData.mi; if (m.geometry === pieces(pt.lib, pt.params)[mi].geo) m.geometry = m.geometry.clone(); }); }
 function updateOrbit() { controls.enabled = true; controls.touches.ONE = (!sculpting() || penSeen || stylus || fingerView) ? THREE.TOUCH.ROTATE : null;
@@ -867,7 +867,7 @@ canvas.addEventListener('pointerdown', e => {
 }, true);
 canvas.addEventListener('pointermove', e => { if (!sculpting()) return; if (e.pointerType !== 'touch' || stroking) ring(e.clientX, e.clientY);
   if (stroking) { if (e.pointerType === 'pen' && e.pressure > 0) pressure = .35 + e.pressure * 1.3; brushAt(e.clientX, e.clientY); } });
-const brushAt = (x, y) => P.fx.lowpoly && !lpMode ? (lastHit ? null : (lastHit = true, tip('Turn off 🔷 Low-poly look (FX / View) to sculpt or brush paint', 2200))) : tab === 'paint' ? paintStroke(x, y) : lpMode ? (lastHit ? null : (lastHit = true, lpTap(x, y))) : stroke(x, y);
+const brushAt = (x, y) => P.fx.lowpoly && !lpMode ? (lastHit ? null : (lastHit = true, tip('Turn off 🔷 Low-poly look (FX / View) to sculpt or brush paint', 2200))) : tab === 'paint' ? paintStroke(x, y) : lpMode ? (lastHit ? null : (lastHit = true, lpTap(x, y))) : sculptRoute(x, y);
 addEventListener('pointercancel', e => touches.delete(e.pointerId));
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 addEventListener('pointerup', e => {
@@ -1572,3 +1572,228 @@ if (window.MF_V2) {
     {sel: '#bMenu', t: 'Save + help', p: '⋯ has Save as, Download model, ❓ How to build, and this tour again. Have fun!'});
 }
 window.__dbg = () => ({LIB, SKEL, MATS, FAMILY});   // test hook
+
+// ====================================================================== sculpt tools v2 (Nov 9): ideas from Nomad Sculpt + Blender sculpt mode, all written here
+// build: clay, strips, layer, sharp · shape: elastic, snake, twist, thumb · hard surface: scrape, panel, trim (lasso), lineflat · control: mask, stamp, relax (even out),
+// ➖ invert, falloff (soft/normal/hard/flat), pen pressure -> size. Sculpt data stays per-vertex offsets in pt.sculpt; mask = pt.mask[mi][vertex] (0..1, 1 = protected).
+var strokeBase = new Map(), sInv = false, sFall = 'normal', penSz = false, rawP = 1, stampPat = 'scales', lastStamp = null, sDirPrev = null, ds = null, gest = null;
+const NEWB = new Set(['clay', 'strips', 'layer', 'sharp', 'scrape', 'panel', 'relax', 'stamp', 'mask']);
+const DRAGB = new Set(['snake', 'elastic', 'twist', 'thumb']);
+const GESTB = new Set(['trim', 'lineflat']);
+function fall(t2) { const t = Math.sqrt(Math.min(1, t2));
+  return sFall === 'soft' ? (1 - t2) ** 3 : sFall === 'hard' ? 1 - t ** 6 : sFall === 'flat' ? (t < .85 ? 1 : (1 - t) / .15) : (1 - t2) ** 2; }
+function penSize() { return penSz ? .3 + .7 * rawP : 1; }
+canvas.addEventListener('pointerdown', e => { rawP = e.pointerType === 'pen' && e.pressure > 0 ? e.pressure : 1; lastStamp = null; sDirPrev = null; ds = null; strokeBase = new Map(); }, true);
+canvas.addEventListener('pointermove', e => { if (e.pointerType === 'pen' && e.pressure > 0) rawP = e.pressure; }, true);
+function maskOf(pt, mi) { return pt.mask && pt.mask[mi]; }
+function applyMoves(pt, mi, g, moved) { const p = g.attributes.position, S = (pt.sculpt = pt.sculpt || {})[mi] = (pt.sculpt[mi] || {}), MK = maskOf(pt, mi);
+  for (const [i, mv] of moved) { const k = MK && MK[i] ? 1 - MK[i] : 1; if (k <= 0) continue; if (k < 1) mv.multiplyScalar(k);
+    p.setXYZ(i, p.getX(i) + mv.x, p.getY(i) + mv.y, p.getZ(i) + mv.z); const o = S[i] || [0, 0, 0]; S[i] = [o[0] + mv.x, o[1] + mv.y, o[2] + mv.z].map(v => +v.toFixed(4)); }
+  if (moved.size) { p.needsUpdate = true; g.computeVertexNormals(); g.computeBoundingSphere(); g.computeBoundingBox(); } }
+const addMv = (moved, i, mv) => { const pr = moved.get(i); moved.set(i, pr ? pr.add(mv) : mv); };
+// stamp patterns: u, v in about -1..1 across the brush -> height -1..1
+const fr = x => x - Math.floor(x), hsh = (a, b) => fr(Math.sin(a * 127.1 + b * 311.7) * 43758.5);
+const STAMPS = {
+  scales: (u, v) => { const k = 3, vv = v * k, row = Math.floor(vv), uu = u * k + (row % 2 ? .5 : 0), fu = fr(uu) - .5, fv = fr(vv); return Math.sqrt(Math.max(0, 1 - (fu * 2.1) ** 2 - ((fv - .65) * 1.5) ** 2)) * .9 - .15; },
+  rivets: (u, v) => { const k = 2.6, fu = fr(u * k) - .5, fv = fr(v * k) - .5, r = Math.hypot(fu, fv); return r < .17 ? Math.sqrt(1 - (r / .17) ** 2) : 0; },
+  pores: (u, v) => -Math.max(0, -K.vnoise(u * 9, v * 9, .5) - .25) * 2.4,
+  hex: (u, v) => { const k = 2.4, x = u * k, y = v * k, q = (2 / 3 * x), r = (-1 / 3 * x + Math.sqrt(3) / 3 * y); let rx = Math.round(q), rz = Math.round(r), ry = Math.round(-q - r);
+    const dx = Math.abs(rx - q), dz = Math.abs(rz - r), dy = Math.abs(ry + q + r); if (dx > dy && dx > dz) rx = -ry - rz; else if (dz > dy) rz = -rx - ry;
+    const cx = rx * 1.5, cy = Math.sqrt(3) * (rz + rx / 2), px = Math.abs(x - cx), py = Math.abs(y - cy), e = Math.max(px * .5 + py * Math.sqrt(3) / 2, px); return e > .86 ? -1 : .2; },
+  cracks: (u, v) => { const k = 2.2, x = u * k, y = v * k, ix = Math.floor(x), iy = Math.floor(y); let f1 = 9, f2 = 9;
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const px = ix + a + hsh(ix + a, iy + b), py = iy + b + hsh(iy + b + 7, ix + a + 3), d = Math.hypot(x - px, y - py); if (d < f1) { f2 = f1; f1 = d; } else if (d < f2) f2 = d; }
+    return f2 - f1 < .07 ? -1 : 0; },
+  bolt: (u, v) => { const au = Math.abs(u), av = Math.abs(v), hx = Math.max(au * .866 + av * .5, av), r = Math.hypot(u, v); return hx < .42 ? (r < .1 ? .4 : 1) : 0; }};
+// brushes that need the surface under the finger
+function stroke2(pt, mesh, mi, g, local, R, power, hit) {
+  const p = g.attributes.position, nrm = g.attributes.normal, R2 = R * R, inv = sInv ? -1 : 1, S = pt.sculpt[mi], V = THREE.Vector3;
+  const centers = [local]; if (symSculpt) centers.push(new V(-local.x, local.y, local.z));
+  if (brush === 'mask') { pt.mask = pt.mask || {}; const M = pt.mask[mi] = pt.mask[mi] || {};
+    for (const c of centers) for (let i = 0; i < p.count; i++) { const d2 = (p.getX(i) - c.x) ** 2 + (p.getY(i) - c.y) ** 2 + (p.getZ(i) - c.z) ** 2; if (d2 > R2) continue;
+      const val = Math.max(0, Math.min(1, (M[i] || 0) + fall(d2 / R2) * power * 1.5 * inv)); if (val > .01) M[i] = +val.toFixed(2); else delete M[i]; }
+    return maskShow(pt); }
+  if (brush === 'stamp') { if (lastStamp && local.distanceTo(lastStamp) < R * 1.6) return; lastStamp = local.clone(); }
+  let dir = null; if (sDirPrev && local.distanceTo(sDirPrev) > R * .05) dir = local.clone().sub(sDirPrev).normalize(); if (!sDirPrev || dir) sDirPrev = local.clone();
+  const nb = brush === 'relax' ? adj(g) : null, moved = new Map();
+  for (const [ci, c] of centers.entries()) {
+    const list = []; let w = 0; const C = new V(), Nn = new V();
+    for (let i = 0; i < p.count; i++) { const d2 = (p.getX(i) - c.x) ** 2 + (p.getY(i) - c.y) ** 2 + (p.getZ(i) - c.z) ** 2; if (d2 > R2) continue; const f = fall(d2 / R2); list.push([i, f, d2]); w += f;
+      C.x += p.getX(i) * f; C.y += p.getY(i) * f; C.z += p.getZ(i) * f; Nn.x += nrm.getX(i) * f; Nn.y += nrm.getY(i) * f; Nn.z += nrm.getZ(i) * f; }
+    if (!w) continue; C.multiplyScalar(1 / w); Nn.normalize();
+    let U = dir ? dir.clone() : new V(1, 0, 0); if (ci && dir) U.x = -U.x; U.addScaledVector(Nn, -U.dot(Nn)); if (U.lengthSq() < 1e-6) U = new V(0, 1, 0).addScaledVector(Nn, -Nn.y); U.normalize(); const W = new V().crossVectors(Nn, U);
+    for (const [i, f, d2] of list) { const P = new V(p.getX(i), p.getY(i), p.getZ(i)), Ni = new V(nrm.getX(i), nrm.getY(i), nrm.getZ(i)), D0 = P.clone().sub(C); let mv = null;
+      if (brush === 'clay') { const d = D0.dot(Nn) - R * .12 * inv; if (d * inv < 0) mv = Nn.clone().multiplyScalar(-d * f * power * .5); }
+      else if (brush === 'strips') { const q = Math.max(Math.abs(D0.dot(U)), Math.abs(D0.dot(W))) / R; if (q > 1) continue; const f2 = 1 - q ** 6, d = D0.dot(Nn) - R * .18 * inv; if (d * inv < 0) mv = Nn.clone().multiplyScalar(-d * f2 * power * .6); }
+      else if (brush === 'layer') { const o0 = S[i] ? S[i][0] * Nn.x + S[i][1] * Nn.y + S[i][2] * Nn.z : 0, kb = mi + ':' + i; if (!strokeBase.has(kb)) strokeBase.set(kb, o0); const off = o0 - strokeBase.get(kb), tg = R * .15 * inv - off; if (tg * inv > 0) mv = Nn.clone().multiplyScalar(tg * f * power); }
+      else if (brush === 'sharp') { const t = Math.sqrt(d2) / R; mv = Ni.clone().multiplyScalar(-inv * (1 - t) ** 4 * power * R * .12); }
+      else if (brush === 'scrape') { const d = D0.dot(Nn); if (d * inv > 0) mv = Nn.clone().multiplyScalar(-d * f * power); }
+      else if (brush === 'panel') { const t = Math.sqrt(d2) / (R * .3); if (t > 1) continue; const o0 = S[i] ? S[i][0] * Ni.x + S[i][1] * Ni.y + S[i][2] * Ni.z : 0, kb = mi + ':' + i; if (!strokeBase.has(kb)) strokeBase.set(kb, o0); const off = o0 - strokeBase.get(kb), tg = -R * .07 * inv - off; if (tg * -inv > 0) mv = Ni.clone().multiplyScalar(tg * (1 - t ** 4) * Math.min(1, power * 2)); }
+      else if (brush === 'relax') { const k = nb[i]; if (!k.length) continue; const A = new V(); for (const o of k) A.add(new V(p.getX(o), p.getY(o), p.getZ(o))); A.multiplyScalar(1 / k.length).sub(P); A.addScaledVector(Ni, -A.dot(Ni)); mv = A.multiplyScalar(Math.min(1, f * power * 1.5)); }
+      else if (brush === 'stamp') { const h = (STAMPS[stampPat] || STAMPS.scales)(D0.dot(U) / R, D0.dot(W) / R); if (!h) continue; mv = Nn.clone().multiplyScalar(h * R * .1 * inv * power * Math.min(1, f * 2.5)); }
+      if (mv) addMv(moved, i, mv); } }
+  applyMoves(pt, mi, g, moved); }
+// brushes that keep pulling after the finger leaves the surface (snake hook, elastic grab, twist, thumb)
+function dragStroke(x, y) { const pt = partBy(sel), v = views[sel]; if (!pt || !v) return; const V = THREE.Vector3;
+  if (!ds) { const hit = cast(x, y, v.meshes); if (!hit) return; const mesh = hit.object, mi = mesh.userData.mi;
+    if (mesh.geometry === pieces(pt.lib, pt.params)[mi].geo) { buildPartOwn(pt); return dragStroke(x, y); } pt.sculpt = pt.sculpt || {};
+    const ws = new V(); mesh.getWorldScale(ws); const R = (+$('sBrush').value) * penSize() / Math.abs(ws.y), local = mesh.worldToLocal(hit.point.clone());
+    const nl = hit.face.normal.clone(), g = mesh.geometry, p = g.attributes.position, centers = [local]; if (symSculpt) centers.push(new V(-local.x, local.y, local.z));
+    ds = {mesh, mi, R, c: centers, n: nl, prevW: hit.point.clone(), px: x, plane: new THREE.Plane().setFromNormalAndCoplanarPoint(camera.getWorldDirection(new V()).negate(), hit.point), lists: null};
+    if (brush === 'elastic') ds.lists = centers.map(c => { const L = []; for (let i = 0; i < p.count; i++) { const d = Math.sqrt((p.getX(i) - c.x) ** 2 + (p.getY(i) - c.y) ** 2 + (p.getZ(i) - c.z) ** 2); const w = 1 / Math.pow(1 + (d / R) ** 2, 1.5); if (w > .02) L.push([i, w]); } return L; });
+    return; }
+  ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); const cur = new V(); if (!ray.ray.intersectPlane(ds.plane, cur)) return;
+  const {mesh, mi, R} = ds, g = mesh.geometry, p = g.attributes.position, nrm = g.attributes.normal, power = Math.min(1, +$('sStr').value * pressure), R2 = R * R;
+  const dL = mesh.worldToLocal(cur.clone()).sub(mesh.worldToLocal(ds.prevW.clone())); ds.prevW = cur; const moved = new Map();
+  ds.c.forEach((c, ci) => { const d = dL.clone(); if (ci) d.x = -d.x;
+    if (brush === 'elastic') { for (const [i, w] of ds.lists[ci]) addMv(moved, i, d.clone().multiplyScalar(w)); return; }
+    if (brush === 'twist') { const ax = ds.n.clone(); if (ci) ax.x = -ax.x; const ang = (x - ds.px) * .012 * power * (ci ? -1 : 1) * (sInv ? -1 : 1); const q = new THREE.Quaternion().setFromAxisAngle(ax.normalize(), 0);
+      for (let i = 0; i < p.count; i++) { const P = new V(p.getX(i), p.getY(i), p.getZ(i)), d2 = P.distanceToSquared(c); if (d2 > R2) continue; q.setFromAxisAngle(ax, ang * fall(d2 / R2)); const rel = P.clone().sub(c).applyQuaternion(q).add(c); addMv(moved, i, rel.sub(P)); } return; }
+    for (let i = 0; i < p.count; i++) { const d2 = (p.getX(i) - c.x) ** 2 + (p.getY(i) - c.y) ** 2 + (p.getZ(i) - c.z) ** 2; if (d2 > R2) continue; const f = fall(d2 / R2);
+      if (brush === 'snake') addMv(moved, i, d.clone().multiplyScalar(f));
+      else { const N = new V(nrm.getX(i), nrm.getY(i), nrm.getZ(i)), t = d.clone(); t.addScaledVector(N, -t.dot(N)); addMv(moved, i, t.multiplyScalar(f * power)); } }
+    if (brush === 'snake' || brush === 'thumb') c.add(d); });
+  ds.px = x; applyMoves(pt, mi, g, moved); }
+// draw-a-shape tools: ✂ Trim (lasso: cut off what's inside) and 📏 Line flatten (everything on the right of your line goes flat on it)
+function gestDraw() { const el = $('gest'); if (!el) return; if (!gest || !gest.pts.length) { el.innerHTML = ''; return; }
+  const pts = gest.pts.map(q => q.join(',')).join(' '), lf = brush === 'lineflat';
+  el.innerHTML = `<svg width="100%" height="100%"><${lf ? 'polyline' : 'polygon'} points="${lf ? [gest.pts[0], gest.pts[gest.pts.length - 1]].map(q => q.join(',')).join(' ') : pts}" fill="${lf ? 'none' : 'rgba(255,90,58,.18)'}" stroke="#ff5a3a" stroke-width="3" stroke-dasharray="8 6"/></svg>`; }
+function sculptRoute(x, y) { if (GESTB.has(brush)) { if (!gest) gest = {pts: []}; gest.pts.push([x, y]); return gestDraw(); } if (DRAGB.has(brush)) return dragStroke(x, y); return stroke(x, y); }
+const inPoly = (x, y, poly) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
+function toScreen(v3) { const q = v3.clone().project(camera); return [(q.x + 1) / 2 * innerWidth, (1 - q.y) / 2 * innerHeight, q.z]; }
+function gestEnd() { const g0 = gest; gest = null; gestDraw(); const pt = partBy(sel), v = views[sel]; if (!g0 || !pt || !v || g0.pts.length < 2) return; const V = THREE.Vector3;
+  if (brush === 'trim') { if (g0.pts.length < 3) return; const cut = new Set(pt.cut || []); let n = 0;
+    for (const m of v.meshes) { const mi = m.userData.mi, keep = pt.cut; pt.cut = []; const g = partGeo(pt, mi, pieces(pt.lib, pt.params)[mi].geo); pt.cut = keep; const I = g.index.array, p = g.attributes.position; m.updateMatrixWorld(true);
+      for (let t = 0; t < I.length / 3; t++) { const c = new V(); for (let j = 0; j < 3; j++) c.add(new V(p.getX(I[t * 3 + j]), p.getY(I[t * 3 + j]), p.getZ(I[t * 3 + j]))); c.multiplyScalar(1 / 3);
+        const cs = [c]; if (symSculpt) cs.push(new V(-c.x, c.y, c.z)); if (cs.some(cc => { const [sx, sy] = toScreen(cc.clone().applyMatrix4(m.matrixWorld)); return inPoly(sx, sy, g0.pts); })) { cut.add(mi + ':' + t); n++; } } }
+    if (!n) return tip('Nothing inside — draw the loop around part of the selected part', 2200); snap(); pt.cut = [...cut]; buildPart(pt); syncTwin(pt); saveCur(); return tip('✂ Trimmed ' + n + ' faces (Undo or Sculpt › Undo all sculpt brings them back)', 2400); }
+  // line flatten
+  const a = g0.pts[0], b = g0.pts[g0.pts.length - 1]; if (Math.hypot(a[0] - b[0], a[1] - b[1]) < 20) return; const ctr = new THREE.Box3().setFromObject(v.G).getCenter(new V());
+  const pl = new THREE.Plane().setFromNormalAndCoplanarPoint(camera.getWorldDirection(new V()).negate(), ctr), onPl = q => { ndc.set(q[0] / innerWidth * 2 - 1, -(q[1] / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); const o = new V(); ray.ray.intersectPlane(pl, o); return o; };
+  const A = onPl(a), B = onPl(b), nW = new V().crossVectors(B.clone().sub(A), camera.getWorldDirection(new V())).normalize(); snap(); let n = 0;
+  for (const m of v.meshes) { const mi = m.userData.mi; if (m.geometry === pieces(pt.lib, pt.params)[mi].geo) { buildPartOwn(pt); } const g = m.geometry, p = g.attributes.position, inv = m.matrixWorld.clone().invert(), moved = new Map();
+    const planes = [[A.clone(), nW.clone()]]; if (symSculpt) { const Al = A.clone().applyMatrix4(inv), nl = nW.clone().transformDirection(inv); Al.x = -Al.x; nl.x = -nl.x; planes.push([Al.applyMatrix4(m.matrixWorld), nl.transformDirection(m.matrixWorld)]); }
+    for (let i = 0; i < p.count; i++) { const L = new V(p.getX(i), p.getY(i), p.getZ(i)), Wp = L.clone().applyMatrix4(m.matrixWorld); let T2 = Wp.clone();
+      for (const [P0, n0] of planes) { const d = T2.clone().sub(P0).dot(n0); if (d > 0) T2.addScaledVector(n0, -d); }
+      if (T2.distanceToSquared(Wp) > 1e-10) { addMv(moved, i, T2.applyMatrix4(inv).sub(L)); n++; } }
+    applyMoves(pt, mi, g, moved); }
+  syncTwin(pt); saveCur(); tip(n ? '📏 Flattened along your line' : 'Nothing on that side — draw your line the other way', 2200); }
+addEventListener('pointerup', () => { if (gest && stroking) gestEnd(); }, true); addEventListener('pointercancel', () => { gest = null; gestDraw(); }, true);
+// mask: dark overlay (sculpt tab only), clear / invert / blur
+const maskMat = () => new THREE.ShaderMaterial({transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+  vertexShader: 'attribute float mmask; varying float vM; void main(){ vM = mmask; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: 'varying float vM; void main(){ if (vM < .01) discard; gl_FragColor = vec4(.08, .1, .28, vM * .72); }'});
+function maskShow(pt) { const v = pt && views[pt.uid]; if (!v) return; for (const m of v.meshes) { const M = maskOf(pt, m.userData.mi), g = m.geometry, n = g.attributes.position.count;
+    let ov = m.parent.children.find(c => c.userData.maskOf === m); if (!M || !Object.keys(M).length) { if (ov) ov.removeFromParent(); continue; }
+    const a = new Float32Array(n); for (const k in M) if (+k < n) a[+k] = M[k]; g.setAttribute('mmask', new THREE.BufferAttribute(a, 1));
+    if (!ov) { ov = new THREE.Mesh(g, maskMat()); ov.userData.maskOf = m; ov.raycast = () => {}; ov.renderOrder = 3; m.parent.add(ov); } ov.visible = tab === 'sculpt'; } }
+{ const _bp = buildPart; buildPart = function (pt) { _bp(pt); if (pt.mask) maskShow(pt); }; }
+const maskOp = f => { const pt = partBy(sel), v = pt && views[pt.uid]; if (!v) return tip('Tap a part first'); snap(); pt.mask = pt.mask || {};
+  for (const m of v.meshes) { const mi = m.userData.mi, n = m.geometry.attributes.position.count, M = pt.mask[mi] = pt.mask[mi] || {}; f(M, n, m.geometry); } maskShow(pt); saveCur(); };
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-mask]'); if (!b) return; const k = b.dataset.mask;
+  if (k === 'clear') { const pt = partBy(sel); if (!pt) return; snap(); pt.mask = null; maskShow(pt); saveCur(); return tip('Mask cleared'); }
+  if (k === 'invert') maskOp((M, n) => { for (let i = 0; i < n; i++) { const v2 = 1 - (M[i] || 0); if (v2 > .01) M[i] = +v2.toFixed(2); else delete M[i]; } });
+  if (k === 'blur') maskOp((M, n, g) => { const nb = adj(g), c = {}; for (let i = 0; i < n; i++) { const k2 = nb[i]; if (!k2.length) continue; let s = M[i] || 0; for (const o of k2) s += M[o] || 0; c[i] = s / (k2.length + 1); }
+    for (const i in c) if (c[i] > .01) M[i] = +c[i].toFixed(2); else delete M[i]; }); });
+// 🧽 even out the whole part: slide points along the surface so they spread evenly (keeps the shape)
+function evenAll(iter = 4) { const pt = partBy(sel), v = pt && views[pt.uid]; if (!v) return tip('Tap a part first'); snap(); const V = THREE.Vector3;
+  for (const m of v.meshes) { const mi = m.userData.mi; if (m.geometry === pieces(pt.lib, pt.params)[mi].geo) buildPartOwn(pt); const g = m.geometry, p = g.attributes.position, nrm = g.attributes.normal, nb = adj(g);
+    for (let it = 0; it < iter; it++) { const moved = new Map(); for (let i = 0; i < p.count; i++) { const k = nb[i]; if (!k.length) continue; const P = new V(p.getX(i), p.getY(i), p.getZ(i)), N = new V(nrm.getX(i), nrm.getY(i), nrm.getZ(i)), A = new V();
+        for (const o of k) A.add(new V(p.getX(o), p.getY(o), p.getZ(o))); A.multiplyScalar(1 / k.length).sub(P); A.addScaledVector(N, -A.dot(N)); moved.set(i, A.multiplyScalar(.5)); } applyMoves(pt, mi, g, moved); } }
+  syncTwin(pt); saveCur(); tip('🧽 Points spread out evenly — stretched spots look smoother now', 2400); }
+// sculpt UI wiring
+const BR_TIP = {clay: 'Clay: builds up in soft layers and flattens as it goes', strips: 'Clay strips: chunky square strokes to block out muscles', layer: 'Layer: raises to one even height (plates, scales)', inflate: 'Inflate: puffs the surface out',
+  sharp: 'Draw sharp: thin sharp cut (➖ Invert = raised line, like a vein)', grab: 'Grab: drag the surface under your finger', elastic: 'Elastic grab: soft rubbery pull of a whole area', snake: 'Snake hook: start on the surface and pull out horns, spikes, tentacles',
+  twist: 'Twist: drag left / right to spin the area under the brush', thumb: 'Thumb: slide the surface sideways', pinch: 'Pinch: pulls points together — sharp tips and edges', smooth: 'Smooth: rubs bumps away', relax: 'Even out: spreads points evenly without changing the shape',
+  flatten: 'Flatten: presses the area flat', scrape: 'Scrape: shaves bumps down to a flat panel (➖ Invert fills dents)', crease: 'Crease: sharp fold line', noise: 'Rough: bumpy texture', stamp: 'Stamp: drag to press a pattern in (pick one below)',
+  panel: 'Panel lines: even grooves like a model kit (draw slowly)', trim: '✂ Trim: draw a loop around what to cut off', lineflat: '📏 Line flatten: draw a line — everything to the RIGHT of it goes flat (draw the other way for the other side)',
+  erase: 'Erase: rub to delete faces', mask: 'Mask: paint the parts to protect (dark blue). ➖ Invert = unmask'};
+document.querySelectorAll('[data-br]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.br; if ($('stampRow')) $('stampRow').style.display = k === 'stamp' ? '' : 'none'; if ($('maskRow')) $('maskRow').style.display = k === 'mask' ? '' : '';
+  if (BR_TIP[k]) tip(BR_TIP[k] + (sel ? '' : ' — tap a part first'), 3200); }));
+if ($('bInv')) $('bInv').onclick = () => { sInv = !sInv; $('bInv').classList.toggle('on', sInv); tip(sInv ? '➖ Invert on: brushes dig in instead of building up' : 'Invert off', 1800); };
+document.querySelectorAll('[data-fall]').forEach(b => b.onclick = () => { sFall = b.dataset.fall; document.querySelectorAll('[data-fall]').forEach(x => x.classList.toggle('on', x === b)); });
+document.querySelectorAll('[data-stamp]').forEach(b => b.onclick = () => { stampPat = b.dataset.stamp; document.querySelectorAll('[data-stamp]').forEach(x => x.classList.toggle('on', x === b)); });
+if ($('bPenSz')) $('bPenSz').onclick = () => { penSz = !penSz; $('bPenSz').classList.toggle('on', penSz); tip(penSz ? 'Pen pressure changes size AND strength' : 'Pen pressure changes strength only', 2000); };
+if ($('bEven')) $('bEven').onclick = () => evenAll(4);
+// sculpt-tab-only mask overlays; tab switches hide them
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => Object.values(views).forEach(v => v.M.children.forEach(c => { if (c.userData.maskOf) c.visible = tab === 'sculpt'; }))));
+if ($('mExport')) $('mExport').addEventListener('click', () => Object.values(views).forEach(v => v.M.children.forEach(c => { if (c.userData.maskOf) c.visible = false; })), true);
+
+// ====================================================================== 🎓 Sculpt together: step-by-step sculpting lessons in the Workshop, each step sets the tool up and has 👀 Show me
+// (the app does that stroke itself while a yellow dot shows where the finger goes). Demo paths are in fractions of the part's bounding box [x, y, z] so they fit any size.
+const LESSONS = [
+  {id: 'horn', name: '🦄 Horn', shape: 'bc_horn', view: 'side', steps: [
+    ['Bend it', 'Elastic grab pulls a whole area softly. Start on the tip and drag to bend the horn.', {br: 'elastic', size: 1.2, str: 1}, [[[.5, .95, .75], [.5, .9, 1.05]]]],
+    ['Pull it longer', 'Snake hook: start on the tip and pull outward. It keeps pulling even past the surface.', {br: 'snake', size: .45, str: 1}, [[[.5, .97, .85], [.5, 1.2, 1.0]]]],
+    ['Twist', 'Twist: put the brush on the base and drag sideways to spin it like a ram horn.', {br: 'twist', size: 1, str: .8}, [[[.5, .3, .2], [.5, .3, .8]]]],
+    ['Ridges', 'Crease makes sharp folds. Draw short lines across the horn for growth rings. (Mirror off for this.)', {br: 'crease', size: .3, str: .7, sym: false}, [[[.25, .3, .45], [.75, .3, .45]], [[.25, .45, .5], [.75, .45, .5]], [[.25, .6, .55], [.75, .6, .55]]]],
+    ['Smooth', 'Smooth rubs away lumps. Go gently over anything too rough.', {br: 'smooth', size: .6, str: .5}, [[[.5, .2, .5], [.5, .5, .5], [.5, .8, .6]]]]]},
+  {id: 'claw', name: '🦅 Claw', shape: 'bc_claw', view: 'side', steps: [
+    ['Hook it', 'Elastic grab on the tip, then drag down to hook the claw.', {br: 'elastic', size: .8, str: 1}, [[[.5, .97, .92], [.5, .78, 1.0]]]],
+    ['Sharpen the tip', 'Pinch pulls points together — rub the tip to make it needle sharp.', {br: 'pinch', size: .3, str: .8}, [[[.5, .8, .95], [.5, .85, .97]]]],
+    ['Blade sides', 'Scrape shaves bumps flat. Rub the side so it becomes a blade instead of a cone.', {br: 'scrape', size: .7, str: .7}, [[[.5, .3, .4], [.5, .6, .6]]]],
+    ['Groove', 'Draw sharp carves a thin line. Draw a groove along the claw.', {br: 'sharp', size: .2, str: .7}, [[[.5, .2, .45], [.5, .5, .55], [.5, .7, .75]]]],
+    ['Smooth', 'Smooth the rough spots so it looks polished.', {br: 'smooth', size: .5, str: .5}, [[[.5, .3, .5], [.5, .7, .7]]]]]},
+  {id: 'arm', name: '💪 Muscle arm', shape: 'bc_muscle', view: 'front', steps: [
+    ['Block out the biceps', 'Clay strips build chunky volume fast. Short strokes up and down the front of the upper arm.', {br: 'strips', size: .7, str: .6}, [[[.45, .18, .5], [.5, .32, .5]], [[.55, .18, .5], [.5, .32, .5]]]],
+    ['Forearm muscle', 'Clay builds up softly and flattens as it goes. Stroke along the forearm.', {br: 'clay', size: .6, str: .6}, [[[.45, .55, .5], [.5, .75, .5]]]],
+    ['Blend', 'Smooth blends the new muscle into the arm.', {br: 'smooth', size: .8, str: .5}, [[[.4, .15, .5], [.6, .4, .5], [.4, .7, .5]]]],
+    ['Muscle split', 'Crease draws the line between two muscles.', {br: 'crease', size: .3, str: .6}, [[[.35, .45, .5], [.65, .45, .5]]]],
+    ['Veins', 'Draw sharp with ➖ Invert on makes a raised line — perfect for veins.', {br: 'sharp', size: .15, str: .6, inv: true}, [[[.48, .15, .5], [.52, .3, .5], [.47, .5, .5], [.5, .7, .5]]]],
+    ['Skin texture', 'Stamp presses a pattern in. Skin pores give it a real skin feel.', {br: 'stamp', size: .8, str: .8, stamp: 'pores'}, [[[.5, .1, .5], [.5, .9, .5]]]]]},
+  {id: 'head', name: '🐲 Monster head', shape: 'bc_head', view: 'side', steps: [
+    ['Pull out the snout', 'Elastic grab on the face, then drag forward to stretch out a snout.', {br: 'elastic', size: 1.3, str: 1}, [[[.5, .35, .9], [.5, .3, 1.25]]]],
+    ['Mouth line', 'Draw sharp: carve the mouth line along the snout.', {br: 'sharp', size: .25, str: .8}, [[[.5, .25, 1.15], [.5, .28, .75]]]],
+    ['Brow ridge', 'Layer raises the surface to one height — great for a heavy brow plate.', {br: 'layer', size: .5, str: .8}, [[[.5, .62, .95], [.5, .66, .6]]]],
+    ['Horns', 'Snake hook: start on top of the head and pull out a horn.', {br: 'snake', size: .35, str: 1}, [[[.5, .97, .45], [.5, 1.25, .15]]]],
+    ['Protect the snout', 'Mask paints areas the other brushes can\'t touch (dark blue). Paint the snout.', {br: 'mask', size: .6, str: 1}, [[[.5, .3, 1.1], [.5, .35, .85]]]],
+    ['Scales', 'Stamp with Scales — the masked snout stays smooth.', {br: 'stamp', size: .9, str: .9, stamp: 'scales'}, [[[.5, .8, .3], [.5, .5, .2], [.5, .3, .5]]]],
+    ['Clear the mask', 'Mask › Clear removes the blue so everything can be sculpted again.', {br: 'mask', clear: true}, null]]},
+  {id: 'plate', name: '🤖 Mech armor plate', shape: 'bc_plate', view: 'top', steps: [
+    ['Flatten the top', 'Scrape shaves the curve into clean flat panels.', {br: 'scrape', size: .9, str: .8}, [[[.2, 1, .5], [.8, 1, .5]], [[.2, 1, .3], [.8, 1, .3]]]],
+    ['Cut a corner', '📏 Line flatten: draw a line across a corner — everything to the RIGHT of your line goes flat. Draw the other way for the other side.', {br: 'lineflat', sym: false}, [[[.72, 1, -.05], [1.05, 1, .3]]]],
+    ['Notch', '✂ Trim: draw a loop around a bit of the edge to cut it off clean.', {br: 'trim', sym: true}, [[[.4, 1, .88], [.6, 1, .88], [.6, 1, 1.1], [.4, 1, 1.1], [.4, 1, .88]]]],
+    ['Panel lines', 'Panel lines carve even grooves like a model kit. Draw slowly.', {br: 'panel', size: .6, str: .9}, [[[.12, 1, .35], [.88, 1, .35]], [[.5, 1, .35], [.5, 1, .8]]]],
+    ['Rivets', 'Stamp with Rivets — drag along the edges.', {br: 'stamp', size: .4, str: 1, stamp: 'rivets'}, [[[.1, 1, .12], [.9, 1, .12]]]]]}];
+const SC = {on: false, L: null, i: 0, busy: false};
+function scTool(t) { if (!t) return; if (t.clear) document.querySelector('[data-mask=clear]').click();
+  const b = document.querySelector('[data-br="' + t.br + '"]'); if (b) b.click(); if (t.size) $('sBrush').value = t.size; if (t.str) $('sStr').value = t.str;
+  if (!!t.inv !== sInv) $('bInv').click(); if ((t.sym === false) === symSculpt) $('bSymSculpt').click(); if (t.stamp) { const s = document.querySelector('[data-stamp="' + t.stamp + '"]'); if (s) s.click(); }
+  const f = document.querySelector('[data-fall="normal"]'); if (f) f.click(); }
+function scShow() { const el = $('guide'); if (!SC.on) return; document.body.classList.add('guiding'); document.body.classList.remove('gside'); el.style.display = 'block'; el.classList.remove('small'); el.innerHTML = '';
+  const h = (tag, cls, html) => { const x = document.createElement(tag); if (cls) x.className = cls; if (html != null) x.innerHTML = html; el.append(x); return x; }, btn = (r, t, f, on) => { const b = Object.assign(document.createElement('button'), {textContent: t, onclick: f}); if (on) b.className = 'on'; r.append(b); return b; };
+  if (!SC.L) { h('div', 'gh', '<b>🗿 Sculpt together</b>'); h('div', 'gp', 'Pick a body part to learn on. It opens in the 🛠 Workshop (your creature is kept safe), with a clay shape to sculpt. Each step picks the tool for you, and 👀 Show me does it while you watch.');
+    const r = h('div', 'gc'); LESSONS.forEach(L => btn(r, L.name, () => scStart(L), true)); const b = h('div', 'gb'); btn(b, '✕ Close', scEnd); return; }
+  const L = SC.L, N = L.steps.length;
+  if (SC.i >= N) { h('div', 'gh', `<b>🎉 ${L.name} done!</b>`); h('div', 'gp', 'Keep sculpting with any tool, then 💾 Save part (top bar) to put it in My Parts so you can drag it onto creatures.');
+    const r = h('div', 'gc'); btn(r, '💾 Save part', () => $('bSaveAsset').click(), true); btn(r, 'Another lesson', () => { SC.L = null; scShow(); }); btn(r, '↩ Back to my creature', () => { scEnd(); exitWS(); }); const b = h('div', 'gb'); btn(b, '◀', () => { SC.i--; scStep(); }); btn(b, '✕', scEnd); return; }
+  const [t, p] = L.steps[SC.i]; h('div', 'gh', `<b>🗿 ${L.name} · ${SC.i + 1}/${N} · ${t}</b>`); h('div', 'gp', p);
+  const sl = h('div', 'gsl'); for (const [id, nm] of [['sBrush', 'Size'], ['sStr', 'Strength']]) { const src = $(id), row = document.createElement('label'); row.innerHTML = `<span>${nm}</span>`; const inp = Object.assign(document.createElement('input'), {type: 'range', min: src.min, max: src.max, step: src.step, value: src.value}); inp.oninput = () => { src.value = inp.value; }; row.append(inp); sl.append(row); }
+  const b = h('div', 'gb'); btn(b, '✕', scEnd); btn(b, '◀', () => { SC.i = Math.max(0, SC.i - 1); scStep(); }); btn(b, '↶ Undo', () => $('bUndo').click());
+  if (L.steps[SC.i][3]) btn(b, SC.busy ? '…' : '👀 Show me', () => scDemo(L.steps[SC.i][3])); btn(b, SC.i === N - 1 ? 'Finish ▶' : 'Next ▶', () => { SC.i++; scStep(); }, true); }
+function scStep() { const L = SC.L, st = L && L.steps[SC.i]; if (st) { tabBtn('sculpt').click(); scTool(st[2]); } scShow(); }
+function scStart(L) { if (!inWS) enterWS(); else if (P.parts.length && !confirm('Clear the Workshop for the lesson?')) return; snap(); P.parts = []; rebuildParts();
+  addPart(L.shape, null, [0, 0, 0], [0, 0, 0], 1); const pt = P.parts[P.parts.length - 1]; select(pt.uid); SC.L = L; SC.i = 0;
+  setTimeout(() => { const b = document.querySelector('[data-cam="' + L.view + '"]'); frameObj(views[pt.uid].G, 1.6); if (b) b.click(); controls.update && controls.update(); scStep(); }, 60); }
+function scOpen() { $('menu').classList.remove('open'); if (typeof BT !== 'undefined') {} SC.on = true; SC.L = null; scShow(); }
+function scEnd() { SC.on = false; $('guide').style.display = 'none'; document.body.classList.remove('guiding', 'gside'); }
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function scDemo(strokes) { const v = views[sel]; if (!v || SC.busy) return; SC.busy = true; scShow(); const box = new THREE.Box3().setFromObject(v.G), sz = box.getSize(new THREE.Vector3()), dot = $('demoDot');
+  const at3 = f => new THREE.Vector3(box.min.x + sz.x * f[0], box.min.y + sz.y * f[1], box.min.z + sz.z * f[2]);
+  // snap a point onto the visible surface: nearest vertex that faces the camera
+  const camP = camera.position.clone(), onSurf = q => { let best = null, bd = 1e9; const W = new THREE.Vector3(), Nw = new THREE.Vector3();
+    for (const m of v.meshes) { const g = m.geometry, p = g.attributes.position, n = g.attributes.normal, nm = new THREE.Matrix3().getNormalMatrix(m.matrixWorld);
+      for (let i = 0; i < p.count; i += 1) { W.fromBufferAttribute(p, i).applyMatrix4(m.matrixWorld); Nw.fromBufferAttribute(n, i).applyMatrix3(nm); if (Nw.normalize().dot(camP.clone().sub(W).normalize()) < .35) continue; const d = W.distanceToSquared(q); if (d < bd) { bd = d; best = W.clone(); } } }
+    return best || q; };
+  const PULL = DRAGB.has(brush), GEST = GESTB.has(brush);
+  for (const sk of strokes) { const raw = []; for (let k = 0; k < sk.length - 1; k++) for (let j = 0; j < 14; j++) raw.push(at3(sk[k]).lerp(at3(sk[k + 1]), j / 14)); raw.push(at3(sk[sk.length - 1]));
+    let pts; if (GEST) pts = raw; else if (PULL) { const s0 = onSurf(raw[0]), off = s0.clone().sub(raw[0]); pts = raw.map(p => p.clone().add(off)); } else pts = raw.map((p, i) => i % 2 && i < raw.length - 1 ? null : onSurf(p)).map((p, i, a) => p || a[i - 1].clone().lerp(a[i + 1], .5));
+    const scr = pts.map(p => toScreen(p)); snap(); stroking = true; lastHit = null; ds = null; lastStamp = null; sDirPrev = null; strokeBase = new Map(); pressure = 1; rawP = 1; dot.style.display = 'block';
+    for (const [x, y] of scr) { dot.style.left = x + 'px'; dot.style.top = y + 'px'; brushAt(x, y); await sleep(28); }
+    if (gest) gestEnd(); stroking = false; const pt = partBy(sel); if (pt) syncTwin(pt); saveCur(); await sleep(250); }
+  dot.style.display = 'none'; SC.busy = false; scShow(); }
+if ($('bSculptGuide')) $('bSculptGuide').onclick = scOpen; if ($('mSculptGuide')) $('mSculptGuide').onclick = scOpen;
+// ⤢ real full screen (hides the browser bar); the old "hide all menus" is in ⋯ now
+$('bFull').onclick = async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen({navigationUI: 'hide'}); } catch (e) { tip('Full screen not allowed here — try ⋯ › Hide all menus', 2500); } };
+document.addEventListener('fullscreenchange', () => { $('bFull').classList.toggle('on', !!document.fullscreenElement); setTimeout(resize, 120); });
+if ($('mHide')) $('mHide').onclick = () => { $('menu').classList.remove('open'); document.body.classList.add('full'); gizmo.detach(); resize(); };
+window.__sc = {open: scOpen, start: id => scStart(LESSONS.find(l => l.id === id)), demo: () => scDemo(SC.L.steps[SC.i][3]), next: () => { SC.i++; scStep(); }, st: () => SC};   // test hooks
