@@ -315,3 +315,4 @@ Buildings and cars by Kenney (www.kenney.nl), CC0. The license files are in `mod
 
 ## Art direction update (Nov 9, 2026)
 - **Titan Clash is going low-poly**: faceted, flat-shaded models with glowing accents (MajorasPride's references: low-poly kaiju battle art, papercraft kaiju, low-poly mechs). Mythic Forge has a 🔷 Low-poly look (FX / View) that also applies to exported .glb models, plus a 🔷 Low-poly building mode in Sculpt. Talk through with him whether toon/cel shading goes on top before changing the game's renderer.
+- Decided Nov 9: the game look is **low-poly + toon shading + outlines** (Mythic Forge FX / View › 🎮 Game look shows it). Next game chat: port the toon shader + outlines into the game.

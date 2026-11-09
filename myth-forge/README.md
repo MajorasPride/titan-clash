@@ -78,7 +78,7 @@ MajorasPride's creature + mech builder for Titan Clash. Open `index.html` (GitHu
 - Test hooks at the end of forge-core.js (`window.__ls/__fa/__nb/__cam`) are for headless screenshot checks only.
 
 ### Next (talk through with MajorasPride first)
-- **Game look**: Titan Clash is going **low-poly** (Nov 9) — the 🔷 Low-poly look is step one. Still to talk through: whether cel/toon shading goes on top of the low-poly look (flat toon ramp + outlines), and game-side versions of Fade away / Burn / Drip / brushed skin layers (exports don't carry them yet).
+- **Game look** (decided Nov 9: low-poly + toon + outlines): built in Mythic Forge as FX / View › 🎮 Game look (= 🔷 Low-poly look light + 🎨 Toon shading + ✏ Outlines). Toon = `toonMat` (3 light bands, small hard highlight; materials rebuilt via `resetMats`), outlines = inverted hull per mesh (`addOutline`). Next: the same toon shader + outlines in the Titan Clash game, and game-side versions of Fade away / Burn / Drip / brushed skin layers (exports don't carry them yet). 'Chunky' low-poly can flatten small mech pieces — use 'light' for mechs.
 - Wish (later): a **cherry blossom tree monster** (treefolk body + pink blossom crown/petal skins, maybe petals using Fade away).
 
 ## Nov 9, 2026 (late night): paint tools, burn + drip, super-robot pieces, cloth, water/energy/fire, low-poly

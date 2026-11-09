@@ -250,7 +250,7 @@
   <div class="pane" id="p-fx">
     <details class="more"><summary>More ▾</summary>
       <div class="row"><button id="bGlow" class="on">Glow (bloom)</button><button id="bFog">Fog</button><button id="bMist">Ground mist</button><button id="bAura">Aura</button><button id="bDrip">Ooze drips</button><button id="bSpin">Turntable</button></div>
-      <div class="row"><button id="bLowLook">🔷 Low-poly look: off</button></div>
+      <div class="row"><button id="bGameLook">🎮 Game look (all 3)</button><button id="bLowLook">🔷 Low-poly look: off</button><button id="bToon">🎨 Toon shading</button><button id="bOutline">✏ Outlines</button></div>
       <div class="lbl">Background</div>
       <div class="row"><button data-bg="studio" class="on">Studio</button><button data-bg="neon">Neon city night</button><button data-bg="day">Daylight</button><button data-bg="hell">Hellfire</button><button data-bg="void">Void</button></div>
       <div class="lbl">Aura / mist color</div>
@@ -426,9 +426,21 @@ const twinName = n => n.endsWith('.L') ? n.slice(0, -2) + '.R' : n.endsWith('.R'
 let views = {};                                                 // uid -> {G, M, meshes}
 let sel = null, colorMode = false, wire = false, xray = false;
 const matCache = {};
-function matFor(key, tint, tile, vc) { const k = key + '|' + (tint || '') + '|' + (tile || 1) + (vc ? '|vc' : ''); if (!matCache[k]) { matCache[k] = MATS.makeMat(THREE, key, tint, tile); matCache[k].vertexColors = !!vc; styleMat(matCache[k]); } const m = matCache[k];
+function matFor(key, tint, tile, vc) { const k = key + '|' + (tint || '') + '|' + (tile || 1) + (vc ? '|vc' : ''); if (!matCache[k]) { matCache[k] = toonMat(MATS.makeMat(THREE, key, tint, tile)); matCache[k].vertexColors = !!vc; styleMat(matCache[k]); } const m = matCache[k];
   m.wireframe = wire; if (xray) { const c = m.clone(); c.transparent = true; c.opacity = .4; c.depthWrite = false; return c; } return m; }
 // ---- eye glow color: recolors every 'Glow (fire)' piece (eyes, visors, lamps) on the model (P.fx.eyeGlow)
+// ---- 🎨 toon shading (P.fx.toon): light falls in 3 flat bands with a hard small highlight; ✏ outlines (P.fx.outline) = dark inverted-hull edge around every part
+function toonMat(m) { if (!P || !P.fx || !P.fx.toon) return m; const prev = m.onBeforeCompile, pck = m.customProgramCacheKey;
+  m.onBeforeCompile = sh => { prev(sh); sh.fragmentShader = sh.fragmentShader.replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
+    { float dl = dot(diffuseColor.rgb, vec3(.333)) + 1e-4, f = dot(reflectedLight.directDiffuse, vec3(.333)) / dl * 3.14159;
+      float q = f < .18 ? .28 : f < .65 ? .62 : 1.0; reflectedLight.directDiffuse = diffuseColor.rgb * q * 1.05 / 3.14159;
+      float id = dot(reflectedLight.indirectDiffuse, vec3(.333)) / dl * 3.14159; reflectedLight.indirectDiffuse = diffuseColor.rgb * (id < .5 ? .32 : .45) / 3.14159;
+      float sp = dot(reflectedLight.directSpecular, vec3(.333)); reflectedLight.directSpecular = vec3(smoothstep(.32, .38, sp)) * .35; reflectedLight.indirectSpecular *= .25; }`); };
+  m.customProgramCacheKey = () => pck() + '-toon'; return m; }
+const outlineMat = new THREE.MeshBasicMaterial({color: 0x0a0a10, side: THREE.BackSide});
+outlineMat.onBeforeCompile = sh => { sh.uniforms.uOut = {value: .035}; sh.vertexShader = 'uniform float uOut;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n transformed += normalize(normal) * uOut;'); };
+function addOutline(M, mesh, pt) { if (!P.fx.outline) return; const s = Math.max(.2, pt.s || 1); const om = outlineMat.clone(); om.onBeforeCompile = sh => { sh.vertexShader = 'uniform float uOut;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n transformed += normalize(normal) * uOut;'); sh.uniforms.uOut = {value: .05 / s}; };
+  om.customProgramCacheKey = () => 'outline'; const o = new THREE.Mesh(mesh.geometry, om); o.raycast = () => {}; M.add(o); }
 function styleMat(m) { if (!m || !m.userData || m.userData.key !== 'glow') return m; const u = m.userData; if (!u.baseEm) { u.baseEm = m.emissive.clone(); u.baseCol = m.color.clone(); }
   const g = P && P.fx && P.fx.eyeGlow; if (g) { const c = new THREE.Color(g); m.emissive.copy(c); m.color.copy(c).lerp(new THREE.Color(1, 1, 1), .45); } else { m.emissive.copy(u.baseEm); m.color.copy(u.baseCol); } return m; }
 function applyEyeGlow() { Object.values(matCache).forEach(styleMat); Object.values(views).forEach(v => v.meshes.forEach(m => styleMat(m.material))); }
@@ -445,7 +457,7 @@ const FADE_MAIN = `{ float fd = length(vTP) / max(uFadeR, 1e-3), st = 1.0 - uFad
   fadeEdge = (1.0 - smoothstep(0.0, .09, n - cut)) * step(.001, e); fadeChar = (1.0 - smoothstep(0.0, .25, n - cut)) * step(.001, e) * uBurn; diffuseColor.rgb *= 1.0 - fadeChar * .8; }`;
 // ---- skin layer: a second skin painted on with the 🧴 Skin brush (pt.layer = {mat, m: {piece: {vertex: amount}}}), drawn on top through a mask
 function layerMat(pt, fR) {
-  const m = fR ? fadeMat(pt.layer.mat, null, pt.tile, false, pt, fR) : MATS.makeMat(THREE, pt.layer.mat, null, pt.tile); styleMat(m);
+  const m = fR ? fadeMat(pt.layer.mat, null, pt.tile, false, pt, fR) : toonMat(MATS.makeMat(THREE, pt.layer.mat, null, pt.tile)); styleMat(m);
   m.transparent = true; m.depthWrite = false; m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -2;
   const prev = m.onBeforeCompile, pck = m.customProgramCacheKey;
   m.onBeforeCompile = sh => { prev(sh); sh.vertexShader = 'attribute float lmask; varying float vLm;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vLm = lmask;');
@@ -489,11 +501,16 @@ function lowpolyGeo(g, lv) { const key = g.uuid + '|' + lv; if (lowCache.has(key
     for (const k of [a, b, c]) { const s = sums[k]; pos.push(s.p[0] / s.n, s.p[1] / s.n, s.p[2] / s.n); extra.forEach((_, j) => ex[j].push(...s.e[j].map(v => v / s.n))); } }
   const o = new THREE.BufferGeometry(); o.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); extra.forEach((a, j) => o.setAttribute(a, new THREE.Float32BufferAttribute(ex[j], g.attributes[a].itemSize)));
   o.computeVertexNormals(); o.userData.low = true; if (lowCache.size > 400) lowCache.delete(lowCache.keys().next().value); lowCache.set(key, o); return o; }
+function resetMats() { for (const k in matCache) delete matCache[k]; rebuildParts(); }
+$('bToon').onclick = () => { P.fx.toon = !P.fx.toon; lowLookUI(); resetMats(); saveCur(); tip(P.fx.toon ? 'Toon shading on: flat cartoon light bands' : 'Toon shading off'); };
+$('bOutline').onclick = () => { P.fx.outline = !P.fx.outline; lowLookUI(); rebuildParts(); saveCur(); tip(P.fx.outline ? 'Outlines on' : 'Outlines off'); };
+$('bGameLook').onclick = () => { const on = !(P.fx.lowpoly && P.fx.toon && P.fx.outline); P.fx.lowpoly = on ? 1 : 0; P.fx.toon = on; P.fx.outline = on; lowLookUI(); resetMats(); saveCur(); tip(on ? 'Game look: low-poly + toon + outlines (Titan Clash style)' : 'Game look off'); };
 $('bLowLook').onclick = () => { P.fx.lowpoly = ((P.fx.lowpoly || 0) + 1) % 4; lowLookUI(); rebuildParts(); saveCur(); tip(P.fx.lowpoly ? 'Low-poly look: ' + LOWLV[P.fx.lowpoly] + ' (sculpt/paint brushes pause while it is on)' : 'Low-poly look off', 2400); };
-function lowLookUI() { const b = $('bLowLook'); if (b) { b.textContent = '🔷 Low-poly look: ' + LOWLV[P.fx.lowpoly || 0]; b.classList.toggle('on', !!P.fx.lowpoly); } }
+function lowLookUI() { const b = $('bLowLook'); if (b) { b.textContent = '🔷 Low-poly look: ' + LOWLV[P.fx.lowpoly || 0]; b.classList.toggle('on', !!P.fx.lowpoly); }
+  if ($('bToon')) { $('bToon').classList.toggle('on', !!P.fx.toon); $('bOutline').classList.toggle('on', !!P.fx.outline); $('bGameLook').classList.toggle('on', !!(P.fx.lowpoly && P.fx.toon && P.fx.outline)); } }
 function partRadius(pt) { let R = .1; pieces(pt.lib, pt.params).forEach(pc => { const a = pc.geo.attributes.position; for (let i = 0; i < a.count; i++) R = Math.max(R, Math.hypot(a.getX(i), a.getY(i), a.getZ(i))); }); return R; }
 function fadeMat(key, tint, tile, vc, pt, R) {
-  const m = MATS.makeMat(THREE, key, tint, tile); m.vertexColors = !!vc; styleMat(m); m.userData.fadeU = {uFadeA: {value: pt.fade.amt}, uFadeR: {value: R}, uFT: FADE_T, uBurn: {value: pt.fade.style === 'burn' ? 1 : 0}};
+  const m = toonMat(MATS.makeMat(THREE, key, tint, tile)); m.vertexColors = !!vc; styleMat(m); m.userData.fadeU = {uFadeA: {value: pt.fade.amt}, uFadeR: {value: R}, uFT: FADE_T, uBurn: {value: pt.fade.style === 'burn' ? 1 : 0}};
   const prev = m.onBeforeCompile, pck = m.customProgramCacheKey; m.side = THREE.DoubleSide;
   m.onBeforeCompile = sh => { prev(sh); Object.assign(sh.uniforms, m.userData.fadeU); sh.fragmentShader = FADE_GLSL + sh.fragmentShader.replace('#include <alphatest_fragment>', '#include <alphatest_fragment>\n' + FADE_MAIN)
     .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += mix(diffuseColor.rgb * .9, vec3(3.0, 1.1, .25), uBurn) * fadeEdge;'); };
@@ -540,6 +557,7 @@ function buildPart(pt) {
   pieces(pt.lib, pt.params).forEach((pc, mi) => { if (pt.keep && !pt.keep.includes(mi)) return; let g = partGeo(pt, mi, pc.geo); if (P.fx.lowpoly && !(LIB[pt.lib] && LIB[pt.lib].lowpoly)) g = lowpolyGeo(g, P.fx.lowpoly);
     const mat = fR ? fadeMat(pt.mat && pt.mat[mi] != null ? pt.mat[mi] : (pt.matAll || pc.mat), pt.tint, pt.tile, !!(pt.vpaint && pt.vpaint[mi]), pt, fR) : colorMode ? new THREE.MeshStandardMaterial({color: new THREE.Color().setHSL((hash(pt.uid) % 360) / 360, .6, .55)}) : pc.matObj && !pt.mat ? pc.matObj : matFor(pt.mat && pt.mat[mi] != null ? pt.mat[mi] : (pt.matAll || pc.mat), pt.tint, pt.tile, !!(pt.vpaint && pt.vpaint[mi]));
     const mesh = new THREE.Mesh(g, mat); mesh.userData = {uid: pt.uid, mi}; M.add(mesh); meshes.push(mesh);
+    if (!colorMode) addOutline(M, mesh, pt);
     if (g.attributes.lmask && !colorMode) { const ov = new THREE.Mesh(g, layerMat(pt, fR)); ov.raycast = () => {}; ov.renderOrder = 2; M.add(ov); } });
   M.scale.set((pt.flip ? -1 : 1) * (pt.w || 1), pt.l || 1, pt.w || 1); applyOff(pt, M);
   G.position.set(...pt.p); G.quaternion.setFromEuler(new THREE.Euler(...pt.r.map(x => x * D))); G.scale.setScalar(pt.s);
