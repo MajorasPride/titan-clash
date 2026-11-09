@@ -58,6 +58,12 @@
     camo(x) { fill(x, '#999'); for (const c of ['#666', '#bbb', '#444']) for (let i = 0; i < 40; i++) { const px = R(0, S), py = R(0, S); x.fillStyle = c; wrap(x, () => { x.beginPath(); for (let k = 0; k < 9; k++) { const a = k / 9 * 7, r = R(15, 45); x.lineTo(px + Math.cos(a) * r, py + Math.sin(a) * r); } x.fill(); }); } },
     runes(x) { fill(x, '#555'); x.strokeStyle = '#fff'; x.lineWidth = 3; for (let j = 0; j < 8; j++) for (let i = 0; i < 8; i++) { const cx = i * 64 + 32, cy = j * 64 + 32; x.beginPath(); for (let k = 0; k < 4; k++) { x.moveTo(cx + R(-18, 18), cy + R(-22, 22)); x.lineTo(cx + R(-18, 18), cy + R(-22, 22)); } x.stroke(); } },
     eye(x) { const g = x.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2); g.addColorStop(0, '#fff'); g.addColorStop(1, '#ddd'); x.fillStyle = g; x.fillRect(0, 0, S, S); x.strokeStyle = 'rgba(160,30,30,.35)'; for (let i = 0; i < 30; i++) { x.lineWidth = 1; x.beginPath(); x.moveTo(R(0, S), R(0, S)); x.lineTo(R(0, S), R(0, S)); x.stroke(); } },
+    stained(x) { const pts = [...Array(46)].map(() => [R(0, S), R(0, S)]), cols = ['#d42a2a', '#2a5ad4', '#e8c02a', '#2ab45a', '#8a2ad4', '#e8782a', '#2ac8d4'], img = x.createImageData(S, S), cIdx = pts.map(() => (rnd() * cols.length) | 0);
+      const rgb = cols.map(c => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)]);
+      for (let yy = 0; yy < S; yy++) for (let xx = 0; xx < S; xx++) { let d1 = 1e9, d2 = 1e9, k = 0; for (let i = 0; i < pts.length; i++) { let dx = Math.abs(xx - pts[i][0]), dy = Math.abs(yy - pts[i][1]); dx = Math.min(dx, S - dx); dy = Math.min(dy, S - dy); const d = dx * dx + dy * dy; if (d < d1) { d2 = d1; d1 = d; k = i; } else if (d < d2) d2 = d; }
+        const edge = Math.sqrt(d2) - Math.sqrt(d1) < 5, o = (yy * S + xx) * 4, c = rgb[cIdx[k]], sh = .75 + .25 * Math.sin(xx * .05 + yy * .03);
+        if (edge) { img.data[o] = img.data[o + 1] = img.data[o + 2] = 20; } else { img.data[o] = c[0] * sh; img.data[o + 1] = c[1] * sh; img.data[o + 2] = c[2] * sh; } img.data[o + 3] = 255; } x.putImageData(img, 0, 0); },
+    frost(x) { fill(x, '#eef4fa'); noiseLayer(x, 300, 3, 18, ['#ffffff', '#c8d4e0'], .35); },
     screen(x) { fill(x, '#ddd'); for (let y = 0; y < S; y += 4) { x.fillStyle = 'rgba(0,0,0,.25)'; x.fillRect(0, y, S, 2); } },
   };
   const texCache = {};
@@ -90,6 +96,9 @@
     ['amethyst', 'Amethyst', 'Glow & Crystal', 'crystal', 0xc08aff, .1, .1, {emissive: 0x7a2aff, emissiveIntensity: .6, transparent: true, opacity: .9, flat: true}],
     ['gemblue', 'Blue orb gem', 'Glow & Crystal', 'crystal', 0x3a8aff, .05, .2, {emissive: 0x1a5aff, emissiveIntensity: 1.1}], ['gemred', 'Red orb gem', 'Glow & Crystal', 'crystal', 0xff3a4a, .05, .2, {emissive: 0xff1a2a, emissiveIntensity: 1.1}],
     ['gemgreen', 'Green orb gem', 'Glow & Crystal', 'crystal', 0x3aff8a, .05, .2, {emissive: 0x10c050, emissiveIntensity: 1.1}],
+    ['glass', 'Clear glass', 'Glass', 'plain', 0xd8ecff, .02, .1, {transparent: true, opacity: .28, side: 2}], ['glassblue', 'Blue glass', 'Glass', 'plain', 0x6aa8ff, .02, .1, {transparent: true, opacity: .4, side: 2}],
+    ['frosted', 'Frosted glass', 'Glass', 'frost', 0xe8f0f8, .5, 0, {transparent: true, opacity: .6, side: 2}], ['stained', 'Stained glass', 'Glass', 'stained', 0xffffff, .15, 0, {transparent: true, opacity: .85, side: 2, emissive: 0xffffff, emissiveIntensity: .7, ecol: true}],
+    ['stainedsolid', 'Stained glass (solid)', 'Glass', 'stained', 0xffffff, .2, 0, {emissive: 0xffffff, emissiveIntensity: .4, ecol: true}], ['glassred', 'Ruby glass', 'Glass', 'plain', 0xff4a5a, .02, .1, {transparent: true, opacity: .45, side: 2}],
     ['eye', 'Eyeball', 'Glow & Crystal', 'eye', 0xffffff, .15, 0], ['glow', 'Glow (fire)', 'Glow & Crystal', 'plain', 0xffb070, .3, 0, {emissive: 0xff5a1a, emissiveIntensity: 2}],
     ['glowblue', 'Glow (energy)', 'Glow & Crystal', 'plain', 0x8ae0ff, .3, 0, {emissive: 0x20a0ff, emissiveIntensity: 2}], ['glowgreen', 'Glow (toxic)', 'Glow & Crystal', 'plain', 0xaaff7a, .3, 0, {emissive: 0x40ff20, emissiveIntensity: 2}],
     ['glowpurple', 'Glow (dark magic)', 'Glow & Crystal', 'plain', 0xd08aff, .3, 0, {emissive: 0x8a20ff, emissiveIntensity: 2}], ['runeglow', 'Glowing runes', 'Glow & Crystal', 'runes', 0x444455, .5, .3, {emissive: 0x40c0ff, emissiveIntensity: 1.5, emap: true}],
@@ -102,13 +111,13 @@
     if (tint && tint !== '#ffffff') m.color.multiply(new T.Color(tint));
     m.userData.key = key; m.userData.tile = tile || 1;
     m.onBeforeCompile = sh => {                                   // triplanar: texture from 3 directions, no UVs needed
-      sh.uniforms.tpMap = {value: t}; sh.uniforms.tpScale = {value: .55 / (m.userData.tile || 1)}; sh.uniforms.tpEm = {value: ex.emap ? 1 : 0};
+      sh.uniforms.tpMap = {value: t}; sh.uniforms.tpScale = {value: .55 / (m.userData.tile || 1)}; sh.uniforms.tpEm = {value: ex.emap ? 1 : 0}; sh.uniforms.tpEc = {value: ex.ecol ? 1 : 0};
       sh.vertexShader = 'varying vec3 vTP; varying vec3 vTN;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vTP = transformed; vTN = objectNormal;');
-      sh.fragmentShader = 'uniform sampler2D tpMap; uniform float tpScale; uniform float tpEm; varying vec3 vTP; varying vec3 vTN;\n' + sh.fragmentShader
+      sh.fragmentShader = 'uniform sampler2D tpMap; uniform float tpScale; uniform float tpEm; uniform float tpEc; varying vec3 vTP; varying vec3 vTN;\n' + sh.fragmentShader
         .replace('#include <map_fragment>', `vec3 bw = pow(abs(normalize(vTN)), vec3(4.0)); bw /= (bw.x + bw.y + bw.z + 1e-5);
           vec4 tpc = texture2D(tpMap, vTP.yz * tpScale) * bw.x + texture2D(tpMap, vTP.xz * tpScale) * bw.y + texture2D(tpMap, vTP.xy * tpScale) * bw.z;
           diffuseColor.rgb *= mix(tpc.rgb, vec3(1.0), tpEm);`)
-        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance *= mix(1.0, smoothstep(0.35, 0.9, dot(tpc.rgb, vec3(.333))) * 2.5, tpEm);');
+        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance *= mix(1.0, smoothstep(0.35, 0.9, dot(tpc.rgb, vec3(.333))) * 2.5, tpEm); totalEmissiveRadiance *= mix(vec3(1.0), tpc.rgb, tpEc);');
     };
     m.customProgramCacheKey = () => 'tp-' + key + '-' + (tile || 1);
     return m;

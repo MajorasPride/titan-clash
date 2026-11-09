@@ -1,5 +1,5 @@
 import re,os
 d=os.path.dirname(os.path.abspath(__file__))
-h=open(d+'/index.html').read(); core=open(d+'/forge-core.js').read()
+h=open(d+'/page.html').read(); core=open(d+'/forge-core.js').read()
 h=h.replace('<script type="module" src="forge-core.js"></script>','<script type="module">\n'+core+'\n</script>')
-open(d+'/titan-forge.html','w').write(h); print('built',len(h))
+open(d+'/index.html','w').write(h); print('built',len(h))

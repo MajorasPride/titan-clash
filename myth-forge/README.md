@@ -1,10 +1,10 @@
-# Titan Forge (game/tools/forge/)
+# Myth Forge (myth-forge/)
 
-MajorasPride's creature + mech builder for Titan Clash. Open `titan-forge.html` (GitHub Pages link or double-click). Not used by the game directly: it exports `.glb` models (⋯ → Download model) that Claude then puts into the game.
+MajorasPride's creature + mech builder for Titan Clash. Open `index.html` (GitHub Pages link or double-click). Not used by the game directly: it exports `.glb` models (⋯ → Download model) that Claude then puts into the game.
 
 ## Files
-- `titan-forge.html` — BUILT file (do not edit by hand). Run `python3 build.py` after editing `index.html` or `forge-core.js`.
-- `index.html` — page + UI. `forge-core.js` — the editor (inlined into titan-forge.html by build.py so it works from file://).
+- `index.html` — BUILT file (do not edit by hand). Run `python3 build.py` after editing `index.html` or `forge-core.js`.
+- `page.html` — page + UI. `forge-core.js` — the editor (inlined into titan-forge.html by build.py so it works from file://).
 - `k-helpers.js` — geometry helper kit `K` used by every parts file. `materials.js` — procedural textures (ours) + triplanar shader. `skeletons.js` — body types.
 - `parts/*.js` — part libraries (classic scripts, `FORGE_PARTS.push((THREE,K)=>[...])`). Spec: `PARTS-SPEC.md`.
   basic.js (clay + shapes), creature-heads.js, creature-body.js, mech.js, weapons-magic.js. All made in code = ours, no license.

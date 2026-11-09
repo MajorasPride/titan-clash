@@ -1,3 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Myth Forge</title>
+<style>
+  :root{--bg:#18181c;--pn:rgba(28,28,34,.96);--ln:#3a3a46;--tx:#ecebf2;--ac:#ff8a3a;--ac2:#ffd166}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font-family:system-ui,Roboto,sans-serif;color:var(--tx);user-select:none;-webkit-user-select:none}
+  #c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+  button{font:600 14px system-ui,sans-serif;color:var(--tx);background:#33333d;border:1px solid #4c4c58;border-radius:10px;padding:8px 11px;min-height:40px;touch-action:manipulation}
+  button.on{background:var(--ac);border-color:#ffab6a;color:#141414}
+  button:active{transform:scale(.97)}
+  input[type=range]{width:100%;accent-color:var(--ac);height:30px}
+  input[type=search]{width:100%;box-sizing:border-box;font-size:16px;padding:9px 12px;border-radius:10px;border:1px solid #4c4c58;background:#24242c;color:var(--tx)}
+  .top{position:fixed;left:0;right:0;top:0;display:flex;align-items:center;gap:5px;padding:6px 8px;padding-top:max(6px,env(safe-area-inset-top));background:var(--pn);border-bottom:1px solid var(--ln);z-index:5}
+  .top h1{font:800 13px system-ui;letter-spacing:2px;color:var(--ac);margin:0 4px}
+  .top .sp{flex:1}
+  .top button{min-height:36px;padding:5px 9px}
+  #wsBadge{position:fixed;left:50%;transform:translateX(-50%);top:56px;z-index:4;background:#2a6a3a;color:#d8ffd8;font:800 12px system-ui;padding:4px 10px;border-radius:8px;display:none;letter-spacing:1px}
+  body.ws #wsBadge{display:block}
+  #tip{position:fixed;left:0;right:0;top:58px;text-align:center;font:700 14px system-ui;color:var(--ac2);pointer-events:none;text-shadow:0 0 6px #000,0 0 2px #000;z-index:4;padding:0 10px}
+  #sheet{position:fixed;left:0;right:0;bottom:0;background:var(--pn);border-top:1px solid var(--ln);z-index:5;padding:0 8px calc(6px + env(safe-area-inset-bottom));height:46vh;display:flex;flex-direction:column;border-radius:14px 14px 0 0;touch-action:none}
+  #sheet.tall{height:78vh}#sheet.min{height:auto}
+  .pane{touch-action:pan-y}
+  #grab{padding:6px 0 4px;text-align:center;font:700 13px system-ui;color:var(--ac2)}
+  #grab::before{content:'';display:block;width:46px;height:5px;border-radius:3px;background:#5a5a66;margin:0 auto 5px}
+  .tabs{display:flex;gap:3px;margin-bottom:6px;overflow-x:auto;flex:none}
+  #grab{flex:none}
+  .tabs button{flex:1 0 auto;padding:8px 8px;font-size:13px}
+  .pane{display:none;overflow:auto;flex:1;min-height:0}.pane.on{display:block}
+  #sheet.min .tabs,#sheet.min .pane{display:none!important}
+  .row{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0;align-items:center}
+  .chips{display:flex;gap:5px;overflow-x:auto;padding-bottom:3px;margin:4px 0}
+  .chips button{flex:none;font-size:12.5px;padding:6px 10px;min-height:34px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;margin:4px 0}
+  .item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;font-size:11.5px;line-height:1.15;min-height:110px;text-align:center}
+  .item img,.item .ph{width:72px;height:72px;border-radius:8px;background:#22222a}
+  .lbl{font-size:12px;opacity:.75;margin:6px 2px 2px}
+  .sl{display:grid;grid-template-columns:70px 1fr 46px;gap:6px;align-items:center;font-size:13px}
+  .hint{opacity:.6;font-size:11.5px;margin:4px 2px}
+  #outliner{position:fixed;left:0;top:50px;bottom:0;width:min(300px,82vw);overflow:auto;background:rgba(24,24,30,.98);border-right:1px solid var(--ln);padding:6px;z-index:6;transform:translateX(-105%);transition:transform .18s}
+  #outliner.open{transform:none}
+  #outliner h3{margin:10px 4px 4px;font:800 11px system-ui;letter-spacing:1px;color:var(--ac)}
+  .ol{display:flex;align-items:center;gap:6px;padding:7px 6px;border-radius:8px;font-size:14px}
+  .ol.sel{background:#4a3524;outline:1px solid var(--ac)}
+  .ol .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ol button{min-height:32px;padding:2px 8px;font-size:14px}
+  .ol.hid .nm{opacity:.4;text-decoration:line-through}
+  #restore{position:fixed;right:10px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:7;display:none;min-height:48px;font-size:18px;opacity:.85}
+  body.full .top,body.full #sheet,body.full #outliner,body.full #wsBadge{position:fixed;left:50%;transform:translateX(-50%);top:56px;z-index:4;background:#2a6a3a;color:#d8ffd8;font:800 12px system-ui;padding:4px 10px;border-radius:8px;display:none;letter-spacing:1px}
+  body.ws #wsBadge{display:block}
+  #tip{display:none!important}
+  body.full #restore{display:block}
+  #ring{position:fixed;border:2px solid #ff5a3a;border-radius:50%;pointer-events:none;display:none;transform:translate(-50%,-50%);z-index:3}
+  #menu{position:fixed;right:6px;top:52px;z-index:8;background:#24242c;border:1px solid var(--ln);border-radius:12px;padding:6px;display:none;flex-direction:column;gap:5px;min-width:220px}
+  #menu.open{display:flex}
+  #out{position:fixed;left:8px;right:8px;top:60px;height:120px;display:none;background:#000;color:#ffd9b0;border:1px solid var(--ac);border-radius:8px;font-size:10px;z-index:9}
+  .matsw{width:100%;height:72px;border-radius:8px}
+  @media (orientation:landscape) and (min-width:760px){ #sheet,#sheet.tall{left:auto;top:50px;width:380px;height:auto;border-left:1px solid var(--ln);border-top:none;border-radius:0} }
+  @media (max-width:420px){ .tabs button{padding:8px 6px;font-size:12.5px} .item{min-height:104px} .item img{width:64px;height:64px} }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ring"></div>
+<div class="top">
+  <button id="bList">☰</button><h1>MYTH FORGE</h1>
+  <span class="sp"></span><button id="bSaveAsset" style="display:none" class="on">💾 Save part</button><button id="bExitWork" style="display:none">↩ Creature</button>
+  <button id="bUndo">↶</button><button id="bRedo">↷</button><button id="bPen" title="Stylus mode">✒️</button><button id="bFull" title="Hide all menus">⤢</button><button id="bMenu">⋯</button>
+</div>
+<div id="menu">
+  <button id="mWork">🛠 Create Asset (Workshop)</button><button id="mNew">New creature…</button><button id="mSave">Save as…</button><button id="mLoad">Open saved…</button>
+  <button id="mExport">Download model (.glb for the game)</button><button id="mCopy">Copy project (to paste to Claude)</button>
+  <button id="mPaste">Paste project…</button><button id="mCredits">Asset credits &amp; licenses</button>
+</div>
+<div id="wsBadge">WORKSHOP · building one part</div>
+<div id="tip"></div>
+<div id="outliner"></div>
+<textarea id="out"></textarea>
+<button id="restore">⤡ Menus</button>
+
+<div id="sheet">
+  <div id="grab">Myth Forge</div>
+  <div class="tabs">
+    <button data-tab="add" class="on">＋ Add</button><button data-tab="edit">Move</button><button data-tab="sculpt">Sculpt</button><button data-tab="paint">Paint</button><button data-tab="skel">Skeleton</button><button data-tab="fx">FX / View</button>
+  </div>
+
+  <div class="pane on" id="p-add">
+    <input type="search" id="search" placeholder="Search parts: skull, wing, fang, sword, TV…">
+    <div class="chips" id="groups"></div>
+    <div class="chips" id="subs"></div>
+    <div class="chips" id="tags"></div>
+    <div class="grid" id="lib"></div>
+    <div class="row"><button id="bModeBone" class="on">Snap to bone</button><button id="bModeSurf">Stick on surface</button><button id="bMirrorAdd" class="on">Mirror L/R</button></div>
+    <div class="row"><button id="bAddCenter">Add without tapping</button><button id="bImport">Import file…</button><input type="file" id="fImport" hidden multiple accept=".glb,.gltf,.obj,.fbx,.zip"></div>
+    <div class="hint" id="addHint">Pick a part, then tap a bone (orange dots) or the body. Limbs, tails, necks and wings line up with the bone; small parts stick to the surface.</div>
+  </div>
+
+  <div class="pane" id="p-edit">
+    <div class="row"><button data-gz="translate" class="on">Move</button><button data-gz="rotate">Turn</button><button data-gz="scale">Stretch</button><button id="bLocal">Local</button><button id="bSnap">Snap off</button></div>
+    <div class="sl"><span>Size</span><input id="sSize" type="range" min=".1" max="4" step=".01"><span id="vSize"></span></div>
+    <div class="sl"><span>Length</span><input id="sLen" type="range" min=".3" max="3" step=".01"><span id="vLen"></span></div>
+    <div class="sl"><span>Width</span><input id="sWid" type="range" min=".3" max="3" step=".01"><span id="vWid"></span></div>
+    <div class="row"><button id="bDup">Duplicate</button><button id="bFlip">Flip</button><button id="bMirrorPart">Mirror copy</button><button id="bUnlink">Unlink twin</button><button id="bReattach">Move to bone…</button><button id="bDel">🗑 Delete</button></div>
+    <div class="row"><button id="bHide">Hide</button><button id="bSolo">Solo (only this)</button><button id="bShowAll">Show all</button></div>
+    <div class="hint">Drag the arrows/rings on the part. One finger turns the view, two fingers pinch/move. Mirrored twins copy every change.</div>
+  </div>
+
+  <div class="pane" id="p-sculpt">
+    <div class="row"><button data-br="inflate" class="on">Inflate</button><button data-br="deflate">Deflate</button><button data-br="grab">Grab</button><button data-br="smooth">Smooth</button><button data-br="flatten">Flatten</button><button data-br="pinch">Pinch</button><button data-br="crease">Crease</button><button data-br="noise">Rough</button><button data-br="erase">Erase</button></div>
+    <div class="sl"><span>Brush</span><input id="sBrush" type="range" min=".1" max="3" step=".05" value=".6"><span></span></div>
+    <div class="sl"><span>Strength</span><input id="sStr" type="range" min=".05" max="1" step=".05" value=".4"><span></span></div>
+    <div class="row"><button id="bSubdiv">More detail (subdivide)</button><button id="bSymSculpt" class="on">Mirror sculpt</button><button id="bFingerView">Finger = turn view</button><button id="bResetSculpt">Undo all sculpt</button></div>
+    <div class="hint">Sculpts the selected part. Tap a part first. S Pen: pen sculpts, fingers turn the view. "More detail" adds polygons so sculpting looks smooth.</div>
+  </div>
+
+  <div class="pane" id="p-paint">
+    <div class="chips" id="matCats"></div>
+    <div class="grid" id="mats"></div>
+    <div class="row"><button id="bBrushPaint">🖌 Brush paint</button><input type="color" id="brushCol" value="#c03020" style="width:56px;height:40px;border:0;background:none"><button id="bBrushErase">Clear paint</button></div>
+    <div class="row"><input type="color" id="tint" value="#ffffff" style="width:56px;height:40px;border:0;background:none"><button id="bTintClear">Clear tint</button><button id="bPaintTwin" class="on">Twin too</button><button id="bPaintAllSame">All parts like this</button></div>
+    <div class="row"><button id="bPattern">Import pattern (image)…</button><input type="file" id="fPattern" hidden accept="image/*" multiple><button id="bPatternDel">Remove my pattern</button></div>
+    <div class="sl"><span>Pattern size</span><input id="sTile" type="range" min=".1" max="3" step=".05" value="1"><span></span></div>
+    <div class="hint">Tap a material to put it on the selected part. Tint mixes a color on top. Your own images go into My Patterns.</div>
+  </div>
+
+  <div class="pane" id="p-skel">
+    <div class="lbl">Starters (ready-made creatures to remix)</div>
+    <div class="chips" id="starters"></div>
+    <div class="lbl">Body type (empty skeleton)</div>
+    <div class="chips" id="skels"></div>
+    <div class="row"><button id="bBones" class="on">Show bones</button><button id="bPose">Pose bones</button><button id="bJoint">Move joints</button><button id="bResetPose">Reset pose</button></div>
+    <div class="sl"><span>Bone len</span><input id="sBone" type="range" min=".3" max="3" step=".01" value="1"><span id="vBone"></span></div>
+    <div class="row"><button id="bAddBone">＋ Extend bone</button><button id="bAddBranch">＋ Branch (extra limb/head)</button><button id="bDelBone">Delete bone</button></div>
+    <div class="lbl">Animations (preview)</div>
+    <div class="row"><button data-anim="none" class="on">Still</button><button data-anim="idle">Idle</button><button data-anim="walk">Walk</button><button data-anim="roar">Roar</button><button data-anim="fly">Fly</button><button data-anim="attack">Attack</button><button data-anim="swim">Slither</button></div>
+    <div class="hint" id="boneHint">Tap an orange joint to pick a bone. Parts on a bone move with it.</div>
+  </div>
+
+  <div class="pane" id="p-fx">
+    <div class="row"><button id="bGlow" class="on">Glow (bloom)</button><button id="bFog">Fog</button><button id="bMist">Ground mist</button><button id="bAura">Aura</button><button id="bDrip">Ooze drips</button><button id="bSpin">Turntable</button></div>
+    <div class="lbl">Background</div>
+    <div class="row"><button data-bg="studio" class="on">Studio</button><button data-bg="neon">Neon city night</button><button data-bg="day">Daylight</button><button data-bg="hell">Hellfire</button><button data-bg="void">Void</button></div>
+    <div class="lbl">Aura / mist color</div>
+    <div class="row"><input type="color" id="fxCol" value="#8a2aff" style="width:56px;height:40px;border:0;background:none"></div>
+    <div class="lbl">View</div>
+    <div class="row"><button data-cam="front">Front</button><button data-cam="side">Side</button><button data-cam="back">Back</button><button data-cam="top">Top</button><button id="bFrame">Fit to screen</button><button id="bWire">Wireframe</button><button id="bXray">X-ray</button><button id="bScale">Size vs. city</button></div>
+  </div>
+</div>
+
+<script src="k-helpers.js"></script>
+<script src="materials.js"></script>
+<script src="skeletons.js"></script>
+<script src="parts/basic.js"></script>
+<script src="parts/creature-heads.js"></script>
+<script src="parts/creature-body.js"></script>
+<script src="parts/mech.js"></script>
+<script src="parts/weapons-magic.js"></script>
+<script src="parts/mecha-dragon.js"></script>
+<script src="parts/sphinx.js"></script>
+<script src="starters.js"></script>
+<script src="packs/index.js"></script>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+"three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
@@ -100,14 +268,15 @@ const twinName = n => n.endsWith('.L') ? n.slice(0, -2) + '.R' : n.endsWith('.R'
 let views = {};                                                 // uid -> {G, M, meshes}
 let sel = null, colorMode = false, wire = false, xray = false;
 const matCache = {};
-function matFor(key, tint, tile) { const k = key + '|' + (tint || '') + '|' + (tile || 1); if (!matCache[k]) matCache[k] = MATS.makeMat(THREE, key, tint, tile); const m = matCache[k];
+function matFor(key, tint, tile, vc) { const k = key + '|' + (tint || '') + '|' + (tile || 1) + (vc ? '|vc' : ''); if (!matCache[k]) { matCache[k] = MATS.makeMat(THREE, key, tint, tile); matCache[k].vertexColors = !!vc; } const m = matCache[k];
   m.wireframe = wire; if (xray) { const c = m.clone(); c.transparent = true; c.opacity = .4; c.depthWrite = false; return c; } return m; }
 function partGeo(pt, mi, base) {                                // per-instance geometry: subdivided + sculpted copy if needed
-  const sd = pt.subdiv || 0, sc = pt.sculpt && pt.sculpt[mi];
-  if (!sd && !sc && !(pt.cut && pt.cut.length)) return base;
+  const sd = pt.subdiv || 0, sc = pt.sculpt && pt.sculpt[mi], vp = pt.vpaint && pt.vpaint[mi];
+  if (!sd && !sc && !vp && !(pt.cut && pt.cut.length)) return base;
   let g = base; for (let i = 0; i < sd; i++) g = subdivide(g);
   if (g === base) g = base.clone();
   if (sc) { const p = g.attributes.position; for (const v in sc) { const d = sc[v]; if (+v < p.count) p.setXYZ(+v, p.getX(+v) + d[0], p.getY(+v) + d[1], p.getZ(+v) + d[2]); } }
+  if (vp) { const n = g.attributes.position.count, c = new Float32Array(n * 3).fill(1); for (const v in vp) if (+v < n) c.set(vp[v], +v * 3); g.setAttribute('color', new THREE.Float32BufferAttribute(c, 3)); }
   if (pt.cut && pt.cut.length) { const cut = new Set(pt.cut.filter(c => c.startsWith(mi + ':')).map(c => +c.split(':')[1])); if (cut.size) { const I = g.index.array, keep = [];
     for (let t = 0; t < I.length / 3; t++) if (!cut.has(t)) keep.push(I[t * 3], I[t * 3 + 1], I[t * 3 + 2]); g = g.clone(); g.setIndex(keep); } }
   g.computeVertexNormals(); g.userData.sub = sd; return g;
@@ -125,7 +294,7 @@ function buildPart(pt) {
   const parent = (pt.bone && bones[pt.bone]) || skelRoot; parent.add(G);
   const meshes = [];
   pieces(pt.lib).forEach((pc, mi) => { const g = partGeo(pt, mi, pc.geo);
-    const mat = colorMode ? new THREE.MeshStandardMaterial({color: new THREE.Color().setHSL((hash(pt.uid) % 360) / 360, .6, .55)}) : pc.matObj && !pt.mat ? pc.matObj : matFor(pt.mat && pt.mat[mi] != null ? pt.mat[mi] : (pt.matAll || pc.mat), pt.tint, pt.tile);
+    const mat = colorMode ? new THREE.MeshStandardMaterial({color: new THREE.Color().setHSL((hash(pt.uid) % 360) / 360, .6, .55)}) : pc.matObj && !pt.mat ? pc.matObj : matFor(pt.mat && pt.mat[mi] != null ? pt.mat[mi] : (pt.matAll || pc.mat), pt.tint, pt.tile, !!(pt.vpaint && pt.vpaint[mi]));
     const mesh = new THREE.Mesh(g, mat); mesh.userData = {uid: pt.uid, mi}; M.add(mesh); meshes.push(mesh); });
   M.scale.set((pt.flip ? -1 : 1) * (pt.w || 1), pt.l || 1, pt.w || 1);
   G.position.set(...pt.p); G.quaternion.setFromEuler(new THREE.Euler(...pt.r.map(x => x * D))); G.scale.setScalar(pt.s);
@@ -139,7 +308,7 @@ const partBy = u => P.parts.find(p => p.uid === u);
 const twinOf = pt => pt && pt.twin ? partBy(pt.twin) : null;
 function mirrorInto(src, dst) {                                 // keep a mirrored twin in sync
   dst.p = [-src.p[0], src.p[1], src.p[2]]; dst.r = [src.r[0], -src.r[1], -src.r[2]]; dst.s = src.s; dst.l = src.l; dst.w = src.w; dst.flip = !src.flip;
-  dst.mat = src.mat ? [...src.mat] : null; dst.matAll = src.matAll; dst.tint = src.tint; dst.tile = src.tile; dst.subdiv = src.subdiv; dst.sculpt = src.sculpt ? JSON.parse(JSON.stringify(src.sculpt)) : null; dst.cut = src.cut ? [...src.cut] : [];
+  dst.mat = src.mat ? [...src.mat] : null; dst.matAll = src.matAll; dst.tint = src.tint; dst.tile = src.tile; dst.subdiv = src.subdiv; dst.sculpt = src.sculpt ? JSON.parse(JSON.stringify(src.sculpt)) : null; dst.cut = src.cut ? [...src.cut] : []; dst.vpaint = src.vpaint ? JSON.parse(JSON.stringify(src.vpaint)) : null;
   dst.hidden = src.hidden; buildPart(dst);
 }
 const syncTwin = pt => { const t = twinOf(pt); if (t) mirrorInto(pt, t); };
@@ -189,8 +358,11 @@ $('bAddCenter').onclick = () => { const lib = placing || visibleIds()[0]; if (!l
   const b = selBone || (P.bones.find(b => b[4] === 'chest') || P.bones[0])[0]; addPart(lib, b, [0, 0, 0], [0, 0, 0]); };
 
 // ====================================================================== library UI
+let tagFilter = null;
 let gFilter = GROUP_ORDER.find(g => Object.values(LIB).some(e => e.group === g)) || 'Basic Shapes & Clay', sFilter = null, query = '';
-const visibleIds = () => Object.keys(LIB).filter(id => { const e = LIB[id]; if (gFilter === MY && !query) return e.mine && (!sFilter || e.sub === sFilter); if (query) return (e.name + ' ' + e.group + ' ' + e.sub + ' ' + (e.tags || []).join(' ')).toLowerCase().includes(query);
+const userTags = (() => { try { return JSON.parse(localStorage.getItem('titan-forge-tags') || '{}'); } catch (e) { return {}; } })();
+const tagsOf = id => [...(LIB[id].tags || []), ...(userTags[id] || [])];
+const visibleIds = () => Object.keys(LIB).filter(id => { const e = LIB[id]; if (tagFilter && !tagsOf(id).includes(tagFilter)) return false; if (tagFilter === 'fav') return true; if (gFilter === MY && !query) return e.mine && (!sFilter || e.sub === sFilter); if (query) return (e.name + ' ' + e.group + ' ' + e.sub + ' ' + tagsOf(id).join(' ')).toLowerCase().includes(query);
   return e.group === gFilter && (!sFilter || e.sub === sFilter); });
 function libUI() {
   const groups = [MY, ...GROUP_ORDER].filter(g => g === 'Free Packs (CC0)' || g === 'My Imports' || g === MY || Object.values(LIB).some(e => e.group === g));
@@ -198,10 +370,18 @@ function libUI() {
     b.textContent = g + (n ? ` ${n}` : ''); b.className = !query && g === gFilter ? 'on' : ''; b.onclick = () => { gFilter = g; sFilter = null; query = ''; $('search').value = ''; if (g === 'Free Packs (CC0)') packsUI(); libUI(); }; $('groups').append(b); }
   const subs = [...new Set(Object.values(LIB).filter(e => gFilter === MY ? e.mine : e.group === gFilter).map(e => e.sub))];
   $('subs').innerHTML = ''; if (!query && subs.length > 1) for (const s of [null, ...subs]) { const b = document.createElement('button'); b.textContent = s || 'All'; b.className = s === sFilter ? 'on' : ''; b.onclick = () => { sFilter = s; libUI(); }; $('subs').append(b); }
+  const cnt = {}; Object.keys(LIB).filter(id => query ? true : (gFilter === MY ? LIB[id].mine : LIB[id].group === gFilter)).forEach(id => tagsOf(id).forEach(t => cnt[t] = (cnt[t] || 0) + 1));
+  const top = Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, 24).map(x => x[0]); if (tagFilter && !top.includes(tagFilter)) top.unshift(tagFilter);
+  $('tags').innerHTML = ''; for (const t of top) { const b = document.createElement('button'); b.textContent = '#' + t; b.className = t === tagFilter ? 'on' : ''; b.onclick = () => { tagFilter = tagFilter === t ? null : t; libUI(); }; $('tags').append(b); }
+  { const b = document.createElement('button'); b.textContent = '＋ tag'; b.onclick = () => { if (!placing) return tip('Tap a part in the grid first, then ＋ tag'); const t = (prompt('Add tags to ' + LIB[placing].name + ' (comma separated)') || '').toLowerCase().split(',').map(x => x.trim().replace(/^#/, '')).filter(Boolean);
+    if (!t.length) return; userTags[placing] = [...new Set([...(userTags[placing] || []), ...t])]; localStorage.setItem('titan-forge-tags', JSON.stringify(userTags)); libUI(); tip('Tagged'); }; $('tags').append(b); }
+  { const b = document.createElement('button'); b.textContent = '⭐ favorites'; b.className = tagFilter === 'fav' ? 'on' : ''; b.onclick = () => { tagFilter = tagFilter === 'fav' ? null : 'fav'; query = tagFilter ? ' ' : ''; libUI(); }; $('tags').prepend(b); }
   const gr = $('lib'); gr.innerHTML = '';
   if (gFilter === 'Free Packs (CC0)' && !query) packButtons(gr);
   for (const id of visibleIds().slice(0, 240)) { const e = LIB[id], b = document.createElement('button'); b.className = 'item' + (placing === id ? ' on' : '');
-    const img = document.createElement('img'); img.dataset.id = id; img.alt = ''; b.append(img, Object.assign(document.createElement('span'), {textContent: e.name}));
+    const img = document.createElement('img'); img.dataset.id = id; img.alt = ''; const fav = (userTags[id] || []).includes('fav'), st = Object.assign(document.createElement('span'), {textContent: fav ? '⭐' : '☆'}); st.style.cssText = 'position:absolute;top:2px;right:4px;font-size:16px';
+    st.onclick = ev => { ev.stopPropagation(); const t = new Set(userTags[id] || []); t.has('fav') ? t.delete('fav') : t.add('fav'); userTags[id] = [...t]; localStorage.setItem('titan-forge-tags', JSON.stringify(userTags)); libUI(); };
+    b.style.position = 'relative'; b.append(img, Object.assign(document.createElement('span'), {textContent: e.name}), st);
     b.onclick = () => { placing = placing === id ? null : id; libUI(); if (placing) tip(isAlong(e) && modeBone ? `Tap a bone dot for the ${e.name}` : `Tap the body where the ${e.name} goes`, 4000); };
     gr.append(b); thumbObs.observe(img); }
   if (!visibleIds().length && gFilter !== 'Free Packs (CC0)') gr.innerHTML = gFilter === MY ? '<div class="hint">Your own parts land here. Open ⋯ → 🛠 Create Asset (Workshop), build a hand, wing, head… then 💾 Save part.</div>' : '<div class="hint">Nothing here yet.</div>';
@@ -315,7 +495,7 @@ document.querySelectorAll('[data-gz]').forEach(b => b.onclick = () => { gzMode =
 $('bLocal').onclick = e => { gizmo.setSpace(gizmo.space === 'world' ? 'local' : 'world'); e.target.classList.toggle('on', gizmo.space === 'local'); };
 $('bSnap').onclick = e => { const on = gizmo.translationSnap == null; gizmo.setTranslationSnap(on ? .25 : null); gizmo.setRotationSnap(on ? 15 * D : null); e.target.textContent = on ? 'Snap on' : 'Snap off'; e.target.classList.toggle('on', on); };
 function syncEdit(soft) { const pt = partBy(sel);
-  $('grab').textContent = pt ? (LIB[pt.lib] ? LIB[pt.lib].name : 'part') + (pt.bone ? ' · on ' + pt.bone : '') : (selBone && tab === 'skel' ? 'Bone: ' + selBone : 'Titan Forge');
+  $('grab').textContent = pt ? (LIB[pt.lib] ? LIB[pt.lib].name : 'part') + (pt.bone ? ' · on ' + pt.bone : '') : (selBone && tab === 'skel' ? 'Bone: ' + selBone : 'Myth Forge');
   if (!pt) return; for (const [s, v, k] of [['sSize', 'vSize', 's'], ['sLen', 'vLen', 'l'], ['sWid', 'vWid', 'w']]) { if (!soft || document.activeElement !== $(s)) $(s).value = pt[k] || 1; $(v).textContent = (+(pt[k] || 1)).toFixed(2); }
   $('bHide').textContent = pt.hidden ? 'Show' : 'Hide'; $('bUnlink').style.display = pt.twin ? '' : 'none'; $('tint').value = pt.tint || '#ffffff'; }
 for (const [s, k] of [['sSize', 's'], ['sLen', 'l'], ['sWid', 'w']]) { $(s).onpointerdown = () => snap();
@@ -363,7 +543,21 @@ $('bSubdiv').onclick = () => { const pt = partBy(sel); if (!pt) return tip('Tap 
   const tris = views[sel].meshes.reduce((s, m) => s + m.geometry.index.count / 3, 0); if (tris * 4 > 400000) return tip('Already very detailed');
   snap(); pt.subdiv = (pt.subdiv || 0) + 1; pt.sculpt = null; pt.cut = []; buildPart(pt); syncTwin(pt); attachGizmo(); saveCur(); tip('Detail level ' + pt.subdiv + ' (' + Math.round(tris * 4) + ' triangles)'); };
 $('bResetSculpt').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); pt.sculpt = null; pt.cut = []; buildPart(pt); syncTwin(pt); saveCur(); };
-const sculpting = () => tab === 'sculpt';
+let brushPaint = false, stylus = false;
+const sculpting = () => tab === 'sculpt' || (tab === 'paint' && brushPaint);
+$('bPen').onclick = e => { stylus = !stylus; e.target.classList.toggle('on', stylus); if (stylus) penSeen = true; updateOrbit();
+  tip(stylus ? 'Stylus mode: pen sculpts / paints / taps, fingers only turn and zoom the view' : 'Stylus mode off', 3000); };
+$('bBrushPaint').onclick = e => { brushPaint = !brushPaint; e.target.classList.toggle('on', brushPaint); updateOrbit(); tip(brushPaint ? (sel ? 'Draw on the part to paint it' : 'Tap a part first, then draw on it') : 'Brush paint off'); };
+$('bBrushErase').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); pt.vpaint = null; buildPart(pt); syncTwin(pt); saveCur(); };
+function paintStroke(x, y) { const pt = partBy(sel), v = views[sel]; if (!pt || !v) return; const hit = cast(x, y, v.meshes); if (!hit) return;
+  const mesh = hit.object, mi = mesh.userData.mi; pt.vpaint = pt.vpaint || {};
+  if (!pt.vpaint[mi]) { pt.vpaint[mi] = {}; buildPart(pt); return paintStroke(x, y); }
+  const g = mesh.geometry, p = g.attributes.position, col = g.attributes.color; if (!col) return; const local = mesh.worldToLocal(hit.point.clone()), ws = new THREE.Vector3(); mesh.getWorldScale(ws);
+  const R = (+$('sBrush').value) / Math.abs(ws.y), R2 = R * R, power = Math.min(1, +$('sStr').value * pressure), c = new THREE.Color($('brushCol').value), M = pt.vpaint[mi];
+  const centers = [local]; if (symSculpt) centers.push(new THREE.Vector3(-local.x, local.y, local.z));
+  for (const ce of centers) for (let i = 0; i < p.count; i++) { const d2 = (p.getX(i) - ce.x) ** 2 + (p.getY(i) - ce.y) ** 2 + (p.getZ(i) - ce.z) ** 2; if (d2 > R2) continue;
+    const f = (1 - d2 / R2) * power, r = col.getX(i) + (c.r - col.getX(i)) * f, gg = col.getY(i) + (c.g - col.getY(i)) * f, b = col.getZ(i) + (c.b - col.getZ(i)) * f; col.setXYZ(i, r, gg, b); M[i] = [+r.toFixed(3), +gg.toFixed(3), +b.toFixed(3)]; }
+  col.needsUpdate = true; }
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 function cast(x, y, objs) { ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); return ray.intersectObjects(objs, false)[0]; }
 const visibleMeshes = () => Object.values(views).filter(v => v.G.visible).flatMap(v => v.meshes);
@@ -399,7 +593,7 @@ function stroke(x, y) {
   if (moved.size) { p.needsUpdate = true; g.computeVertexNormals(); g.computeBoundingSphere(); }
 }
 function buildPartOwn(pt) { pt.sculpt = pt.sculpt || {}; const v = views[pt.uid]; v.meshes.forEach((m, mi) => { if (m.geometry === pieces(pt.lib)[mi].geo) m.geometry = m.geometry.clone(); }); }
-function updateOrbit() { controls.enabled = true; controls.touches.ONE = (!sculpting() || penSeen || fingerView) ? THREE.TOUCH.ROTATE : null;
+function updateOrbit() { controls.enabled = true; controls.touches.ONE = (!sculpting() || penSeen || stylus || fingerView) ? THREE.TOUCH.ROTATE : null;
   controls.touches.TWO = THREE.TOUCH.DOLLY_PAN; controls.mouseButtons.LEFT = sculpting() ? null : THREE.MOUSE.ROTATE; if (!sculpting()) $('ring').style.display = 'none'; }
 function ring(x, y) { const px = (+$('sBrush').value) * innerHeight / (camera.position.distanceTo(controls.target) * Math.tan(camera.fov * D / 2) * 2);
   const r = $('ring'); r.style.display = 'block'; r.style.left = x + 'px'; r.style.top = y + 'px'; r.style.width = r.style.height = px * 2 + 'px'; }
@@ -411,11 +605,12 @@ canvas.addEventListener('pointerdown', e => {
   if (e.pointerType === 'pen' && !penSeen) { penSeen = true; updateOrbit(); tip('S Pen found: pen sculpts, fingers turn the view'); }
   if (stroking && touches.size > 1) { stroking = false; saveCur(); }
   down = [e.clientX, e.clientY];
-  const toolPtr = sculpting() && (e.pointerType === 'pen' || (e.pointerType === 'mouse' && e.button === 0) || (e.pointerType === 'touch' && !penSeen && !fingerView && touches.size === 1));
-  if (toolPtr && sel) { pressure = e.pointerType === 'pen' && e.pressure > 0 ? .35 + e.pressure * 1.3 : 1; snap(); stroking = true; lastHit = null; stroke(e.clientX, e.clientY); ring(e.clientX, e.clientY); }
+  const toolPtr = sculpting() && (e.pointerType === 'pen' || (e.pointerType === 'mouse' && e.button === 0) || (e.pointerType === 'touch' && !stylus && !penSeen && !fingerView && touches.size === 1));
+  if (toolPtr && sel) { pressure = e.pointerType === 'pen' && e.pressure > 0 ? .35 + e.pressure * 1.3 : 1; snap(); stroking = true; lastHit = null; brushAt(e.clientX, e.clientY); ring(e.clientX, e.clientY); }
 }, true);
 canvas.addEventListener('pointermove', e => { if (!sculpting()) return; if (e.pointerType !== 'touch' || stroking) ring(e.clientX, e.clientY);
-  if (stroking) { if (e.pointerType === 'pen' && e.pressure > 0) pressure = .35 + e.pressure * 1.3; stroke(e.clientX, e.clientY); } });
+  if (stroking) { if (e.pointerType === 'pen' && e.pressure > 0) pressure = .35 + e.pressure * 1.3; brushAt(e.clientX, e.clientY); } });
+const brushAt = (x, y) => tab === 'paint' ? paintStroke(x, y) : stroke(x, y);
 addEventListener('pointercancel', e => touches.delete(e.pointerId));
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 addEventListener('pointerup', e => {
@@ -546,7 +741,12 @@ document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { tab =
   document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.id === 'p-' + tab)); $('sheet').classList.remove('min');
   if (tab !== 'add') { placing = null; } if (tab === 'add') libUI(); if (tab === 'paint') matsUI(); if (tab === 'skel') { skelUI(); syncBoneUI(); }
   if (tab === 'sculpt' && !sel) tip('Tap a part to sculpt it'); attachGizmo(); updateOrbit(); syncEdit(); });
-$('grab').onclick = () => $('sheet').classList.toggle('min');
+{ // sheet: tap the handle to cycle small / half / tall, or drag it up and down
+  const sh = $('sheet'), g = $('grab'); let y0 = null, moved = false;
+  const setState = st => { sh.classList.toggle('min', st === 'min'); sh.classList.toggle('tall', st === 'tall'); };
+  g.addEventListener('pointerdown', e => { y0 = e.clientY; moved = false; g.setPointerCapture(e.pointerId); });
+  g.addEventListener('pointermove', e => { if (y0 == null) return; const d = e.clientY - y0; if (Math.abs(d) > 30) { moved = true; setState(d > 0 ? (sh.classList.contains('tall') ? 'mid' : 'min') : (sh.classList.contains('min') ? 'mid' : 'tall')); y0 = e.clientY; } });
+  g.addEventListener('pointerup', () => { if (!moved) setState(sh.classList.contains('min') ? 'mid' : sh.classList.contains('tall') ? 'min' : 'tall'); y0 = null; }); }
 $('bFull').onclick = () => { document.body.classList.add('full'); gizmo.detach(); resize(); };
 $('restore').onclick = () => { document.body.classList.remove('full'); attachGizmo(); resize(); };
 $('bMenu').onclick = () => $('menu').classList.toggle('open');
@@ -557,9 +757,9 @@ $('mNew').onclick = () => { if (P.parts.length && !confirm('Start a new creature
 $('mSave').onclick = async () => { const n = prompt('Name this creature', P.name); if (!n) return; P.name = n; await idb('projects', 'readwrite', st => st.put(JSON.stringify(P), n)); saveCur(); tip('Saved "' + n + '"'); };
 $('mLoad').onclick = async () => { const all = await idbAll('projects'); if (!all.length) return tip('Nothing saved yet');
   const n = prompt('Type a name to open:\n' + all.map(a => '• ' + a[0]).join('\n')); const f = all.find(a => a[0] === n); if (!f) return; snap(); restore(f[1]); applyFX(); tip('Opened "' + n + '"'); };
-$('mCopy').onclick = () => { const txt = 'TITAN FORGE: ' + JSON.stringify(P); const o = $('out'); o.value = txt; o.style.display = 'block'; o.select(); setTimeout(() => o.style.display = 'none', 6000);
+$('mCopy').onclick = () => { const txt = 'MYTH FORGE: ' + JSON.stringify(P); const o = $('out'); o.value = txt; o.style.display = 'block'; o.select(); setTimeout(() => o.style.display = 'none', 6000);
   try { navigator.clipboard.writeText(txt).then(() => tip('Copied! Paste it to Claude.')); } catch (e) {} };
-$('mPaste').onclick = () => { const t = prompt('Paste a TITAN FORGE project'); if (!t) return; try { const j = t.replace(/^TITAN FORGE:\s*/, ''); JSON.parse(j); snap(); restore(j); applyFX(); } catch (e) { tip('That text is not a project'); } };
+$('mPaste').onclick = () => { const t = prompt('Paste a MYTH FORGE project'); if (!t) return; try { const j = t.replace(/^(TITAN|MYTH) FORGE:\s*/, ''); JSON.parse(j); snap(); restore(j); applyFX(); } catch (e) { tip('That text is not a project'); } };
 $('mExport').onclick = async () => { const {GLTFExporter} = await import('three/addons/exporters/GLTFExporter.js'); const was = showBones; boneHelpers.forEach(h => h.visible = false); gizmo.detach();
   new GLTFExporter().parse(skelRoot, r => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([r], {type: 'model/gltf-binary'})); a.download = (P.name || 'creature').replace(/\W+/g, '-') + '.glb'; a.click();
     boneHelpers.forEach(h => h.visible = was); attachGizmo(); tip('Downloaded — send it to Claude to put in the game'); }, e => tip('Export failed'), {binary: true, onlyVisible: true}); };
@@ -586,11 +786,12 @@ $('bSaveAsset').onclick = async () => {
     const mk = pt.mat && pt.mat[mi] != null ? pt.mat[mi] : (pt.matAll || (pieces_of(pt)[mi] || {}).mat || 'skin');
     pieces.push({pos: Array.from(g.attributes.position.array, v => +v.toFixed(4)), idx: Array.from(g.index.array), mat: mk, tint: pt.tint, tile: pt.tile || 1}); }); }
   const box = new THREE.Box3(); for (const pc of pieces) for (let i = 0; i < pc.pos.length; i += 3) box.expandByPoint(new THREE.Vector3(pc.pos[i], pc.pos[i + 1], pc.pos[i + 2]));
-  const id = 'my:' + Date.now().toString(36), rec = {id, name, sub: cat, along: ALONG_SUBS.has(cat), base: [0, Math.min(0, box.min.y), 0], pieces, made: new Date().toISOString().slice(0, 10)};
+  const tg = (prompt('Tags (optional, comma separated) e.g. lion, gold, sphinx', '') || '').toLowerCase().split(',').map(x => x.trim().replace(/^#/, '')).filter(Boolean);
+  const id = 'my:' + Date.now().toString(36), rec = {id, name, sub: cat, tags: tg, along: ALONG_SUBS.has(cat), base: [0, Math.min(0, box.min.y), 0], pieces, made: new Date().toISOString().slice(0, 10)};
   await idb('myparts', 'readwrite', st => st.put(rec, id)); registerMine(rec); tip('Saved "' + name + '" to My Parts → ' + cat, 3500);
 };
 const pieces_of = pt => pieces(pt.lib);
-function registerMine(rec) { LIB[rec.id] = {id: rec.id, group: 'My Parts', sub: rec.sub, name: rec.name, mine: true, along: rec.along, src: 'Made by you in the Workshop (yours)',
+function registerMine(rec) { LIB[rec.id] = {id: rec.id, group: 'My Parts', sub: rec.sub, name: rec.name, mine: true, tags: rec.tags || [], along: rec.along, src: 'Made by you in the Workshop (yours)',
   make: () => rec.pieces.map(pc => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pc.pos, 3)); g.setIndex(pc.idx); g.translate(0, -rec.base[1], 0); return {geo: g, mat: pc.mat}; })}; delete LIB[rec.id]._p; }
 async function loadMine() { try { for (const [, rec] of await idbAll('myparts')) registerMine(rec); } catch (e) {} }
 // delete own parts from the Add grid with a long press
@@ -632,3 +833,7 @@ addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; con
   tip(Object.keys(LIB).length + ' parts ready. Pick one and tap a bone dot.', 3500);
   window.FORGE = {P: () => P, LIB, addPart, bones: () => bones, views: () => views, select, rebuildParts};   // for testing
 })();
+
+</script>
+</body>
+</html>
