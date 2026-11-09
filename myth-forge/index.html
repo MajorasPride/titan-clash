@@ -895,7 +895,10 @@ function paintStroke(x, y) { const pt = partBy(sel), v = views[sel]; if (!pt || 
     const f = (1 - d2 / R2) * power, r = col.getX(i) + (c.r - col.getX(i)) * f, gg = col.getY(i) + (c.g - col.getY(i)) * f, b = col.getZ(i) + (c.b - col.getZ(i)) * f; col.setXYZ(i, r, gg, b); M[i] = [+r.toFixed(3), +gg.toFixed(3), +b.toFixed(3)]; }
   col.needsUpdate = true; }
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-function cast(x, y, objs) { ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); ray.camera = camera; return ray.intersectObjects(objs, false)[0]; }
+let castCam = null;   // set while a stroke comes from the focus window: rays go through the window's own camera
+function cast(x, y, objs) { const c = castCam, cam = c ? c.cam : camera;
+  if (c) ndc.set((x - c.rect.left) / c.rect.width * 2 - 1, -((y - c.rect.top) / c.rect.height) * 2 + 1); else ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1);
+  ray.setFromCamera(ndc, cam); ray.camera = cam; return ray.intersectObjects(objs, false)[0]; }
 const visibleMeshes = () => Object.values(views).filter(v => v.G.visible).flatMap(v => v.meshes);
 const adjCache = new WeakMap();
 function adj(g) { if (adjCache.has(g)) return adjCache.get(g); const I = g.index.array, n = g.attributes.position.count, nb = Array.from({length: n}, () => []);
@@ -1204,12 +1207,21 @@ function fwToggle() { FW.on = !FW.on; $('fwin').classList.toggle('on', FW.on); [
 $('bFWin').onclick = fwToggle; $('bFWin2').onclick = fwToggle; $('fwClose').onclick = fwToggle;
 $('fwSize').onclick = () => { FW.size = (FW.size + 1) % FW_SIZES.length; fwLayout(); };
 { const pts = new Map(); let pinch0 = 0; const el = $('fwin');
-  el.addEventListener('pointerdown', e => { if (e.target.tagName === 'BUTTON') return; e.preventDefault(); e.stopPropagation(); el.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch0 = Math.hypot(a[0] - b[0], a[1] - b[1]); } });
-  el.addEventListener('pointermove', e => { const p = pts.get(e.pointerId); if (!p) return; e.stopPropagation();
+  // sculpt / brush paint right inside the window: pen (or one finger when there's no pen) draws, other fingers turn and pinch the window view
+  const inWin = fn => { const rc = el.getBoundingClientRect(); castCam = {cam: fwCam, rect: {left: rc.left + 2, top: rc.top + 2, width: rc.width - 4, height: rc.height - 4}}; try { fn(); } finally { castCam = null; } };
+  let fwDraw = null;
+  el.addEventListener('pointerdown', e => { if (e.target.tagName === 'BUTTON') return; e.preventDefault(); e.stopPropagation(); try { el.setPointerCapture(e.pointerId); } catch (err) {}
+    if (e.pointerType === 'pen' && !penSeen) { penSeen = true; updateOrbit(); }
+    const tool = sculpting() && sel && pts.size === 0 && (e.pointerType === 'pen' || (e.pointerType === 'mouse' && e.button === 0) || (e.pointerType === 'touch' && !stylus && !penSeen && !fingerView));
+    if (tool) { fwDraw = e.pointerId; pressure = e.pointerType === 'pen' && e.pressure > 0 ? .35 + e.pressure * 1.3 : 1; snap(); stroking = true; lastHit = null; $('ring').style.display = 'none'; inWin(() => brushAt(e.clientX, e.clientY)); return; }
+    if (fwDraw != null && e.pointerType === 'touch') { stroking = false; fwDraw = null; saveCur(); }      // a second finger turns a stroke into a view move
+    pts.set(e.pointerId, [e.clientX, e.clientY]); if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch0 = Math.hypot(a[0] - b[0], a[1] - b[1]); } });
+  el.addEventListener('pointermove', e => { if (fwDraw === e.pointerId) { e.stopPropagation(); if (stroking) { if (e.pointerType === 'pen' && e.pressure > 0) pressure = .35 + e.pressure * 1.3; inWin(() => brushAt(e.clientX, e.clientY)); } return; }
+    const p = pts.get(e.pointerId); if (!p) return; e.stopPropagation();
     if (pts.size === 1) { FW.az -= (e.clientX - p[0]) * .012; FW.el = Math.max(-1.45, Math.min(1.45, FW.el + (e.clientY - p[1]) * .01)); }
     pts.set(e.pointerId, [e.clientX, e.clientY]);
     if (pts.size === 2) { const [a, b] = [...pts.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (pinch0) FW.zoom = Math.max(.3, Math.min(4, FW.zoom * pinch0 / d)); pinch0 = d; } });
-  const up = e => { pts.delete(e.pointerId); pinch0 = 0; }; el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  const up = e => { if (fwDraw === e.pointerId) { fwDraw = null; if (stroking) { stroking = false; const pt = partBy(sel); if (pt) syncTwin(pt); saveCur(); } return; } pts.delete(e.pointerId); pinch0 = 0; }; el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
   el.addEventListener('wheel', e => { e.preventDefault(); FW.zoom = Math.max(.3, Math.min(4, FW.zoom * (e.deltaY > 0 ? 1.1 : .9))); }, {passive: false}); }
 const fwBox = new THREE.Box3(), fwC = new THREE.Vector3(), fwS = new THREE.Vector3();
 function fwRender() { if (!FW.on) return; const v = sel && views[sel], pt = sel && partBy(sel); $('fwCap').textContent = v ? (pt && LIB[pt.lib] ? LIB[pt.lib].name || pt.lib : 'Part') : 'Tap a part';
