@@ -147,3 +147,7 @@ Looked at how Nomad Sculpt (phone) and Blender sculpt mode do it; he picked all 
 - v2 section: `DEF[skel][stepTitle] = partId` (step titles = PARTSTEPS titles: Body, Neck, Head, Jaw, Face, Horns, Arms, Hands, Legs, Feet, Wings, 'Tail / tentacles', 'Extra limbs', 'Armor + extras', Weapon), `DEF_MECH` + `DEF_MECH_SK` for the mech style, `defFor(st)`.
 - Build together: `btGo` auto-places the default the first time a part step opens (`BT.defDone`), `BT.addedBy[stepIndex]` remembers what each step added so going back / swapping replaces it; 🚫 None removes it. Head step removes base_ pieces on jaw bones (all current heads + skulls include their lower jaw).
 - `buildDefault(k, style)` (Start › ⭐ Default builds, `#defBuilds`; test hook `__def`). `__btAuto(style, skipOpt)` = first part of every step (test hook).
+
+## Nov 9, 2026 (5:30am): bone levels + default polish
+- `detailBones(bones, lvl)` (before the fit system; `boneDetail` in localStorage `mf-bones`): 'simple' merges straight same-tag chains of spine / tail / neck / armU / extra; 'complex' splits spine / chest / neck / tail bones in two (second half named `<name>_x2<.L|.R>`). Applied in `blankProject` and the body-type buttons. Start › empty body has the `[data-bd]` row.
+- Build together: anything placed on a limb family removes the base_ pieces on that family. bb_tank / bb_walker have `fitKind: 'torso'`. New bodies-more parts: bb_antenna, bb_palp, bb_abdomen, bb_fin, bb_tailfan.

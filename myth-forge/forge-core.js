@@ -67,7 +67,7 @@ function piecesOld(id) {
 
 // ====================================================================== state
 const uid = () => Math.random().toString(36).slice(2, 9);
-const blankProject = (skel = 'biped') => ({v: 1, name: 'New creature', skel, bones: JSON.parse(JSON.stringify(SKEL[skel].bones)), pose: {}, parts: [], fx: {glow: true, fog: false, mist: false, aura: false, drip: false, col: '#8a2aff', bg: 'studio'}});
+const blankProject = (skel = 'biped') => ({v: 1, name: 'New creature', skel, bones: detailBones(JSON.parse(JSON.stringify(SKEL[skel].bones))), pose: {}, parts: [], fx: {glow: true, fog: false, mist: false, aura: false, drip: false, col: '#8a2aff', bg: 'studio'}});
 let P = blankProject();
 try { const s = JSON.parse(localStorage.getItem('titan-forge-cur') || 'null'); if (s && s.v) P = s; } catch (e) {}
 const saveCur = () => { try { localStorage.setItem(typeof inWS !== 'undefined' && inWS ? 'titan-forge-ws' : 'titan-forge-cur', JSON.stringify(P)); } catch (e) { tip('Too big for quick save — use ⋯ Save as'); } };
@@ -316,6 +316,23 @@ function autoFit(lib, bone) {                                  // fit limbs / ta
   const ratio = Math.min(4, Math.max(.25, chain / len)), sz = Math.min(1.6, Math.max(.6, Math.sqrt(ratio)));
   return [+sz.toFixed(3), +(ratio / sz).toFixed(3)];
 }
+// ====================================================================== skeleton detail: 🦴 Simple / Normal / Complex (Nov 9) — any body type, applied when a body type is picked
+// Simple merges chains of bones with the same job (tail1..5 -> one tail, two spine bones -> one, shoulder stub + upper arm -> one) so it's easy to build on.
+// Complex splits the spine, neck and tail bones in two (more bends for posing and smoother long necks / tails). Normal = the template as made.
+var boneDetail = (() => { try { return localStorage.getItem('mf-bones') || 'normal'; } catch (e) { return 'normal'; } })();
+function detailBones(bones, lvl = boneDetail) { if (!bones || lvl === 'normal' || bones.length < 3) return bones;
+  const side = n => (n.match(/\.(L|R)$/) || [''])[0], base = n => n.replace(/\.(L|R)$/, '');
+  if (lvl === 'simple') { const MERGE = new Set(['spine', 'tail', 'neck', 'armU', 'extra']); let changed = true;
+    while (changed) { changed = false; for (const r of bones) { const p = bones.find(b => b[0] === r[1]); if (!p || p[4] !== r[4] || !MERGE.has(r[4])) continue;
+        if (bones.filter(b => b[1] === p[0] && b[4] === p[4]).length !== 1) continue;   // only straight chains (a fork stays)
+        p[3] = r[3].slice(); bones.forEach(b => { if (b[1] === r[0]) b[1] = p[0]; }); bones.splice(bones.indexOf(r), 1); changed = true; break; } }
+    return bones; }
+  if (lvl === 'complex') { const SPLIT = new Set(['spine', 'chest', 'neck', 'tail']), out = [];
+    for (const r of bones) { if (!SPLIT.has(r[4])) { out.push(r); continue; } const mid = r[2].map((v, i) => +((v + r[3][i]) / 2).toFixed(3)), n2 = base(r[0]) + '_x2' + side(r[0]);
+      out.push([r[0], r[1], r[2], mid, r[4], r[5]], [n2, r[0], mid, r[3], r[4], r[5]]); bones.forEach(b => { if (b[1] === r[0] && b !== r) b[1] = n2; }); }
+    // children re-parented above may point at the first half when they were listed before; fix any child of a split bone to the second half
+    return out; }
+  return bones; }
 // ====================================================================== fit system
 // Every bone-snapped part sizes itself to its slot on the skeleton, and to the parts next to it, so pieces line up:
 // torsos fill the trunk (hips -> neck), heads sit on the neck at a size that matches the body, limbs/tails/necks fill their
@@ -358,6 +375,7 @@ function bodyInfo() {                                           // trunk path, s
   if (legRoots >= 6 && flat && path.length <= 2) { let reach = 0; for (const r of P.bones) if (FAMILY[r[4]] === 'leg' || FAMILY[r[4]] === 'foot') reach = Math.max(reach, Math.abs(r[3][0])); W = Math.max(W, reach * 2 * .4, len * 1.15); }
   // bodies with no arms or legs on the trunk (fish, octopus, blob, serpent): as wide as the trunk is long, so the body doesn't come out thin
   else if (!sh && !hp && !legRoots) W = Math.max(W, Math.min(len * .9, 4.5));
+  if (P.bones.some(r => r[4] === 'wingA') && hp) W = Math.max(W, len * .8);
   return {R, path, names, start, end, len, W, root: path[0][0]}; }
 function aimRot(R, from, endPt) {                               // rotation (deg, bone space of `from`) that points +Y at endPt
   const r = R[from], d = endPt.clone().sub(v3(r[2])); if (d.lengthSq() < 1e-6) return [0, 0, 0]; d.applyQuaternion(restQOf(r).invert()).normalize();
@@ -986,7 +1004,7 @@ for (const [k, v] of Object.entries(mySkels)) SKEL[k] = v;
 $('bSaveSkel').onclick = () => { const n = prompt('Name this body type (e.g. My mech frame)'); if (!n) return; const k = 'my_' + Date.now().toString(36);
   mySkels[k] = SKEL[k] = {name: '★ ' + n, bones: JSON.parse(JSON.stringify(P.bones))}; localStorage.setItem('titan-forge-skels', JSON.stringify(mySkels)); P.skel = k; skelUI(); saveCur(); tip('Saved — it is in the body type list now'); };
 function skelUI() { startersUI(); $('skels').innerHTML = ''; for (const [k, s] of Object.entries(SKEL)) { const b = document.createElement('button'); b.textContent = s.name; b.className = P.skel === k ? 'on' : '';
-  b.onclick = () => { if (P.parts.length && !confirm('Switch body type? Parts stay on bones with the same name; others move to the body.')) return; snap(); P.skel = k; P.bones = JSON.parse(JSON.stringify(s.bones)); P.pose = {};
+  b.onclick = () => { if (P.parts.length && !confirm('Switch body type? Parts stay on bones with the same name; others move to the body.')) return; snap(); P.skel = k; P.bones = detailBones(JSON.parse(JSON.stringify(s.bones))); P.pose = {};
     const names = new Set(P.bones.map(b => b[0])), fb = (P.bones.find(b => b[4] === 'chest') || P.bones[0])[0]; P.parts.forEach(p => { if (p.bone && !names.has(p.bone)) p.bone = fb; if (p.fit && p.fit.drop && !names.has(p.fit.drop)) p.fit.drop = p.bone; }); P.bodyBase = null; P.body = {};
     rebuildSkeleton(); const had = P.parts.length; if (had) { refitAll(false); if (hasBase()) buildBase(); } else buildBase(); rebuildParts(); skelUI(); bodyUI(); outliner(); saveCur(); frameAll(); if (!had) tip('Base body ready — tap a body part, then pick a part to swap it in', 3500); }; $('skels').append(b); } }
 function syncBoneUI() { const b = selBone && bones[selBone]; $('boneHint').textContent = b ? `Bone: ${selBone} (${b.userData.tag})` : 'Tap an orange joint to pick a bone. Parts on a bone move with it.';
@@ -1512,7 +1530,7 @@ if (window.MF_V2) {
     ['Long neck + tail', {neck: 1.8, tail: 1.6}], ['Long arms', {arms: 1.45}], ['Big head', {head: 1.4}]];
   const SKINCATS = ['Skins & Scales', 'Lizards', 'Fur', 'Fish & Sea', 'Insects', 'Metal', 'Mech Paint', 'Alien Armor', 'Gems & Stone', 'Glow & Crystal', 'Neon', 'Fire', 'Cosmic & Special', 'Toys: plastic', 'Candy', 'Bark (Lynocs, CC0)'];
   // ⭐ bodies made for each body type (first choice in the Body step)
-  const BODY_FOR = {biped: ['bd_torso_brawler', 'bd_torso_dragon', 'bd_torso_round', 'kj_chest'], kaiju: ['bd_torso_dragon', 'bd_torso_brawler', 'kj_chest'], theropod: ['dn_body', 'bd_torso_dragon'],
+  const BODY_FOR = {biped: ['bd_torso_brawler', 'bd_torso_dragon', 'bd_torso_round', 'kj_chest'], kaiju: ['bd_torso_dragon', 'bd_torso_brawler', 'kj_chest'], theropod: ['bd_torso_dragon', 'dn_body'],
     mech: ['mk_torso_hero', 'mk_torso_siege', 'mk_torso_slim', 'mk_torso_cockpit', 'mk_torso_barrel', 'mk_torso_frame'], walker: ['bb_walker', 'mk_torso_cockpit'], tank: ['bb_tank', 'mk_torso_siege'],
     quad: ['bb_beast', 'bb_lion', 'bd_torso_dragon'], sphinx: ['bb_lion', 'bb_beast'], centaur: ['bb_horse', 'bb_beast'], dragon: ['bd_torso_dragon', 'md_chest', 'bb_beast'], hydra: ['bd_torso_dragon', 'bb_beast'],
     wyvern: ['bd_torso_dragon', 'bb_bird'], bird: ['bb_bird'], serpent: ['bb_snakeseg', 'bb_snake', 'bd_torso_naga'], naga: ['bd_torso_naga', 'bb_snake'], fish: ['bb_fish', 'kr_mantle'], octopus: ['kr_mantle', 'bd_torso_slug'],
@@ -1524,31 +1542,31 @@ if (window.MF_V2) {
   const DEF = {
     biped: {Body: 'bd_torso_brawler', Neck: 'bd_neck_bull', Head: 'hd_head_demon', Horns: 'hd_horn_demon', Arms: 'bd_arm_kaiju', Hands: 'bd_hand_kaiju', Legs: 'bd_leg_pillar', 'Tail / tentacles': 'tw_tail_spiked'},
     kaiju: {Body: 'bd_torso_dragon', Neck: 'bd_neck_bull', Head: 'hd_head_theropod', Arms: 'bd_arm_kaiju', Hands: 'bd_hand_kaiju', Legs: 'bd_leg_pillar', 'Tail / tentacles': 'tw_tail_spiked'},
-    theropod: {Body: 'dn_body', Neck: 'bd_neck_dragon', Head: 'hd_head_theropod', Arms: 'bd_arm_raptor', Hands: 'bd_hand_sickle', Legs: 'bd_leg_dragon', 'Tail / tentacles': 'tw_tail_reptile'},
+    theropod: {Body: 'bd_torso_dragon', Neck: 'bd_neck_dragon', Head: 'hd_head_theropod', Arms: 'bd_arm_raptor', Hands: 'bd_hand_sickle', Legs: 'bd_leg_dragon', 'Tail / tentacles': 'tw_tail_reptile'},
     quad: {Body: 'bb_beast', Neck: 'bd_neck_maned', Head: 'hd_head_wolf', Legs: 'bd_leg_beast', 'Tail / tentacles': 'tw_tail_whip'},
     sphinx: {Body: 'bb_lion', Neck: 'bd_neck_maned', Head: 'hd_head_lion', Legs: 'bd_leg_beast', Wings: 'sx_wing_feather', 'Tail / tentacles': 'tw_tail_whip'},
     dragon: {Body: 'bd_torso_dragon', Neck: 'bd_neck_dragon', Head: 'hd_head_dragon', Horns: 'hd_horn_dragon', Legs: 'bd_leg_dragon', Wings: 'tw_wing_bat', 'Tail / tentacles': 'tw_tail_spiked'},
     hydra: {Body: 'bd_torso_dragon', Neck: 'bd_neck_serpent', Head: 'hd_head_dragon_brute', Legs: 'bd_leg_dragon', 'Tail / tentacles': 'tw_tail_spiked'},
     wyvern: {Body: 'bd_torso_dragon', Neck: 'bd_neck_dragon', Head: 'hd_head_wyvern', Legs: 'bd_leg_dragon', Wings: 'tw_wing_bat', 'Tail / tentacles': 'tw_tail_whip'},
-    bird: {Body: 'bb_bird', Neck: 'bd_neck_bird', Head: 'hd_head_eagle', Legs: 'bd_leg_bird', Wings: 'sx_wing_feather'},
+    bird: {Body: 'bb_bird', Neck: 'bd_neck_bird', Head: 'hd_head_eagle', Legs: 'bd_leg_bird', Wings: 'sx_wing_feather', 'Tail / tentacles': 'bb_tailfan'},
     serpent: {Body: 'bb_snakeseg', Head: 'hd_head_seaserpent'},
     naga: {Body: 'bd_torso_naga', Neck: 'bd_neck_serpent', Head: 'hd_head_cobra', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', 'Tail / tentacles': 'tw_tail_reptile'},
-    spider: {Body: 'bd_torso_spider', Head: 'hd_head_spider', Legs: 'bd_leg_spider'},
-    crab: {Body: 'bd_torso_crab', Head: 'hd_head_crab', Arms: 'bd_arm_crab', Hands: 'bd_hand_crab', Legs: 'bd_leg_insect'},
-    insect: {Body: 'bd_torso_thorax', Head: 'hd_head_ant', Legs: 'bd_leg_insect', 'Extra limbs': 'tw_wing_insect', 'Tail / tentacles': 'mo_abdomen'},
+    spider: {Body: 'bd_torso_thorax', Head: 'hd_head_spider', Arms: 'bb_palp', Legs: 'bd_leg_spider', 'Tail / tentacles': 'bb_abdomen'},
+    crab: {Body: 'bd_torso_crab', Neck: 'hd_eye_stalk', Head: 'hd_head_crab', Arms: 'bd_arm_crab', Hands: 'bd_hand_crab', Legs: 'bd_leg_insect'},
+    insect: {Body: 'bd_torso_thorax', Head: 'hd_head_ant', Legs: 'bd_leg_insect', 'Extra limbs': 'bb_antenna', 'Tail / tentacles': 'bb_abdomen'},
     scorpion: {Body: 'bb_scorpion', Head: 'hd_head_spider', Arms: 'bd_arm_crab', Hands: 'bd_hand_scorpion', Legs: 'bd_leg_insect', 'Tail / tentacles': 'tw_tail_whip'},
-    moth: {Body: 'mo_body', Head: 'mo_head', Legs: 'bd_leg_insect', Wings: 'mo_wing', 'Extra limbs': 'mo_wing_hind', 'Tail / tentacles': 'mo_abdomen'},
+    moth: {Body: 'mo_body', Head: 'mo_head', Legs: 'bd_leg_insect', Wings: 'mo_wing', 'Extra limbs': 'bb_antenna', 'Tail / tentacles': 'mo_abdomen'},
     centipede: {Body: 'cp_segment', Head: 'cp_head', Legs: 'cp_leg', 'Tail / tentacles': 'cp_tail_feelers'},
-    fish: {Body: 'bb_fish', Head: 'hd_head_shark', 'Tail / tentacles': 'tw_tail_fin'},
+    fish: {Body: 'bb_fish', Head: 'hd_head_shark', Wings: 'bb_fin', 'Extra limbs': 'bb_fin', 'Tail / tentacles': 'tw_tail_fin'},
     octopus: {Body: 'kr_mantle', Head: 'hd_head_octopus', 'Tail / tentacles': 'kr_tentacle'},
     blob: {Body: 'bb_blob', Head: 'hd_head_grey', Face: 'hd_eye_horror_cluster'},
-    treefolk: {Body: 'tf_trunk', Head: 'tf_face_elder', Horns: 'tf_leaf_crown', Arms: 'tf_arm_branch', Hands: 'tf_hand_twig', Legs: 'tf_leg_root', Feet: 'tf_foot_roots'},
-    centaur: {Body: 'bb_horse', Head: 'hd_head_demon', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', Legs: 'bd_leg_beast', 'Tail / tentacles': 'tw_tail_whip'},
-    slim: {Body: 'sp_torso_gaunt', Head: 'hd_head_xeno', Arms: 'sp_arm_gaunt', Hands: 'sp_hand_claw', Legs: 'sp_leg_gaunt'},
+    treefolk: {Body: 'tf_trunk', Neck: 'bd_neck_bull', 'Extra limbs': 'tf_arm_branch', Head: 'tf_face_elder', Horns: 'tf_leaf_crown', Arms: 'tf_arm_branch', Hands: 'tf_hand_twig', Legs: 'tf_leg_root', Feet: 'tf_foot_roots'},
+    centaur: {Body: 'bb_horse', Neck: 'bd_neck_bull', Head: 'hd_head_demon', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', Legs: 'bd_leg_beast', 'Tail / tentacles': 'tw_tail_whip'},
+    slim: {Body: 'sp_torso_gaunt', Neck: 'bd_neck_serpent', Head: 'hd_head_xeno', Arms: 'sp_arm_gaunt', Hands: 'sp_hand_claw', Legs: 'sp_leg_gaunt'},
     brute: {Body: 'bd_torso_round', Neck: 'bd_neck_bull', Head: 'hd_head_boar', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', Legs: 'bd_leg_pillar'},
-    gorilla: {Body: 'bd_torso_brawler', Head: 'hd_head_ape', Arms: 'bd_arm_brawler', Hands: 'bd_hand_bear', Legs: 'bd_leg_beast'},
-    fourarm: {Body: 'bd_torso_brawler', Head: 'hd_head_demon', Horns: 'hd_horn_ram', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed'},
-    angel: {Body: 'bd_torso_brawler', Head: 'hd_head_eagle', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', Legs: 'bd_leg_beast', Wings: 'sx_wing_feather'}};
+    gorilla: {Body: 'bd_torso_brawler', Neck: 'bd_neck_bull', Head: 'hd_head_ape', Arms: 'bd_arm_brawler', Hands: 'bd_hand_bear', Legs: 'bd_leg_beast'},
+    fourarm: {Body: 'bd_torso_brawler', Neck: 'bd_neck_bull', Head: 'hd_head_demon', Horns: 'hd_horn_ram', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed'},
+    angel: {Body: 'bd_torso_brawler', Neck: 'bd_neck_bull', Head: 'hd_head_eagle', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', Legs: 'bd_leg_beast', Wings: 'sx_wing_feather'}};
   const DEF_MECH = {Body: null, Neck: 'mn_neck_piston', Head: 'mk_head_vcrest', Arms: 'mk_arm_full', Hands: 'mk_hand_fist', Legs: 'mk_leg_full', Feet: 'mk_foot_armored', Wings: 'tw_wing_mech', 'Tail / tentacles': 'tw_tail_plated', 'Armor + extras': 'mk_sh_round'};
   const DEF_MECH_SK = {walker: {Head: 'mk_head_camera', Arms: 'mk_arm_missile', Legs: 'mk_leg_chicken'}, tank: {Head: 'mk_head_monoeye', Hands: 'mk_hand_claw'}};
   const defFor = st => { const t = st.t; let id = BT.style === 'mech' ? (t === 'Body' ? fitsFor()[0] : {...DEF_MECH, ...(DEF_MECH_SK[P.skel] || {})}[t]) : (DEF[P.skel] || {})[t];
@@ -1564,7 +1582,7 @@ if (window.MF_V2) {
     if (st.how === 'weapon') { const hands = famBones('hand'), h = hands.find(n => n.endsWith('.R')) || hands[0]; if (!h || !addWeaponToPalm(id, h)) addPart(id, (P.bones.find(r => r[4] === 'chest') || P.bones[0])[0], [0, 0, 0], [0, 0, 0]); }
     else if (st.how === 'trunk' && e.perSeg) { mirrorAdd = false; P.bones.filter(r => TRUNK_TAGS.has(r[4])).forEach(r => addPart(id, r[0], [0, 0, 0], [0, 0, 0])); }
     else if (st.how === 'trunk' || st.how === 'decor') { const tb = st.fam === 'trunk' ? (P.bones.find(r => r[4] === 'chest') || P.bones.find(r => TRUNK_TAGS.has(r[4])) || P.bones[0])[0] : famRoots(st.fam)[0]; mirrorAdd = false; addPart(id, tb, [0, 0, 0], [0, 0, 0]); }
-    else { const roots = famRoots(st.fam); mirrorAdd = false; roots.forEach(r => addPart(id, r, [0, 0, 0], [0, 0, 0])); }
+    else { const roots = famRoots(st.fam); mirrorAdd = false; roots.forEach(r => addPart(id, r, [0, 0, 0], [0, 0, 0])); const fb = new Set(famBones(st.fam)); removeParts(P.parts.filter(p => p.lib.startsWith('base_') && fb.has(p.bone))); }   // whatever goes on a limb replaces the mannequin there
     mirrorAdd = m; modeBone = keepMode; BT.added = P.parts.filter(p => !before.has(p.uid)).map(p => p.uid); (BT.addedBy = BT.addedBy || {})[BT.i] = BT.added;
     if (st.t === 'Head') { const jaws = new Set(P.bones.filter(r => r[4] === 'jaw').map(r => r[0])); removeParts(P.parts.filter(p => p.lib.startsWith('base_') && jaws.has(p.bone))); }   // heads come with their own lower jaw
     rebuildParts(); outliner(); saveCur(); if (quiet) return;
@@ -1628,6 +1646,9 @@ if (window.MF_V2) {
       el.append(Object.assign(document.createElement('button'), {textContent: sk.name, onclick: () => buildDefault(k)})); }
     el.append(Object.assign(document.createElement('button'), {textContent: '🤖 Mech (default)', onclick: () => buildDefault('mech', 'mech')})); }; defUI();
   window.__def = buildDefault;
+  const bdUI = () => document.querySelectorAll('[data-bd]').forEach(b => b.classList.toggle('on', b.dataset.bd === boneDetail));
+  document.querySelectorAll('[data-bd]').forEach(b => b.onclick = () => { boneDetail = b.dataset.bd; try { localStorage.setItem('mf-bones', boneDetail); } catch (x) {} bdUI();
+    tip({simple: '🦴 Simple bones: fewer bones, easy to build on', normal: 'Normal bones', complex: '🦴 Complex bones: more bends in the spine, neck and tail'}[boneDetail] + ' — used when you pick a body type', 2600); }); bdUI();
   window.__fresh = k => { P = blankProject(k); rebuildSkeleton(); buildBase(); rebuildParts(); outliner(); frameAll(); }; window.__fits = () => fitsFor(); window.__btAuto = (style, skipOpt) => { BT.style = style || 'creature'; btSteps(); for (const st of BT.steps) { if (st.k !== 'part' || (skipOpt && st.opt)) continue; BT.pick = null; const ch = choicesOf(st)[0]; if (!ch) continue; const ids = partsOf(ch); if (ids[0]) { BT.added = []; btPlace(st, ids[0]); } BT.added = []; } }; window.__bones = () => P.bones;   // test hooks
   // ---- first-time tour for the new layout
   TOUR.length = 0; TOUR.push(

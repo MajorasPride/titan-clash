@@ -41,6 +41,22 @@
     {...S('snakeseg', TB, 'Sea Bodies', 'Serpent body segment', ['snake', 'serpent', 'eel', 'segment'], () => {
       const g = new T.CylinderGeometry(.5, .5, 1.25, 32, 6).translate(0, .5, 0), p = g.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i), k = 1 + .05 * Math.sin(Math.max(0, Math.min(1, y)) * Math.PI); p.setX(i, p.getX(i) * k); p.setZ(i, p.getZ(i) * k); } g.computeVertexNormals();
       const plate = new T.BoxGeometry(.62, .32, .16).translate(0, .5, .48); return [{geo: noise(g, .01, 6), mat: 'scale'}, {geo: plate, mat: 'leather'}]; }), fitKind: 'seg', unitLen: 1, perSeg: true},
+    // small missing pieces found by the default builds (Nov 9): antennae, spider palps + abdomen, fish fins, bird tail fan
+    {...S('antenna', 'Tentacles & Extra Limbs', 'Bug Bits', 'Bug antenna', ['antenna', 'feeler', 'bug', 'insect', 'moth'], () => {
+      const c = cr([V3(0, 0, 0), V3(0, 1.2, .3), V3(0, 2.2, .9), V3(0, 2.8, 1.8)]), g = taper(c, t => .09 - .05 * t, 0, 60, 10), knobs = [];
+      for (let i = 1; i < 12; i++) { const p = c.getPointAt(i / 12); knobs.push(at(new T.SphereGeometry(.07 - .002 * i, 10, 8), p.x, p.y, p.z)); }
+      return [{geo: g, mat: 'chitin'}, {geo: merge(knobs), mat: 'chitin'}]; }), fitKind: 'limb'},
+    {...S('palp', 'Arms & Shoulders', 'Bug & Crab', 'Spider palp', ['spider', 'palp', 'pedipalp', 'bug'], () => {
+      const c = cr([V3(0, 0, 0), V3(0, .9, .3), V3(0, 1.6, .1), V3(0, 2.1, .4)]); return [{geo: noise(taper(c, t => .2 - .08 * t, 0, 50, 14), .01, 8), mat: 'chitin'}, {geo: at(new T.SphereGeometry(.17, 16, 12), 0, 2.1, .4), mat: 'chitin'}]; }), fitKind: 'limb'},
+    {...S('abdomen', 'Tails', 'Bug Bits', 'Bug abdomen (big)', ['spider', 'abdomen', 'bug', 'insect', 'ant'], () => {
+      const g = body(3.2, t => (1.25 * Math.sin(Math.min(1, t * 1.02 + .03) * Math.PI) ** .7) * (1 - .15 * t), 1, 1.05, 48, 40);
+      const bands = []; for (let i = 1; i < 6; i++) bands.push(at(new T.TorusGeometry(1.0 * Math.sin(i / 6 * Math.PI) ** .7 + .05, .04, 6, 40).rotateX(Math.PI / 2), 0, i * .53, 0));
+      return [{geo: g, mat: 'chitin'}, {geo: merge(bands), mat: 'chitin'}]; }), fitKind: 'tail'},
+    {...S('fin', 'Wings', 'Fins', 'Fish fin', ['fish', 'fin', 'shark', 'sea', 'aquatic'], () => {
+      const g = extr([[0, 0], [.5, .1], [2.2, 1.6], [1.4, 1.8], [.3, 1.2]], .06, .03).applyMatrix4(new T.Matrix4().makeBasis(V3(1, 0, 0), V3(0, 1, 0), V3(0, 0, 1))); return [{geo: g, mat: 'membrane'}]; }), fitKind: 'wing'},
+    {...S('tailfan', 'Tails', 'Bird', 'Bird tail fan', ['bird', 'tail', 'feather', 'fan'], () => {
+      const fs = []; for (let i = 0; i < 9; i++) { const a = (i - 4) * .16; fs.push(at(K.extr([[-.12, 0], [.12, 0], [.18, 2.4], [0, 2.8], [-.18, 2.4]], .04, .02), 0, 0, 0, 0, 0, a)); }
+      return [{geo: merge(fs), mat: 'feather'}]; }), fitKind: 'tail'},
     S('scorpion', TB, 'Bug & Shell', 'Scorpion body (plated)', ['scorpion', 'bug', 'plates', 'chitin', 'arachnid'], () => {
       const segs = [], plates = []; for (let i = 0; i < 6; i++) { const y = i * .72, w = 1.25 - .07 * i;
         segs.push(at(new T.SphereGeometry(w, 40, 24), 0, y + .4, 0).scale(1, 1, .55)); plates.push(at(new T.SphereGeometry(w * 1.04, 40, 16, 0, Math.PI * 2, 0, Math.PI / 2.4).rotateX(-Math.PI / 2), 0, y + .45, -.1).scale(1, 1, .6)); }
@@ -49,17 +65,17 @@
       const g = body(3.4, t => (1.7 * Math.sin(Math.min(1, t * 1.02 + .02) * Math.PI) ** .55) * (1 + .25 * Math.max(0, .35 - t)), 1, 1, 64, 50); noise(g, .18, 1.2);
       const drips = []; for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2 + .3; drips.push(taper(cr([V3(Math.cos(a) * 1.55, .5, Math.sin(a) * 1.55), V3(Math.cos(a) * 1.75, .1, Math.sin(a) * 1.75), V3(Math.cos(a) * 1.85, -.05, Math.sin(a) * 1.85)]), .22, .1, 16, 10)); }
       return [{geo: g, mat: 'slime'}, {geo: merge(drips), mat: 'slime'}]; }),
-    S('tank', MT, 'Bases', 'Tank hull + treads', ['tank', 'treads', 'mech', 'vehicle', 'base'], () => {
+    {...S('tank', MT, 'Bases', 'Tank hull + treads', ['tank', 'treads', 'mech', 'vehicle', 'base'], () => {
       const hull = at(extr([[-1.6, -1.2], [1.6, -1.2], [1.9, 0], [1.6, 1.2], [-1.6, 1.2], [-1.9, 0]], 1.0, .1), 0, .9, 0, Math.PI / 2); hull.rotateY(Math.PI / 2);
       const treads = [-1, 1].map(s => at(new T.CapsuleGeometry(.55, 3.2, 8, 24).rotateX(Math.PI / 2), s * 1.25, .55, 0)); const wheels = [];
       for (const s of [-1, 1]) for (let i = 0; i < 5; i++) wheels.push(at(new T.CylinderGeometry(.35, .35, .3, 20).rotateZ(Math.PI / 2), s * 1.42, .5, -1.4 + i * .7));
       const ring = at(new T.CylinderGeometry(.9, 1.0, .25, 32), 0, 1.5, 0);
-      return [{geo: hull, mat: 'paint'}, {geo: merge(treads), mat: 'rubber'}, {geo: merge(wheels), mat: 'darkmetal'}, {geo: ring, mat: 'metal'}]; }),
-    S('walker', MT, 'Bases', 'Walker cockpit hull', ['walker', 'mech', 'cockpit', 'pod', 'beast-mech'], () => {
+      return [{geo: hull, mat: 'paint'}, {geo: merge(treads), mat: 'rubber'}, {geo: merge(wheels), mat: 'darkmetal'}, {geo: ring, mat: 'metal'}]; }), fitKind: 'torso'},
+    {...S('walker', MT, 'Bases', 'Walker cockpit hull', ['walker', 'mech', 'cockpit', 'pod', 'beast-mech'], () => {
       const pod = body(2.8, t => (1.3 * Math.sin(Math.min(1, t * 1.05 + .03) * Math.PI) ** .7), 1.1, 1.35, 32, 30);
       const glass = at(new T.SphereGeometry(.75, 32, 20, 0, Math.PI * 2, 0, Math.PI / 2).rotateX(Math.PI / 2), 0, 1.7, 1.05).scale(1.1, .8, 1);
       const hips = [-1, 1].map(s => at(new T.CylinderGeometry(.45, .45, .5, 20).rotateZ(Math.PI / 2), s * 1.35, .9, 0));
       const vents = [0, 1, 2].map(i => at(new T.BoxGeometry(.7, .08, .3), 0, .9 + i * .25, -1.25));
-      return [{geo: pod, mat: 'paint'}, {geo: glass, mat: 'glow'}, {geo: merge(hips), mat: 'darkmetal'}, {geo: merge(vents), mat: 'metal'}]; }),
+      return [{geo: pod, mat: 'paint'}, {geo: glass, mat: 'glow'}, {geo: merge(hips), mat: 'darkmetal'}, {geo: merge(vents), mat: 'metal'}]; }), fitKind: 'torso'},
   ];
 });
