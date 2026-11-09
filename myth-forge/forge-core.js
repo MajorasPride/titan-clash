@@ -112,8 +112,16 @@ function numberSprite(n) { const c = document.createElement('canvas'); c.width =
   const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: tx, depthTest: false, transparent: true, sizeAttenuation: false, toneMapped: false})); sp.scale.set(.036, .036, 1); sp.renderOrder = 12; return sp; }
 function boneNumsUI() { for (const [id, add] of [['boneNums', false], ['boneNumsAdd', true]]) { const el = $(id); if (!el) continue; el.innerHTML = '';
   boneOrder.forEach((n, i) => { const b = document.createElement('button'); b.textContent = (i + 1) + ' ' + niceBone(n); b.className = n === selBone ? 'on' : ''; if (add) b.style.fontSize = '12px';
+    if (add && placing && LIB[placing] && groupForBone(n)[0] === LIB[placing].group) b.classList.add('sug');
     b.onclick = () => goBone(n, add); el.append(b); }); } }
-function goBone(n, add) { selBone = n; markBone(); boneNumsUI(); syncBoneUI();
+const MECH_SKELS = new Set(['mech', 'walker', 'tank']);
+function groupForBone(n) { const tag = (boneRow(n) || [])[4], mech = MECH_SKELS.has(P.skel);
+  const m = mech ? {head: 'Mech Heads', jaw: 'Mech Heads', neck: 'Mech Torso & Core', chest: 'Mech Torso & Core', spine: 'Mech Torso & Core', armU: 'Mech Arms & Legs', armF: 'Mech Arms & Legs', hand: 'Mech Arms & Legs', legU: 'Mech Arms & Legs', legL: 'Mech Arms & Legs', foot: 'Mech Arms & Legs'}
+    : {head: 'Heads & Skulls', jaw: 'Jaws & Teeth', neck: 'Necks & Spines', chest: 'Torsos & Bellies', spine: 'Torsos & Bellies', armU: 'Arms & Shoulders', armF: 'Arms & Shoulders', hand: 'Hands & Claws', legU: 'Legs & Feet', legL: 'Legs & Feet', foot: 'Legs & Feet', tail: 'Tails', wingA: 'Wings', wingB: 'Wings', wingC: 'Wings', extra: 'Tentacles & Extra Limbs'};
+  const subFor = {foot: /foot|feet|hoof|paw/i, hand: null}; let g = m[tag]; if (g && !Object.values(LIB).some(e => e.group === g)) g = tag === 'tail' ? 'Part Makers (sliders)' : 'Part Makers (sliders)'; return [g, tag]; }
+let manualCat = false;                                          // you picked a category yourself: bones stop changing it until you tap a bone again
+function catForBone(n) { const [g] = groupForBone(n); if (!g) return; gFilter = g; sFilter = null; query = ''; tagFilter = null; $('search').value = ''; catsOpen = false; manualCat = false; if (tab === 'add') libUI(); }
+function goBone(n, add) { selBone = n; markBone(); boneNumsUI(); syncBoneUI(); if (!(add && placing)) catForBone(n);
   if (add && placing) { const lib = placing; placing = null; libUI(); const e = LIB[lib];
     if (e.whole) return placeAt({object: {userData: {bone: n}}, point: new THREE.Vector3(), face: null});
     if (addWeaponToPalm(lib, n)) return;
@@ -239,7 +247,7 @@ function libUI() {
   $('grpToggle').textContent = (catsOpen ? '📂 Categories ▴' : '📂 ' + (query ? 'Search results' : gFilter) + '  ▾ (tap for all categories)'); $('groups').style.display = catsOpen ? '' : 'none';
   $('groups').innerHTML = ''; for (const g of groups) { if (SEC[g]) $('groups').append(Object.assign(document.createElement('div'), {className: 'sec', textContent: SEC[g]}));
     const n = Object.values(LIB).filter(e => g === MY ? e.mine : e.group === g).length, b = document.createElement('button');
-    b.textContent = g + (n ? ` ${n}` : ''); b.className = !query && g === gFilter ? 'on' : ''; b.onclick = () => { gFilter = g; sFilter = null; query = ''; tagFilter = null; $('search').value = ''; catsOpen = false; libUI(); }; $('groups').append(b); }
+    b.textContent = g + (n ? ` ${n}` : ''); b.className = !query && g === gFilter ? 'on' : ''; b.onclick = () => { gFilter = g; sFilter = null; query = ''; tagFilter = null; $('search').value = ''; catsOpen = false; manualCat = true; libUI(); }; $('groups').append(b); }
   const subs = [...new Set(Object.values(LIB).filter(e => gFilter === MY ? e.mine : e.group === gFilter).map(e => e.sub))];
   $('subs').innerHTML = ''; if (!query && subs.length > 1) for (const s of [null, ...subs]) { const b = document.createElement('button'); b.textContent = s || 'All'; b.className = s === sFilter ? 'on' : ''; b.onclick = () => { sFilter = s; libUI(); }; $('subs').append(b); }
   const cnt = {}; Object.keys(LIB).filter(id => query ? true : (gFilter === MY ? LIB[id].mine : LIB[id].group === gFilter)).forEach(id => tagsOf(id).forEach(t => cnt[t] = (cnt[t] || 0) + 1));
@@ -254,7 +262,7 @@ function libUI() {
     const img = document.createElement('img'); img.dataset.id = id; img.alt = ''; const fav = (userTags[id] || []).includes('fav'), st = Object.assign(document.createElement('span'), {textContent: fav ? '⭐' : '☆'}); st.style.cssText = 'position:absolute;top:2px;right:4px;font-size:16px';
     st.onclick = ev => { ev.stopPropagation(); const t = new Set(userTags[id] || []); t.has('fav') ? t.delete('fav') : t.add('fav'); userTags[id] = [...t]; localStorage.setItem('titan-forge-tags', JSON.stringify(userTags)); libUI(); };
     b.style.position = 'relative'; b.append(img, Object.assign(document.createElement('span'), {textContent: e.name}), st);
-    b.onclick = () => { placing = placing === id ? null : id; libUI(); if (placing) tip(isAlong(e) && modeBone ? `Tap a bone dot for the ${e.name}` : `Tap the body where the ${e.name} goes`, 4000); };
+    b.onclick = () => { placing = placing === id ? null : id; libUI(); boneNumsUI(); if (placing) tip(isAlong(e) && modeBone ? `Tap a bone dot for the ${e.name}` : `Tap the body where the ${e.name} goes`, 4000); };
     gr.append(b); thumbObs.observe(img); }
   if (!visibleIds().length && gFilter !== 'Free Packs (CC0)') gr.innerHTML = gFilter === MY ? '<div class="hint">Your own parts land here. Open ⋯ → 🛠 Create Asset (Workshop), build a hand, wing, head… then 💾 Save part.</div>' : '<div class="hint">Nothing here yet.</div>';
 }
@@ -513,7 +521,7 @@ addEventListener('pointerup', e => {
     const h = useBone ? hitB : hitP; if (!h) return tip(P.bones.length ? 'Tap a bone dot or the body' : 'Use "Add without tapping"'); return placeAt(h); }
   if (tab === 'skel' && hitB) { selBone = hitB.object.userData.bone; markBone(); attachGizmo(); syncBoneUI(); boneNumsUI(); return; }
   if (hitP) { select(hitP.object.userData.uid); return; }
-  if (hitB) { selBone = hitB.object.userData.bone; markBone(); syncBoneUI(); tip('Bone ' + selBone + ' (new parts go here with "Add without tapping")'); return; }
+  if (hitB) { selBone = hitB.object.userData.bone; markBone(); syncBoneUI(); boneNumsUI(); catForBone(selBone); tip('Bone ' + (boneOrder.indexOf(selBone) + 1) + ': ' + niceBone(selBone) + ' — showing parts for it'); return; }
 });
 
 // ====================================================================== skeleton tab
