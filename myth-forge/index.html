@@ -191,7 +191,14 @@
   <div class="pane" id="p-shape"><div class="row"><button id="bFocus2">🔍 Focus / back</button><button id="bFWin2">🪟 Focus window</button></div><div id="shapeBox"></div></div>
 
   <div class="pane" id="p-sculpt">
-    <div class="row"><button id="bFWin3">🪟 Focus window</button></div>
+    <div class="row"><button id="bFWin3">🪟 Focus window</button><button id="bLP">🔷 Low-poly</button></div>
+    <div id="lpBox" style="display:none">
+      <div class="hint">Low-poly: tap faces on a low-poly part to pick them (orange). Pull them out to grow new sections, like fingers from a palm.</div>
+      <div class="row"><button id="lpBlock">➕ Block</button><button id="lpTube">➕ Tube</button><button id="lpPull">⬆ Pull out</button><button id="lpPush">⬇ Push in</button><button id="lpConnect">🔗 Connect 2</button><button id="lpCut">✂ Cut loop</button><button id="lpCut2">✂ Other way</button></div>
+      <div class="row"><button id="lpBig">➕ Bigger</button><button id="lpSmall">➖ Smaller</button><button id="lpWeld">🧲 Weld points</button><button id="lpMirror">🪞 Mirror</button><button id="lpDel">🗑 Delete faces</button><button id="lpClear">Clear pick</button><button id="lpAll">Pick all</button></div>
+      <div class="row"><button data-lpm="0,1,0">⬆ Up</button><button data-lpm="0,-1,0">⬇ Down</button><button data-lpm="-1,0,0">⬅ Left</button><button data-lpm="1,0,0">➡ Right</button><button data-lpm="0,0,1">Forward</button><button data-lpm="0,0,-1">Back</button><button data-lpr="x,1">↻ Tilt</button><button data-lpr="x,-1">↺ Tilt</button><button data-lpr="y,1">↻ Twist</button><button data-lpr="z,1">↻ Roll</button></div>
+      <div class="sl"><span>Step</span><input id="sLP" type="range" min=".05" max="1.5" step=".05" value=".4"><span></span></div>
+    </div>
     <div class="row"><button data-br="inflate" class="on">Inflate</button><button data-br="deflate">Deflate</button><button data-br="grab">Grab</button><button data-br="smooth">Smooth</button><button data-br="flatten">Flatten</button><button data-br="pinch">Pinch</button><button data-br="crease">Crease</button><button data-br="noise">Rough</button><button data-br="erase">Erase</button></div>
     <div class="sl"><span>Brush</span><input id="sBrush" type="range" min=".1" max="3" step=".05" value=".6"><span></span></div>
     <div class="sl"><span>Strength</span><input id="sStr" type="range" min=".05" max="1" step=".05" value=".4"><span></span></div>
@@ -202,11 +209,13 @@
   </div>
 
   <div class="pane" id="p-paint">
-    <div class="row"><button id="bPaintAll">🎨 Paint all</button><button id="bFWin4">🪟 Focus window</button><button id="bPiecePaint">🎯 One piece only</button><button id="bFade">💨 Fade away</button></div>
-    <div class="row" id="fadeRow" style="display:none"><div class="sl" style="flex:1"><span>Fade amount</span><input id="sFade" type="range" min=".1" max=".95" step=".01" value=".5"><span id="vFade"></span></div><button id="bDust" class="on">Dust</button></div>
+    <div class="row"><button id="bPaintAll">🎨 Paint all</button><button id="bFWin4">🪟 Focus window</button><button id="bPiecePaint">🎯 One piece only</button><button id="bFade">💨 Fade away</button><button id="bPDrip">💧 Drip</button></div>
+    <div class="row" id="fadeRow" style="display:none"><div class="sl" style="flex:1"><span>Fade amount</span><input id="sFade" type="range" min=".1" max=".95" step=".01" value=".5"><span id="vFade"></span></div><button id="bFadeStyle">Style: 💨 Dust</button><button id="bDust" class="on">Particles</button></div>
+    <div class="row" id="dripRow" style="display:none"><div class="sl" style="flex:1"><span>Drip amount</span><input id="sDrip" type="range" min=".05" max="1" step=".01" value=".5"><span id="vDrip"></span></div><button id="bMelt">🫠 Melt</button></div>
     <div class="chips" id="matCats"></div>
     <div class="grid" id="mats"></div>
-    <div class="row"><button id="bBrushPaint">🖌 Brush paint</button><input type="color" id="brushCol" value="#c03020" style="width:56px;height:40px;border:0;background:none"><button id="bBrushErase">Clear paint</button></div>
+    <div class="row"><button data-pb="color">🖌 Color brush</button><input type="color" id="brushCol" value="#c03020" style="width:56px;height:40px;border:0;background:none"><button data-pb="skin">🧴 Skin brush</button><button data-pb="blend">🌫 Blend</button><button id="bBrushErase">Clear paint</button></div>
+    <div id="pbRow" style="display:none"><div class="hint" id="pbHint"></div><div class="sl"><span>Brush size</span><input id="sPSize" type="range" min=".1" max="3" step=".05" value=".6"><span></span></div><div class="sl"><span>Strength</span><input id="sPStr" type="range" min=".05" max="1" step=".05" value=".5"><span></span></div></div>
     <details class="more"><summary>More ▾</summary>
       <div class="row"><span>💡 Eye glow color</span><input type="color" id="eyeGlow" value="#ff5a1a" style="width:56px;height:40px;border:0;background:none"><button id="bEyeGlowReset">Default</button></div>
       <div class="row"><input type="color" id="tint" value="#ffffff" style="width:56px;height:40px;border:0;background:none"><button id="bTintClear">Clear tint</button><button id="bPaintTwin" class="on">🪞 Both sides</button><button id="bPaintAllSame">All parts like this</button></div>
@@ -241,6 +250,7 @@
   <div class="pane" id="p-fx">
     <details class="more"><summary>More ▾</summary>
       <div class="row"><button id="bGlow" class="on">Glow (bloom)</button><button id="bFog">Fog</button><button id="bMist">Ground mist</button><button id="bAura">Aura</button><button id="bDrip">Ooze drips</button><button id="bSpin">Turntable</button></div>
+      <div class="row"><button id="bLowLook">🔷 Low-poly look: off</button></div>
       <div class="lbl">Background</div>
       <div class="row"><button data-bg="studio" class="on">Studio</button><button data-bg="neon">Neon city night</button><button data-bg="day">Daylight</button><button data-bg="hell">Hellfire</button><button data-bg="void">Void</button></div>
       <div class="lbl">Aura / mist color</div>
@@ -268,6 +278,7 @@
 <script src="parts/dino-kit.js"></script>
 <script src="parts/sphinx.js"></script>
 <script src="parts/tails-wings.js"></script>
+<script src="parts/lowpoly.js"></script>
 <script src="parts/mech-faces.js"></script>
 <script src="parts/myth-creatures.js"></script>
 <script src="starters.js"></script>
@@ -313,7 +324,7 @@ let useBloom = true;
 
 // ====================================================================== parts library
 const LIB = {}, GROUP_ORDER = ['Base Body', 'Basic Shapes & Clay', 'Part Makers (sliders)', 'Heads & Skulls', 'Jaws & Teeth', 'Horns & Crests', 'Eyes & Faces', 'Necks & Spines', 'Torsos & Bellies', 'Arms & Shoulders', 'Hands & Claws',
-  'Legs & Feet', 'Tails', 'Wings', 'Back & Armor Plates', 'Tentacles & Extra Limbs', 'Bones & Skeleton', 'Mech Heads', 'Mech Eyes & Faces', 'Mech Torso & Core', 'Mech Arms & Legs', 'Mech Details', 'Mecha Dragon', 'Kaiju Kit', 'Turtle Kit', 'Dino Kit', 'Weapons', 'Accessories & Magic', 'Free Packs (CC0)', 'My Imports'];
+  'Legs & Feet', 'Tails', 'Wings', 'Back & Armor Plates', 'Tentacles & Extra Limbs', 'Bones & Skeleton', 'Mech Heads', 'Mech Eyes & Faces', 'Mech Torso & Core', 'Mech Arms & Legs', 'Mech Details', 'Mecha Dragon', 'Kaiju Kit', 'Turtle Kit', 'Dino Kit', 'Cloth & Capes', 'Weapons', 'Accessories & Magic', 'Low-Poly Builds', 'Free Packs (CC0)', 'My Imports'];
 const MY = 'My Parts';
 const ALONG = new Set(['Necks & Spines', 'Arms & Shoulders', 'Legs & Feet', 'Tails', 'Wings', 'Tentacles & Extra Limbs', 'Mech Arms & Legs', 'Heads & Skulls', 'Mech Heads', 'Torsos & Bellies', 'Mech Torso & Core', 'Hands & Claws']);
 const isAlong = e => e.along != null ? e.along : ALONG.has(e.group) || (e.group === 'Mecha Dragon' && /Head|Neck|Wings|Limbs/.test(e.sub)) || e.id === 'md_chest' || e.id === 'md_belly';
@@ -423,20 +434,69 @@ function styleMat(m) { if (!m || !m.userData || m.userData.key !== 'glow') retur
 function applyEyeGlow() { Object.values(matCache).forEach(styleMat); Object.values(views).forEach(v => v.meshes.forEach(m => styleMat(m.material))); }
 // ---- fade away: the far end of a part dissolves into drifting dust (sand wings, galaxy skins…). pt.fade = {amt 0..1, dust bool}
 const FADE_T = {value: 0};
-const FADE_GLSL = `uniform float uFadeA; uniform float uFadeR; uniform float uFT; float fadeEdge = 0.0;
+const FADE_GLSL = `uniform float uFadeA; uniform float uFadeR; uniform float uFT; uniform float uBurn; float fadeEdge = 0.0; float fadeChar = 0.0;
 float fh(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
 float fn3(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
   return mix(mix(mix(fh(i), fh(i + vec3(1, 0, 0)), f.x), mix(fh(i + vec3(0, 1, 0)), fh(i + vec3(1, 1, 0)), f.x), f.y), mix(mix(fh(i + vec3(0, 0, 1)), fh(i + vec3(1, 0, 1)), f.x), mix(fh(i + vec3(0, 1, 1)), fh(i + vec3(1, 1, 1)), f.x), f.y), f.z); }
 `;
 const FADE_MAIN = `{ float fd = length(vTP) / max(uFadeR, 1e-3), st = 1.0 - uFadeA, sc = 3.0 / max(uFadeR * .3, .05);
   vec3 q = vTP * sc + vec3(0.0, -uFT * .7, uFT * .3); float n = fn3(q) * .62 + fn3(q * 2.7) * .38;
-  float e = smoothstep(st, 1.0, fd), cut = e * 1.1 - .05; if (n < cut) discard; fadeEdge = (1.0 - smoothstep(0.0, .09, n - cut)) * step(.001, e); }`;
+  float e = smoothstep(st, 1.0, fd); e = max(e, uBurn * smoothstep(.68, .8, fn3(vTP * sc * .45 + 7.3)) * min(1.0, uFadeA * 1.6)); float cut = e * 1.1 - .05; if (n < cut) discard;
+  fadeEdge = (1.0 - smoothstep(0.0, .09, n - cut)) * step(.001, e); fadeChar = (1.0 - smoothstep(0.0, .25, n - cut)) * step(.001, e) * uBurn; diffuseColor.rgb *= 1.0 - fadeChar * .8; }`;
+// ---- skin layer: a second skin painted on with the 🧴 Skin brush (pt.layer = {mat, m: {piece: {vertex: amount}}}), drawn on top through a mask
+function layerMat(pt, fR) {
+  const m = fR ? fadeMat(pt.layer.mat, null, pt.tile, false, pt, fR) : MATS.makeMat(THREE, pt.layer.mat, null, pt.tile); styleMat(m);
+  m.transparent = true; m.depthWrite = false; m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -2;
+  const prev = m.onBeforeCompile, pck = m.customProgramCacheKey;
+  m.onBeforeCompile = sh => { prev(sh); sh.vertexShader = 'attribute float lmask; varying float vLm;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vLm = lmask;');
+    sh.fragmentShader = 'varying float vLm;\n' + sh.fragmentShader.replace('#include <dithering_fragment>', '#include <dithering_fragment>\n gl_FragColor.a *= clamp(vLm, 0.0, 1.0); if (gl_FragColor.a < .01) discard;'); };
+  m.customProgramCacheKey = () => pck() + '-layer'; return m; }
+// ---- 💧 drip off: drips hang from the bottom of a part (in its own skin) and drops fall and splash. pt.drip = {amt 0..1, melt}
+const dripRoot = new THREE.Group(); scene.add(dripRoot);
+const dripGeo = (() => { const g = new THREE.LatheGeometry([[0, .02], [.5, -.05], [.46, -.35], [.26, -.66], [.2, -.8], [.36, -.9], [.38, -.97], [.26, -1.03], [0, -1.05]].map(([x, y]) => new THREE.Vector2(x, y)), 12); g.computeVertexNormals(); return g; })();
+const dropGeo = new THREE.SphereGeometry(.5, 10, 8);
+function makeDrip(pt) { const key = pt.matAll || (pieces(pt.lib, pt.params)[0] || {}).mat || 'skin', mat = matFor(key, pt.tint, pt.tile), N = Math.round(6 + pt.drip.amt * 30);
+  const st = new THREE.InstancedMesh(dripGeo, mat, N), dr = new THREE.InstancedMesh(dropGeo, mat, N * 2); [st, dr].forEach(m => { m.frustumCulled = false; m.raycast = () => {}; m.count = 0; dripRoot.add(m); });
+  return {pt, st, dr, N, init: false, S: [], D: []}; }
+function killDrip(v) { const d = v && v.drip; if (!d) return; d.st.removeFromParent(); d.dr.removeFromParent(); v.drip = null; }
+function dripTick(dt) { const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), S3 = new THREE.Vector3(), P3 = new THREE.Vector3();
+  for (const v of Object.values(views)) { const d = v.drip; if (!d) continue; const vis = v.G.visible; d.st.visible = d.dr.visible = vis; if (!vis) continue;
+    if (!d.init) { d.init = true; const cand = [], wn = new THREE.Vector3(), nm = new THREE.Matrix3(); let R = .1;
+      for (const me of v.meshes) { me.updateWorldMatrix(true, false); nm.getNormalMatrix(me.matrixWorld); const p = me.geometry.attributes.position, n = me.geometry.attributes.normal;
+        for (let i = 0; i < p.count; i++) { wn.set(n.getX(i), n.getY(i), n.getZ(i)).applyMatrix3(nm).normalize(); R = Math.max(R, Math.hypot(p.getX(i), p.getY(i), p.getZ(i)));
+          if (d.pt.drip.melt ? wn.y < .4 : wn.y < -.35) cand.push([me, i]); } }
+      if (!cand.length) v.meshes.forEach(me => { for (let i = 0; i < me.geometry.attributes.position.count; i += 7) cand.push([me, i]); });
+      const ws = new THREE.Vector3(); v.meshes[0] && v.meshes[0].getWorldScale(ws); d.r = R * Math.abs(ws.y || 1) * .022 * (.6 + d.pt.drip.amt);
+      for (let k = 0; k < d.N && cand.length; k++) { const [me, i] = cand[(Math.random() * cand.length) | 0], p = me.geometry.attributes.position;
+        d.S.push({me, lp: new THREE.Vector3(p.getX(i), p.getY(i), p.getZ(i)), ph: Math.random(), sp: .25 + Math.random() * .45, L: 2.5 + Math.random() * 4}); } }
+    let n = 0; for (const s of d.S) { s.ph += dt * s.sp; const wp = s.lp.clone().applyMatrix4(s.me.matrixWorld);
+      if (s.ph >= 1) { s.ph = 0; if (d.D.length < d.N * 2) d.D.push({p: wp.clone().add(new THREE.Vector3(0, -d.r * s.L, 0)), vy: 0, sz: d.r * .8, t: 0, splat: 0}); }
+      const L = d.r * s.L * (.25 + .75 * s.ph * s.ph); M4.compose(wp, Q, S3.set(d.r, L, d.r)); d.st.setMatrixAt(n++, M4); }
+    d.st.count = n; d.st.instanceMatrix.needsUpdate = true;
+    let m = 0; d.D = d.D.filter(o => { o.t += dt; if (!o.splat) { o.vy -= 18 * dt; o.p.y += o.vy * dt; if (o.p.y <= .02) { o.p.y = .02; o.splat = .35; } } else { o.splat -= dt; if (o.splat <= 0) return false; }
+      const k = o.splat ? Math.max(0, o.splat / .35) : 1; M4.compose(o.p, Q, o.splat ? S3.set(o.sz * 2.6 * k + .01, o.sz * .25, o.sz * 2.6 * k + .01) : S3.set(o.sz, o.sz * 1.35, o.sz)); d.dr.setMatrixAt(m++, M4); return true; });
+    d.dr.count = m; d.dr.instanceMatrix.needsUpdate = true; } }
+// ---- 🔷 low-poly look (P.fx.lowpoly 0..3): every part is shown (and exported) faceted, with fewer polygons — the Titan Clash art style
+const LOWLV = ['off', 'light', 'chunky', 'very chunky'], lowCache = new Map();
+function lowpolyGeo(g, lv) { const key = g.uuid + '|' + lv; if (lowCache.has(key)) return lowCache.get(key);
+  g.computeBoundingBox(); const bb = g.boundingBox, diag = bb.max.distanceTo(bb.min) || 1, cell = diag / [0, 16, 10, 6][lv];
+  const p = g.attributes.position, extra = ['color', 'lmask'].filter(a => g.attributes[a]), cid = new Map(), sums = [], ids = new Int32Array(p.count);
+  for (let i = 0; i < p.count; i++) { const k = Math.round(p.getX(i) / cell) + ',' + Math.round(p.getY(i) / cell) + ',' + Math.round(p.getZ(i) / cell); let c = cid.get(k);
+    if (c == null) { c = sums.length; cid.set(k, c); sums.push({n: 0, p: [0, 0, 0], e: extra.map(a => new Array(g.attributes[a].itemSize).fill(0))}); }
+    const s = sums[c]; s.n++; s.p[0] += p.getX(i); s.p[1] += p.getY(i); s.p[2] += p.getZ(i); extra.forEach((a, j) => { const A = g.attributes[a]; for (let q = 0; q < A.itemSize; q++) s.e[j][q] += A.array[i * A.itemSize + q]; }); ids[i] = c; }
+  const I = g.index ? g.index.array : [...Array(p.count).keys()], pos = [], ex = extra.map(() => []);
+  for (let t = 0; t < I.length; t += 3) { const a = ids[I[t]], b = ids[I[t + 1]], c = ids[I[t + 2]]; if (a === b || b === c || a === c) continue;
+    for (const k of [a, b, c]) { const s = sums[k]; pos.push(s.p[0] / s.n, s.p[1] / s.n, s.p[2] / s.n); extra.forEach((_, j) => ex[j].push(...s.e[j].map(v => v / s.n))); } }
+  const o = new THREE.BufferGeometry(); o.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); extra.forEach((a, j) => o.setAttribute(a, new THREE.Float32BufferAttribute(ex[j], g.attributes[a].itemSize)));
+  o.computeVertexNormals(); o.userData.low = true; if (lowCache.size > 400) lowCache.delete(lowCache.keys().next().value); lowCache.set(key, o); return o; }
+$('bLowLook').onclick = () => { P.fx.lowpoly = ((P.fx.lowpoly || 0) + 1) % 4; lowLookUI(); rebuildParts(); saveCur(); tip(P.fx.lowpoly ? 'Low-poly look: ' + LOWLV[P.fx.lowpoly] + ' (sculpt/paint brushes pause while it is on)' : 'Low-poly look off', 2400); };
+function lowLookUI() { const b = $('bLowLook'); if (b) { b.textContent = '🔷 Low-poly look: ' + LOWLV[P.fx.lowpoly || 0]; b.classList.toggle('on', !!P.fx.lowpoly); } }
 function partRadius(pt) { let R = .1; pieces(pt.lib, pt.params).forEach(pc => { const a = pc.geo.attributes.position; for (let i = 0; i < a.count; i++) R = Math.max(R, Math.hypot(a.getX(i), a.getY(i), a.getZ(i))); }); return R; }
 function fadeMat(key, tint, tile, vc, pt, R) {
-  const m = MATS.makeMat(THREE, key, tint, tile); m.vertexColors = !!vc; styleMat(m); m.userData.fadeU = {uFadeA: {value: pt.fade.amt}, uFadeR: {value: R}, uFT: FADE_T};
+  const m = MATS.makeMat(THREE, key, tint, tile); m.vertexColors = !!vc; styleMat(m); m.userData.fadeU = {uFadeA: {value: pt.fade.amt}, uFadeR: {value: R}, uFT: FADE_T, uBurn: {value: pt.fade.style === 'burn' ? 1 : 0}};
   const prev = m.onBeforeCompile, pck = m.customProgramCacheKey; m.side = THREE.DoubleSide;
   m.onBeforeCompile = sh => { prev(sh); Object.assign(sh.uniforms, m.userData.fadeU); sh.fragmentShader = FADE_GLSL + sh.fragmentShader.replace('#include <alphatest_fragment>', '#include <alphatest_fragment>\n' + FADE_MAIN)
-    .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += diffuseColor.rgb * fadeEdge * .9;'); };
+    .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += mix(diffuseColor.rgb * .9, vec3(3.0, 1.1, .25), uBurn) * fadeEdge;'); };
   m.customProgramCacheKey = () => pck() + '-fade'; return m; }
 let dustTex = null;
 function makeDust(pt, view, R) {                                  // drifting grains that blow off the fading end
@@ -447,19 +507,20 @@ function makeDust(pt, view, R) {                                  // drifting gr
     V.set([x / l * .5 + (Math.random() - .5) * .5, y / l * .5 + (Math.random() - .5) * .5 + .15, z / l * .5 + (Math.random() - .5) * .5].map(v => v * R * .18), i * 3); Lf[i] = 1.2 + Math.random() * 2.2; A[i] = Math.random() * Lf[i]; }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); const m0 = src[0][3], key = (m0.userData && m0.userData.key) || '';
   const glowy = /galaxy|star|nebula|const|aurora|void|holo|opal|sun|cyber|cosmic|glow|ecto|spirit|leafspirit|sandglow/.test(key) || (m0.emissive && m0.emissive.getHex() > 0 && m0.emissiveIntensity > .4);
-  const col = m0.color.clone(); if (glowy) col.lerp(new THREE.Color(1, 1, 1), .35);
-  const pm = new THREE.PointsMaterial({size: Math.max(.04, R * .022), map: dustTex, color: col, transparent: true, depthWrite: false, opacity: .9, blending: glowy ? THREE.AdditiveBlending : THREE.NormalBlending});
+  const burn = pt.fade.style === 'burn', col = burn ? new THREE.Color(1, .45, .12) : m0.color.clone(); if (glowy && !burn) col.lerp(new THREE.Color(1, 1, 1), .35);
+  const pm = new THREE.PointsMaterial({size: Math.max(.04, R * .022), map: dustTex, color: col, transparent: true, depthWrite: false, opacity: .9, blending: glowy || burn ? THREE.AdditiveBlending : THREE.NormalBlending});
   const pts = new THREE.Points(g, pm); pts.frustumCulled = false; pts.raycast = () => {}; view.M.add(pts); return {pts, O, V, A, L: Lf, N}; }
 function fadeTick(dt) { FADE_T.value += dt; for (const v of Object.values(views)) { const d = v.dust; if (!d) continue; const p = d.pts.geometry.attributes.position;
   for (let i = 0; i < d.N; i++) { d.A[i] += dt; if (d.A[i] > d.L[i]) d.A[i] = 0; const a = d.A[i], k = a * (1 + a * .35); p.setXYZ(i, d.O[i * 3] + d.V[i * 3] * k, d.O[i * 3 + 1] + d.V[i * 3 + 1] * k, d.O[i * 3 + 2] + d.V[i * 3 + 2] * k); }
   p.needsUpdate = true; d.pts.material.opacity = .9; } }
 function partGeo(pt, mi, base) {                                // per-instance geometry: subdivided + sculpted copy if needed
-  const sd = pt.subdiv || 0, sc = pt.sculpt && pt.sculpt[mi], vp = pt.vpaint && pt.vpaint[mi];
-  if (!sd && !sc && !vp && !(pt.cut && pt.cut.length)) return base;
+  const sd = pt.subdiv || 0, sc = pt.sculpt && pt.sculpt[mi], vp = pt.vpaint && pt.vpaint[mi], lm = pt.layer && pt.layer.m && pt.layer.m[mi];
+  if (!sd && !sc && !vp && !lm && !(pt.cut && pt.cut.length)) return base;
   let g = base; for (let i = 0; i < sd; i++) g = subdivide(g);
   if (g === base) g = base.clone();
   if (sc) { const p = g.attributes.position; for (const v in sc) { const d = sc[v]; if (+v < p.count) p.setXYZ(+v, p.getX(+v) + d[0], p.getY(+v) + d[1], p.getZ(+v) + d[2]); } }
   if (vp) { const n = g.attributes.position.count, c = new Float32Array(n * 3).fill(1); for (const v in vp) if (+v < n) c.set(vp[v], +v * 3); g.setAttribute('color', new THREE.Float32BufferAttribute(c, 3)); }
+  if (lm) { const n = g.attributes.position.count, a = new Float32Array(n); for (const v in lm) if (+v < n) a[+v] = lm[v]; g.setAttribute('lmask', new THREE.Float32BufferAttribute(a, 1)); }
   if (pt.cut && pt.cut.length) { const cut = new Set(pt.cut.filter(c => c.startsWith(mi + ':')).map(c => +c.split(':')[1])); if (cut.size) { const I = g.index.array, keep = [];
     for (let t = 0; t < I.length / 3; t++) if (!cut.has(t)) keep.push(I[t * 3], I[t * 3 + 1], I[t * 3 + 2]); g = g.clone(); g.setIndex(keep); } }
   g.computeVertexNormals(); g.userData.sub = sd; return g;
@@ -472,35 +533,37 @@ function subdivide(g) {                                         // split every t
   const n = new THREE.BufferGeometry(); n.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); n.setIndex(out); n.computeVertexNormals(); return n;
 }
 function buildPart(pt) {
-  if (views[pt.uid]) { views[pt.uid].G.removeFromParent(); }
+  if (views[pt.uid]) { views[pt.uid].G.removeFromParent(); killDrip(views[pt.uid]); }
   const G = new THREE.Group(), M = new THREE.Group(); G.add(M); G.userData.uid = pt.uid;
   const parent = (pt.bone && bones[pt.bone]) || skelRoot; parent.add(G);
   const meshes = [], fR = pt.fade && !colorMode ? partRadius(pt) : 0;
-  pieces(pt.lib, pt.params).forEach((pc, mi) => { if (pt.keep && !pt.keep.includes(mi)) return; const g = partGeo(pt, mi, pc.geo);
+  pieces(pt.lib, pt.params).forEach((pc, mi) => { if (pt.keep && !pt.keep.includes(mi)) return; let g = partGeo(pt, mi, pc.geo); if (P.fx.lowpoly && !(LIB[pt.lib] && LIB[pt.lib].lowpoly)) g = lowpolyGeo(g, P.fx.lowpoly);
     const mat = fR ? fadeMat(pt.mat && pt.mat[mi] != null ? pt.mat[mi] : (pt.matAll || pc.mat), pt.tint, pt.tile, !!(pt.vpaint && pt.vpaint[mi]), pt, fR) : colorMode ? new THREE.MeshStandardMaterial({color: new THREE.Color().setHSL((hash(pt.uid) % 360) / 360, .6, .55)}) : pc.matObj && !pt.mat ? pc.matObj : matFor(pt.mat && pt.mat[mi] != null ? pt.mat[mi] : (pt.matAll || pc.mat), pt.tint, pt.tile, !!(pt.vpaint && pt.vpaint[mi]));
-    const mesh = new THREE.Mesh(g, mat); mesh.userData = {uid: pt.uid, mi}; M.add(mesh); meshes.push(mesh); });
+    const mesh = new THREE.Mesh(g, mat); mesh.userData = {uid: pt.uid, mi}; M.add(mesh); meshes.push(mesh);
+    if (g.attributes.lmask && !colorMode) { const ov = new THREE.Mesh(g, layerMat(pt, fR)); ov.raycast = () => {}; ov.renderOrder = 2; M.add(ov); } });
   M.scale.set((pt.flip ? -1 : 1) * (pt.w || 1), pt.l || 1, pt.w || 1); applyOff(pt, M);
   G.position.set(...pt.p); G.quaternion.setFromEuler(new THREE.Euler(...pt.r.map(x => x * D))); G.scale.setScalar(pt.s);
   G.visible = !pt.hidden && !(soloUid && soloUid !== pt.uid);
   views[pt.uid] = {G, M, meshes};
   if (fR && pt.fade.dust !== false) views[pt.uid].dust = makeDust(pt, views[pt.uid], fR);
+  if (pt.drip && !colorMode) views[pt.uid].drip = makeDrip(pt);
 }
 function applyOff(pt, M) { const o = pt.off; if (o) M.position.set(-o[0] * M.scale.x, -o[1] * M.scale.y, -o[2] * M.scale.z); else M.position.set(0, 0, 0); }
 const hash = s => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
 let soloUid = null;
-function rebuildParts() { Object.values(views).forEach(v => v.G.removeFromParent()); views = {}; P.parts.forEach(buildPart); attachGizmo(); }
+function rebuildParts() { Object.values(views).forEach(v => { v.G.removeFromParent(); killDrip(v); }); views = {}; P.parts.forEach(buildPart); attachGizmo(); }
 const partBy = u => P.parts.find(p => p.uid === u);
 const twinOf = pt => pt && pt.twin ? partBy(pt.twin) : null;
 function mirrorInto(src, dst) {                                 // keep a mirrored twin in sync
   dst.p = [-src.p[0], src.p[1], src.p[2]]; dst.r = [src.r[0], -src.r[1], -src.r[2]]; dst.s = src.s; dst.l = src.l; dst.w = src.w; dst.flip = !src.flip;
   dst.mat = src.mat ? [...src.mat] : null; dst.matAll = src.matAll; dst.tint = src.tint; dst.tile = src.tile; dst.subdiv = src.subdiv; dst.sculpt = src.sculpt ? JSON.parse(JSON.stringify(src.sculpt)) : null; dst.cut = src.cut ? [...src.cut] : []; dst.vpaint = src.vpaint ? JSON.parse(JSON.stringify(src.vpaint)) : null;
-  dst.fade = src.fade ? {...src.fade} : null; dst.keep = src.keep ? [...src.keep] : null; dst.off = src.off ? [...src.off] : null; dst.hidden = src.hidden; dst.params = src.params ? {...src.params} : null; buildPart(dst);
+  dst.fade = src.fade ? {...src.fade} : null; dst.drip = src.drip ? {...src.drip} : null; dst.layer = src.layer ? JSON.parse(JSON.stringify(src.layer)) : null; dst.keep = src.keep ? [...src.keep] : null; dst.off = src.off ? [...src.off] : null; dst.hidden = src.hidden; dst.params = src.params ? {...src.params} : null; buildPart(dst);
 }
 const syncTwin = pt => { const t = twinOf(pt); if (t) mirrorInto(pt, t); };
 
 // ====================================================================== adding parts
 let placing = null, modeBone = true, mirrorAdd = true;
-function newPart(lib, bone, p, r, s = 1) { const f = LIB[lib] && LIB[lib].fade; return {uid: uid(), lib, bone, p, r, s, l: 1, w: 1, flip: false, mat: null, matAll: null, tint: '#ffffff', subdiv: 0, sculpt: null, cut: [], hidden: false, twin: null, fade: f ? {amt: f.amt || .5, dust: true} : null}; }
+function newPart(lib, bone, p, r, s = 1) { const f = LIB[lib] && LIB[lib].fade; return {uid: uid(), lib, bone, p, r, s, l: 1, w: 1, flip: false, mat: null, matAll: null, tint: '#ffffff', subdiv: 0, sculpt: null, cut: [], hidden: false, twin: null, fade: f ? {amt: f.amt || .5, dust: true, style: f.style || 'dust'} : null}; }
 function autoScale(lib, bone) { return autoFit(lib, bone)[0]; }
 function autoFit(lib, bone) {                                  // fit limbs / tails / necks / wings to their bone chain -> [size, extra length stretch]
   const e = LIB[lib], b = bones[bone]; if (!e || !b || !isAlong(e)) return [1, 1];
@@ -610,7 +673,7 @@ function partRootW(lib) { if (rootWCache[lib]) return rootWCache[lib]; const bx 
 function decorScale(bone) { const m = bone && mainOn(bone); if (m) return +Math.min(2, Math.max(.4, m.lib.startsWith('base_') ? bodyInfo().W / 2.6 : m.s)).toFixed(3);
   return +Math.min(2, Math.max(.5, bodyInfo().W / 3.2)).toFixed(3); }
 function removeParts(list) { const kill = new Set(); list.forEach(p => { kill.add(p); const t = twinOf(p); if (t) kill.add(t); });
-  P.parts = P.parts.filter(p => !kill.has(p)); kill.forEach(p => views[p.uid] && views[p.uid].G.removeFromParent()); return kill.size; }
+  P.parts = P.parts.filter(p => !kill.has(p)); kill.forEach(p => { if (views[p.uid]) { views[p.uid].G.removeFromParent(); killDrip(views[p.uid]); } }); return kill.size; }
 const SLOT = k => k === 'seg' || k === 'limb' || k === 'neck' || k === 'tail' ? 'chain' : k === 'hand' || k === 'foot' ? 'end' : k;
 function swapOut(fit) {                                         // a new main part replaces what was in its slot (base pieces + same-kind parts)
   const cover = new Set(fit.cover), sk = SLOT(fit.kind);
@@ -901,7 +964,9 @@ function matThumb(k) { if (matThumbs[k]) return matThumbs[k]; try { if (!matR) {
 var piecePaint = false, lastPick = null;
 $('bPiecePaint').onclick = () => { piecePaint = !piecePaint; $('bPiecePaint').classList.toggle('on', piecePaint); tip(piecePaint ? 'One piece: tap a spike / crystal / bit on the model, then tap a material' : 'Whole part gets painted', 2600); };
 let paintAll = false;
-function paint(k) { if (paintAll) { snap(); for (const o of P.parts) if (!o.boxed) { o.matAll = k; o.mat = null; buildPart(o); } saveCur(); return tip(MATS.LIST.find(l => l[0] === k)[1] + ' on the whole creature'); }
+function paint(k) { if (brushPaint && paintBrush === 'skin') { skinBrushMat = k; pbUI(); const pt = partBy(sel); if (pt && pt.layer && pt.layer.mat !== k) { snap(); pt.layer.mat = k; buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); }
+    return tip('Skin brush: ' + MATS.LIST.find(l => l[0] === k)[1] + ' — draw it on', 1800); }
+  if (paintAll) { snap(); for (const o of P.parts) if (!o.boxed) { o.matAll = k; o.mat = null; buildPart(o); } saveCur(); return tip(MATS.LIST.find(l => l[0] === k)[1] + ' on the whole creature'); }
   const pt = partBy(sel); if (!pt) return tip('Tap a part first, or turn on 🎨 Paint all'); snap();
   if (piecePaint) { if (!lastPick || lastPick.uid !== sel) return tip('Tap the piece on the model first'); const g = pieceClusters(pt, true).find(x => x.ids.includes(lastPick.mi)), ids = g ? g.ids : [lastPick.mi];
     const n = pieces(pt.lib, pt.params).length; pt.mat = pt.mat || Array(n).fill(null); ids.forEach(i => pt.mat[i] = k); buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); return tip(MATS.LIST.find(l => l[0] === k)[1] + ' on that piece only'); }
@@ -909,10 +974,18 @@ function paint(k) { if (paintAll) { snap(); for (const o of P.parts) if (!o.boxe
 $('bPaintAll').onclick = e => { paintAll = !paintAll; e.target.classList.toggle('on', paintAll); if (paintAll) { piecePaint = false; $('bPiecePaint').classList.remove('on'); } tip(paintAll ? 'Paint all on: a material or tint now goes on every part' : 'Paint all off: paints the part you tap', 2600); };
 $('tint').onchange = e => { if (paintAll) { snap(); for (const o of P.parts) if (!o.boxed) { o.tint = e.target.value; buildPart(o); } return saveCur(); } const pt = partBy(sel); if (!pt) return; snap(); pt.tint = e.target.value; buildPart(pt); if (paintTwin) syncTwin(pt); saveCur(); };
 function fadeUI(pt) { pt = pt || partBy(sel); const on = !!(pt && pt.fade); $('bFade').classList.toggle('on', on); $('fadeRow').style.display = on ? '' : 'none';
-  if (on) { $('sFade').value = pt.fade.amt; $('vFade').textContent = (+pt.fade.amt).toFixed(2); $('bDust').classList.toggle('on', pt.fade.dust !== false); } }
+  if (on) { $('sFade').value = pt.fade.amt; $('vFade').textContent = (+pt.fade.amt).toFixed(2); $('bDust').classList.toggle('on', pt.fade.dust !== false); $('bFadeStyle').textContent = pt.fade.style === 'burn' ? 'Style: 🔥 Burn' : 'Style: 💨 Dust'; }
+  const dr = !!(pt && pt.drip); $('bPDrip').classList.toggle('on', dr); $('dripRow').style.display = dr ? '' : 'none'; if (dr) { $('sDrip').value = pt.drip.amt; $('vDrip').textContent = (+pt.drip.amt).toFixed(2); $('bMelt').classList.toggle('on', !!pt.drip.melt); } }
 const fadeTargets = () => { if (paintAll) return P.parts.filter(o => !o.boxed); const pt = partBy(sel); if (!pt) return []; const t = twinOf(pt); return t ? [pt, t] : [pt]; };
 $('bFade').onclick = () => { const L = fadeTargets(); if (!L.length) return tip('Tap a part first (or turn on Paint all)'); snap(); const on = !L[0].fade;
-  L.forEach(o => { o.fade = on ? {amt: .5, dust: true} : null; buildPart(o); }); fadeUI(L[0]); saveCur(); tip(on ? 'Fade away on — the far end dissolves into drifting dust' : 'Fade away off'); };
+  L.forEach(o => { o.fade = on ? {amt: .5, dust: true, style: 'dust'} : null; buildPart(o); }); fadeUI(L[0]); saveCur(); tip(on ? 'Fade away on — the far end dissolves into drifting dust' : 'Fade away off'); };
+$('bFadeStyle').onclick = () => { const L = fadeTargets().filter(o => o.fade); if (!L.length) return; snap(); const st = L[0].fade.style === 'burn' ? 'dust' : 'burn'; L.forEach(o => { o.fade.style = st; buildPart(o); }); fadeUI(L[0]); saveCur();
+  tip(st === 'burn' ? 'Burn: holes burn through with glowing edges and embers' : 'Dust: the end crumbles away like sand'); };
+$('bPDrip').onclick = () => { const L = fadeTargets(); if (!L.length) return tip('Tap a part first (or turn on Paint all)'); snap(); const on = !L[0].drip; L.forEach(o => { o.drip = on ? {amt: .5, melt: false} : null; buildPart(o); }); fadeUI(L[0]); saveCur();
+  tip(on ? 'Drip on — drips in the part\'s own skin (galaxy drips galaxy)' : 'Drip off'); };
+$('sDrip').oninput = e => { $('vDrip').textContent = (+e.target.value).toFixed(2); };
+$('sDrip').onchange = e => { snap(); fadeTargets().forEach(o => { if (o.drip) { o.drip.amt = +e.target.value; buildPart(o); } }); saveCur(); };
+$('bMelt').onclick = () => { const L = fadeTargets().filter(o => o.drip); if (!L.length) return; snap(); const m = !L[0].drip.melt; L.forEach(o => { o.drip.melt = m; buildPart(o); }); fadeUI(L[0]); saveCur(); tip(m ? 'Melt: drips from all over the part' : 'Drips from the bottom edges'); };
 $('sFade').onpointerdown = () => snap();
 $('sFade').oninput = e => { const v = +e.target.value; $('vFade').textContent = v.toFixed(2); fadeTargets().forEach(o => { if (!o.fade) return; o.fade.amt = v; const w = views[o.uid]; if (w) w.meshes.forEach(m => m.material.userData.fadeU && (m.material.userData.fadeU.uFadeA.value = v)); }); };
 $('sFade').onchange = () => { fadeTargets().forEach(o => o.fade && buildPart(o)); saveCur(); };
@@ -937,17 +1010,36 @@ let brushPaint = false, stylus = false;
 const sculpting = () => tab === 'sculpt' || (tab === 'paint' && brushPaint);
 $('bPen').onclick = e => { stylus = !stylus; e.target.classList.toggle('on', stylus); if (stylus) penSeen = true; updateOrbit();
   tip(stylus ? 'Stylus mode: pen sculpts / paints / taps, fingers only turn and zoom the view' : 'Stylus mode off', 3000); };
-$('bBrushPaint').onclick = e => { brushPaint = !brushPaint; e.target.classList.toggle('on', brushPaint); updateOrbit(); tip(brushPaint ? (sel ? 'Draw on the part to paint it' : 'Tap a part first, then draw on it') : 'Brush paint off'); };
-$('bBrushErase').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); pt.vpaint = null; buildPart(pt); syncTwin(pt); saveCur(); };
+let paintBrush = 'color', skinBrushMat = 'galaxy';
+const PB_TIP = {color: 'Color brush: draw on the part with the color next to it', skin: 'Skin brush: tap any skin below to pick it, then draw it on (one brushed skin per part)', blend: 'Blend: rub where two paints meet to mix them softly'};
+function pbUI() { document.querySelectorAll('[data-pb]').forEach(b => b.classList.toggle('on', brushPaint && b.dataset.pb === paintBrush)); $('pbRow').style.display = brushPaint ? '' : 'none';
+  const nm = (MATS.LIST.find(l => l[0] === skinBrushMat) || [])[1]; $('pbHint').textContent = PB_TIP[paintBrush] + (paintBrush === 'skin' ? ' — now: ' + nm : ''); }
+document.querySelectorAll('[data-pb]').forEach(b => b.onclick = () => { const k = b.dataset.pb; brushPaint = !(brushPaint && paintBrush === k); paintBrush = k; pbUI(); updateOrbit();
+  tip(brushPaint ? (sel ? PB_TIP[k] : 'Tap a part first, then draw on it') : 'Brush off', 2600); });
+$('bBrushErase').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); pt.vpaint = null; pt.layer = null; buildPart(pt); syncTwin(pt); saveCur(); tip('Brushed paint cleared'); };
 function paintStroke(x, y) { const pt = partBy(sel), v = views[sel]; if (!pt || !v) return; const hit = cast(x, y, v.meshes); if (!hit) return;
+  if (paintBrush !== 'color') return layerStroke(pt, hit, x, y);
   const mesh = hit.object, mi = mesh.userData.mi; pt.vpaint = pt.vpaint || {};
   if (!pt.vpaint[mi]) { pt.vpaint[mi] = {}; buildPart(pt); return paintStroke(x, y); }
   const g = mesh.geometry, p = g.attributes.position, col = g.attributes.color; if (!col) return; const local = mesh.worldToLocal(hit.point.clone()), ws = new THREE.Vector3(); mesh.getWorldScale(ws);
-  const R = (+$('sBrush').value) / Math.abs(ws.y), R2 = R * R, power = Math.min(1, +$('sStr').value * pressure), c = new THREE.Color($('brushCol').value), M = pt.vpaint[mi];
+  const R = (+$('sPSize').value) / Math.abs(ws.y), R2 = R * R, power = Math.min(1, +$('sPStr').value * pressure), c = new THREE.Color($('brushCol').value), M = pt.vpaint[mi];
   const centers = [local]; if (symSculpt) centers.push(new THREE.Vector3(-local.x, local.y, local.z));
   for (const ce of centers) for (let i = 0; i < p.count; i++) { const d2 = (p.getX(i) - ce.x) ** 2 + (p.getY(i) - ce.y) ** 2 + (p.getZ(i) - ce.z) ** 2; if (d2 > R2) continue;
     const f = (1 - d2 / R2) * power, r = col.getX(i) + (c.r - col.getX(i)) * f, gg = col.getY(i) + (c.g - col.getY(i)) * f, b = col.getZ(i) + (c.b - col.getZ(i)) * f; col.setXYZ(i, r, gg, b); M[i] = [+r.toFixed(3), +gg.toFixed(3), +b.toFixed(3)]; }
   col.needsUpdate = true; }
+function layerStroke(pt, hit, x, y) { const mesh = hit.object, mi = mesh.userData.mi;
+  if (paintBrush === 'skin') { pt.layer = pt.layer || {mat: skinBrushMat, m: {}}; if (!pt.layer.m[mi]) { pt.layer.m[mi] = {}; buildPart(pt); return paintStroke(x, y); } }
+  const g = mesh.geometry, p = g.attributes.position, A = g.attributes.lmask, col = g.attributes.color, local = mesh.worldToLocal(hit.point.clone()), ws = new THREE.Vector3(); mesh.getWorldScale(ws);
+  const R = (+$('sPSize').value) / Math.abs(ws.y), R2 = R * R, power = Math.min(1, +$('sPStr').value * pressure), centers = [local]; if (symSculpt) centers.push(new THREE.Vector3(-local.x, local.y, local.z));
+  if (paintBrush === 'blend' && !A && !col) return tip('Paint something with the color or skin brush first, then blend it', 1600);
+  const nb = paintBrush === 'blend' ? adj(g) : null, LM = pt.layer && pt.layer.m[mi], VP = pt.vpaint && pt.vpaint[mi];
+  for (const ce of centers) for (let i = 0; i < p.count; i++) { const d2 = (p.getX(i) - ce.x) ** 2 + (p.getY(i) - ce.y) ** 2 + (p.getZ(i) - ce.z) ** 2; if (d2 > R2) continue; const f = (1 - d2 / R2) * power;
+    if (paintBrush === 'skin') { const val = A.getX(i) + (1 - A.getX(i)) * f; A.setX(i, val); LM[i] = +val.toFixed(2); continue; }
+    const k = nb[i]; if (!k.length) continue; const t = Math.min(1, f * 1.4);
+    if (A && LM) { let s = 0; for (const o of k) s += A.getX(o); const val = A.getX(i) + (s / k.length - A.getX(i)) * t; A.setX(i, val); LM[i] = +val.toFixed(2); }
+    if (col && VP) { let r = 0, gg = 0, b = 0; for (const o of k) { r += col.getX(o); gg += col.getY(o); b += col.getZ(o); } const n = k.length;
+      col.setXYZ(i, col.getX(i) + (r / n - col.getX(i)) * t, col.getY(i) + (gg / n - col.getY(i)) * t, col.getZ(i) + (b / n - col.getZ(i)) * t); VP[i] = [+col.getX(i).toFixed(3), +col.getY(i).toFixed(3), +col.getZ(i).toFixed(3)]; } }
+  if (A) A.needsUpdate = true; if (col) col.needsUpdate = true; }
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 let castCam = null;   // set while a stroke comes from the focus window: rays go through the window's own camera
 function cast(x, y, objs) { const c = castCam, cam = c ? c.cam : camera;
@@ -1003,7 +1095,7 @@ canvas.addEventListener('pointerdown', e => {
 }, true);
 canvas.addEventListener('pointermove', e => { if (!sculpting()) return; if (e.pointerType !== 'touch' || stroking) ring(e.clientX, e.clientY);
   if (stroking) { if (e.pointerType === 'pen' && e.pressure > 0) pressure = .35 + e.pressure * 1.3; brushAt(e.clientX, e.clientY); } });
-const brushAt = (x, y) => tab === 'paint' ? paintStroke(x, y) : stroke(x, y);
+const brushAt = (x, y) => P.fx.lowpoly && !lpMode ? (lastHit ? null : (lastHit = true, tip('Turn off 🔷 Low-poly look (FX / View) to sculpt or brush paint', 2200))) : tab === 'paint' ? paintStroke(x, y) : lpMode ? (lastHit ? null : (lastHit = true, lpTap(x, y))) : stroke(x, y);
 addEventListener('pointercancel', e => touches.delete(e.pointerId));
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 addEventListener('pointerup', e => {
@@ -1021,6 +1113,74 @@ addEventListener('pointerup', e => {
   if (hitB) { selBone = hitB.object.userData.bone; markBone(); syncBoneUI(); boneNumsUI(); catForBone(selBone); tip('Bone ' + (boneOrder.indexOf(selBone) + 1) + ': ' + niceBone(selBone) + ' — showing parts for it'); return; }
 });
 
+// ====================================================================== 🔷 low-poly building (Sculpt tab)
+let lpMode = false, lpSel = new Set(), lpUid = null, lpHL = null;
+const LPF = window.FORGE_POLY;
+const lpPart = () => { const pt = partBy(sel); return pt && LIB[pt.lib] && LIB[pt.lib].lowpoly ? pt : null; };
+const lpGet = pt => JSON.parse(JSON.stringify((pt.params && pt.params.poly) || (pt.lib === 'lp_tube' ? LPF.tube() : LPF.box())));
+function lpSet(pt, poly) { pt.params = {poly}; pt.sculpt = null; pt.cut = []; pt.vpaint = null; pt.layer = null; buildPart(pt); syncTwin(pt); lpDraw(); saveCur(); }
+const vsub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], vadd = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], vmul = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
+function fNorm(poly, f) { let x = 0, y = 0, z = 0; for (let i = 0; i < f.length; i++) { const a = poly.v[f[i]], b = poly.v[f[(i + 1) % f.length]]; x += (a[1] - b[1]) * (a[2] + b[2]); y += (a[2] - b[2]) * (a[0] + b[0]); z += (a[0] - b[0]) * (a[1] + b[1]); }
+  const l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l]; }
+const fCent = (poly, f) => vmul(f.reduce((s, i) => vadd(s, poly.v[i]), [0, 0, 0]), 1 / f.length);
+const ekey = (a, b) => a < b ? a + '_' + b : b + '_' + a;
+function lpCompact(poly) { const used = [...new Set(poly.f.flat())].sort((a, b) => a - b), map = new Map(used.map((o, i) => [o, i])); poly.v = used.map(i => poly.v[i]); poly.f = poly.f.map(f => f.map(i => map.get(i))); return poly; }
+function triToFace(poly, t) { let k = 0; for (let i = 0; i < poly.f.length; i++) { const n = poly.f[i].length - 2; if (t < k + n) return i; k += n; }
+  if (poly.mirror) for (let i = 0; i < poly.f.length; i++) { if (poly.f[i].every(j => Math.abs(poly.v[j][0]) < 1e-4)) continue; const n = poly.f[i].length - 2; if (t < k + n) return i; k += n; } return -1; }
+function lpDraw() { if (lpHL) { lpHL.removeFromParent(); lpHL.geometry.dispose(); lpHL = null; } const pt = lpPart(); if (!lpMode || !pt || !lpSel.size || !views[pt.uid]) return;
+  const poly = lpGet(pt), f = [...lpSel].filter(i => poly.f[i]).map(i => poly.f[i]); if (!f.length) return;
+  const sh = {v: poly.v.map(p => p.slice()), f, mirror: poly.mirror}; f.forEach(ff => { const n = fNorm(poly, ff); ff.forEach(i => { sh.v[i] = vadd(poly.v[i], vmul(n, .015)); }); });
+  lpHL = new THREE.Mesh(LPF.build(THREE, sh), new THREE.MeshBasicMaterial({color: 0xff8a2a, transparent: true, opacity: .55, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2}));
+  lpHL.raycast = () => {}; views[pt.uid].M.add(lpHL); }
+function lpTap(x, y) { const pt = lpPart(); if (!pt) return tip('Tap a low-poly part (or press ➕ Block)', 1800); if (lpUid !== pt.uid) { lpSel.clear(); lpUid = pt.uid; }
+  const hit = cast(x, y, views[pt.uid].meshes); if (!hit) return; const fi = triToFace(lpGet(pt), hit.faceIndex); if (fi < 0) return;
+  lpSel.has(fi) ? lpSel.delete(fi) : lpSel.add(fi); lpDraw(); }
+function lpNeed(n = 1) { const pt = lpPart(); if (!pt) { tip('Pick a low-poly part first (➕ Block)'); return null; } if (lpSel.size < n) { tip(n === 1 ? 'Tap a face first' : 'Pick ' + n + ' faces first'); return null; } snap(); return pt; }
+const lpStep = () => +$('sLP').value;
+function lpVerts(poly) { return [...new Set([...lpSel].flatMap(i => poly.f[i] || []))]; }
+function lpKeepMid(poly, ids, before) { if (!poly.mirror) return; ids.forEach(i => { if (Math.abs(before[i][0]) < 1e-4) poly.v[i][0] = 0; }); }
+function lpExtrude(d) { const pt = lpNeed(); if (!pt) return; const poly = lpGet(pt), S = [...lpSel], cnt = new Map(), vn = new Map();
+  S.forEach(fi => { const f = poly.f[fi], n = fNorm(poly, f); f.forEach((a, k) => { const b = f[(k + 1) % f.length], key = ekey(a, b); cnt.set(key, (cnt.get(key) || 0) + 1); vn.set(a, vadd(vn.get(a) || [0, 0, 0], n)); }); });
+  const map = new Map(); for (const [i, n] of vn) { const l = Math.hypot(...n) || 1, nv = vadd(poly.v[i], vmul(n, d / l)); if (poly.mirror && Math.abs(poly.v[i][0]) < 1e-4) nv[0] = 0; map.set(i, poly.v.length); poly.v.push(nv); }
+  S.forEach(fi => { const f = poly.f[fi]; f.forEach((a, k) => { const b = f[(k + 1) % f.length]; if (cnt.get(ekey(a, b)) === 1) poly.f.push([a, b, map.get(b), map.get(a)]); }); poly.f[fi] = f.map(i => map.get(i)); });
+  lpSet(pt, poly); tip(d > 0 ? 'Pulled out — press again to keep growing' : 'Pushed in'); }
+function lpXform(fn) { const pt = lpNeed(); if (!pt) return; const poly = lpGet(pt), ids = lpVerts(poly), before = poly.v.map(p => p.slice()), c = vmul(ids.reduce((s, i) => vadd(s, poly.v[i]), [0, 0, 0]), 1 / ids.length);
+  ids.forEach(i => { poly.v[i] = fn(poly.v[i], c); }); lpKeepMid(poly, ids, before); lpSet(pt, poly); }
+function lpRot(ax, sg) { const a = sg * 15 * D, cs = Math.cos(a), sn = Math.sin(a);
+  lpXform((p, c) => { const q = vsub(p, c); let r; if (ax === 'x') r = [q[0], q[1] * cs - q[2] * sn, q[1] * sn + q[2] * cs]; else if (ax === 'y') r = [q[0] * cs + q[2] * sn, q[1], -q[0] * sn + q[2] * cs]; else r = [q[0] * cs - q[1] * sn, q[0] * sn + q[1] * cs, q[2]]; return vadd(c, r); }); }
+function lpConnect() { const pt = lpNeed(2); if (!pt) return; if (lpSel.size !== 2) return tip('Pick exactly 2 faces to connect'); const poly = lpGet(pt), [ia, ib] = [...lpSel], A = poly.f[ia], Bf = poly.f[ib];
+  if (A.length !== Bf.length) return tip('Both faces need the same number of corners'); const n = A.length, Br = [...Bf].reverse(); let best = 0, bd = 1e9;
+  for (let k = 0; k < n; k++) { let s = 0; for (let i = 0; i < n; i++) { const p = poly.v[A[i]], q = poly.v[Br[(i + k) % n]]; s += Math.hypot(...vsub(p, q)); } if (s < bd) { bd = s; best = k; } }
+  for (let i = 0; i < n; i++) { const a0 = A[i], a1 = A[(i + 1) % n], b0 = Br[(i + best) % n], b1 = Br[(i + 1 + best) % n]; poly.f.push([a0, a1, b1, b0]); }
+  poly.f = poly.f.filter((_, i) => i !== ia && i !== ib); lpSel.clear(); lpSet(pt, lpCompact(poly)); tip('Connected — a bridge joins the two faces'); }
+function lpCut(dir) { const pt = lpNeed(); if (!pt) return; const poly = lpGet(pt), f0 = [...lpSel][0]; if (poly.f[f0].length !== 4) return tip('Cut loops need a 4-sided face');
+  const eFaces = new Map(); poly.f.forEach((f, fi) => f.forEach((a, k) => { const key = ekey(a, f[(k + 1) % f.length]); (eFaces.get(key) || eFaces.set(key, []).get(key)).push(fi); }));
+  const split = new Map(); const walk = (fi, a, b) => { while (true) { const f = poly.f[fi]; if (f.length !== 4 || split.has(fi)) return; let p = -1; for (let k = 0; k < 4; k++) if (ekey(f[k], f[(k + 1) % 4]) === ekey(a, b)) p = k; if (p < 0) return;
+      split.set(fi, p); const c = f[(p + 2) % 4], d = f[(p + 3) % 4], nx = (eFaces.get(ekey(c, d)) || []).find(o => o !== fi); if (nx == null) return; fi = nx; a = c; b = d; } };
+  const f = poly.f[f0], p = dir ? 1 : 0; walk(f0, f[p], f[(p + 1) % 4]); const back = (eFaces.get(ekey(f[p], f[(p + 1) % 4])) || []).find(o => o !== f0); if (back != null) walk(back, f[p], f[(p + 1) % 4]);
+  const mid = new Map(), M = (a, b) => { const key = ekey(a, b); if (!mid.has(key)) { mid.set(key, poly.v.length); poly.v.push(vmul(vadd(poly.v[a], poly.v[b]), .5)); } return mid.get(key); }, out = [];
+  poly.f.forEach((ff, fi) => { if (!split.has(fi)) return out.push(ff); const k = split.get(fi), q = [0, 1, 2, 3].map(j => ff[(k + j) % 4]), m01 = M(q[0], q[1]), m23 = M(q[2], q[3]); out.push([q[0], m01, m23, q[3]], [m01, q[1], q[2], m23]); });
+  poly.f = out; lpSel.clear(); lpSet(pt, poly); tip('Cut a loop through ' + split.size + ' faces — pick faces on either side to move them'); }
+function lpWeld() { const pt = lpPart(); if (!pt) return tip('Pick a low-poly part first'); snap(); const poly = lpGet(pt), n = poly.v.length, par = [...Array(n).keys()], fd = i => par[i] === i ? i : (par[i] = fd(par[i])), th = lpStep() * .5;
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) if (Math.hypot(...vsub(poly.v[i], poly.v[j])) < th) par[fd(j)] = fd(i);
+  poly.f = poly.f.map(f => { const g = f.map(fd).filter((x, k, a) => x !== a[(k + a.length - 1) % a.length]); return g; }).filter(f => new Set(f).size >= 3);
+  const before = poly.f.length; lpSel.clear(); lpSet(pt, lpCompact(poly)); tip('Welded points closer than the Step size (' + before + ' faces)'); }
+function lpMirror() { const pt = lpPart(); if (!pt) return tip('Pick a low-poly part first'); snap(); const poly = lpGet(pt);
+  if (!poly.mirror) { poly.v.forEach(p => { if (p[0] < .02) p[0] = 0; }); poly.f = poly.f.filter(f => !f.every(i => poly.v[i][0] === 0)); poly.mirror = true; tip('Mirror on: build the right side, the left copies it (the left half was folded to the middle)', 3200); }
+  else { const n = poly.v.length, map = poly.v.map((p, i) => Math.abs(p[0]) < 1e-4 ? i : -1); poly.v.forEach((p, i) => { if (map[i] < 0) { map[i] = poly.v.length; poly.v.push([-p[0], p[1], p[2]]); } });
+    const add = []; poly.f.forEach(f => { if (!f.every(i => Math.abs(poly.v[i][0]) < 1e-4)) add.push([...f].reverse().map(i => map[i])); }); poly.f.push(...add); poly.mirror = false; tip('Mirror off: both sides are now real faces you can change separately'); }
+  lpSel.clear(); lpSet(pt, poly); }
+function lpNew(lib) { const b = selBone || (P.bones.find(r => r[0] === 'chest') || P.bones[0] || [])[0]; if (!b) return tip('Add a skeleton bone first');
+  const keep = mirrorAdd; mirrorAdd = false; addPart(lib, b, [0, 0, 0], [0, 0, 0], 1); mirrorAdd = keep; lpSel.clear(); lpUid = sel; tip('Low-poly ' + (lib === 'lp_tube' ? 'tube' : 'block') + ' added — tap a face, then ⬆ Pull out', 2600); }
+$('bLP').onclick = e => { lpMode = !lpMode; e.target.classList.toggle('on', lpMode); $('lpBox').style.display = lpMode ? '' : 'none'; lpDraw(); tip(lpMode ? 'Low-poly on: tap faces of a low-poly part to pick them' : 'Low-poly off: brushes sculpt again', 2200); };
+$('lpBlock').onclick = () => lpNew('lp_block'); $('lpTube').onclick = () => lpNew('lp_tube');
+$('lpPull').onclick = () => lpExtrude(lpStep()); $('lpPush').onclick = () => lpExtrude(-lpStep() * .5);
+$('lpBig').onclick = () => lpXform((p, c) => vadd(c, vmul(vsub(p, c), 1.15))); $('lpSmall').onclick = () => lpXform((p, c) => vadd(c, vmul(vsub(p, c), .87)));
+$('lpConnect').onclick = lpConnect; $('lpCut').onclick = () => lpCut(0); $('lpCut2').onclick = () => lpCut(1); $('lpWeld').onclick = lpWeld; $('lpMirror').onclick = lpMirror;
+$('lpDel').onclick = () => { const pt = lpNeed(); if (!pt) return; const poly = lpGet(pt); poly.f = poly.f.filter((_, i) => !lpSel.has(i)); lpSel.clear(); lpSet(pt, lpCompact(poly)); };
+$('lpClear').onclick = () => { lpSel.clear(); lpDraw(); }; $('lpAll').onclick = () => { const pt = lpPart(); if (!pt) return; lpSel = new Set(lpGet(pt).f.keys()); lpUid = pt.uid; lpDraw(); };
+document.querySelectorAll('[data-lpm]').forEach(b => b.onclick = () => { const d = b.dataset.lpm.split(',').map(Number); lpXform(p => vadd(p, vmul(d, lpStep()))); });
+document.querySelectorAll('[data-lpr]').forEach(b => b.onclick = () => { const [ax, sg] = b.dataset.lpr.split(','); lpRot(ax, +sg); });
 // ====================================================================== skeleton tab
 let poseMode = false, jointMode = false, anim = 'none', animT = 0;
 const STARTERS = window.FORGE_STARTERS || [];
@@ -1112,7 +1272,7 @@ function applyFX() { const f = P.fx, [bg, gr] = BGS[f.bg] || BGS.studio; scene.b
   if (neonCity) neonCity.visible = f.bg === 'neon'; grid.visible = f.bg === 'studio';
   mist.visible = f.mist; aura.visible = f.aura; drips.visible = f.drip; mist.material.color.set(f.col); aura.material.color.set(f.col);
   for (const [id, k] of [['bGlow', 'glow'], ['bFog', 'fog'], ['bMist', 'mist'], ['bAura', 'aura'], ['bDrip', 'drip']]) $(id).classList.toggle('on', !!f[k]);
-  document.querySelectorAll('[data-bg]').forEach(b => b.classList.toggle('on', b.dataset.bg === f.bg)); $('fxCol').value = f.col; if ($('eyeGlow')) $('eyeGlow').value = f.eyeGlow || '#ff5a1a'; applyEyeGlow(); }
+  document.querySelectorAll('[data-bg]').forEach(b => b.classList.toggle('on', b.dataset.bg === f.bg)); $('fxCol').value = f.col; if ($('eyeGlow')) $('eyeGlow').value = f.eyeGlow || '#ff5a1a'; applyEyeGlow(); lowLookUI(); }
 // particles: mist, aura, ooze drips
 const mkPts = (n, size, col, fn) => { const g = new THREE.BufferGeometry(), a = new Float32Array(n * 3); for (let i = 0; i < n; i++) fn(a, i); g.setAttribute('position', new THREE.BufferAttribute(a, 3));
   const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64);
@@ -1415,7 +1575,7 @@ function resize() { renderer.setSize(innerWidth, innerHeight, false); composer.s
 new ResizeObserver(() => resize()).observe($('sheet'));
 addEventListener('resize', resize); resize();
 const clock = new THREE.Clock();
-renderer.setAnimationLoop(() => { const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime; controls.update(); animate(dt); fxTick(dt, t); fadeTick(dt);
+renderer.setAnimationLoop(() => { const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime; controls.update(); animate(dt); fxTick(dt, t); fadeTick(dt); dripTick(dt);
   if (spin) skelRoot.rotation.y += dt * .5; applyNums(); if (useBloom) composer.render(); else renderer.render(scene, camera); fwRender(); });
 addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; const k = e.key.toLowerCase();
   if ((e.ctrlKey || e.metaKey) && k === 'z') { e.preventDefault(); (e.shiftKey ? $('bRedo') : $('bUndo')).click(); }
@@ -1439,7 +1599,7 @@ $('bRefit').onclick = () => { const pt = partBy(sel); if (!pt) return tip('Tap a
   refitPart(pt, true); attachGizmo(); syncEdit(); saveCur(); tip('Fitted to the body'); };
 bodyUI();
 if (!P.parts.length && P.skel !== 'none') { buildBase(); rebuildParts(); setTimeout(frameAll, 50); }   // every skeleton starts with a base body to build on
-window.__ls = loadStarter; window.__fa = () => frameAll(); window.__nb = () => { showBones = false; boneHelpers.forEach(h => h.visible = false); }; window.__cam = (x, y, z, tx, ty, tz) => { camera.position.set(x, y, z); controls.target.set(tx, ty, tz); };   // test hooks (headless checks)
+window.__ls = loadStarter; window.__fa = () => frameAll(); window.__nb = () => { showBones = false; boneHelpers.forEach(h => h.visible = false); }; window.__cam = (x, y, z, tx, ty, tz) => { camera.position.set(x, y, z); controls.target.set(tx, ty, tz); }; window.__sel = u => select(u); window.__P = () => P; window.__add = (l, b, s) => addPart(l, b, [0, 0, 0], [0, 0, 0], s); window.__rb = () => rebuildParts(); window.__lp = {tap: (fi) => { lpSel.add(fi); lpDraw(); }, mode: () => $("bLP").click()};   // test hooks (headless checks)
 
 </script>
 </body>

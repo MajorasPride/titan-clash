@@ -416,5 +416,30 @@
     return b;
   });
 
+  // =================================================================== SUPER ROBOT PIECES (Nov 9 night)
+  // Rocket shoulder: sits on a shoulder bone like the other pauldrons (+Y = out of the shoulder); the rocket points along -X (up on a mech's left shoulder bone).
+  P.push({id: 'mf_sh_rocket', group: 'Mech Arms & Legs', sub: 'Shoulders', name: 'Rocket shoulder pod', tags: ['mech', 'shoulder', 'rocket', 'super robot', 'fin'], make: () => {
+    const b = B(), r = B();
+    b.add('paint2', hl([[.85, -.15], [.9, .1], [.75, .45], [.45, .65], [0, .7]], 32)); b.add('gold', hl([[.86, -.2], [.94, -.2], [.94, -.1], [.86, -.1]], 32, true));
+    r.add('darkmetal', hl([[.25, -1.25], [.42, -1.45], [.46, -1.42], [.32, -1.1], [.48, -.95], [0, -.95]], 24));                       // nozzle
+    r.add('paint', hl([[.5, -.95], [.6, -.6], [.62, 1.5], [.52, 2.2], [.3, 2.9], [0, 3.3]], 32));                                      // body + nose
+    for (const y of [-.55, .4, 1.45]) r.add('gold', hl([[.6, y], [.67, y], [.67, y + .14], [.6, y + .14]], 32, true));
+    r.add('glow', at(cy(.12, .06, 18), 0, 0, 0, PI / 2, 0, 0).translate(0, 1.0, .6)); r.add('darkmetal', ringZ(.13, .025, 0, 1.0, .62, 6, 18));
+    r.add('paint2', fr([[.55, -.7], [1.55, -1.25], [1.3, .9], [.55, 2.3]], .09, .03)); r.add('gold', fr([[1.38, -1.12], [1.55, -1.25], [1.32, .8], [1.22, .7]], .1, .02));
+    r.add('paint2', at(fr([[.55, -.7], [1.2, -1.1], [1.0, .3], [.55, 1.2]], .07, .02), 0, 0, 0, 0, PI, 0));
+    b.put(r, 0, .95, 0, 0, 0, PI / 2);
+    return b.out(); }});
+  part('head_crownspike', GH, 'Super Robot', 'Spiked crown head', ['super robot', 'crown', 'spikes', 'villain', 'visor'], () => {
+    const b = B().put(mNeck(.5, .28));
+    b.add('darkmetal', roundShell(.92)); b.add('paint', band([[.48, .62], [.6, .66], [.6, 1.0], [.48, 1.0]], -45, 45, 20));
+    b.add('gemred', band([[.58, .98], [.64, .99], [.64, 1.07], [.58, 1.08]], -38, 38, 20)); b.add('glow', ball(.05, 0, 1.03, .63, 12, 8));
+    b.add('paint', front([[-.2, .66], [.2, .66], [.1, .42], [-.1, .42]], .14, .55, .5, .03));
+    b.sym('paint', sd([[.35, .65], [-.25, .58], [-.3, 1.1], [.3, 1.15]], .1, .02).translate(.6, 0, 0));
+    for (let i = 0; i < 9; i++) { const a = (i - 4) * 17 * D, L = (i === 4 ? 1.5 : 1.15 - Math.abs(i - 4) * .1);
+      b.add('gold', at(fr([[-.07, 0], [.07, 0], [0, L]], .06, .015), Math.sin(a) * .35, 1.32 + Math.cos(a) * .12, .45 - Math.abs(a) * .2, -.35, 0, -a * 1.1)); }
+    b.add('paint2', front([[-.24, 1.2], [.24, 1.2], [.16, 1.38], [-.16, 1.38]], .1, .58, .3));
+    return b;
+  });
+
   return P;
 });

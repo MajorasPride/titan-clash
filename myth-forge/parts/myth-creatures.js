@@ -526,5 +526,42 @@
     return out(L);
   });
 
+  // ======================================================================= CLOTH & CAPES (Nov 9 night). Capes/chains go on the chest bone (+Y up the spine, front +Z),
+  // shroud on the head bone (head frame), scarf on the neck bone, sash on the hips bone.
+  const CC = 'Cloth & Capes';
+  function capeSheet(o) { rs(o.seed || 141); const holes = [...Array(o.holes || 0)].map(() => [rr(-.8, .8), rr(.25, .85), rr(.04, .1)]), cuts = [...Array(26)].map(() => rr(o.tat ? .8 : 1, 1));
+    return sheet((u, w) => { const a = (u - .5) * 2, W = o.w || 1.5; return V3(a * (W + w * (o.flare || 1.8)), 1.1 - w * (o.len || 7), -(o.back || .9) - w * 1.6 - .32 * sin(a * 9 + w * 2) * w - .3 * w * w * cos(a * 2.5)); },
+      34, 24, .04, {skip: (u, w) => w > cuts[(u * 25.9) | 0] || holes.some(([hx, hy, hr]) => ((u - .5) * 2 - hx) ** 2 * .3 + (w - hy) ** 2 < hr * hr)}); }
+  add('cl_cape_tattered', CC, 'Capes', 'Tattered battle cape', ['cape', 'cloak', 'tattered', 'burnt', 'super robot', 'villain'], () => out([
+    [capeSheet({tat: 1, seed: 142}), 'capeblack'], [sweep([[-1.6, 1.15, -.55], [-.8, 1.3, -.95], [0, 1.35, -1.0], [.8, 1.3, -.95], [1.6, 1.15, -.55]], .12, {seg: 24, rad: 8}), 'capeblack']]), {fade: {amt: .3, style: 'burn'}});
+  add('cl_cape_royal', CC, 'Capes', 'Royal cape + clasp', ['cape', 'royal', 'hero', 'king'], () => out([
+    [capeSheet({seed: 143, flare: 1.4}), 'capered'], [sweep([[-1.6, 1.15, -.5], [-.8, 1.35, -.9], [0, 1.4, -.98], [.8, 1.35, -.9], [1.6, 1.15, -.5]], .16, {seg: 24, rad: 10}), 'velvet'],
+    ...[-1, 1].map(s2 => [new T.CylinderGeometry(.22, .22, .1, 24).rotateX(PI / 2).translate(s2 * 1.45, 1.2, -.3), 'gold'])]));
+  add('cl_shroud', CC, 'Shrouds & Scarves', 'Wasteland head shroud', ['shroud', 'hood', 'gauze', 'wrap', 'desert', 'megatron'], () => {
+    rs(151); const cuts = [...Array(30)].map(() => rr(.75, 1));
+    const g = sheet((u, w) => { const a = -2.75 + u * 5.5, el = w < .45 ? (w / .45) * 1.35 : 1.35, r = w < .45 ? 1.05 * sin(.25 + el) : 1.15 + (w - .45) * 1.6, y = w < .45 ? 1.15 + 1.05 * cos(.25 + el) : 1.2 - (w - .45) * 4.2;
+      return V3(sin(a) * r + .12 * sin(u * 31) * w, y + .12 * sin(u * 23 + w * 4) * w, -cos(a) * r * .95 + .2 * w * w); }, 44, 22, .035, {skip: (u, w) => w > cuts[(u * 29.9) | 0]});
+    return out([[nz(g, .03, 3), 'gauze']]);
+  });
+  add('cl_scarf', CC, 'Shrouds & Scarves', 'Long flowing scarf', ['scarf', 'neck', 'hero', 'ninja', 'flowing'], () => {
+    const L = []; for (const [y, r] of [[.05, .78], [.32, .74]]) L.push([sweep(K.ring(41, (i) => { const a = i / 40 * TAU; return [sin(a) * r, y + .06 * sin(a * 3), cos(a) * r * .9]; }), .16, {seg: 80, rad: 10, sy: .55, cap: false}), 'capered']);
+    rs(161); for (const [s2, len] of [[1, 4.2], [-1, 3.3]]) { const cuts = [...Array(6)].map(() => rr(.85, 1));
+      L.push([sheet((u, w) => { const t = w; return V3(s2 * (.25 + .5 * t) + (u - .5) * .42, .1 - t * len * .45 + .2 * sin(t * 5), .75 - t * len - .25 * sin(t * 4 + s2)); }, 6, 26, .04, {skip: (u, w) => w > cuts[(u * 5.9) | 0]}), 'capered']); }
+    L.push([nz(ell(.22, .18, .18, .1, .15, .82, 12, 10), .03, 5), 'capered']);
+    return out(L);
+  });
+  add('cl_chains', CC, 'Chains & Straps', 'Hanging chains', ['chains', 'iron', 'prisoner', 'megatron', 'rusty'], () => {
+    const L = [], link = (p, d, i) => { const g = new T.TorusGeometry(.13, .04, 6, 14).scale(1, 1.6, 1); return place(g.rotateY(i % 2 ? PI / 2 : 0), p, d, [0, 0, 1]); };
+    for (const pts of [[[1.3, 1.1, .5], [.6, -.4, 1.2], [-.3, -1.4, 1.1], [-1.2, -2.6, .7]], [[-1.4, .9, .4], [-1.1, -1.2, 1.1], [-.8, -2.7, .9]]]) { const c = crv(pts), n = (c.getLength() / .32) | 0;
+      for (let i = 0; i <= n; i++) L.push([link(c.getPointAt(i / n), c.getTangentAt(i / n), i), 'rustchain']); }
+    return out(L);
+  });
+  add('cl_sash', CC, 'Chains & Straps', 'Waist sash + loincloth', ['sash', 'loincloth', 'belt', 'warrior', 'cloth'], () => {
+    const L = [[sweep(K.ring(33, (i) => { const a = i / 32 * TAU; return [sin(a) * 1.05, .2 + .05 * sin(a * 2), cos(a) * .85]; }), .14, {seg: 64, rad: 8, sy: .6, cap: false}), 'leather']];
+    rs(171); for (const zs of [1, -1]) { const cuts = [...Array(8)].map(() => rr(.8, 1));
+      L.push([sheet((u, w) => V3((u - .5) * (.8 + w * .2), .15 - w * 2.6, zs * (.85 + w * .25 + .08 * sin(u * 9))), 10, 16, .04, {skip: (u, w) => w > cuts[(u * 7.9) | 0]}), 'canvas']); }
+    return out(L);
+  });
+
   return P;
 });
