@@ -117,6 +117,8 @@
   #vtools{position:fixed;right:6px;bottom:calc(46vh + 8px);z-index:4;display:flex;flex-direction:column;gap:5px}
   #vtools button{min-height:36px;padding:4px 10px;font-size:13px;background:rgba(40,40,50,.88);max-width:46vw}
   #vtools button.on{background:rgba(40,40,50,.88);color:var(--tx);border-color:#4c4c58}
+  #btResume{position:fixed;left:50%;transform:translateX(-50%);top:62px;z-index:6;min-height:44px;padding:6px 16px;font-size:15px;font-weight:700;background:var(--ac);color:#141414;border:0;border-radius:22px;box-shadow:0 4px 14px #0008;max-width:92vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #vtools button.lit{border-color:var(--ac,#ff8c32);color:#ffb070}
   #nav{top:140px}
   body.ws .top h1{display:none} body.ws .top button{padding:5px 7px}
   .bgrp{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:3px 0}.bgrp>span{font:800 10.5px system-ui;letter-spacing:.5px;color:var(--ac);width:100%;margin:4px 2px 0;text-transform:uppercase}.bgrp button{min-height:36px;padding:4px 9px;font-size:13px}
@@ -262,6 +264,7 @@
       <div class="row"><button id="bHide">Hide</button><button id="bSolo">Solo (only this)</button><button id="bShowAll">Show all</button></div>
       <div class="hint">🧩 Break apart turns a row of spikes or crystals (or a part you saved) into single pieces. 🫳 Mold squishes a dropped part around what it lands on. Drag a part onto the 📦 box at the top to keep it for later.</div>
     </details>
+    <div class="row" id="tagEd" style="display:none"></div>
   </div>
 
   <div class="pane" id="p-shape"><div class="how">👉 Tap a "maker" part (Basic Shapes &amp; Clay) to get its sliders here.</div><div id="shapeBox"></div></div>
@@ -346,7 +349,7 @@
     <div class="row"><button data-bg="studio" class="on">Studio</button><button data-bg="neon">Neon city night</button><button data-bg="day">Daylight</button><button data-bg="hell">Hellfire</button><button data-bg="void">Void</button></div>
   </div>
 </div>
-<div id="vtools"><button id="bFocus" class="on">🔍 Focus</button><button id="bFWin">🪟 Window</button><button id="bVBones">🦴 Bones</button><button id="bVNums"># Numbers</button></div>
+<div id="vtools"><button id="bFocus" class="on">🔍 Focus</button><button id="bFWin">🪟 Window</button><button id="bJoint">🔗 Joint</button><button id="bTrash">🗑 Remove part</button><button id="bVBones">🦴 Bones</button><button id="bVNums"># Numbers</button></div>
 <div id="guide"></div>
 <div id="sections"><div class="sh">MYTHIC FORGE</div>
   <a class="sec on">🐉 Creature Forge <small>titans, mechs, monsters, parts</small></a>

@@ -117,6 +117,8 @@
   #vtools{position:fixed;right:6px;bottom:calc(46vh + 8px);z-index:4;display:flex;flex-direction:column;gap:5px}
   #vtools button{min-height:36px;padding:4px 10px;font-size:13px;background:rgba(40,40,50,.88);max-width:46vw}
   #vtools button.on{background:rgba(40,40,50,.88);color:var(--tx);border-color:#4c4c58}
+  #btResume{position:fixed;left:50%;transform:translateX(-50%);top:62px;z-index:6;min-height:44px;padding:6px 16px;font-size:15px;font-weight:700;background:var(--ac);color:#141414;border:0;border-radius:22px;box-shadow:0 4px 14px #0008;max-width:92vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #vtools button.lit{border-color:var(--ac,#ff8c32);color:#ffb070}
   #nav{top:140px}
   body.ws .top h1{display:none} body.ws .top button{padding:5px 7px}
   .bgrp{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:3px 0}.bgrp>span{font:800 10.5px system-ui;letter-spacing:.5px;color:var(--ac);width:100%;margin:4px 2px 0;text-transform:uppercase}.bgrp button{min-height:36px;padding:4px 9px;font-size:13px}
@@ -262,6 +264,7 @@
       <div class="row"><button id="bHide">Hide</button><button id="bSolo">Solo (only this)</button><button id="bShowAll">Show all</button></div>
       <div class="hint">🧩 Break apart turns a row of spikes or crystals (or a part you saved) into single pieces. 🫳 Mold squishes a dropped part around what it lands on. Drag a part onto the 📦 box at the top to keep it for later.</div>
     </details>
+    <div class="row" id="tagEd" style="display:none"></div>
   </div>
 
   <div class="pane" id="p-shape"><div class="how">👉 Tap a "maker" part (Basic Shapes &amp; Clay) to get its sliders here.</div><div id="shapeBox"></div></div>
@@ -346,7 +349,7 @@
     <div class="row"><button data-bg="studio" class="on">Studio</button><button data-bg="neon">Neon city night</button><button data-bg="day">Daylight</button><button data-bg="hell">Hellfire</button><button data-bg="void">Void</button></div>
   </div>
 </div>
-<div id="vtools"><button id="bFocus" class="on">🔍 Focus</button><button id="bFWin">🪟 Window</button><button id="bVBones">🦴 Bones</button><button id="bVNums"># Numbers</button></div>
+<div id="vtools"><button id="bFocus" class="on">🔍 Focus</button><button id="bFWin">🪟 Window</button><button id="bJoint">🔗 Joint</button><button id="bTrash">🗑 Remove part</button><button id="bVBones">🦴 Bones</button><button id="bVNums"># Numbers</button></div>
 <div id="guide"></div>
 <div id="sections"><div class="sh">MYTHIC FORGE</div>
   <a class="sec on">🐉 Creature Forge <small>titans, mechs, monsters, parts</small></a>
@@ -675,7 +678,7 @@ function buildPart(pt) {
     if (g.attributes.lmask && !colorMode) { const ov = new THREE.Mesh(g, layerMat(pt, fR)); ov.raycast = () => {}; ov.renderOrder = 2; M.add(ov); } });
   M.scale.set((pt.flip ? -1 : 1) * (pt.w || 1), pt.l || 1, pt.w || 1); applyOff(pt, M);
   G.position.set(...pt.p); G.quaternion.setFromEuler(new THREE.Euler(...pt.r.map(x => x * D))); G.scale.setScalar(pt.s);
-  G.visible = !pt.hidden && !(soloUid && soloUid !== pt.uid);
+  G.visible = !pt.hidden && !(soloUid && soloUid !== pt.uid) && !(jointSet && !jointSet.has(pt.uid));
   views[pt.uid] = {G, M, meshes};
   if (fR && pt.fade.dust !== false) views[pt.uid].dust = makeDust(pt, views[pt.uid], fR);
   if (pt.drip && !colorMode) views[pt.uid].drip = makeDrip(pt);
@@ -684,7 +687,7 @@ function buildPart(pt) {
 }
 function applyOff(pt, M) { const o = pt.off; if (o) M.position.set(-o[0] * M.scale.x, -o[1] * M.scale.y, -o[2] * M.scale.z); else M.position.set(0, 0, 0); }
 const hash = s => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
-let soloUid = null;
+let soloUid = null, jointSet = null;   // jointSet: 🔗 Joint view — only the picked part + the parts it connects to are shown
 function rebuildParts() { Object.values(views).forEach(v => { v.G.removeFromParent(); killDrip(v); }); views = {}; P.parts.forEach(buildPart); attachGizmo(); }
 const partBy = u => P.parts.find(p => p.uid === u);
 const twinOf = pt => pt && pt.twin ? partBy(pt.twin) : null;
@@ -801,9 +804,17 @@ function fitPart(lib, bone) {
     const r = R[bone], len = Math.max(.15, v3(r[2]).distanceTo(v3(r[3]))); let i = 0, c = r; while (c[1] && R[c[1]] && R[c[1]][4] === tag) { i++; c = R[c[1]]; }
     if (!c[1] && tag === 'tail') { i = 0; let d = r; for (;;) { const k = kidRows(d[0]).find(x => x[4] === tag); if (!k) break; i++; d = k; } }   // tail grows out of the root (naga): thick end is the body end
     const T = FAMILY[tag] === 'trunk' ? thickFor(B, tag) * Math.pow(.93, i) : thickFor(B, tag, i); out.s = +(T / thick).toFixed(3); out.l = +(len / ((e.unitLen || plen) * out.s)).toFixed(3); return out; }
-  if (kind === 'head') { const hl = v3(R[bone][2]).distanceTo(v3(R[bone][3])), tw = Math.min(W * .8, Math.max(W * .5, hl * .9));
-    out.s = +Math.min(4, Math.max(.2, tw * bodyK('head') / pw)).toFixed(3); return out; }
-  if (kind === 'jaw') { const hp = R[bone][1] && mainOn(R[bone][1]); if (hp && hp.fit.kind === 'head') { out.s = +(hp.s * .95).toFixed(3); return out; }
+  if (kind === 'head') {
+    // a head dropped on the body, neck or jaw goes to the head slot it belongs to (the neck's own head, else the nearest head)
+    if (FAMILY[tag] !== 'head' && (FAMILY[tag] === 'trunk' || FAMILY[tag] === 'neck' || FAMILY[tag] === 'jaw')) { const hb = headSlotFor(bone); if (hb) { bone = hb; out.bone = hb; out.fit.drop = hb; out.fit.cover = [hb]; } }
+    const hl = v3(R[bone][2]).distanceTo(v3(R[bone][3])), nk = neckTipW(bone); let tw = Math.min(W * .8, Math.max(W * .5, hl * .9));
+    if (nk) tw = Math.max(tw, Math.min(nk * 1.35, W * 1.1));   // the head always covers the end of its neck (no neck stub showing under the chin)
+    out.s = +Math.min(4, Math.max(.2, tw * bodyK('head') / pw)).toFixed(3);
+    // 🔗 socket: the neck end goes INTO the back-bottom of the skull, not under it. Head bones keep world axes (+Y up, +Z face).
+    if (FAMILY[R[bone][4]] === 'head') { const sy = nk ? .22 : .06, sz = nk ? .3 : .4;
+      out.p = [-(bx.min.x + bx.max.x) / 2, -(bx.min.y + (bx.max.y - bx.min.y) * sy), -(bx.min.z + (bx.max.z - bx.min.z) * sz)].map(v => +(v * out.s).toFixed(3)); }
+    return out; }
+  if (kind === 'jaw') { const hp = R[bone][1] && mainOn(R[bone][1]); if (hp && hp.fit.kind === 'head') { out.s = +(hp.s * .95).toFixed(3); if (!hp.fit.tweaked && hp.p && (R[bone][5] || {}).up) out.p = [...hp.p]; return out; }   // follows the head's socket shift
     const jl = v3(R[bone][2]).distanceTo(v3(R[bone][3])); out.s = +Math.min(3, Math.max(.2, jl * 1.15 / pd)).toFixed(3); return out; }
   if (kind === 'hand' || kind === 'foot') { const par = R[bone][1] && R[R[bone][1]], ptag = FAMILY[tag] === 'hand' || FAMILY[tag] === 'foot' ? (par ? par[4] : tag) : tag;
     const T = thickFor(B, ptag) * 1.3; out.s = +Math.min(4, Math.max(.15, T / pw)).toFixed(3);
@@ -831,9 +842,27 @@ function fitPart(lib, bone) {
   if (e.group === 'Legs & Feet' && n === ch.length) kidRows(used[used.length - 1][0]).filter(k => FAMILY[k[4]] === 'foot').forEach(k => out.fit.cover.push(k[0]));   // these legs come with their own feet
   return out; }
 const rootWCache = {};
-function partRootW(lib) { if (rootWCache[lib]) return rootWCache[lib]; const bx = partBoxOf(lib), lim = Math.max(0, bx.min.y) + (bx.max.y - Math.max(0, bx.min.y)) * .35; let lo = 1e9, hi = -1e9;
-  pieces(lib).forEach(pc => { const a = pc.geo.attributes.position; for (let i = 0; i < a.count; i++) if (a.getY(i) <= lim) { const x = a.getX(i); if (x < lo) lo = x; if (x > hi) hi = x; } });
-  return rootWCache[lib] = hi > lo ? Math.max(.05, hi - lo) : Math.max(.05, bx.max.x - bx.min.x); }
+function partRootW(lib) { if (rootWCache[lib]) return rootWCache[lib]; const bx = partBoxOf(lib), y0 = Math.max(0, bx.min.y), H = bx.max.y - y0, lim = y0 + H * .35, N = 10;
+  let lo = 1e9, hi = -1e9; const sl = Array.from({length: N}, () => [1e9, -1e9]);
+  pieces(lib).forEach(pc => { const a = pc.geo.attributes.position; for (let i = 0; i < a.count; i++) { const x = a.getX(i), y = a.getY(i);
+    if (y <= lim) { if (x < lo) lo = x; if (x > hi) hi = x; } const k = Math.min(N - 1, Math.max(0, Math.floor((y - y0) / H * N))); if (x < sl[k][0]) sl[k][0] = x; if (x > sl[k][1]) sl[k][1] = x; } });
+  let w = hi > lo ? Math.max(.05, hi - lo) : Math.max(.05, bx.max.x - bx.min.x);
+  // a feather ruff / spikes / mane flaring out at the base used to count as "thickness" and shrank the whole part (tiny bird neck):
+  // never let the base read much wider than the part's typical width along its length
+  const ws = sl.filter(s => s[1] > s[0]).map(s => s[1] - s[0]).sort((a, b) => a - b); if (ws.length >= 4) w = Math.min(w, ws[ws.length >> 1] * 1.3);
+  return rootWCache[lib] = Math.max(.05, w); }
+const tipWCache = {};
+function partTipW(lib) { if (tipWCache[lib]) return tipWCache[lib]; const bx = partBoxOf(lib), lim = bx.max.y - (bx.max.y - bx.min.y) * .2; let lo = 1e9, hi = -1e9;   // width of the last 20% of a part (its +Y end)
+  pieces(lib).forEach(pc => { const a = pc.geo.attributes.position; for (let i = 0; i < a.count; i++) if (a.getY(i) >= lim) { const x = a.getX(i); if (x < lo) lo = x; if (x > hi) hi = x; } });
+  return tipWCache[lib] = hi > lo ? Math.max(.05, hi - lo) : Math.max(.05, bx.max.x - bx.min.x); }
+// how wide the neck (or whatever chain part ends where this head starts) is at its end, in world units; 0 = no neck there
+function neckTipW(headBone) { const row = boneRow(headBone), par = row && row[1]; if (!par) return 0;
+  const np = P.parts.find(p => p.fit && !p.boxed && !p.hidden && ['neck', 'seg', 'limb'].includes(p.fit.kind) && (p.fit.cover || [p.bone]).slice(-1)[0] === par);
+  if (!np) return 0; const pr = boneRow(par); if (!pr || FAMILY[pr[4]] === 'trunk') return 0; return partTipW(np.lib) * np.s * (np.w || 1); }
+function headSlotFor(bone) { const row = boneRow(bone); if (!row) return null; if (FAMILY[row[4]] === 'jaw') return row[1];
+  const kid = P.bones.find(r => r[1] === bone && FAMILY[r[4]] === 'head'); if (kid) return kid[0];
+  if (FAMILY[row[4]] === 'neck') { for (let c = bone; ;) { const k = P.bones.find(r => r[1] === c && FAMILY[r[4]] === 'neck'); if (!k) break; c = k[0]; const h = P.bones.find(r => r[1] === c && FAMILY[r[4]] === 'head'); if (h) return h[0]; } }
+  const at = v3(row[3]); let best = null, bd = 1e9; for (const r of P.bones) if (FAMILY[r[4]] === 'head') { const d = v3(r[2]).distanceTo(at); if (d < bd) { bd = d; best = r[0]; } } return best; }
 function decorScale(bone) { const m = bone && mainOn(bone); if (m) return +Math.min(2, Math.max(.4, m.lib.startsWith('base_') ? bodyInfo().W / 2.6 : m.s)).toFixed(3);
   return +Math.min(2, Math.max(.5, bodyInfo().W / 3.2)).toFixed(3); }
 function removeParts(list) { const kill = new Set(); list.forEach(p => { kill.add(p); const t = twinOf(p); if (t) kill.add(t); });
@@ -849,7 +878,9 @@ function swapOut(fit) {                                         // a new main pa
 function applyFit(pt, f) { pt.bone = f.bone; pt.p = f.p; pt.r = f.r; pt.s = f.s; pt.l = f.l; pt.w = 1; pt.fit = {...f.fit, tweaked: false}; }
 function refitPart(pt, force) { if (!pt.fit || (pt.fit.tweaked && !force) || pt.twin && P.parts.indexOf(partBy(pt.twin)) < P.parts.indexOf(pt) && partBy(pt.twin).fit) return false;
   const f = fitPart(pt.lib, pt.fit.drop && boneRow(pt.fit.drop) ? pt.fit.drop : pt.bone); if (!f) return false; applyFit(pt, f); buildPart(pt); syncTwin(pt); return true; }
-function refitAll(force) { let n = 0; const order = [...P.parts].sort((a, b) => (a.fit && a.fit.kind === 'head' ? 0 : 1) - (b.fit && b.fit.kind === 'head' ? 0 : 1));
+const fitOrder = p => !p.fit ? 3 : ['torso', 'neck', 'seg', 'limb'].includes(p.fit.kind) ? 0 : p.fit.kind === 'head' ? 1 : 2;   // necks first (heads size to them), then heads (jaws size to them)
+function refitHeadsOn(cover) { if (!cover) return; const c = new Set(cover); P.parts.filter(p => p.fit && p.fit.kind === 'head' && c.has((boneRow(p.bone) || [])[1])).forEach(h => { refitPart(h, false); P.parts.filter(j => j.fit && j.fit.kind === 'jaw' && (boneRow(j.bone) || [])[1] === h.bone).forEach(j => refitPart(j, false)); }); }   // a new neck: the head on it re-sizes + re-seats
+function refitAll(force) { let n = 0; const order = [...P.parts].sort((a, b) => fitOrder(a) - fitOrder(b));
   order.forEach(p => { if (P.parts.includes(p) && refitPart(p, force)) n++; }); return n; }
 function buildBase() {                                          // cover every bone of any skeleton with a smooth base body
   snap(); const B = bodyInfo(), R = B.R, keep = mirrorAdd; mirrorAdd = true; removeParts(P.parts.filter(p => p.lib.startsWith('base_')));
@@ -895,7 +926,7 @@ function addPart(lib, bone, p, r, s) {
   P.parts.push(pt);
   const tb = bone && twinName(bone);
   if (mirrorAdd && (tb ? bones[tb] : Math.abs(p[0]) > .25)) { const t = newPart(lib, tb || bone, [0, 0, 0], [0, 0, 0]); t.twin = pt.uid; pt.twin = t.uid; if (pt.fit) t.fit = {...pt.fit, drop: twinName(pt.fit.drop) || pt.fit.drop, cover: pt.fit.cover.map(c => twinName(c) || c)}; P.parts.push(t); mirrorInto(pt, t); }
-  buildPart(pt); if (window.V3) window.V3.afterAdd(pt); select(pt.uid); outliner(); saveCur();
+  buildPart(pt); if (window.V3) window.V3.afterAdd(pt); if (pt.fit) refitHeadsOn(pt.fit.cover); select(pt.uid); outliner(); saveCur();
   tip(LIB[lib].name + (swapped ? ' swapped in' : ' added') + (pt.twin ? ' (+ mirrored twin)' : '') + (LIB[lib].params ? ' — shape it with the sliders' : (window.MF_V2 ? ' — drag it to move it' : ' — Move tab to adjust')));
   if (LIB[lib].params && !(LIB[lib].tags || []).includes('kit')) { document.querySelector('.tabs [data-tab="shape"]').click(); if (!focusOn) $('bFocus').click(); }
   else if (typeof inWS !== 'undefined' && inWS) frameObj(views[pt.uid].G, 1.4);
@@ -941,7 +972,17 @@ function quickAdd(id) { const e = LIB[id]; if (!e) return;
 let tagFilter = null, catsOpen = true;
 let gFilter = GROUP_ORDER.find(g => Object.values(LIB).some(e => e.group === g)) || 'Basic Shapes & Clay', sFilter = null, query = '';
 const userTags = (() => { try { return JSON.parse(localStorage.getItem('titan-forge-tags') || '{}'); } catch (e) { return {}; } })();
-const tagsOf = id => [...(LIB[id].tags || []), ...(userTags[id] || [])];
+const tagsOf = id => { const u = userTags[id] || [], off = new Set(u.filter(t => t[0] === '-').map(t => t.slice(1))); return [...new Set([...(LIB[id].tags || []).filter(t => !off.has(t)), ...u.filter(t => t[0] !== '-')])]; };   // '-x' in userTags = built-in tag x removed
+const saveTags = () => { try { localStorage.setItem('titan-forge-tags', JSON.stringify(userTags)); } catch (e) {} };
+// 🏷 Tags editor (Move & size tab): see the picked part's search tags, ✕ to remove one, ＋ to add your own. Kept on this device.
+function tagEdUI() { const el = $('tagEd'); if (!el) return; const pt = partBy(sel); el.innerHTML = ''; if (!pt || !LIB[pt.lib]) { el.style.display = 'none'; return; } el.style.display = '';
+  const id = pt.lib, lbl = Object.assign(document.createElement('span'), {className: 'hint', textContent: '🏷 Tags (for search):'}); lbl.style.margin = '0'; el.append(lbl);
+  for (const t of tagsOf(id).filter(t => t !== 'fav')) { const b = document.createElement('button'); b.textContent = '#' + t + '  ✕'; b.title = 'Remove this tag';
+    b.onclick = () => { const u = new Set(userTags[id] || []); if (u.has(t)) u.delete(t); else u.add('-' + t); userTags[id] = [...u]; saveTags(); tagEdUI(); if (tab === 'add') libUI(); tip('#' + t + ' removed', 1400); }; el.append(b); }
+  const add = document.createElement('button'); add.textContent = '＋ Add tag'; add.className = 'on';
+  add.onclick = () => { const t = (prompt('New tags for ' + LIB[id].name + ' (comma separated)') || '').toLowerCase().split(',').map(x => x.trim().replace(/^#/, '').replace(/\s+/g, '-')).filter(Boolean); if (!t.length) return;
+    const u = new Set(userTags[id] || []); t.forEach(x => { u.delete('-' + x); if (!(LIB[id].tags || []).includes(x)) u.add(x); }); userTags[id] = [...u]; saveTags(); tagEdUI(); if (tab === 'add') libUI(); tip('Tagged ' + t.map(x => '#' + x).join(' '), 1600); }; el.append(add);
+  const hid = (userTags[id] || []).filter(t => t[0] === '-'); if (hid.length) { const r = document.createElement('button'); r.textContent = '↺ Bring back ' + hid.length + ' removed'; r.onclick = () => { userTags[id] = (userTags[id] || []).filter(t => t[0] !== '-'); saveTags(); tagEdUI(); }; el.append(r); } }
 const visibleIds = () => Object.keys(LIB).filter(id => { const e = LIB[id]; if (lpParts ? e.hasLpv : e.lpv) return false; if (tagFilter && !tagsOf(id).includes(tagFilter)) return false; if (tagFilter === 'fav') return true; if (gFilter === MY && !query) return e.mine && (!sFilter || e.sub === sFilter); if (query) return (e.name + ' ' + e.group + ' ' + e.sub + ' ' + tagsOf(id).join(' ')).toLowerCase().includes(query);
   return e.group === gFilter && (!sFilter || e.sub === sFilter); });
 function libUI() {
@@ -1043,7 +1084,7 @@ $('fImport').onchange = async e => { for (const f of e.target.files) { tip('Read
   e.target.value = ''; gFilter = 'My Imports'; sFilter = null; libUI(); };
 
 // ====================================================================== selection + outliner
-function select(u) { if (u && u !== sel && navigator.vibrate) try { navigator.vibrate(10); } catch (e) {} sel = u; attachGizmo(); outliner(); syncEdit(); highlight(); if (tab === 'shape') shapeUI(); }
+function select(u) { if (u && u !== sel && navigator.vibrate) try { navigator.vibrate(10); } catch (e) {} const was = sel; sel = u; if (jointSet && u && u !== was) jointApply(false); attachGizmo(); outliner(); syncEdit(); highlight(); if (tab === 'shape') shapeUI(); }
 let hl = null;
 function highlight() { if (hl) { hl.removeFromParent(); hl = null; } const v = sel && views[sel]; if (!v || !v.meshes.length) return;
   const box = new THREE.Box3().setFromObject(v.M); hl = new THREE.Box3Helper(box, 0xffd166); hl.material.depthTest = false; hl.renderOrder = 11; scene.add(hl); setTimeout(() => { if (hl) { hl.removeFromParent(); hl = null; } }, 900); }
@@ -1085,7 +1126,7 @@ let gzMode = 'translate';
 document.querySelectorAll('[data-gz]').forEach(b => b.onclick = () => { gzMode = b.dataset.gz; document.querySelectorAll('[data-gz]').forEach(x => x.classList.toggle('on', x === b)); attachGizmo(); });
 $('bLocal').onclick = e => { gizmo.setSpace(gizmo.space === 'world' ? 'local' : 'world'); e.target.classList.toggle('on', gizmo.space === 'local'); };
 $('bSnap').onclick = e => { const on = gizmo.translationSnap == null; gizmo.setTranslationSnap(on ? .25 : null); gizmo.setRotationSnap(on ? 15 * D : null); e.target.textContent = on ? 'Snap on' : 'Snap off'; e.target.classList.toggle('on', on); };
-function syncEdit(soft) { const pt = partBy(sel);
+function syncEdit(soft) { const pt = partBy(sel); tagEdUI();
   $('grab').textContent = pt ? (LIB[pt.lib] ? LIB[pt.lib].name : 'part') + (pt.bone ? ' · on ' + pt.bone : '') : (selBone && tab === 'skel' ? 'Bone: ' + selBone : 'Mythic Forge');
   if (!pt) return; for (const [s, v, k] of [['sSize', 'vSize', 's'], ['sLen', 'vLen', 'l'], ['sWid', 'vWid', 'w']]) { if (!soft || document.activeElement !== $(s)) $(s).value = pt[k] || 1; $(v).textContent = (+(pt[k] || 1)).toFixed(2); }
   $('bHide').textContent = pt.hidden ? 'Show' : 'Hide'; $('bUnlink').style.display = pt.twin ? '' : 'none'; $('tint').value = pt.tint || '#ffffff'; fadeUI(pt); paintNowUI(); }
@@ -1520,6 +1561,35 @@ let focusOn = false;
 $('bFocus').onclick = () => { if (!$('bFocus').isConnected) return; if (!sel) return tip('Tap a part first'); focusOn = !focusOn; soloUid = focusOn ? sel : null; showBones = !focusOn; boneHelpers.forEach(h => h.visible = showBones);
   rebuildParts(); outliner(); if (focusOn) { frameObj(views[sel].G, 1.9); tip('Focus: only this part. Sculpt / paint / move it, then tap Focus again', 3500); } else frameAll(); $('bFocus').textContent = focusOn ? '↩ Back to whole creature' : '🔍 Focus on this part'; };
 
+// ---- 🔗 Joint view: shows ONLY the picked part + what it connects to (head + its neck + its jaw, a hand + its arm…),
+// zoomed on the joint between them, other bones hidden — so you can see if a part sits right without the rest of the creature in the way.
+const coverOf = q => { const c = new Set((q.fit && q.fit.cover) || []); if (q.bone) c.add(q.bone); return c; };
+function jointNeighbors(pt) { const set = new Set([pt.uid]), cover = coverOf(pt), row = boneRow(pt.bone), par = row && row[1];
+  const kids = new Set(P.bones.filter(r => cover.has(r[1]) && !cover.has(r[0])).map(r => r[0])), hostOf = q => q.host && partBy(q.host.u);
+  if (hostOf(pt)) set.add(pt.host.u);   // a plugged part (eye, horn): its host part
+  for (const q of P.parts) { if (q === pt || q.boxed || q.hidden || q.host) continue; const qc = coverOf(q);
+    if (par && !cover.has(par) && qc.has(par)) set.add(q.uid);   // what it hangs on (the neck under a head)
+    else if ([...qc].some(b => kids.has(b))) set.add(q.uid);      // what hangs on it (the head on a neck, the jaw on a head)
+    else if ([...qc].some(b => cover.has(b)) && q.uid !== pt.twin) set.add(q.uid); }   // other parts on the same bone (mane, crest)
+  for (let more = true; more;) { more = false; for (const q of P.parts) if (q.host && set.has(q.host.u) && !set.has(q.uid)) { set.add(q.uid); more = true; } }   // + everything plugged into those
+  return set; }
+function jointBones(pt) { const c = coverOf(pt), row = boneRow(pt.bone); if (row && row[1]) c.add(row[1]); P.bones.forEach(r => { if (c.has(r[1])) c.add(r[0]); }); return c; }
+function jointApply(frame) { const pt = partBy(sel); if (!pt) return; jointSet = jointNeighbors(pt); const jb = jointBones(pt);
+  for (const [u, v] of Object.entries(views)) { const q = partBy(u); v.G.visible = !!q && !q.hidden && !q.boxed && jointSet.has(u); }
+  boneHelpers.forEach(h => h.visible = jb.has(h.userData.bone) && !(h.userData.num));
+  if (frame === false || !views[pt.uid]) return; const pb = new THREE.Box3().setFromObject(views[pt.uid].G); if (pb.isEmpty()) return;
+  // zoom on the joint (where the part meets what it hangs on), sized by the picked part, kept in the part of the screen above the panel
+  const j = new THREE.Vector3(); (bones[pt.bone] || skelRoot).getWorldPosition(j); const r = Math.max(.7, pb.getSize(new THREE.Vector3()).length() / 2) * 1.5;
+  const H = innerHeight, top = 60 + ($('guide') && $('guide').offsetParent ? $('guide').getBoundingClientRect().height : 0), bot = $('sheet') ? Math.max(top + 120, Math.min(H, $('sheet').getBoundingClientRect().top)) : H;
+  const vis = (bot - top) / H, dist = r / Math.tan(camera.fov * D / 2) / Math.max(.3, vis);   // fit the free area between the top bar and the panel
+  const c = pb.getCenter(new THREE.Vector3()).lerp(j, .5), dir = camera.position.clone().sub(controls.target).normalize();
+  controls.target.copy(c); camera.position.copy(c).add(dir.multiplyScalar(dist)); }   // (the view is already offset above the panel by resize())
+function jointOff() { jointSet = null; Object.entries(views).forEach(([u, v]) => { const q = partBy(u); v.G.visible = !!q && !q.hidden && !q.boxed && !(soloUid && soloUid !== u); }); boneHelpers.forEach(h => h.visible = showBones); if (typeof applyNums === 'function') applyNums(); }
+$('bJoint').onclick = () => { if (jointSet) { jointOff(); frameAll(); $('bJoint').classList.remove('lit'); $('bJoint').textContent = '🔗 Joint'; return; }
+  if (!sel) return tip('Tap a part first — 🔗 Joint shows just it + what it connects to', 3000);
+  if (focusOn) $('bFocus').click(); jointApply(); $('bJoint').classList.add('lit'); $('bJoint').textContent = '↩ Whole creature';
+  tip('🔗 Joint: only this part + what it connects to. Move it, swap it, tap another shown part to hop along. Tap again to see everything', 4200); };
+
 // ====================================================================== tabs, sheet, fullscreen
 let tab = 'add';
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { tab = b.dataset.tab; document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
@@ -1776,7 +1846,7 @@ try { if (!localStorage.getItem(window.MF_V2 ? 'mf-tour2-done' : 'mf-tour-done')
 // ====================================================================== loop
 function resize() { renderer.setSize(innerWidth, innerHeight, false); composer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight;
   const sh = $('sheet'), land = innerWidth >= 760 && innerWidth > innerHeight, full = document.body.classList.contains('full');
-  const cover = full ? 0 : land ? 0 : sh.getBoundingClientRect().height, side = full || !land ? 0 : sh.getBoundingClientRect().width;
+  const cover = full ? 0 : land ? 0 : Math.max(0, Math.min(sh.getBoundingClientRect().height, innerHeight - sh.getBoundingClientRect().top)), side = full || !land ? 0 : sh.getBoundingClientRect().width;   // cover = only the part of the panel that is on screen
   camera.setViewOffset(innerWidth, innerHeight, side / 2, cover / 2 - 25, innerWidth, innerHeight); camera.updateProjectionMatrix(); }
 new ResizeObserver(() => resize()).observe($('sheet'));
 addEventListener('resize', resize); resize();
@@ -1794,7 +1864,7 @@ addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; con
   await loadMine(); await loadPatterns();
   rebuildSkeleton(); rebuildParts(); applyFX(); libUI(); outliner(); updateOrbit(); frameAll();
   tip(Object.keys(LIB).length + (window.MF_V2 ? ' parts ready — press and hold one, then drag it onto the model' : ' parts ready. Pick one and tap a bone dot.'), 3500);
-  window.FORGE = {P: () => P, LIB, addPart, bones: () => bones, views: () => views, select, rebuildParts};   // for testing
+  window.FORGE = {P: () => P, LIB, addPart, bones: () => bones, views: () => views, select, rebuildParts, camera, controls, THREE, skelRoot};   // for testing
 })();
 
 // fit / base body buttons
@@ -1905,6 +1975,9 @@ if (window.MF_V2) {
   // ---- 🎓 Build together: a step-by-step build for ANY body type. Each step asks a multiple-choice question, then shows parts to pick;
   // tapping one = "do it for me" (placed on every matching bone, e.g. all 8 tentacles), or "I'll do it myself" opens the parts grid.
   const BT = {on: false, i: 0, steps: [], style: 'creature', pick: null, added: [], small: false, t: null};
+  // 🗑 Remove part: always on screen (next to Focus); removes the picked part (+ its mirrored twin). ↶ Undo brings it back.
+  $('bTrash').onclick = () => { const pt = partBy(sel); if (!pt) return tip('Tap a part first, then 🗑 to remove it', 2200); const name = (LIB[pt.lib] || {}).name || 'Part';
+    $('bDel').click(); if (BT.on) { BT.added = (BT.added || []).filter(u => partBy(u)); if (BT.addedBy) BT.addedBy[BT.i] = BT.added; btShow(); } tip('🗑 ' + name + ' removed — ↶ undo brings it back', 2400); };
   const famBones = fam => P.bones.filter(r => (fam === 'trunk' ? TRUNK_TAGS.has(r[4]) || FAMILY[r[4]] === 'trunk' : FAMILY[r[4]] === fam)).map(r => r[0]);
   const famRoots = fam => { const set = new Set(famBones(fam)); return [...set].filter(n => !set.has((boneRow(n) || [])[1])); };
   const hasFam = fam => famBones(fam).length > 0;
@@ -2074,8 +2147,20 @@ if (window.MF_V2) {
     BT.defDone = BT.defDone || {}; if (st.k === 'part' && !BT.defDone[BT.i]) { BT.defDone[BT.i] = true; const d = defFor(st); if (d) btPlace(st, d, true); }
     document.body.classList.remove('gside'); btShow(); }
   function btStart() { $('menu').classList.remove('open'); BT.on = true; if (window.MF_V3) { try { BT.level = localStorage.getItem('mf-btlevel') || 'complex'; } catch (x) { BT.level = 'complex'; } } BT.addedBy = {}; BT.defDone = {}; btSteps(); BT.style = P.skel === 'mech' || P.skel === 'walker' || P.skel === 'tank' ? 'mech' : 'creature'; btGo(0); }
-  function btEnd(won) { BT.on = false; $('guide').style.display = 'none'; document.body.classList.remove('guiding', 'gside'); if (won === true) tip('🎉 Titan built! Start › 🎓 Build together to make another', 4000); }
-  $('bGuide').onclick = btStart; $('mGuide').onclick = btStart;
+  // ↩ Resume: closing Build together (✕) keeps your place. A "🎓 Back to <step>" button stays on screen (also after a reload),
+  // and Start › Build together picks up at that step on the same creature. Finishing (or Start over) clears it.
+  const BTKEY = 'mf-bt-resume';
+  const btSave = () => { try { if (BT.paused) localStorage.setItem(BTKEY, JSON.stringify(BT.paused)); else localStorage.removeItem(BTKEY); } catch (x) {} };
+  function btPill() { let el = $('btResume'); if (!el) { el = Object.assign(document.createElement('button'), {id: 'btResume'}); el.onclick = btResume; document.body.append(el); }
+    const p = BT.paused, ok = p && p.skel === P.skel && !BT.on; el.style.display = ok ? '' : 'none'; if (ok) el.textContent = '🎓 Back to ' + p.label + ' · ' + (p.i + 1) + '/' + p.n; }
+  function btEnd(won) { BT.on = false; $('guide').style.display = 'none'; document.body.classList.remove('guiding', 'gside');
+    const st = BT.steps[BT.i]; BT.paused = won === true || !st || BT.i < 2 ? null : {i: BT.i, skel: P.skel, style: BT.style, level: BT.level, n: BT.steps.length, label: st.k === 'part' ? (st.label || st.t) : ({shape: 'Body shape', move: 'Move things', paint: 'Paint', clean: 'Clean up', look: 'Game look', save: 'Save'}[st.k] || 'your build')};
+    btSave(); btPill(); if (won === true) tip('🎉 Titan built! Start › 🎓 Build together to make another', 4000); else if (BT.paused) tip('Paused — tap 🎓 Back to ' + BT.paused.label + ' (top of the screen) to carry on', 3200); }
+  function btResume() { const p = BT.paused; if (!p || p.skel !== P.skel) return btStart(); $('menu').classList.remove('open'); BT.on = true; BT.style = p.style || BT.style; if (p.level) BT.level = p.level;
+    BT.addedBy = BT.addedBy || {}; BT.defDone = BT.defDone || {}; btSteps(); BT.added = []; BT.paused = null; btSave(); btPill(); btGo(Math.min(p.i, BT.steps.length - 1)); }
+  try { BT.paused = JSON.parse(localStorage.getItem(BTKEY) || 'null'); } catch (x) {} setTimeout(btPill, 400);
+  const btOpen = () => { if (BT.paused && BT.paused.skel === P.skel) { const p = BT.paused; if (confirm('Carry on from ' + p.label + ' (step ' + (p.i + 1) + ')?\n\nOK = carry on · Cancel = start over')) return btResume(); BT.paused = null; btSave(); btPill(); } btStart(); };
+  $('bGuide').onclick = btOpen; $('mGuide').onclick = btOpen;
   // ⭐ Default builds: one finished creature per body type (Start tab), made from the same defaults
   function buildDefault(k, style) { if (P.parts.some(p => !p.lib.startsWith('base_')) && !confirm('Replace what is on screen with the default ' + (SKEL[k] || {}).name + '? (Save first if you want to keep it)')) return;
     snap(); P = blankProject(k); rebuildSkeleton(); buildBase(); rebuildParts(); BT.style = style || (/^(mech|walker|tank)$/.test(k) ? 'mech' : 'creature'); btSteps(); BT.addedBy = {};
