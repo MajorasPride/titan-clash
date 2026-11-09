@@ -242,6 +242,27 @@ vec3 hue(float h){ return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.
     float fl = step(.55, h) * smoothstep(.35, .0, length(fract(g) - .5)); vec3 c2 = floor(q * 23.0); float h2 = h3(c2), tw2 = pow(.5 + .5 * sin(t * 4.0 + h2 * 50.0 + dot(Vd, vec3(13.0, 3.0, 9.0)) * 9.0), 18.0);
     fx = (diffuse * 2.2 + vec3(.6)) * fl * tw * 2.2 + vec3(1.0) * step(.7, h2) * tw2 * smoothstep(.3, .0, length(fract(q * 23.0) - .5)) * 1.6 + diffuse * fr * .25; }
   else if (uFx == 27) { float n = fbm(q * .9); vec3 sh = hue(fr * .9 + n * .35 + .55); diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * (.75 + sh * .5), .6); fx = mix(sh, vec3(1.0), .45) * pow(fr, 1.4) * .55 + vec3(1.0) * pow(max(dot(normalize(normal), Vd), 0.0), 40.0) * .15; }
+  else if (uFx == 28) { float n = fbm(q * 1.1 + vec3(t * .08, t * .03, -t * .05)), m = fbm(q * 2.3 - vec3(t * .12, 0.0, t * .06)); float d = smoothstep(.3, .85, n * .7 + m * .45);
+    fx = (vec3(.75, .8, .88) * (.25 + d * .8) + vec3(.9, .95, 1.0) * fr * .25) * .5; diffuseColor.a *= .2 + d * .75; base = .35; }
+  else if (uFx == 29) { float n = fbm(q * 1.0 + vec3(t * .1, 0.0, t * .04)), fl = step(.985, h3(vec3(floor(t * 6.0)))) + step(.993, h3(vec3(floor(t * 9.0) + 3.0))) * .7;
+    float bolt = smoothstep(.03, .0, abs(fbm(q * 2.2 + vec3(floor(t * 6.0) * .37)) - .5)) * fl;
+    fx = mix(vec3(.04, .045, .06), vec3(.3, .32, .38), smoothstep(.35, .8, n)) + vec3(.6, .7, 1.0) * fl * .5 * n + vec3(.8, .85, 1.0) * bolt * 4.0; base = .05; }
+  else if (uFx == 30) { vec3 r = vec3(q.x * 30.0, q.y * 2.0 + t * 9.0, q.z * 30.0); float s2 = step(.93, h3(floor(vec3(r.x, r.y * .25, r.z)))) * smoothstep(.5, .0, abs(fract(r.y * .25) - .5) - .2);
+    float n = fbm(q * 1.2 + vec3(t * .05, 0.0, 0.0)); fx = mix(vec3(.08, .1, .14), vec3(.22, .26, .32), n) + vec3(.6, .7, .85) * s2 * .9 + vec3(.4, .5, .7) * fr * .3; base = .06; }
+  else if (uFx == 31) { vec3 g = q * 6.0 + vec3(sin(t * .7 + q.y) * .3, t * 1.4, 0.0); vec3 c = floor(g); float h = h3(c), f = smoothstep(.22, .0, length(fract(g) - .5 - (vec3(h3(c + 2.0), h3(c + 5.0), h3(c + 9.0)) - .5) * .5));
+    vec3 g2 = q * 13.0 + vec3(0.0, t * 2.2, 0.0); float f2 = smoothstep(.18, .0, length(fract(g2) - .5)) * step(.6, h3(floor(g2)));
+    fx = vec3(.2, .24, .32) * (.6 + fbm(q * 1.5) * .5) + vec3(1.0) * (f * step(.45, h) + f2 * .7) * .9; base = .15; }
+  else if (uFx == 32) { float a = atan(q.x, q.z), sw = fbm(vec3(a * 1.5 + t * .9, q.y * 1.5 - t * .4, length(q.xz) * 2.0)), gr = h3(floor(q * 40.0 + vec3(t * 8.0, 0.0, 0.0)));
+    fx = mix(vec3(.45, .3, .15), vec3(.95, .72, .4), smoothstep(.3, .8, sw)) * .8 + vec3(1.0, .85, .6) * step(.97, gr) * .6; base = .15; }
+  else if (uFx == 33) { float a = atan(q.x, q.z), r = length(q.xz), sp = fbm(vec3(a * 2.0 - t * 2.5 + r * 3.0, q.y * 1.2 + t * .5, r));
+    fx = mix(vec3(.15, .16, .18), vec3(.6, .62, .66), smoothstep(.35, .75, sp)) * (.7 + .3 * sin(a * 6.0 - t * 6.0 + q.y * 3.0)) + vec3(.7, .75, .8) * fr * .4; base = .1; }
+  else if (uFx == 34) { float n = fbm(q * .9 + vec3(t * .06, 0.0, t * .03)), cl = smoothstep(.5, .78, n);
+    fx = (mix(vec3(.25, .55, .95), vec3(1.0, 1.0, 1.0), cl) * (.85 + .15 * fbm(q * 3.0)) + vec3(1.0, .95, .8) * fr * .25) * .5; base = .3; }
+  else if (uFx == 35) { float n = fbm(q * 1.4 + vec3(t * .15, -t * .1, 0.0)), f = pow(abs(sin(n * 9.0 + t * .6)), 10.0);
+    fx = mix(vec3(.02, .02, .05), vec3(.2, .05, .3), n) + vec3(.6, .3, 1.0) * f * .8 + vec3(1.0) * stars(q * 20.0, .04, t) * 1.5; base = .03; }
+  else if (uFx == 36) { vec3 g = abs(fract(vTP * 1.4) - .5); float ln = smoothstep(.025, .0, min(min(abs(g.x - .38), abs(g.y - .38)), abs(g.z - .38))) * step(.45, h3(floor(vTP * 1.4)));
+    float pulse = .6 + .4 * sin(vTP.y * 2.0 - t * 2.5); fx = diffuse * 0.0 + vec3(.25, .75, 1.0) * ln * pulse * 1.6 + vec3(.5, .8, 1.0) * fr * .12; }
+  else if (uFx == 37) { float n = fbm(q * 2.5 + vec3(0.0, t * .15, 0.0)), v = smoothstep(.04, .0, abs(vn(q * 5.0 + t * .1) - .5)); diffuseColor.rgb *= .7 + n * .6; fx = vec3(.5, .8, .1) * v * (.5 + .5 * sin(t * 2.0 + n * 6.0)) * .9 + vec3(.6, .7, .2) * fr * .2; }
   if (uFur > .5) fx *= .55 + diffuseColor.r * .9;
   if (uKeep > .5) totalEmissiveRadiance += fx; else { diffuseColor.rgb = (uFur > .5 ? diffuseColor.rgb * .2 : vec3(base)) + fx * .1; totalEmissiveRadiance += fx * diffuse; }
 }`;
@@ -410,6 +431,17 @@ vec3 hue(float h){ return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.
     ['neonorange', 'Neon orange', 'Neon', 'plain', 0xff9a3a, .3, 0, {emissive: 0xff6a0a, emissiveIntensity: 1.6}], ['neonyellow', 'Neon yellow', 'Neon', 'plain', 0xffff5a, .3, 0, {emissive: 0xf0e01a, emissiveIntensity: 1.5}],
     ['neonpurple', 'Neon purple', 'Neon', 'plain', 0xb05aff, .3, 0, {emissive: 0x8a2aff, emissiveIntensity: 1.8}], ['neonred', 'Neon red', 'Neon', 'plain', 0xff3a4a, .3, 0, {emissive: 0xff1a2a, emissiveIntensity: 1.7}],
     ['neonwhite', 'Neon white', 'Neon', 'plain', 0xffffff, .3, 0, {emissive: 0xd0e0ff, emissiveIntensity: 1.4}], ['neonlime', 'Neon lime', 'Neon', 'plain', 0xd0ff3a, .3, 0, {emissive: 0xa0ff1a, emissiveIntensity: 1.5}],
+    ['fog', 'Fog (moving mist)', 'Weather', 'plain', 0xffffff, .9, 0, {fx: 28, transparent: true, side: 2}], ['fogdense', 'Thick fog', 'Weather', 'plain', 0xffffff, .9, 0, {fx: 28}],
+    ['stormcloud', 'Storm clouds + lightning', 'Weather', 'plain', 0xffffff, .8, 0, {fx: 29}], ['rain', 'Rain storm', 'Weather', 'plain', 0xffffff, .3, .1, {fx: 30}], ['snowfall', 'Snowfall', 'Weather', 'plain', 0xffffff, .7, 0, {fx: 31}],
+    ['sandstorm', 'Sandstorm', 'Weather', 'sand', 0xffffff, .9, 0, {fx: 32}], ['tornado', 'Tornado swirl', 'Weather', 'plain', 0xffffff, .8, 0, {fx: 33}], ['sunnysky', 'Sunny sky + clouds', 'Weather', 'plain', 0xffffff, .6, 0, {fx: 34}],
+    ['nightstorm', 'Eerie night storm', 'Weather', 'plain', 0xffffff, .6, 0, {fx: 35}], ['aurora2', 'Aurora sky', 'Weather', 'plain', 0xffffff, .5, 0, {fx: 5}],
+    ['alienpurple', 'Alien shimmer armor (purple)', 'Alien Armor', 'plain', 0x6a3aa8, .2, .8, {fx: 27, keep: 1}], ['alienblue', 'Alien shimmer armor (blue)', 'Alien Armor', 'plain', 0x2a4ab0, .2, .8, {fx: 27, keep: 1}],
+    ['alienred', 'Alien shimmer armor (red)', 'Alien Armor', 'plain', 0xa82a3a, .2, .8, {fx: 27, keep: 1}], ['aliengold', 'Alien shimmer armor (gold)', 'Alien Armor', 'plain', 0xc8a03a, .2, .9, {fx: 27, keep: 1}],
+    ['alienwhite', 'Alien shimmer armor (white)', 'Alien Armor', 'plain', 0xd8d8e8, .2, .7, {fx: 27, keep: 1}], ['aliengreen', 'Alien shimmer armor (green)', 'Alien Armor', 'plain', 0x3a8a4a, .2, .8, {fx: 27, keep: 1}],
+    ['ancientmachine', 'Ancient machine (glowing lines)', 'Alien Armor', 'panels', 0xa8acb4, .3, .8, {fx: 36, keep: 1}], ['ancientdark', 'Ancient machine (dark)', 'Alien Armor', 'panels', 0x3a3c44, .3, .8, {fx: 36, keep: 1}],
+    ['brutearmor', 'Brute armor (rough)', 'Alien Armor', 'hexpanel', 0x4a3c3a, .55, .7], ['bruteplate', 'Brute plate (blue-grey)', 'Alien Armor', 'brushed', 0x4a5868, .45, .8],
+    ['infection', 'Infection flesh (glowing veins)', 'Alien Armor', 'octopus', 0xb0a060, .5, 0, {fx: 37, keep: 1}], ['infectiondark', 'Infection flesh (rotten)', 'Alien Armor', 'octopus', 0x6a6a3a, .6, 0, {fx: 37, keep: 1}],
+    ['energysword', 'Plasma energy (blue)', 'Alien Armor', 'plain', 0x8ad0ff, .2, 0, {emissive: 0x3a9aff, emissiveIntensity: 2.2}], ['plasmagreen', 'Plasma energy (green)', 'Alien Armor', 'plain', 0xaaff8a, .2, 0, {emissive: 0x4aff3a, emissiveIntensity: 2}],
     ['toyrubber', 'Toy rubber', 'Craft (toy box)', 'plain', 0xe85a3a, .55, 0], ['toyplastic', 'Shiny toy plastic', 'Craft (toy box)', 'plain', 0x3a8ae8, .25, 0],
   ];
   const ALIAS = {paint2: 'paint2', fur: 'fur', feather: 'feather', stone: 'stone', wood: 'wood', cloth: 'cloth', leather: 'leather', chitin: 'chitin', glow: 'glow', screen: 'screen'};
