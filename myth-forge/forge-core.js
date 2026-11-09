@@ -33,7 +33,7 @@ const bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), .4, .45, .92); co
 let useBloom = true;
 
 // ====================================================================== parts library
-const LIB = {}, GROUP_ORDER = ['Basic Shapes & Clay', 'Part Makers (sliders)', 'Heads & Skulls', 'Jaws & Teeth', 'Horns & Crests', 'Eyes & Faces', 'Necks & Spines', 'Torsos & Bellies', 'Arms & Shoulders', 'Hands & Claws',
+const LIB = {}, GROUP_ORDER = ['Base Body', 'Basic Shapes & Clay', 'Part Makers (sliders)', 'Heads & Skulls', 'Jaws & Teeth', 'Horns & Crests', 'Eyes & Faces', 'Necks & Spines', 'Torsos & Bellies', 'Arms & Shoulders', 'Hands & Claws',
   'Legs & Feet', 'Tails', 'Wings', 'Back & Armor Plates', 'Tentacles & Extra Limbs', 'Bones & Skeleton', 'Mech Heads', 'Mech Torso & Core', 'Mech Arms & Legs', 'Mech Details', 'Mecha Dragon', 'Kaiju Kit', 'Turtle Kit', 'Dino Kit', 'Weapons', 'Accessories & Magic', 'Free Packs (CC0)', 'My Imports'];
 const MY = 'My Parts';
 const ALONG = new Set(['Necks & Spines', 'Arms & Shoulders', 'Legs & Feet', 'Tails', 'Wings', 'Tentacles & Extra Limbs', 'Mech Arms & Legs', 'Heads & Skulls', 'Mech Heads', 'Torsos & Bellies', 'Mech Torso & Core', 'Hands & Claws']);
@@ -67,7 +67,7 @@ try { const s = JSON.parse(localStorage.getItem('titan-forge-cur') || 'null'); i
 const saveCur = () => { try { localStorage.setItem(typeof inWS !== 'undefined' && inWS ? 'titan-forge-ws' : 'titan-forge-cur', JSON.stringify(P)); } catch (e) { tip('Too big for quick save — use ⋯ Save as'); } };
 const hist = [], fut = [];
 const snap = () => { hist.push(JSON.stringify(P)); if (hist.length > 50) hist.shift(); fut.length = 0; };
-function restore(j) { P = JSON.parse(j); rebuildSkeleton(); rebuildParts(); outliner(); syncEdit(); saveCur(); if (typeof boxUI === 'function') boxUI(); }
+function restore(j) { P = JSON.parse(j); rebuildSkeleton(); rebuildParts(); outliner(); syncEdit(); saveCur(); if (typeof bodyUI === 'function') bodyUI(); if (typeof boxUI === 'function') boxUI(); }
 $('bUndo').onclick = () => { if (!hist.length) return tip('Nothing to undo'); fut.push(JSON.stringify(P)); restore(hist.pop()); };
 $('bRedo').onclick = () => { if (!fut.length) return tip('Nothing to redo'); hist.push(JSON.stringify(P)); restore(fut.pop()); };
 
@@ -198,12 +198,160 @@ function autoFit(lib, bone) {                                  // fit limbs / ta
   const ratio = Math.min(4, Math.max(.25, chain / len)), sz = Math.min(1.6, Math.max(.6, Math.sqrt(ratio)));
   return [+sz.toFixed(3), +(ratio / sz).toFixed(3)];
 }
+// ====================================================================== fit system
+// Every bone-snapped part sizes itself to its slot on the skeleton, and to the parts next to it, so pieces line up:
+// torsos fill the trunk (hips -> neck), heads sit on the neck at a size that matches the body, limbs/tails/necks fill their
+// bone chain at a thickness set by the body width, hands/feet match the limb, jaws match the head, small details match
+// whatever big part is on that bone. pt.fit = {kind, drop, cover[]}; pt.fit.tweaked = user moved/stretched it by hand.
+const v3 = a => new THREE.Vector3(...a);
+const kidRows = n => P.bones.filter(r => r[1] === n);
+const restQOf = r => basisFor(v3(r[3]).sub(v3(r[2])), r[5] && r[5].up);
+const TRUNK_TAGS = new Set(['spine', 'chest']);
+const FAMILY = {armU: 'arm', armF: 'arm', legU: 'leg', legL: 'leg', tail: 'tail', neck: 'neck', wingA: 'wing', wingB: 'wing', wingC: 'wing', extra: 'extra', spine: 'trunk', chest: 'trunk', hand: 'hand', foot: 'foot', head: 'head', jaw: 'jaw'};
+const KITS = /^(Mecha Dragon|Kaiju Kit|Dino Kit|Turtle Kit|Free Packs \(CC0\)|My Imports|My Parts|Basic Shapes & Clay|Part Makers \(sliders\))$/;
+function kindOf(e) { if (!e) return null; if (e.fitKind) return e.fitKind; const g = e.group, id = e.id, sub = e.sub || '';
+  if (KITS.test(g) || e.whole || e.params) return null;
+  if (g === 'Torsos & Bellies' || (g === 'Mech Torso & Core' && (sub === 'Chests' || sub === 'Frames') && id !== 'mk_torso_collar')) return 'torso';
+  if (g === 'Heads & Skulls') return /mane/.test(id) ? 'decor' : 'head';
+  if (g === 'Mech Heads') return 'head';
+  if (g === 'Jaws & Teeth') return /Lower Jaws|Beaks|Maws/.test(sub) ? 'jaw' : 'decor';
+  if (g === 'Necks & Spines') return /neck/.test(id) ? 'neck' : null;
+  if (g === 'Arms & Shoulders') return /shoulder/.test(id) ? 'decor' : 'limb';
+  if (g === 'Legs & Feet') return /foot|feet/i.test(sub + id) ? 'foot' : 'limb';
+  if (g === 'Mech Arms & Legs') return sub === 'Shoulders' ? 'decor' : sub === 'Hands' ? 'hand' : sub === 'Feet' ? 'foot' : 'limb';
+  if (g === 'Hands & Claws') return 'hand';
+  if (g === 'Tails') return 'tail'; if (g === 'Tentacles & Extra Limbs') return 'limb'; if (g === 'Wings') return 'wing';
+  return 'decor'; }
+const boxCache = {};
+function partBoxOf(lib, params) { const k = lib + JSON.stringify(params || ''); if (boxCache[k]) return boxCache[k]; const b = new THREE.Box3();
+  pieces(lib, params).forEach(pc => { pc.geo.computeBoundingBox(); b.union(pc.geo.boundingBox); }); if (b.isEmpty()) b.set(new THREE.Vector3(-.5, 0, -.5), new THREE.Vector3(.5, 1, .5)); return boxCache[k] = b; }
+function bodyInfo() {                                           // trunk path, start/end, length and body width W for the current skeleton
+  const R = Object.fromEntries(P.bones.map(r => [r[0], r])), tr = P.bones.filter(r => TRUNK_TAGS.has(r[4]) && !/\.(L|R)$/.test(r[0]));
+  let path = null;
+  for (const r of tr.filter(r => !r[1] || !R[r[1]] || !TRUNK_TAGS.has(R[r[1]][4]))) { const p = [r]; for (;;) { const k = kidRows(p[p.length - 1][0]).find(x => TRUNK_TAGS.has(x[4]) && !/\.(L|R)$/.test(x[0])); if (!k) break; p.push(k); } if (!path || p.length > path.length) path = p; }
+  if (!path) { const r = P.bones[0]; path = [r]; }
+  const start = v3(path[0][2]), end = v3(path[path.length - 1][3]), len = Math.max(.3, start.distanceTo(end)), names = new Set(path.map(r => r[0]));
+  let sh = 0, hp = 0; for (const r of P.bones) { if (!names.has(r[1])) continue;
+    if (r[4] === 'armU') { const stub = kidRows(r[0]).find(k => k[4] === 'armU'); sh = Math.max(sh, Math.abs((stub ? r[3] : r[2])[0])); }
+    if (r[4] === 'legU') hp = Math.max(hp, Math.abs(r[2][0])); }
+  let W = Math.max(sh * 2 * .85, hp * 2 * 1.2, len * .42, .8); if (!sh && !hp) { const mean = path.reduce((a, r) => a + v3(r[2]).distanceTo(v3(r[3])), 0) / path.length; W = Math.max(.8, Math.min(len * .55, mean * 1.3)); } W = Math.min(W, len * 1.4 + 1);
+  return {R, path, names, start, end, len, W, root: path[0][0]}; }
+function aimRot(R, from, endPt) {                               // rotation (deg, bone space of `from`) that points +Y at endPt
+  const r = R[from], d = endPt.clone().sub(v3(r[2])); if (d.lengthSq() < 1e-6) return [0, 0, 0]; d.applyQuaternion(restQOf(r).invert()).normalize();
+  const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d), eu = new THREE.Euler().setFromQuaternion(q); return [eu.x, eu.y, eu.z].map(v => +(v / D).toFixed(1)); }
+function limbChain(R, bone) {                                   // bones of the same limb from `bone` outward (stops before hands/feet)
+  const fam = FAMILY[R[bone][4]], out = [R[bone]]; for (;;) { const k = kidRows(out[out.length - 1][0]).filter(x => FAMILY[x[4]] === fam); if (k.length !== 1) break; out.push(k[0]); } return out; }
+function thickFor(B, tag, i = 0) { const W = B.W; return {armU: .3, armF: .26, legU: .38, legL: .3, neck: .3, tail: .42 * Math.pow(.84, i), extra: .2, spine: .5, chest: .55, wingA: .12, wingB: .1, wingC: .08, hand: .28, foot: .32, head: .45, jaw: .3}[tag] * W || W * .25; }
+const MAIN_KINDS = new Set(['torso', 'head', 'jaw', 'limb', 'neck', 'tail', 'wing', 'hand', 'foot', 'seg']);
+const mainOn = (bone, not) => P.parts.find(p => p !== not && p.bone === bone && p.fit && MAIN_KINDS.has(p.fit.kind) && !p.boxed);
+function fitPart(lib, bone) {
+  const e = LIB[lib], kind = kindOf(e); if (!kind || kind === 'decor' || !bone || !boneRow(bone)) return null;
+  const B = bodyInfo(), R = B.R, W = B.W, bx = partBoxOf(lib), pw = Math.max(.05, bx.max.x - bx.min.x), pd = Math.max(.05, bx.max.z - bx.min.z);
+  const plen = Math.max(.05, bx.max.y - Math.max(0, bx.min.y)), thick = (pw + pd) / 2, tag = R[bone][4];
+  const out = {bone, p: [0, 0, 0], r: [0, 0, 0], s: 1, l: 1, fit: {kind, drop: bone, cover: [bone]}};
+  const stretch = (len, T, lo = .5, hi = 2.2) => { let s = T / thick, l = len / (plen * s); if (l > hi) { l = hi; s = len / (plen * l); } if (l < lo) { l = lo; s = len / (plen * l); } s = Math.min(4, Math.max(.15, s)); return [+s.toFixed(3), +(len / (plen * s)).toFixed(3)]; };
+  if (kind === 'torso') {
+    if (FAMILY[tag] !== 'trunk' && !B.names.has(bone)) { out.s = +(W / pw).toFixed(3); return out; }  // a torso dropped on a limb: just size it
+    out.bone = B.root; out.fit.cover = B.path.map(r => r[0]); out.r = aimRot(R, B.root, B.end); out.s = +Math.min(4, Math.max(.2, W / pw)).toFixed(3);
+    out.l = +Math.min(2.4, Math.max(.45, B.len / (plen * out.s))).toFixed(3); return out; }
+  if (kind === 'seg') {                                          // base-body piece: exactly this bone
+    const r = R[bone], len = Math.max(.15, v3(r[2]).distanceTo(v3(r[3]))); let i = 0, c = r; while (c[1] && R[c[1]] && R[c[1]][4] === tag) { i++; c = R[c[1]]; }
+    if (!c[1] && tag === 'tail') { i = 0; let d = r; for (;;) { const k = kidRows(d[0]).find(x => x[4] === tag); if (!k) break; i++; d = k; } }   // tail grows out of the root (naga): thick end is the body end
+    const T = FAMILY[tag] === 'trunk' ? thickFor(B, tag) * Math.pow(.93, i) : thickFor(B, tag, i); out.s = +(T / thick).toFixed(3); out.l = +(len / ((e.unitLen || plen) * out.s)).toFixed(3); return out; }
+  if (kind === 'head') { const hl = v3(R[bone][2]).distanceTo(v3(R[bone][3])), tw = Math.min(W * .8, Math.max(W * .5, hl * .9));
+    out.s = +Math.min(4, Math.max(.2, tw * bodyK('head') / pw)).toFixed(3); return out; }
+  if (kind === 'jaw') { const hp = R[bone][1] && mainOn(R[bone][1]); if (hp && hp.fit.kind === 'head') { out.s = +(hp.s * .95).toFixed(3); return out; }
+    const jl = v3(R[bone][2]).distanceTo(v3(R[bone][3])); out.s = +Math.min(3, Math.max(.2, jl * 1.15 / pd)).toFixed(3); return out; }
+  if (kind === 'hand' || kind === 'foot') { const par = R[bone][1] && R[R[bone][1]], ptag = FAMILY[tag] === 'hand' || FAMILY[tag] === 'foot' ? (par ? par[4] : tag) : tag;
+    const T = thickFor(B, ptag) * 1.3; out.s = +Math.min(4, Math.max(.15, T / pw)).toFixed(3);
+    if (kind === 'foot' && FAMILY[tag] === 'foot') { // mech feet are modelled upright (+Y up, +Z forward): keep them level with the ground
+      const q = restQOf(R[bone]).invert(), eu = new THREE.Euler().setFromQuaternion(q); out.r = [eu.x, eu.y, eu.z].map(v => +(v / D).toFixed(1));
+      const ank = v3(R[bone][2]), drop = new THREE.Vector3(0, -(ank.y + bx.min.y * out.s), .15 * W).applyQuaternion(q); out.p = drop.toArray().map(v => +v.toFixed(3)); }
+    return out; }
+  if (kind === 'wing') { const ch = limbChain(R, bone), end = v3(ch[ch.length - 1][3]), len = v3(R[bone][2]).distanceTo(end);
+    out.fit.cover = ch.map(r => r[0]); out.s = +Math.min(12, Math.max(.3, len * 1.05 / Math.max(plen, pw * .8))).toFixed(3);
+    // aim the spar at the wing tip and roll it so the membrane (+X) trails backward and a bit down
+    const r0 = R[bone], qi = restQOf(r0).invert(), y = end.clone().sub(v3(r0[2])).normalize(), side = Math.sign(r0[3][0] - r0[2][0]) || 1;
+    let x = new THREE.Vector3(0, -.35, -1).addScaledVector(y, -new THREE.Vector3(0, -.35, -1).dot(y)); if (x.lengthSq() < 1e-4) x.set(0, -1, 0); x.normalize();
+    if (side < 0) x.negate(); const z = new THREE.Vector3().crossVectors(x, y), m = new THREE.Matrix4().makeBasis(x, y, z), q = new THREE.Quaternion().setFromRotationMatrix(m).premultiply(qi);
+    const eu = new THREE.Euler().setFromQuaternion(q); out.r = [eu.x, eu.y, eu.z].map(v => +(v / D).toFixed(1)); out.fit.cover = ch.map(r => r[0]); return out; }
+  // limbs / necks / tails: keep the part's own proportions (uniform size) and fill the limb; long parts cover the whole limb,
+  // short ones (mech upper arm, shin…) one bone. Only stretch when the part would come out much too thick or thin for this body.
+  let start = bone; if (tag === 'armU') { const stub = kidRows(bone).find(k => k[4] === 'armU'); if (stub && B.names.has(R[bone][1])) start = stub[0]; }
+  out.bone = start; out.fit.drop = bone; const ch = limbChain(R, start), T = thickFor(B, R[start][4]), rw = partRootW(lib);
+  const lens = []; let acc = 0; ch.forEach(r => { acc += v3(r[2]).distanceTo(v3(r[3])); lens.push(acc); });
+  let n = kind === 'tail' || kind === 'neck' ? ch.length : plen >= 3.2 ? ch.length : 1;
+  if (kind === 'limb' && plen >= 3.2 && ch.length > 2) { let bestE = 1e9; lens.forEach((L, i) => { const e2 = Math.abs(Math.log(L / (plen * T / rw))); if (i && e2 < bestE) { bestE = e2; n = i + 1; } }); }
+  const used = ch.slice(0, n), end = v3(used[used.length - 1][3]), len = v3(R[start][2]).distanceTo(end);
+  let sz = len / plen, l = 1; const wNow = rw * sz; if (wNow > T * 1.7 || wNow < T * .55) { sz = Math.min(T * 1.7, Math.max(T * .55, wNow)) / rw; l = Math.min(2.5, Math.max(.4, len / (plen * sz))); sz = len / (plen * l); }
+  out.s = +sz.toFixed(3); out.l = +l.toFixed(3); out.r = aimRot(R, start, end); out.fit.cover = used.map(r => r[0]);
+  if (e.group === 'Legs & Feet' && n === ch.length) kidRows(used[used.length - 1][0]).filter(k => FAMILY[k[4]] === 'foot').forEach(k => out.fit.cover.push(k[0]));   // these legs come with their own feet
+  return out; }
+const rootWCache = {};
+function partRootW(lib) { if (rootWCache[lib]) return rootWCache[lib]; const bx = partBoxOf(lib), lim = Math.max(0, bx.min.y) + (bx.max.y - Math.max(0, bx.min.y)) * .35; let lo = 1e9, hi = -1e9;
+  pieces(lib).forEach(pc => { const a = pc.geo.attributes.position; for (let i = 0; i < a.count; i++) if (a.getY(i) <= lim) { const x = a.getX(i); if (x < lo) lo = x; if (x > hi) hi = x; } });
+  return rootWCache[lib] = hi > lo ? Math.max(.05, hi - lo) : Math.max(.05, bx.max.x - bx.min.x); }
+function decorScale(bone) { const m = bone && mainOn(bone); if (m) return +Math.min(2, Math.max(.4, m.lib.startsWith('base_') ? bodyInfo().W / 2.6 : m.s)).toFixed(3);
+  return +Math.min(2, Math.max(.5, bodyInfo().W / 3.2)).toFixed(3); }
+function removeParts(list) { const kill = new Set(); list.forEach(p => { kill.add(p); const t = twinOf(p); if (t) kill.add(t); });
+  P.parts = P.parts.filter(p => !kill.has(p)); kill.forEach(p => views[p.uid] && views[p.uid].G.removeFromParent()); return kill.size; }
+const SLOT = k => k === 'seg' || k === 'limb' || k === 'neck' || k === 'tail' ? 'chain' : k === 'hand' || k === 'foot' ? 'end' : k;
+function swapOut(fit) {                                         // a new main part replaces what was in its slot (base pieces + same-kind parts)
+  const cover = new Set(fit.cover), sk = SLOT(fit.kind);
+  const old = P.parts.filter(p => p.fit && !p.boxed && cover.has(p.bone) && MAIN_KINDS.has(p.fit.kind) && (SLOT(p.fit.kind) === sk || (sk === 'chain' && p.lib.startsWith('base_')) || (p.lib.startsWith('base_') && fit.kind === 'torso' && p.fit.kind === 'seg'))
+    && !(fit.kind === 'torso' && SLOT(p.fit.kind) !== 'torso' && !p.lib.startsWith('base_')));
+  // a limb/neck/tail part also clears base pieces on the rest of the bones it covers
+  return old.length ? removeParts(old.filter(p => !p.twin || P.parts.includes(p))) : 0; }
+function applyFit(pt, f) { pt.bone = f.bone; pt.p = f.p; pt.r = f.r; pt.s = f.s; pt.l = f.l; pt.w = 1; pt.fit = {...f.fit, tweaked: false}; }
+function refitPart(pt, force) { if (!pt.fit || (pt.fit.tweaked && !force) || pt.twin && P.parts.indexOf(partBy(pt.twin)) < P.parts.indexOf(pt) && partBy(pt.twin).fit) return false;
+  const f = fitPart(pt.lib, pt.fit.drop && boneRow(pt.fit.drop) ? pt.fit.drop : pt.bone); if (!f) return false; applyFit(pt, f); buildPart(pt); syncTwin(pt); return true; }
+function refitAll(force) { let n = 0; const order = [...P.parts].sort((a, b) => (a.fit && a.fit.kind === 'head' ? 0 : 1) - (b.fit && b.fit.kind === 'head' ? 0 : 1));
+  order.forEach(p => { if (P.parts.includes(p) && refitPart(p, force)) n++; }); return n; }
+function buildBase() {                                          // cover every bone of any skeleton with a smooth base body
+  snap(); const B = bodyInfo(), R = B.R, keep = mirrorAdd; mirrorAdd = true; removeParts(P.parts.filter(p => p.lib.startsWith('base_')));
+  const has = b => P.parts.some(p => p.bone === b && p.fit && MAIN_KINDS.has(p.fit.kind)), add = (lib, b) => { if (b.endsWith('.R') && boneRow(twinName(b))) return; const f = fitPart(lib, b); if (!f) return;
+    const pt = newPart(lib, f.bone, f.p, f.r, f.s); pt.l = f.l; pt.fit = f.fit; P.parts.push(pt); const tb = twinName(f.bone); if (tb && bones[tb]) { const t = newPart(lib, tb, [0, 0, 0], [0, 0, 0]); t.twin = pt.uid; pt.twin = t.uid; t.fit = {...f.fit, cover: f.fit.cover.map(twinName)}; P.parts.push(t); } };
+  const longBody = B.len > B.W * 2.6;
+  if (!longBody && !B.path.some(r => has(r[0]))) add('base_trunk', B.root);
+  for (const r of P.bones) { const [n, , , , tag] = r; if (has(n)) continue; const fam = FAMILY[tag];
+    if (fam === 'trunk') { if (longBody || !B.names.has(n)) add('base_seg', n); continue; }
+    if (tag === 'armU' && kidRows(n).some(k => k[4] === 'armU') && B.names.has(r[1])) continue;   // shoulder stub: the trunk covers it
+    if (fam === 'head') add('base_head', n); else if (fam === 'jaw') continue;
+    else if (fam === 'hand') add('base_hand', n); else if (fam === 'foot') add(/^(spider|insect|scorpion|crab)$/.test(P.skel) ? 'base_tailseg' : 'base_foot', n);
+    else if (fam === 'wing') { if (tag === 'wingA') add('base_wing', n); }
+    else if (fam === 'tail') add('base_tailseg', n); else add(tag === 'legU' ? 'base_seg_thick' : 'base_seg', n); }
+  P.parts.forEach(p => { if (p.twin && p.lib.startsWith('base_') && !p.p) {} });
+  mirrorAdd = keep; rebuildParts(); P.parts.filter(p => p.twin && p.lib.startsWith('base_')).forEach(p => { const t = partBy(p.twin); if (t && P.parts.indexOf(t) > P.parts.indexOf(p)) mirrorInto(p, t); });
+  outliner(); saveCur(); }
+const hasBase = () => P.parts.some(p => p.lib.startsWith('base_'));
+// ====================================================================== body shape sliders (Dragon's Dogma style)
+// Sliders reshape the skeleton from a snapshot (P.bodyBase) and every fitted part refits, so the whole creature stays connected.
+const BODY_SL = [['height', 'Height', .6, 1.6], ['bulk', 'Bulk', .6, 1.7], ['arms', 'Arm length', .5, 1.8], ['legs', 'Leg length', .5, 1.8], ['neck', 'Neck length', .3, 2.5], ['tail', 'Tail length', .3, 2], ['head', 'Head size', .6, 1.6]];
+const bodyK = k => (P.body && P.body[k]) || 1;
+function applyBody() {
+  if (!P.bodyBase) P.bodyBase = JSON.parse(JSON.stringify(P.bones)); const bones = JSON.parse(JSON.stringify(P.bodyBase)), R = Object.fromEntries(bones.map(r => [r[0], r]));
+  const shift = (n, d) => bones.filter(x => x[1] === n).forEach(x => { x[2] = x[2].map((v, i) => v + d[i]); x[3] = x[3].map((v, i) => v + d[i]); shift(x[0], d); });
+  const fam = {arms: ['armU', 'armF', 'hand'], legs: ['legU', 'legL'], neck: ['neck'], tail: ['tail']};
+  for (const [k, tags] of Object.entries(fam)) { const s = bodyK(k); if (s === 1) continue;
+    for (const r of bones) { if (!tags.includes(r[4])) continue; if (k === 'arms' && r[4] === 'armU' && bones.some(x => x[1] === r[0] && x[4] === 'armU') && TRUNK_TAGS.has((R[r[1]] || [])[4])) continue;
+      const h = r[2], t = r[3], nt = h.map((v, i) => v + (t[i] - v) * s), d = nt.map((v, i) => v - t[i]); r[3] = nt;
+      bones.filter(x => x[1] === r[0]).forEach(x => { const near = Math.hypot(...x[2].map((v, i) => v - t[i])) < .35; if (near || x[4] === r[4] || FAMILY[x[4]] === 'hand' || FAMILY[x[4]] === 'foot' || FAMILY[x[4]] === 'head') { x[2] = x[2].map((v, i) => v + d[i]); x[3] = x[3].map((v, i) => v + d[i]); shift(x[0], d); } }); } }
+  const b = bodyK('bulk'), h = bodyK('height'); bones.forEach(r => { r[2] = [r[2][0] * b, r[2][1] * h, r[2][2] * Math.sqrt(b)]; r[3] = [r[3][0] * b, r[3][1] * h, r[3][2] * Math.sqrt(b)]; });
+  const feet = bones.filter(r => r[4] === 'foot' || r[4] === 'legL'); if (feet.length) { const lo = Math.min(...feet.flatMap(r => [r[2][1], r[3][1]])); if (Math.abs(lo) > .01) bones.forEach(r => { r[2][1] -= lo; r[3][1] -= lo; }); }
+  bones.forEach(r => { r[2] = r[2].map(v => +v.toFixed(3)); r[3] = r[3].map(v => +v.toFixed(3)); });
+  P.bones = bones; rebuildSkeleton(); refitAll(false); rebuildParts(); saveCur(); }
+function bodyUI() { const el = $('bodySl'); if (!el) return; el.innerHTML = '';
+  for (const [k, name, lo, hi] of BODY_SL) { const row = document.createElement('div'); row.className = 'sl'; row.innerHTML = `<span>${name}</span><input type="range" min="${lo}" max="${hi}" step=".01" value="${bodyK(k)}"><span>${bodyK(k).toFixed(2)}</span>`;
+    const inp = row.querySelector('input'), val = row.lastChild; inp.onpointerdown = () => snap(); inp.oninput = () => { P.body = P.body || {}; P.body[k] = +inp.value; val.textContent = (+inp.value).toFixed(2); applyBody(); }; el.append(row); } }
 function addPart(lib, bone, p, r, s) {
-  snap(); const fit = s == null ? autoFit(lib, bone) : [s, 1], pt = newPart(lib, bone, p, r, fit[0]); pt.l = fit[1]; P.parts.push(pt);
+  snap(); let pt, swapped = 0; const ff = s == null && modeBone !== false ? fitPart(lib, bone) : null;
+  if (ff) { swapped = MAIN_KINDS.has(ff.fit.kind) ? swapOut(ff.fit) : 0; pt = newPart(lib, ff.bone, ff.p, ff.r, ff.s); pt.l = ff.l; pt.fit = ff.fit; bone = ff.bone; p = ff.p; }
+  else { const fit = s == null ? (kindOf(LIB[lib]) === 'decor' ? [decorScale(bone), 1] : autoFit(lib, bone)) : [s, 1]; pt = newPart(lib, bone, p, r, fit[0]); pt.l = fit[1]; }
+  P.parts.push(pt);
   const tb = bone && twinName(bone);
-  if (mirrorAdd && (tb ? bones[tb] : Math.abs(p[0]) > .25)) { const t = newPart(lib, tb || bone, [0, 0, 0], [0, 0, 0]); t.twin = pt.uid; pt.twin = t.uid; P.parts.push(t); mirrorInto(pt, t); }
+  if (mirrorAdd && (tb ? bones[tb] : Math.abs(p[0]) > .25)) { const t = newPart(lib, tb || bone, [0, 0, 0], [0, 0, 0]); t.twin = pt.uid; pt.twin = t.uid; if (pt.fit) t.fit = {...pt.fit, drop: twinName(pt.fit.drop) || pt.fit.drop, cover: pt.fit.cover.map(c => twinName(c) || c)}; P.parts.push(t); mirrorInto(pt, t); }
   buildPart(pt); select(pt.uid); outliner(); saveCur();
-  tip(LIB[lib].name + ' added' + (pt.twin ? ' (+ mirrored twin)' : '') + (LIB[lib].params ? ' — shape it with the sliders' : ' — Move tab to adjust'));
+  tip(LIB[lib].name + (swapped ? ' swapped in' : ' added') + (pt.twin ? ' (+ mirrored twin)' : '') + (LIB[lib].params ? ' — shape it with the sliders' : ' — Move tab to adjust'));
   if (LIB[lib].params) { document.querySelector('.tabs [data-tab="shape"]').click(); if (!focusOn) $('bFocus').click(); }
   else if (typeof inWS !== 'undefined' && inWS) frameObj(views[pt.uid].G, 1.4);
 }
@@ -217,7 +365,7 @@ function placeAt(hit) {
   let boneName = null;
   if (hit.object.userData.bone) boneName = hit.object.userData.bone;
   else if (hit.object.userData.uid) { const pt = partBy(hit.object.userData.uid); boneName = pt && pt.bone; }
-  const e = LIB[lib], along = modeBone && isAlong(e) && boneName;
+  const e = LIB[lib], along = modeBone && boneName && (isAlong(e) || MAIN_KINDS.has(kindOf(e)));
   if (addWeaponToPalm(lib, boneName)) return;
   if (e.whole) { const m = mirrorAdd; mirrorAdd = false; addPart(lib, null, [0, 0, 0], [0, 0, 0], 1); mirrorAdd = m; return tip(e.name + ' added as a whole body — sculpt it, erase bits, or add parts on top'); }
   if (along) return addPart(lib, boneName, [0, 0, 0], [0, 0, 0]);
@@ -226,7 +374,7 @@ function placeAt(hit) {
   let n = hit.face ? hit.face.normal.clone().transformDirection(hit.object.matrixWorld) : new THREE.Vector3(0, 1, 0);
   const qW = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), n.normalize()), bq = new THREE.Quaternion(); B.getWorldQuaternion(bq);
   const ql = bq.invert().multiply(qW), eu = new THREE.Euler().setFromQuaternion(ql);
-  addPart(lib, boneName, lp.toArray().map(v => +v.toFixed(3)), [eu.x, eu.y, eu.z].map(v => +(v / D).toFixed(1)), 1);
+  addPart(lib, boneName, lp.toArray().map(v => +v.toFixed(3)), [eu.x, eu.y, eu.z].map(v => +(v / D).toFixed(1)), kindOf(e) ? decorScale(boneName) : 1);
 }
 $('bModeBone').onclick = () => { modeBone = true; $('bModeBone').classList.add('on'); $('bModeSurf').classList.remove('on'); };
 $('bModeSurf').onclick = () => { modeBone = false; $('bModeSurf').classList.add('on'); $('bModeBone').classList.remove('on'); };
@@ -374,7 +522,7 @@ function writeBack(live) {
   if (gzTarget === 'bone') return boneWriteBack();
   if (gzTarget === 'joint') return jointWriteBack(live);
   const pt = partBy(sel), v = views[sel]; if (!pt || !v) return;
-  pt.p = v.G.position.toArray().map(x => +x.toFixed(3)); const e = new THREE.Euler().setFromQuaternion(v.G.quaternion); pt.r = [e.x, e.y, e.z].map(x => +(x / D).toFixed(1));
+  if (pt.fit) pt.fit.tweaked = true; pt.p = v.G.position.toArray().map(x => +x.toFixed(3)); const e = new THREE.Euler().setFromQuaternion(v.G.quaternion); pt.r = [e.x, e.y, e.z].map(x => +(x / D).toFixed(1));
   if (gizmo.mode === 'scale') { const s = v.G.scale; pt.l = +((pt.l || 1) * s.y / pt.s).toFixed(3); pt.w = +((pt.w || 1) * (s.x + s.z) / 2 / pt.s).toFixed(3); v.G.scale.setScalar(pt.s); v.M.scale.set((pt.flip ? -1 : 1) * pt.w, pt.l, pt.w); applyOff(pt, v.M); }
   syncTwin(pt); syncEdit(true);
 }
@@ -390,7 +538,7 @@ function syncEdit(soft) { const pt = partBy(sel);
   if (!pt) return; for (const [s, v, k] of [['sSize', 'vSize', 's'], ['sLen', 'vLen', 'l'], ['sWid', 'vWid', 'w']]) { if (!soft || document.activeElement !== $(s)) $(s).value = pt[k] || 1; $(v).textContent = (+(pt[k] || 1)).toFixed(2); }
   $('bHide').textContent = pt.hidden ? 'Show' : 'Hide'; $('bUnlink').style.display = pt.twin ? '' : 'none'; $('tint').value = pt.tint || '#ffffff'; }
 for (const [s, k] of [['sSize', 's'], ['sLen', 'l'], ['sWid', 'w']]) { $(s).onpointerdown = () => snap();
-  $(s).oninput = e => { const pt = partBy(sel); if (!pt) return; pt[k] = +e.target.value; buildPart(pt); syncTwin(pt); attachGizmo(); syncEdit(true); saveCur(); }; }
+  $(s).oninput = e => { const pt = partBy(sel); if (!pt) return; if (pt.fit) pt.fit.tweaked = true; pt[k] = +e.target.value; buildPart(pt); syncTwin(pt); attachGizmo(); syncEdit(true); saveCur(); }; }
 $('bDup').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); const n = JSON.parse(JSON.stringify(pt)); n.uid = uid(); n.twin = null; n.p[0] += .6; P.parts.push(n); buildPart(n); select(n.uid); saveCur(); tip('Copy made'); };
 $('bFlip').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); pt.flip = !pt.flip; buildPart(pt); syncTwin(pt); attachGizmo(); saveCur(); };
 $('bMirrorPart').onclick = () => { const pt = partBy(sel); if (!pt || pt.twin) return tip(pt ? 'Already has a twin' : 'Pick a part'); snap(); const tb = pt.bone && twinName(pt.bone);
@@ -555,8 +703,8 @@ $('bSaveSkel').onclick = () => { const n = prompt('Name this body type (e.g. My 
   mySkels[k] = SKEL[k] = {name: '★ ' + n, bones: JSON.parse(JSON.stringify(P.bones))}; localStorage.setItem('titan-forge-skels', JSON.stringify(mySkels)); P.skel = k; skelUI(); saveCur(); tip('Saved — it is in the body type list now'); };
 function skelUI() { startersUI(); $('skels').innerHTML = ''; for (const [k, s] of Object.entries(SKEL)) { const b = document.createElement('button'); b.textContent = s.name; b.className = P.skel === k ? 'on' : '';
   b.onclick = () => { if (P.parts.length && !confirm('Switch body type? Parts stay on bones with the same name; others move to the body.')) return; snap(); P.skel = k; P.bones = JSON.parse(JSON.stringify(s.bones)); P.pose = {};
-    const names = new Set(P.bones.map(b => b[0])), fb = (P.bones.find(b => b[4] === 'chest') || P.bones[0])[0]; P.parts.forEach(p => { if (p.bone && !names.has(p.bone)) p.bone = fb; });
-    rebuildSkeleton(); rebuildParts(); skelUI(); outliner(); saveCur(); frameAll(); }; $('skels').append(b); } }
+    const names = new Set(P.bones.map(b => b[0])), fb = (P.bones.find(b => b[4] === 'chest') || P.bones[0])[0]; P.parts.forEach(p => { if (p.bone && !names.has(p.bone)) p.bone = fb; if (p.fit && p.fit.drop && !names.has(p.fit.drop)) p.fit.drop = p.bone; }); P.bodyBase = null; P.body = {};
+    rebuildSkeleton(); const had = P.parts.length; if (had) { refitAll(false); if (hasBase()) buildBase(); } else buildBase(); rebuildParts(); skelUI(); bodyUI(); outliner(); saveCur(); frameAll(); if (!had) tip('Base body ready — tap a body part, then pick a part to swap it in', 3500); }; $('skels').append(b); } }
 function syncBoneUI() { const b = selBone && bones[selBone]; $('boneHint').textContent = b ? `Bone: ${selBone} (${b.userData.tag})` : 'Tap an orange joint to pick a bone. Parts on a bone move with it.';
   if (b) { $('sBone').value = 1; $('vBone').textContent = b.userData.len.toFixed(2); } syncEdit(); }
 $('bBones').onclick = e => { showBones = !showBones; e.target.classList.toggle('on', showBones); boneHelpers.forEach(h => h.visible = showBones); outliner(); };
@@ -572,13 +720,13 @@ function jointWriteBack(live) { const b = bones[selBone]; if (!b) return; b.upda
   const moveSub = (n, dd) => { const r = boneRow(n); r[2] = r[2].map((v, i) => +(v + dd.getComponent(i)).toFixed(3)); r[3] = r[3].map((v, i) => +(v + dd.getComponent(i)).toFixed(3)); P.bones.filter(x => x[1] === n).forEach(x => moveSub(x[0], dd)); };
   const tw = twinName(selBone); moveSub(selBone, d); if (tw && boneRow(tw)) moveSub(tw, new THREE.Vector3(-d.x, d.y, d.z));
   const par = row[1] && boneRow(row[1]); if (par && P.bones.filter(x => x[1] === row[1]).length === 1) { par[3] = [...row[2]]; const tp = twinName(row[1]); if (tw && tp && boneRow(tp)) boneRow(tp)[3] = [...boneRow(tw)[2]]; }
-  rebuildSkeleton(); rebuildParts(); attachGizmo(); saveCur(); }
+  P.bodyBase = null; P.body = {}; rebuildSkeleton(); refitAll(false); rebuildParts(); attachGizmo(); bodyUI(); saveCur(); }
 $('sBone').onpointerdown = () => { snap(); jointStart = selBone && JSON.parse(JSON.stringify(P.bones)); };
 $('sBone').oninput = e => { if (!selBone || !jointStart) return; P.bones = JSON.parse(JSON.stringify(jointStart)); const k = +e.target.value;
   const scaleBone = n => { const r = boneRow(n), h = new THREE.Vector3(...r[2]), t = new THREE.Vector3(...r[3]), nt = h.clone().add(t.clone().sub(h).multiplyScalar(k)), d = nt.clone().sub(t); r[3] = nt.toArray().map(v => +v.toFixed(3));
     const shift = (c, dd) => { const rr = boneRow(c); rr[2] = rr[2].map((v, i) => +(v + dd.getComponent(i)).toFixed(3)); rr[3] = rr[3].map((v, i) => +(v + dd.getComponent(i)).toFixed(3)); P.bones.filter(x => x[1] === c).forEach(x => shift(x[0], dd)); };
     P.bones.filter(x => x[1] === n && new THREE.Vector3(...x[2]).distanceTo(t) < .3).forEach(x => shift(x[0], d)); };
-  scaleBone(selBone); const tw = twinName(selBone); if (tw && boneRow(tw)) scaleBone(tw); $('vBone').textContent = k.toFixed(2) + '×'; rebuildSkeleton(); rebuildParts(); saveCur(); };
+  scaleBone(selBone); const tw = twinName(selBone); if (tw && boneRow(tw)) scaleBone(tw); $('vBone').textContent = k.toFixed(2) + '×'; P.bodyBase = null; P.body = {}; rebuildSkeleton(); refitAll(false); rebuildParts(); saveCur(); };
 $('bAddBone').onclick = () => { if (!selBone) return tip('Tap a joint first'); snap(); const add = (n, sfx) => { const r = boneRow(n), h = new THREE.Vector3(...r[2]), t = new THREE.Vector3(...r[3]), nt = t.clone().add(t.clone().sub(h).multiplyScalar(.8));
     const nm = n.replace(/\.(L|R)$/, '') + '_x' + (P.bones.length) + sfx; P.bones.push([nm, n, t.toArray(), nt.toArray().map(v => +v.toFixed(3)), r[4], r[5]]); return nm; };
   const tw = twinName(selBone); const n1 = add(selBone, selBone.endsWith('.L') ? '.L' : selBone.endsWith('.R') ? '.R' : ''); if (tw && boneRow(tw)) add(tw, tw.endsWith('.L') ? '.L' : '.R');
@@ -688,7 +836,7 @@ $('bMenu').onclick = () => $('menu').classList.toggle('open');
 addEventListener('pointerdown', e => { if (!$('menu').contains(e.target) && e.target !== $('bMenu')) $('menu').classList.remove('open'); });
 
 // ====================================================================== projects, export
-$('mNew').onclick = () => { if (P.parts.length && !confirm('Start a new creature? (Save first if you want to keep this one)')) return; snap(); P = blankProject(P.skel); rebuildSkeleton(); rebuildParts(); outliner(); applyFX(); saveCur(); tip('New creature'); };
+$('mNew').onclick = () => { if (P.parts.length && !confirm('Start a new creature? (Save first if you want to keep this one)')) return; snap(); P = blankProject(P.skel); rebuildSkeleton(); buildBase(); rebuildParts(); outliner(); applyFX(); bodyUI(); saveCur(); tip('New creature — base body ready to build on'); };
 $('mSave').onclick = async () => { const n = prompt('Name this creature', P.name); if (!n) return; P.name = n; await idb('projects', 'readwrite', st => st.put(JSON.stringify(P), n)); saveCur(); tip('Saved "' + n + '"'); };
 $('mLoad').onclick = async () => { const all = await idbAll('projects'); if (!all.length) return tip('Nothing saved yet');
   const n = prompt('Type a name to open:\n' + all.map(a => '• ' + a[0]).join('\n')); const f = all.find(a => a[0] === n); if (!f) return; snap(); restore(f[1]); applyFX(); tip('Opened "' + n + '"'); };
@@ -931,3 +1079,12 @@ addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; con
   tip(Object.keys(LIB).length + ' parts ready. Pick one and tap a bone dot.', 3500);
   window.FORGE = {P: () => P, LIB, addPart, bones: () => bones, views: () => views, select, rebuildParts};   // for testing
 })();
+
+// fit / base body buttons
+$('bBase').onclick = () => { if (hasBase()) { snap(); removeParts(P.parts.filter(p => p.lib.startsWith('base_'))); rebuildParts(); outliner(); saveCur(); return tip('Base body removed (your own parts stay)'); }
+  buildBase(); rebuildParts(); tip('Base body built — tap any piece, then pick a part to swap it in', 3500); };
+$('bRefitAll').onclick = () => { snap(); const n = refitAll(true); rebuildParts(); saveCur(); tip(n + ' parts fitted to the body'); };
+$('bRefit').onclick = () => { const pt = partBy(sel); if (!pt) return tip('Tap a part first'); snap(); if (!pt.fit) { const f = fitPart(pt.lib, pt.bone); if (!f) return tip("This part doesn't have a body slot — move it by hand"); pt.fit = f.fit; }
+  refitPart(pt, true); attachGizmo(); syncEdit(); saveCur(); tip('Fitted to the body'); };
+bodyUI();
+if (!P.parts.length && P.skel !== 'none') { buildBase(); rebuildParts(); setTimeout(frameAll, 50); }   // every skeleton starts with a base body to build on

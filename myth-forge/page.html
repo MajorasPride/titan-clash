@@ -103,7 +103,12 @@
 <h2>How to build in Mythic Forge</h2>
 <h3>1. Start</h3>
 <ul><li>Skeleton tab → <b>Starters</b>: Hero Mech, Basalt Kaiju or Sailback Spinosaur (turtle shells and parts are in the Turtle Kit category). Pull them apart and remix.</li>
-<li>Or pick a <b>Body type</b> for an empty skeleton and build from nothing.</li></ul>
+<li>Or pick a <b>Body type</b>. Every body type comes with a smooth <b>base body</b> (like a mannequin), so you always have a whole creature to work on.</li>
+<li><b>Body shape</b> sliders (Skeleton tab): height, bulk, arm/leg/neck/tail length, head size. Every part refits as you slide, like a game character creator.</li></ul>
+<h3>Swapping parts</h3>
+<ul><li>Pick a part, then tap a body piece (or its bone). It <b>swaps in</b> for what was there and sizes itself to fit: torsos fill the chest to the hips, heads sit on the neck, arms and legs fill the limb, hands and jaws match.</li>
+<li>Fix anything after in the Move tab. <b>↻ Fit to body</b> snaps a part back to its fitted size. <b>↻ Fit all parts</b> (Skeleton tab) does every part.</li>
+<li><b>🧱 Base body on/off</b> hides or brings back the mannequin pieces. Your own parts stay.</li></ul>
 <h3>2. Add parts</h3>
 <ol><li>Add tab → pick a category, then tap a part.</li><li>Tap an orange dot (a bone) or the body. Limbs, tails, necks and wings line up with the bone. Small parts stick on the surface.</li>
 <li>Mirror L/R puts a copy on the other side. Weapons go into the palm of a hand.</li><li><b>Double-tap</b> a part in the grid to add it right away: on the bone you picked, or the first bone that fits it (heads on the head, hands on the hands…).</li></ol>
@@ -172,7 +177,7 @@
   <div class="pane" id="p-edit">
     <div class="row"><button data-gz="translate" class="on">Move</button><button data-gz="rotate">Turn</button><button data-gz="scale">Stretch</button></div>
     <div class="sl"><span>Size</span><input id="sSize" type="range" min=".1" max="4" step=".01"><span id="vSize"></span></div>
-    <div class="row"><button id="bSticky">🧲 Sticky</button><button id="bMold">🫳 Mold</button><button id="bBreak">🧩 Break apart</button><button id="bDup">Duplicate</button><button id="bFocus" class="on">🔍 Focus on this part</button><button id="bFWin">🪟 Focus window</button><button id="bDel">🗑 Delete</button></div>
+    <div class="row"><button id="bRefit">↻ Fit to body</button><button id="bSticky">🧲 Sticky</button><button id="bMold">🫳 Mold</button><button id="bBreak">🧩 Break apart</button><button id="bDup">Duplicate</button><button id="bFocus" class="on">🔍 Focus on this part</button><button id="bFWin">🪟 Focus window</button><button id="bDel">🗑 Delete</button></div>
     <details class="more"><summary>More ▾</summary>
     <div class="row"><button id="bLocal">Local</button><button id="bSnap">Snap off</button></div>
       <div class="sl"><span>Length</span><input id="sLen" type="range" min=".3" max="3" step=".01"><span id="vLen"></span></div>
@@ -213,6 +218,9 @@
     <div class="chips" id="starters"></div>
     <div class="lbl">Body type (empty skeleton)</div>
     <div class="chips" id="skels"></div>
+    <div class="row"><button id="bBase">🧱 Base body on/off</button><button id="bRefitAll">↻ Fit all parts</button></div>
+    <div class="lbl">Body shape (every part refits)</div>
+    <div id="bodySl"></div>
     <div class="row"><button id="bBones" class="on">Show bones</button><button id="bPose">Pose bones</button></div>
     <div class="lbl">Jump to bone #</div>
     <div class="cats" id="boneNums"></div>
@@ -243,6 +251,7 @@
 <script src="k-helpers.js"></script>
 <script src="materials.js"></script>
 <script src="skeletons.js"></script>
+<script src="parts/base-body.js"></script>
 <script src="parts/basic.js"></script>
 <script src="parts/makers.js"></script>
 <script src="parts/creature-heads.js"></script>
@@ -254,6 +263,7 @@
 <script src="parts/turtle-kit.js"></script>
 <script src="parts/dino-kit.js"></script>
 <script src="parts/sphinx.js"></script>
+<script src="parts/tails-wings.js"></script>
 <script src="starters.js"></script>
 <script src="packs/index.js"></script>
 <script type="importmap">

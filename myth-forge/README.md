@@ -33,3 +33,12 @@ MajorasPride's creature + mech builder for Titan Clash. Open `index.html` (GitHu
 - Double-tap a part in the Add grid = add it right away (quickAdd): picked bone, else the first bone whose category fits; weapons into the right hand's palm.
 - Starters now: Hero Mech, Basalt Kaiju, Sailback Spinosaur (dino-kit.js on the 'theropod' body type), Mecha Dragon. Turtle Kit stays as parts only.
 - Asked for next: Beholder body type; easy make-your-own skeleton / remove bones (tools are under Skeleton › More now); 3-headed dragon body type with wing-arms (arms are the wings), 2 legs, 2 tails.
+
+## Nov 9, 2026 update: parts fit the body
+- **Base body** (`parts/base-body.js`, group "Base Body"): smooth mannequin pieces. `buildBase()` covers every bone of any skeleton (trunk egg, capsule per limb bone, head, hands, feet, tail pieces, wings). New creature / new body type / first open start with it. 🧱 Base body on/off.
+- **Fit system** (forge-core.js, "fit system"): `fitPart(lib, bone)` gives bone/p/r/size/length so a part fills its slot. `bodyInfo()` measures the trunk (hips -> neck) and body width W; everything is sized from W. Torsos fill the trunk (re-homed to the root spine bone, aimed at the neck). Heads ~0.5W wide on the neck. Limbs/necks/tails keep their own proportions, cover the whole limb if long (>=3.2) else one bone, only stretch if far too thick/thin. Hands/feet match the limb, jaws match the head, details (`decor`) match the big part on that bone. Kits/packs/clay/makers keep old behaviour (`kindOf` -> null).
+- **Swap**: a main part dropped on a slot replaces what was there (base pieces + same kind), twins included (`swapOut`).
+- `pt.fit = {kind, drop, cover[], tweaked}`. Moving/stretching by hand sets `tweaked`; auto refits (body type switch, joint edits, sliders) skip tweaked parts; ↻ Fit to body (Move tab) / ↻ Fit all parts (Skeleton) force it.
+- **Body shape sliders** (Dragon's Dogma style): height, bulk, arm/leg/neck/tail length, head size. `applyBody()` rebuilds bones from `P.bodyBase` snapshot, keeps feet on the ground, refits. Joint edits clear the snapshot.
+- `parts/tails-wings.js`: first real tails (reptile, spiked, club, plated, fin, whip stinger) and wings (bat/dragon, insect, mech blade).
+- Tested with headless Chrome on 15 body types + mech/kaiju/dragon builds.
