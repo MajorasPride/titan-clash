@@ -174,6 +174,8 @@ const KIT_BACK = {kaiju: 'kl_back_crystal', biped: 'kl_back_plate', dragon: 'kl_
 V3X.defFor = (skel, t, style, level) => { const cx = level !== 'simple', mech = style === 'mech';
   // custom per-skeleton defaults (new body types)
   const kitMain = cx && !mech && ({Head: KIT_HEAD, Hands: KIT_HAND, Feet: KIT_FOOT, 'Tail / tentacles': KIT_TAIL}[t] || {})[skel]; if (kitMain) return kitMain;
+  if (cx && !mech && (t === 'Legs' && KIT_FOOT[skel] || t === 'Arms' && KIT_HAND[skel] && !/mantis|wasp|uprightbug/.test(skel))) { const m = /paw/.test(KIT_FOOT[skel] || '') ? 'fur' : /human/.test((t === 'Arms' ? KIT_HAND : KIT_FOOT)[skel] || '') ? 'skin' : 'scaly'; return 'kl_limb_' + m + (t === 'Arms' ? '_arm' : ''); }
+  if (cx && mech && (t === 'Legs' || t === 'Arms') && !/walker|tank/.test(skel)) return undefined;
   const own = (V3X.DEF3[skel] || {})[t]; if (own !== undefined && !mech) return own;
   if (cx && mech) { if (t === 'Hands') return 'kl_palm_mech'; if (t === 'Tail / tentacles' && !/walker|tank/.test(skel)) return 'kl_tailseg_mech'; }
   const kitHead = onModel(/^kh_/), hk = kitHead && kitHead.lib.slice(3);

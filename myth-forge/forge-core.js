@@ -1535,7 +1535,8 @@ if (window.MF_V2) {
     ['hand', 'Weapon', 'Give it a weapon?', [C('Weapons')], [C('Weapons')], true, 'weapon']];
   if (window.MF_V3) {   // 🔌 plug steps: fill every free plug of that kind (eyes on every head, claws on every finger...). 'simple' = only shown in Complex builds
     const ins = (after, rows) => { const i = PARTSTEPS.findIndex(r => r[1] === after); PARTSTEPS.splice(i + 1, 0, ...rows); };
-    ins('Head', [['head', 'Eyes', 'Which eyes?', [C('Eyes & Faces', ['🔌 Eyes', 'Eyes'])], [C('Mech Eyes & Faces')], true, 'plug:eye'],
+    PARTSTEPS.splice(PARTSTEPS.findIndex(r => r[1] === 'Face'), 1);   // 'Eyes' (plugs) replaces the old Face step
+    ins('Jaw', [['head', 'Eyes', 'Which eyes?', [C('Eyes & Faces', ['🔌 Eyes', 'Eyes'])], [C('Mech Eyes & Faces')], true, 'plug:eye'],
       ['head', 'Teeth', 'Teeth? (top and bottom)', [C('Jaws & Teeth', ['🔌 Tooth rows', 'Tooth Rows'])], [], true, 'plug:teeth', 'complex'],
       ['head', 'Fangs', 'Big fangs or tusks?', [C('Jaws & Teeth', ['🔌 Fangs', 'Teeth & Tusks'])], [], true, 'plug:fang', 'complex'],
       ['head', 'Tongue', 'A tongue?', [C('Jaws & Teeth', ['🔌 Tongues'])], [], true, 'plug:tongue', 'complex']]);
@@ -1543,6 +1544,8 @@ if (window.MF_V2) {
     ins('Horns', [['head', 'Ears', 'Ears or frills?', [C('Eyes & Faces', ['🔌 Ears', 'Ears'])], [], true, 'plug:ear', 'complex'],
       ['head', 'Face bits', 'Brow, nose, cheeks or chin?', [C('Eyes & Faces', ['🔌 Face bits', 'Face Pieces'])], [], true, 'plug', 'complex'],
       ['head', 'Crest / mane', 'A crest, a mane or antennae?', [C('Horns & Crests', ['🔌 Crests', 'Crests & Frills']), C('Heads & Skulls', ['🔌 Manes', 'Manes & Hair']), C('Eyes & Faces', ['🔌 Antennae'])], [], true, 'plug', 'complex']]);
+    const ai = PARTSTEPS.findIndex(r => r[1] === 'Arms'); PARTSTEPS[ai] = [...PARTSTEPS[ai]]; PARTSTEPS[ai][3] = [C('Arms & Shoulders', ['🔌 Limb segments']), ...PARTSTEPS[ai][3]];
+    const li = PARTSTEPS.findIndex(r => r[1] === 'Legs'); PARTSTEPS[li] = [...PARTSTEPS[li]]; PARTSTEPS[li][3] = [C('Legs & Feet', ['🔌 Limb segments']), ...PARTSTEPS[li][3]];
     ins('Hands', [['hand', 'Fingers', 'What kind of fingers?', [C('Hands & Claws', ['🔌 Fingers & toes'])], [C('Hands & Claws', ['🔌 Fingers & toes'])], true, 'plug:finger', 'complex'],
       ['hand', 'Claws', 'Claws or nails on the fingers?', [C('Hands & Claws', ['🔌 Claws'])], [C('Hands & Claws', ['🔌 Claws'])], true, 'plug:claw', 'complex']]);
     ins('Feet', [['foot', 'Toes', 'What kind of toes?', [C('Hands & Claws', ['🔌 Fingers & toes'])], [], true, 'plug:toe', 'complex'], ['foot', 'Toe claws', 'Claws on the toes?', [C('Hands & Claws', ['🔌 Claws'])], [], true, 'plug:claw', 'complex']]);

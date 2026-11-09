@@ -36,17 +36,27 @@
   add('claw_crystal', 'Hands & Claws', '🔌 Claws', 'Crystal claw', {plugAs: 'claw', tags: ['crystal']}, () => [P(new T.ConeGeometry(.07, .5, 5).translate(0, .25, 0), 'crystal')]);
   add('claw_bone', 'Hands & Claws', '🔌 Claws', 'Bone spike claw', {plugAs: 'claw', tags: ['bone']}, () => [P(spike(.6, .07, -.1), 'bone')]);
   add('claw_mech', 'Hands & Claws', '🔌 Claws', 'Mech claw tip', {plugAs: 'claw', tags: ['mech']}, () => [P(claw(.35, .06, .4, .5), 'darkmetal')]);
-  // ---------------- feet (foot bone, +Y toward the toes, +Z = top of the foot); toes curl down
+  // ---------------- feet: modelled standing up like the mech feet (ankle at the origin, +Y up, toes toward +Z, sole at the bottom), the fit keeps them level with the ground; toes curl down
   const foot = (id, name, mat, nT, ex = {}) => { const W = ex.W || .5, plugs = [];
-    for (let i = 0; i < nT; i++) { const x = nT === 1 ? 0 : -W * .7 + i * (W * 1.4 / (nT - 1)); plugs.push(plug('t' + (i + 1), 'toe', [x, .95, -.02], [x * .5, 1, -.05], 'out', {s: ex.ts || .8, r: [0, 180, 0]})); }
-    if (ex.back) plugs.push(plug('tback', 'toe', [0, .12, -.08], [0, -1, -.1], 'out', {s: (ex.ts || .8) * .8, r: [0, 180, 0]}));
+    for (let i = 0; i < nT; i++) { const x = nT === 1 ? 0 : -W * .7 + i * (W * 1.4 / (nT - 1)); plugs.push(plug('t' + (i + 1), 'toe', [x, -.32, 1.0], [x * .5, -.12, 1], 'out', {s: ex.ts || .8, back: [0, 1, 0]})); }
+    if (ex.back) plugs.push(plug('tback', 'toe', [0, -.32, -.32], [0, -.15, -1], 'out', {s: (ex.ts || .8) * .8, back: [0, 1, 0]}));
+    const S = rows => rows.map(([a, w, yt, yb, n]) => ({a, w, t: (yt - yb) / 2, b: (yt - yb) / 2, y: (yt + yb) / 2, n: n || 2.6}));
     add('foot_' + id, 'Legs & Feet', '🔌 Feet', name, {fitKind: 'foot', plugs, tags: ['foot', ...(ex.tags || [])]},
-      () => [P(loft(Sy([[0, W * .55, .25, .12], [.35, W * .8, .2, .14], [.75, W, .16, .14], [.95, W * .9, .1, .1]]), {axis: 'y', rad: 24, per: 4, noise: [.01, 5]}), mat)]); };
+      () => [P(loft(S([[-.42, W * .5, .05, -.5], [-.1, W * .72, .12, -.52], [.35, W * .9, -.02, -.52], [.8, W, -.12, -.5], [1.02, W * .92, -.2, -.46]]), {rad: 24, per: 4, noise: [.01, 5]}), mat)]); };
   foot('dragon', 'Dragon foot (4 toes)', 'scale', 4, {tags: ['dragon', 'kaiju']});
   foot('kaiju', 'Kaiju foot (3 toes)', 'scale', 3, {W: .6, ts: 1, tags: ['kaiju', 'dinosaur']});
   foot('bird', 'Bird foot (3 + back toe)', 'scale', 3, {W: .35, ts: 1.1, back: true, tags: ['bird', 'griffin', 'raptor']});
   foot('paw', 'Beast paw (4 toes)', 'fur', 4, {W: .5, ts: .55, tags: ['paw', 'wolf', 'lion']});
   foot('human', 'Humanoid foot (5 toes)', 'skin', 5, {W: .42, ts: .4, tags: ['human']});
+  // ---------------- limb segments: one per arm / leg bone (0..1 along +Y), so the hands and feet from the kit show (legs with built-in feet hide them)
+  const lseg = (id, name, mat, secs, ex = {}) => { for (const [g, sub] of [['Legs & Feet', '🔌 Limb segments'], ['Arms & Shoulders', '🔌 Limb segments']]) out.push({id: 'kl_limb_' + id + (g === 'Arms & Shoulders' ? '_arm' : ''), group: g, sub, name, fitKind: 'seg', unitLen: 1, perSeg: true, tags: ['kit', 'limb', 'segment', ...(ex.tags || [])],
+      make: () => [P(loft(Sy(secs), {axis: 'y', rad: 22, per: 4, noise: ex.noise || [.015, 5]}), mat), ...(ex.extra ? ex.extra() : [])]}); };
+  lseg('scaly', 'Muscled scaly limb', 'scale', [[-.08, .42, .44], [.25, .52, .55], [.55, .5, .5], [.85, .38, .4], [1.06, .36, .38]], {tags: ['kaiju', 'dragon']});
+  lseg('fur', 'Furry limb', 'fur', [[-.08, .42, .44], [.3, .5, .52], [.7, .42, .44], [1.06, .34, .36]], {noise: [.04, 4], tags: ['beast', 'wolf', 'lion']});
+  lseg('skin', 'Humanoid limb', 'skin', [[-.08, .38, .4], [.3, .45, .46], [.7, .38, .4], [1.06, .3, .32]], {tags: ['human', 'ape']});
+  lseg('chitin', 'Bug limb (jointed)', 'chitin', [[-.06, .3, .3], [.06, .42, .42], [.15, .3, .3], [.9, .26, .26], [1.04, .34, .34]], {noise: [.004, 4], tags: ['bug', 'mantis', 'wasp']});
+  lseg('mech', 'Mech limb (piston)', 'metal', [[-.06, .4, .4, .4, 4], [.1, .46, .46, .46, 4], [.45, .38, .38, .38, 4], [.85, .44, .44, .44, 4], [1.04, .36, .36, .36, 4]], {noise: [0, 1], tags: ['mech'], extra: () => [P(at(X.seg(.8, .12), .3, .1, .3), 'darkmetal')]});
+  lseg('bone', 'Bone limb (undead)', 'bone', [[-.06, .3, .3], [.08, .38, .38], [.2, .18, .18], [.85, .16, .16], [1.04, .32, .32]], {noise: [.01, 6], tags: ['undead', 'skeleton']});
   // ---------------- tail segments: one per tail bone (0..1 along +Y), 🔌 spike on top (world up), belly underneath, tip at the end
   const tseg = (id, name, mat, ex = {}) => add('tailseg_' + id, 'Tails', '🔌 Tail segments', name, {fitKind: 'seg', unitLen: 1, perSeg: true, plugs: [
       plug('tip', 'tailtip', [0, 1, 0], [0, 1, 0], 'out', {s: ex.ts || .55, segEnd: 1}), plug('back1', 'back', [0, .5, 0], [0, 0, -1], 'out', {up: 'world', s: .5, back: [0, -1, 0]}), plug('belly1', 'belly', [0, .5, 0], [0, 0, 1], 'out', {up: 'world', down: 1, s: .5, back: [0, -1, 0]})], tags: ['tail', 'segment', ...(ex.tags || [])]},
