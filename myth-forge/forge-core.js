@@ -470,6 +470,10 @@ function loadStarter(st) { const keep = mirrorAdd; snap(); P = blankProject(st.s
   mirrorAdd = keep; sel = null; applyFX(); outliner(); saveCur(); frameAll(); tip(st.name + ' loaded — tap any part to change it'); }
 function startersUI() { const el = $('starters'); if (!el) return; el.innerHTML = ''; for (const st of STARTERS) { const b = document.createElement('button'); b.textContent = st.name;
   b.onclick = () => { if (P.parts.length && !confirm('Load ' + st.name + '? Your current creature is replaced (save it first with ⋯ if you want it).')) return; loadStarter(st); skelUI(); }; el.append(b); } }
+const mySkels = (() => { try { return JSON.parse(localStorage.getItem('titan-forge-skels') || '{}'); } catch (e) { return {}; } })();
+for (const [k, v] of Object.entries(mySkels)) SKEL[k] = v;
+$('bSaveSkel').onclick = () => { const n = prompt('Name this body type (e.g. My mech frame)'); if (!n) return; const k = 'my_' + Date.now().toString(36);
+  mySkels[k] = SKEL[k] = {name: '★ ' + n, bones: JSON.parse(JSON.stringify(P.bones))}; localStorage.setItem('titan-forge-skels', JSON.stringify(mySkels)); P.skel = k; skelUI(); saveCur(); tip('Saved — it is in the body type list now'); };
 function skelUI() { startersUI(); $('skels').innerHTML = ''; for (const [k, s] of Object.entries(SKEL)) { const b = document.createElement('button'); b.textContent = s.name; b.className = P.skel === k ? 'on' : '';
   b.onclick = () => { if (P.parts.length && !confirm('Switch body type? Parts stay on bones with the same name; others move to the body.')) return; snap(); P.skel = k; P.bones = JSON.parse(JSON.stringify(s.bones)); P.pose = {};
     const names = new Set(P.bones.map(b => b[0])), fb = (P.bones.find(b => b[4] === 'chest') || P.bones[0])[0]; P.parts.forEach(p => { if (p.bone && !names.has(p.bone)) p.bone = fb; });
