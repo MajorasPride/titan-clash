@@ -929,8 +929,8 @@ numCtlUI();
 // ====================================================================== focus window: a small window that stays zoomed on the picked part while the big view shows everything
 const fwCam = new THREE.PerspectiveCamera(35, 1, .05, 3000), FW = {on: false, size: 1, az: .6, el: .35, zoom: 1}, FW_SIZES = [['S', .36], ['M', .5], ['L', .68]];
 function fwLayout() { const w = Math.round(Math.min(innerWidth * FW_SIZES[FW.size][1], innerHeight * .42)); Object.assign($('fwin').style, {width: w + 'px', height: w + 'px'}); $('fwSize').textContent = 'Size ' + FW_SIZES[FW.size][0]; }
-function fwToggle() { FW.on = !FW.on; $('fwin').classList.toggle('on', FW.on); ['bFWin', 'bFWin2'].forEach(id => $(id) && $(id).classList.toggle('on', FW.on)); fwLayout(); if (FW.on && !sel) tip('Tap a part to see it in the window', 2200); }
-$('bFWin').onclick = fwToggle; $('bFWin2').onclick = fwToggle; $('fwClose').onclick = fwToggle;
+function fwToggle() { FW.on = !FW.on; $('fwin').classList.toggle('on', FW.on); ['bFWin', 'bFWin2', 'bFWin3', 'bFWin4'].forEach(id => $(id) && $(id).classList.toggle('on', FW.on)); fwLayout(); if (FW.on && !sel) tip('Tap a part to see it in the window', 2200); }
+$('bFWin').onclick = fwToggle; $('bFWin2').onclick = fwToggle; ['bFWin3', 'bFWin4'].forEach(id => $(id) && ($(id).onclick = fwToggle)); $('fwClose').onclick = fwToggle;
 $('fwSize').onclick = () => { FW.size = (FW.size + 1) % FW_SIZES.length; fwLayout(); };
 { const pts = new Map(); let pinch0 = 0; const el = $('fwin');
   // sculpt / brush paint right inside the window: pen (or one finger when there's no pen) draws, other fingers turn and pinch the window view
@@ -940,6 +940,7 @@ $('fwSize').onclick = () => { FW.size = (FW.size + 1) % FW_SIZES.length; fwLayou
     if (e.pointerType === 'pen' && !penSeen) { penSeen = true; updateOrbit(); }
     const tool = sculpting() && sel && pts.size === 0 && (e.pointerType === 'pen' || (e.pointerType === 'mouse' && e.button === 0) || (e.pointerType === 'touch' && !stylus && !penSeen && !fingerView));
     if (tool) { fwDraw = e.pointerId; pressure = e.pointerType === 'pen' && e.pressure > 0 ? .35 + e.pressure * 1.3 : 1; snap(); stroking = true; lastHit = null; $('ring').style.display = 'none'; inWin(() => brushAt(e.clientX, e.clientY)); return; }
+    if (!sculpting() && e.pointerType === 'pen') tip('To sculpt in this window, open the Sculpt tab (or Paint → Brush paint)', 2600);
     if (fwDraw != null && e.pointerType === 'touch') { stroking = false; fwDraw = null; saveCur(); }      // a second finger turns a stroke into a view move
     pts.set(e.pointerId, [e.clientX, e.clientY]); if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch0 = Math.hypot(a[0] - b[0], a[1] - b[1]); } });
   el.addEventListener('pointermove', e => { if (fwDraw === e.pointerId) { e.stopPropagation(); if (stroking) { if (e.pointerType === 'pen' && e.pressure > 0) pressure = .35 + e.pressure * 1.3; inWin(() => brushAt(e.clientX, e.clientY)); } return; }
