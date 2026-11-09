@@ -213,6 +213,7 @@
   <div class="pane" id="p-start">
     <button class="next" id="bGuide" style="margin-top:2px">🎓 Build together (step by step)</button>
     <div class="row"><button id="bWS2" style="flex:1">🛠 Workshop: make one part by itself</button></div>
+    <details class="pick"><summary>⭐ Default builds (one for every body type) ▾</summary><div class="hint">A finished creature to start from — swap any part.</div><div class="chips wrap" id="defBuilds"></div></details>
     <details class="pick"><summary>🧸 Remix a ready-made creature ▾</summary><div class="chips wrap" id="starters"></div></details>
     <details class="pick"><summary>🦴 Start from an empty body ▾</summary><div class="hint">Comes with a grey mannequin to build on.</div><div class="chips wrap" id="skels"></div></details>
     <details class="pick" open><summary>🎚 Body shape ▾</summary><div id="bodySl"></div>
@@ -1898,19 +1899,55 @@ if (window.MF_V2) {
     spider: ['bd_torso_spider', 'bd_torso_thorax'], crab: ['bd_torso_crab'], insect: ['bd_torso_thorax', 'bd_torso_spider'], scorpion: ['bb_scorpion', 'bd_torso_crab'], moth: ['mo_body', 'mo_torso_furry'], centipede: ['cp_segment'],
     slim: ['bd_torso_brawler', 'sp_torso_gaunt', 'mo_torso_furry'], brute: ['bd_torso_brawler', 'bd_torso_round', 'bd_torso_bloated'], gorilla: ['bd_torso_brawler', 'bd_torso_round', 'mo_torso_furry'],
     fourarm: ['bd_torso_brawler', 'sp_torso_gaunt'], angel: ['bd_torso_brawler', 'sp_torso_gaunt'], blob: ['bb_blob', 'bd_torso_slug', 'bd_torso_bloated'], treefolk: ['tf_trunk', 'tf_trunk_hunch']};
+  // ⭐ default build for every body type: each Build together step starts with this part on, so Next all the way = a finished creature.
+  // keys = step titles in PARTSTEPS. Heads include their own lower jaw, so Jaw is empty by default.
+  const DEF = {
+    biped: {Body: 'bd_torso_brawler', Neck: 'bd_neck_bull', Head: 'hd_head_demon', Horns: 'hd_horn_demon', Arms: 'bd_arm_kaiju', Hands: 'bd_hand_kaiju', Legs: 'bd_leg_pillar', 'Tail / tentacles': 'tw_tail_spiked'},
+    kaiju: {Body: 'bd_torso_dragon', Neck: 'bd_neck_bull', Head: 'hd_head_theropod', Arms: 'bd_arm_kaiju', Hands: 'bd_hand_kaiju', Legs: 'bd_leg_pillar', 'Tail / tentacles': 'tw_tail_spiked'},
+    theropod: {Body: 'dn_body', Neck: 'bd_neck_dragon', Head: 'hd_head_theropod', Arms: 'bd_arm_raptor', Hands: 'bd_hand_sickle', Legs: 'bd_leg_dragon', 'Tail / tentacles': 'tw_tail_reptile'},
+    quad: {Body: 'bb_beast', Neck: 'bd_neck_maned', Head: 'hd_head_wolf', Legs: 'bd_leg_beast', 'Tail / tentacles': 'tw_tail_whip'},
+    sphinx: {Body: 'bb_lion', Neck: 'bd_neck_maned', Head: 'hd_head_lion', Legs: 'bd_leg_beast', Wings: 'sx_wing_feather', 'Tail / tentacles': 'tw_tail_whip'},
+    dragon: {Body: 'bd_torso_dragon', Neck: 'bd_neck_dragon', Head: 'hd_head_dragon', Horns: 'hd_horn_dragon', Legs: 'bd_leg_dragon', Wings: 'tw_wing_bat', 'Tail / tentacles': 'tw_tail_spiked'},
+    hydra: {Body: 'bd_torso_dragon', Neck: 'bd_neck_serpent', Head: 'hd_head_dragon_brute', Legs: 'bd_leg_dragon', 'Tail / tentacles': 'tw_tail_spiked'},
+    wyvern: {Body: 'bd_torso_dragon', Neck: 'bd_neck_dragon', Head: 'hd_head_wyvern', Legs: 'bd_leg_dragon', Wings: 'tw_wing_bat', 'Tail / tentacles': 'tw_tail_whip'},
+    bird: {Body: 'bb_bird', Neck: 'bd_neck_bird', Head: 'hd_head_eagle', Legs: 'bd_leg_bird', Wings: 'sx_wing_feather'},
+    serpent: {Body: 'bb_snakeseg', Head: 'hd_head_seaserpent'},
+    naga: {Body: 'bd_torso_naga', Neck: 'bd_neck_serpent', Head: 'hd_head_cobra', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', 'Tail / tentacles': 'tw_tail_reptile'},
+    spider: {Body: 'bd_torso_spider', Head: 'hd_head_spider', Legs: 'bd_leg_spider'},
+    crab: {Body: 'bd_torso_crab', Head: 'hd_head_crab', Arms: 'bd_arm_crab', Hands: 'bd_hand_crab', Legs: 'bd_leg_insect'},
+    insect: {Body: 'bd_torso_thorax', Head: 'hd_head_ant', Legs: 'bd_leg_insect', 'Extra limbs': 'tw_wing_insect', 'Tail / tentacles': 'mo_abdomen'},
+    scorpion: {Body: 'bb_scorpion', Head: 'hd_head_spider', Arms: 'bd_arm_crab', Hands: 'bd_hand_scorpion', Legs: 'bd_leg_insect', 'Tail / tentacles': 'tw_tail_whip'},
+    moth: {Body: 'mo_body', Head: 'mo_head', Legs: 'bd_leg_insect', Wings: 'mo_wing', 'Extra limbs': 'mo_wing_hind', 'Tail / tentacles': 'mo_abdomen'},
+    centipede: {Body: 'cp_segment', Head: 'cp_head', Legs: 'cp_leg', 'Tail / tentacles': 'cp_tail_feelers'},
+    fish: {Body: 'bb_fish', Head: 'hd_head_shark', 'Tail / tentacles': 'tw_tail_fin'},
+    octopus: {Body: 'kr_mantle', Head: 'hd_head_octopus', 'Tail / tentacles': 'kr_tentacle'},
+    blob: {Body: 'bb_blob', Head: 'hd_head_grey', Face: 'hd_eye_horror_cluster'},
+    treefolk: {Body: 'tf_trunk', Head: 'tf_face_elder', Horns: 'tf_leaf_crown', Arms: 'tf_arm_branch', Hands: 'tf_hand_twig', Legs: 'tf_leg_root', Feet: 'tf_foot_roots'},
+    centaur: {Body: 'bb_horse', Head: 'hd_head_demon', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', Legs: 'bd_leg_beast', 'Tail / tentacles': 'tw_tail_whip'},
+    slim: {Body: 'sp_torso_gaunt', Head: 'hd_head_xeno', Arms: 'sp_arm_gaunt', Hands: 'sp_hand_claw', Legs: 'sp_leg_gaunt'},
+    brute: {Body: 'bd_torso_round', Neck: 'bd_neck_bull', Head: 'hd_head_boar', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', Legs: 'bd_leg_pillar'},
+    gorilla: {Body: 'bd_torso_brawler', Head: 'hd_head_ape', Arms: 'bd_arm_brawler', Hands: 'bd_hand_bear', Legs: 'bd_leg_beast'},
+    fourarm: {Body: 'bd_torso_brawler', Head: 'hd_head_demon', Horns: 'hd_horn_ram', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed'},
+    angel: {Body: 'bd_torso_brawler', Head: 'hd_head_eagle', Arms: 'bd_arm_brawler', Hands: 'bd_hand_clawed', Legs: 'bd_leg_beast', Wings: 'sx_wing_feather'}};
+  const DEF_MECH = {Body: null, Neck: 'mn_neck_piston', Head: 'mk_head_vcrest', Arms: 'mk_arm_full', Hands: 'mk_hand_fist', Legs: 'mk_leg_full', Feet: 'mk_foot_armored', Wings: 'tw_wing_mech', 'Tail / tentacles': 'tw_tail_plated', 'Armor + extras': 'mk_sh_round'};
+  const DEF_MECH_SK = {walker: {Head: 'mk_head_camera', Arms: 'mk_arm_missile', Legs: 'mk_leg_chicken'}, tank: {Head: 'mk_head_monoeye', Hands: 'mk_hand_claw'}};
+  const defFor = st => { const t = st.t; let id = BT.style === 'mech' ? (t === 'Body' ? fitsFor()[0] : {...DEF_MECH, ...(DEF_MECH_SK[P.skel] || {})}[t]) : (DEF[P.skel] || {})[t];
+    if (!id && BT.style !== 'mech' && t === 'Body') id = fitsFor()[0]; return id && LIB[id] ? (lpParts && LIB[id].hasLpv ? LIB[id].hasLpv : id) : null; };
   const MECHY = id => /^(mk_|md_|bb_tank|bb_walker)/.test(id);
   const fitsFor = () => { let L = (BODY_FOR[P.skel] || []).filter(id => LIB[id]); const f = BT.style === 'mech' ? L.filter(MECHY) : BT.style === 'creature' ? L.filter(id => !MECHY(id)) : L; return f.length ? f : L; };
   const srcOf = st => BT.style === 'mech' ? (st.mech.length ? st.mech : st.cre) : BT.style === 'mix' ? [...st.mech, ...st.cre] : st.cre;
   const choicesOf = st => { const out = []; if (st.how === 'trunk' && fitsFor().length) out.push({fit: true, label: '⭐ Fits ' + ((SKEL[P.skel] || {}).name || 'this body').split(' (')[0].toLowerCase()}); for (const c of srcOf(st)) { const subs = [...new Set(Object.values(LIB).filter(e => e.group === c.g && !e.lpv && (!c.subs || c.subs.includes(e.sub))).map(e => e.sub))];
     subs.forEach(sb => out.push({g: c.g, sub: sb, label: (BT.style === 'mix' && /^Mech /.test(c.g) ? '🤖 ' : '') + sb})); } return out; };
   const partsOf = ch => ch.fit ? fitsFor().map(id => lpParts && LIB[id].hasLpv ? LIB[id].hasLpv : id) : Object.keys(LIB).filter(id => { const e = LIB[id]; return e.group === ch.g && e.sub === ch.sub && (lpParts ? !e.hasLpv : !e.lpv); });
-  function btPlace(st, id) { if (BT.added.length) { removeParts(BT.added.map(partBy).filter(Boolean)); BT.added = []; }
+  function btPlace(st, id, quiet) { if (BT.added.length) { removeParts(BT.added.map(partBy).filter(Boolean)); BT.added = []; }
     snap(); const before = new Set(P.parts.map(p => p.uid)), e = LIB[id], m = mirrorAdd, keepMode = modeBone; modeBone = true;
     if (st.how === 'weapon') { const hands = famBones('hand'), h = hands.find(n => n.endsWith('.R')) || hands[0]; if (!h || !addWeaponToPalm(id, h)) addPart(id, (P.bones.find(r => r[4] === 'chest') || P.bones[0])[0], [0, 0, 0], [0, 0, 0]); }
     else if (st.how === 'trunk' && e.perSeg) { mirrorAdd = false; P.bones.filter(r => TRUNK_TAGS.has(r[4])).forEach(r => addPart(id, r[0], [0, 0, 0], [0, 0, 0])); }
     else if (st.how === 'trunk' || st.how === 'decor') { const tb = st.fam === 'trunk' ? (P.bones.find(r => r[4] === 'chest') || P.bones.find(r => TRUNK_TAGS.has(r[4])) || P.bones[0])[0] : famRoots(st.fam)[0]; mirrorAdd = false; addPart(id, tb, [0, 0, 0], [0, 0, 0]); }
     else { const roots = famRoots(st.fam); mirrorAdd = false; roots.forEach(r => addPart(id, r, [0, 0, 0], [0, 0, 0])); }
-    mirrorAdd = m; modeBone = keepMode; BT.added = P.parts.filter(p => !before.has(p.uid)).map(p => p.uid); rebuildParts(); outliner(); saveCur();
+    mirrorAdd = m; modeBone = keepMode; BT.added = P.parts.filter(p => !before.has(p.uid)).map(p => p.uid); (BT.addedBy = BT.addedBy || {})[BT.i] = BT.added;
+    if (st.t === 'Head') { const jaws = new Set(P.bones.filter(r => r[4] === 'jaw').map(r => r[0])); removeParts(P.parts.filter(p => p.lib.startsWith('base_') && jaws.has(p.bone))); }   // heads come with their own lower jaw
+    rebuildParts(); outliner(); saveCur(); if (quiet) return;
     tip(e.name + ' on ✓' + (st.how === 'decor' ? ' — drag it where you want it' : ''), 2200); btShow(); }
   function btSteps() { const steps = [];
     steps.push({k: 'style'}); steps.push({k: 'body'}); steps.push({k: 'shape'});
@@ -1929,18 +1966,20 @@ if (window.MF_V2) {
     if (st.k === 'body') { q('Which body (skeleton)? Every body comes with a grey mannequin to build on. Tap one:'); const r = row('gc scroll');
       btn(r, '✓ Keep the one I have', () => { btSteps(); btGo(2); }, true);
       for (const [k, sk] of Object.entries(SKEL)) { if (k === 'none') continue; btn(r, sk.name, () => { if (mineNow().length && !confirm('Start fresh on a ' + sk.name + '? Parts you added will be cleared (save first if you want them).')) return;
-        snap(); P = blankProject(k); rebuildSkeleton(); buildBase(); rebuildParts(); outliner(); applyFX(); bodyUI(); saveCur(); frameAll(); btSteps(); btGo(2); }, P.skel === k); } nav(); return; }
+        snap(); P = blankProject(k); rebuildSkeleton(); buildBase(); rebuildParts(); outliner(); applyFX(); bodyUI(); saveCur(); frameAll(); BT.addedBy = {}; BT.defDone = {}; btSteps(); btGo(2); }, P.skel === k); } nav(); return; }
     if (st.k === 'shape') { q('What shape should it be? (Fine-tune any time with the sliders in 🏁 Start.)'); const r = row();
       for (const [t, v] of SHAPES) btn(r, t, () => { snap(); P.body = {...v}; applyBody(); bodyUI(); }, JSON.stringify(P.body || {}) === JSON.stringify(v));
       btn(r, '🎚 Sliders', () => { tabBtn('start').click(); BT.small = true; document.body.classList.add('gside'); btShow(); }); nav(); return; }
     if (st.k === 'part') { const chs = choicesOf(st), roots = st.how ? [] : famRoots(st.fam);
+      if (st.t === 'Jaw') q('<span class="go">Heads already come with their lower jaw. Only pick one here to swap it for a different jaw.</span>');
       q(st.q + (roots.length > 1 ? ` <span class="go">(goes on all ${roots.length})</span>` : '') + (st.opt ? ' <span class="go">optional</span>' : '')); const r = row();
       if (!BT.pick || !chs.some(c => !!c.fit === !!BT.pick.fit && c.g === BT.pick.g && c.sub === BT.pick.sub)) BT.pick = chs[0];
       chs.forEach(c => btn(r, c.label, () => { BT.pick = c; btShow(); }, BT.pick === c || (!!BT.pick.fit === !!c.fit && BT.pick.g === c.g && BT.pick.sub === c.sub)));
       const ids = partsOf(BT.pick), grid = row('gg');
       ids.slice(0, 12).forEach(id => { const b = document.createElement('button'), im = document.createElement('img'); im.src = thumb(id); b.append(im, Object.assign(document.createElement('span'), {textContent: LIB[id].name}));
         if (BT.added.some(u => (partBy(u) || {}).lib === id)) b.className = 'on'; b.onclick = () => btPlace(st, id); grid.append(b); });
-      const tools = row(); btn(tools, '🎲 Surprise me', () => btPlace(st, ids[Math.random() * ids.length | 0]));
+      const tools = row(); if (BT.added.length) btn(tools, '🚫 None', () => { removeParts(BT.added.map(partBy).filter(Boolean)); BT.added = []; BT.addedBy[BT.i] = []; rebuildParts(); outliner(); saveCur(); btShow(); });
+      btn(tools, '🎲 Surprise me', () => btPlace(st, ids[Math.random() * ids.length | 0]));
       btn(tools, '✋ I\'ll drag one on myself', () => { if (BT.pick.fit) openCat(LIB[fitsFor()[0]].group); else openCat(BT.pick.g, BT.pick.sub); BT.small = true; document.body.classList.add('gside'); btShow(); });
       nav(BT.added.length ? 'Next ▶' : 'Skip ▶'); return; }
     if (st.k === 'move') { q('Anything look off? Tap a part (orange outline), then drag it. Let go on the body = sticks. Let go in the air = floats. Size slider and 🎯 Arrows are in ✋ Move & size.');
@@ -1955,12 +1994,21 @@ if (window.MF_V2) {
     if (st.k === 'look') { q('Titan Clash is low-poly with toon shading and outlines. See it that way?'); const r = row();
       btn(r, '🎮 Yes, game look', () => { if (!(P.fx.lowpoly && P.fx.toon)) $('bGameLook').click(); }, !!(P.fx.lowpoly && P.fx.toon)); btn(r, 'Not now', () => btGo(BT.i + 1)); nav(); return; }
     if (st.k === 'save') { q('You built a titan! 🎉 Save it so you can come back to it.'); const r = row(); btn(r, '💾 Save as…', () => $('mSave').click(), true); btn(r, '⬇ Download for the game (.glb)', () => $('mExport').click()); nav('🎉 Done'); return; } }
-  function btGo(i) { BT.i = Math.max(0, Math.min(BT.steps.length - 1, i)); BT.added = []; BT.pick = null; BT.small = false; const st = BT.steps[BT.i];
+  function btGo(i) { BT.i = Math.max(0, Math.min(BT.steps.length - 1, i)); BT.addedBy = BT.addedBy || {}; BT.added = (BT.addedBy[BT.i] || []).filter(u => partBy(u)); BT.pick = null; BT.small = false; const st = BT.steps[BT.i];
+    BT.defDone = BT.defDone || {}; if (st.k === 'part' && !BT.defDone[BT.i]) { BT.defDone[BT.i] = true; const d = defFor(st); if (d) btPlace(st, d, true); }
     document.body.classList.remove('gside'); btShow(); }
-  function btStart() { $('menu').classList.remove('open'); BT.on = true; btSteps(); BT.style = P.skel === 'mech' || P.skel === 'walker' || P.skel === 'tank' ? 'mech' : 'creature'; btGo(0); }
+  function btStart() { $('menu').classList.remove('open'); BT.on = true; BT.addedBy = {}; BT.defDone = {}; btSteps(); BT.style = P.skel === 'mech' || P.skel === 'walker' || P.skel === 'tank' ? 'mech' : 'creature'; btGo(0); }
   function btEnd(won) { BT.on = false; $('guide').style.display = 'none'; document.body.classList.remove('guiding', 'gside'); if (won === true) tip('🎉 Titan built! Start › 🎓 Build together to make another', 4000); }
   $('bGuide').onclick = btStart; $('mGuide').onclick = btStart;
-  window.__fresh = k => { P = blankProject(k); rebuildSkeleton(); buildBase(); rebuildParts(); outliner(); frameAll(); }; window.__fits = () => fitsFor(); window.__bones = () => P.bones;   // test hooks
+  // ⭐ Default builds: one finished creature per body type (Start tab), made from the same defaults
+  function buildDefault(k, style) { if (P.parts.some(p => !p.lib.startsWith('base_')) && !confirm('Replace what is on screen with the default ' + (SKEL[k] || {}).name + '? (Save first if you want to keep it)')) return;
+    snap(); P = blankProject(k); rebuildSkeleton(); buildBase(); rebuildParts(); BT.style = style || (/^(mech|walker|tank)$/.test(k) ? 'mech' : 'creature'); btSteps(); BT.addedBy = {};
+    BT.steps.forEach((st, i) => { if (st.k !== 'part') return; BT.i = i; BT.added = []; const d = defFor(st); if (d) btPlace(st, d, true); }); BT.i = 0; outliner(); applyFX(); bodyUI(); skelUI(); saveCur(); frameAll(); tip('⭐ Default ' + (SKEL[k] || {}).name + ' — change anything you like', 2600); }
+  const defUI = () => { const el = $('defBuilds'); if (!el) return; el.innerHTML = ''; for (const [k, sk] of Object.entries(SKEL)) { if (k === 'none' || (!DEF[k] && !/^(mech|walker|tank)$/.test(k))) continue;
+      el.append(Object.assign(document.createElement('button'), {textContent: sk.name, onclick: () => buildDefault(k)})); }
+    el.append(Object.assign(document.createElement('button'), {textContent: '🤖 Mech (default)', onclick: () => buildDefault('mech', 'mech')})); }; defUI();
+  window.__def = buildDefault;
+  window.__fresh = k => { P = blankProject(k); rebuildSkeleton(); buildBase(); rebuildParts(); outliner(); frameAll(); }; window.__fits = () => fitsFor(); window.__btAuto = (style, skipOpt) => { BT.style = style || 'creature'; btSteps(); for (const st of BT.steps) { if (st.k !== 'part' || (skipOpt && st.opt)) continue; BT.pick = null; const ch = choicesOf(st)[0]; if (!ch) continue; const ids = partsOf(ch); if (ids[0]) { BT.added = []; btPlace(st, ids[0]); } BT.added = []; } }; window.__bones = () => P.bones;   // test hooks
   // ---- first-time tour for the new layout
   TOUR.length = 0; TOUR.push(
     {t: 'Welcome to Mythic Forge', p: 'Build monsters and mechs like a toy: drag parts on, move them around, sculpt and paint. Pick something to start with:', start: true},

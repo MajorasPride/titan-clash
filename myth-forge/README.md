@@ -142,3 +142,8 @@ Looked at how Nomad Sculpt (phone) and Blender sculpt mode do it; he picked all 
 - `bodyInfo()` W: bug bodies (>= 6 legU on a trunk of <= 2 bones that's flat) W = max(W, leg reach x 2 x .4, len x 1.15); bodies with no arms / legs W = max(W, min(len x .9, 4.5)).
 - Parts can say `perSeg: true` (Build together puts them on every trunk bone; with `fitKind: 'seg', unitLen: 1`): `cp_segment`, new `bb_snakeseg`. `bb_snake` has `fitKind: 'tail'` (follows the spine as one straight piece; for naga / straight serpents).
 - `BODY_FOR` (v2 section) = the ⭐ bodies per body type. Test hooks `__fresh(k)`, `__fits()`, `__bones()` + `/tmp`-style headless contact sheet of all 30 body types were used to check.
+
+## Nov 9, 2026 (5am): default builds
+- v2 section: `DEF[skel][stepTitle] = partId` (step titles = PARTSTEPS titles: Body, Neck, Head, Jaw, Face, Horns, Arms, Hands, Legs, Feet, Wings, 'Tail / tentacles', 'Extra limbs', 'Armor + extras', Weapon), `DEF_MECH` + `DEF_MECH_SK` for the mech style, `defFor(st)`.
+- Build together: `btGo` auto-places the default the first time a part step opens (`BT.defDone`), `BT.addedBy[stepIndex]` remembers what each step added so going back / swapping replaces it; 🚫 None removes it. Head step removes base_ pieces on jaw bones (all current heads + skulls include their lower jaw).
+- `buildDefault(k, style)` (Start › ⭐ Default builds, `#defBuilds`; test hook `__def`). `__btAuto(style, skipOpt)` = first part of every step (test hook).
