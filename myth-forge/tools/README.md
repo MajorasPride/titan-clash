@@ -5,3 +5,6 @@ Not part of the app. Paths inside assume the repo is at `/home/claude/titan-clas
 - `node walk.js <phone|pc> <simple|complex> [k1,k2]` — Build together from step 1 to 🎉 Done with real taps; prints PASS / FAIL per body type.
 - `node parts.js parts/kit-limbs.js ...` — runs every `make()` in node (catches a broken parts file, which fails silently in the page).
 - `node shot.js "k:style:dx,dy,dz:zoom:libRegex"` close-ups; `node looks.js k1,k2` game look + block toy look; `mont.js` joins pictures.
+- Before building: `cat forge-core.js forge-v3.js forge-m.js > /tmp/all.mjs && node --check /tmp/all.mjs` (a syntax error means the page never loads and every tool times out after 60 s).
+- Two walks run side by side on 2 cores (about 7 minutes for all body types each).
+- `node stance.js` — crocodile stance switch (crawl → stand → crawl): part counts, button text, page errors. `node sheet12.js dir` — 15 creatures per contact sheet. `node parts0.js parts/bodies-more.js` — like parts.js for the core part files. `node bend.js` — body types whose trunk bends sharply.

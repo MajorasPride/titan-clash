@@ -1,0 +1,10 @@
+const H=require('./lib');(async()=>{const {page,errs,close}=await H.open(process.argv[2]||'pcs');
+const hide=()=>page.evaluate(()=>{if(!window.__sh){window.__sh=1;const st=document.createElement('style');st.textContent='#sheet,#vtools,#mbar,#tip,#outliner,#fwin,.top ~ button, body > button{display:none!important}';document.head.appendChild(st);}});
+const info=()=>page.evaluate(()=>{const P=window.__v3.P();return {skel:P.skel,n:P.parts.length,hosted:P.parts.filter(p=>p.host).length,btn:document.getElementById('bStanceV').style.display+'|'+document.getElementById('bStanceV').textContent}});
+await page.evaluate(()=>{window.__fresh('croc');window.__def('croc');});console.log(await info());
+await page.evaluate(()=>{window.V3.stance();window.__frames(2);});console.log(await info());await hide();
+await page.evaluate(()=>{window.__v3.look(null,[1,.25,.8],1.9);window.__frames(2);});await page.screenshot({path:'st-1.png'});
+await page.evaluate(()=>{window.V3.stance();window.__frames(2);});console.log(await info());
+await page.evaluate(()=>{window.__v3.look(null,[1,.25,.8],1.9);window.__frames(2);});await page.screenshot({path:'st-2.png'});
+await page.evaluate(()=>{window.__fresh('biped');window.__frames(1);});console.log(await info());
+console.log(errs);await close();H.stop();})();

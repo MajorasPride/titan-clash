@@ -84,6 +84,18 @@
       ['clawarm', 'body', [.9, 2.5, 1.5], [2.5, 2.7, 2.9], 'armU'], ['clawfore', 'clawarm#', [2.5, 2.7, 2.9], [2.5, 2.9, 4.6], 'armF'], ['pincer', 'clawfore#', [2.5, 2.9, 4.6], [2.3, 2.9, 7.0], 'hand']]),
     ...lobLeg(1, 1.0, .5), ...lobLeg(2, .35, .15), ...lobLeg(3, -.3, -.2), ...lobLeg(4, -.95, -.5),
     ...chain('tail', 'body', [[0, 2.75, -1.35], [0, 2.75, -2.4], [0, 2.7, -3.4], [0, 2.6, -4.35], [0, 2.45, -5.2], [0, 2.25, -6.0]], 'tail')]};
+  // 🐊 Giant crocodile (Nov 9 late): TWO body types with the SAME bone names, so one creature can switch between them (stance: the other key).
+  // Crawling = belly low, legs sprawled out to the sides, tail on the ground. Standing = upright on its back legs, tail as a prop.
+  const crocBones = (trunk, neckTip, headTip, jaw, arm, leg, tail) => [['hips', null, trunk[0], trunk[1], 'spine'], ['spine', 'hips', trunk[1], trunk[2], 'spine'], ['chest', 'spine', trunk[2], trunk[3], 'chest'],
+    ['neck', 'chest', trunk[3], neckTip, 'neck'], ['head', 'neck', neckTip, headTip, 'head', {up: 1}], ['jaw', 'head', jaw[0], jaw[1], 'jaw', {up: 1}],
+    ...both([['shoulder', 'chest', arm[0], arm[1], 'armU'], ['upperarm', 'shoulder#', arm[1], arm[2], 'armU'], ['forearm', 'upperarm#', arm[2], arm[3], 'armF'], ['hand', 'forearm#', arm[3], arm[4], 'hand'],
+      ['thigh', 'hips', leg[0], leg[1], 'legU'], ['shin', 'thigh#', leg[1], leg[2], 'legL'], ['foot', 'shin#', leg[2], leg[3], 'foot']]), ...chain('tail', 'hips', tail, 'tail')];
+  T.croc = {name: '🐊 Giant crocodile (crawling)', stance: 'croc2', stanceName: '🧍 Stand up', bones: crocBones([[0, 1.9, -2.4], [0, 2.0, -.9], [0, 2.0, .9], [0, 1.95, 2.6]], [0, 2.0, 3.5], [0, 2.4, 5.4], [[0, 1.85, 3.8], [0, 1.65, 5.3]],
+    [[.9, 1.9, 2.3], [1.5, 1.9, 2.3], [2.5, 1.75, 1.8], [2.7, .4, 2.5], [2.8, .14, 3.4]], [[1.1, 1.9, -2.2], [2.6, 1.65, -1.7], [2.8, .45, -2.6], [2.9, 0, -1.5]],
+    [[0, 1.9, -2.5], [0, 1.7, -4.0], [.15, 1.4, -5.5], [.4, 1.1, -7.0], [.5, .9, -8.4], [.3, .7, -9.7], [-.1, .6, -10.9], [-.5, .5, -12.0], [-.8, .45, -12.9]])};
+  T.croc2 = {name: '🐊 Giant crocodile (standing)', stance: 'croc', stanceName: '🐊 Get down (crawl)', bones: crocBones([[0, 5.0, 0], [0, 6.3, .3], [0, 7.9, .8], [0, 9.4, 1.5]], [0, 10.1, 2.2], [0, 10.5, 4.1], [[0, 10.0, 2.5], [0, 9.8, 4.0]],
+    [[.9, 9.0, 1.3], [1.5, 9.0, 1.3], [2.1, 7.6, 1.6], [2.2, 6.4, 2.6], [2.2, 5.8, 3.4]], [[1.1, 5.0, 0], [1.5, 3.0, .8], [1.5, .8, -.1], [1.5, 0, 1.2]],
+    [[0, 4.9, -.7], [0, 3.9, -2.1], [.1, 2.8, -3.4], [.3, 1.9, -4.8], [.45, 1.2, -6.2], [.35, .75, -7.6], [0, .55, -8.9], [-.4, .5, -10.0], [-.7, .45, -10.9]])};
   // default builds that use the same bones under a new name (each is its own ⭐ default build + Build together body)
   const alias = (k, name, from) => { T[k] = {name, bones: (typeof from === 'string' ? T[from].bones : from).map(b => b.slice())}; };
   alias('storm_el', '🌋 Storm elemental', 'elemental'); alias('wind_el', '🌋 Wind elemental', 'elemental'); alias('water_el', '🌋 Water elemental', 'elemental');
@@ -98,6 +110,8 @@
   window.FORGE_HALVES = ['quad', 'dragon', 'sphinx', 'chimera', 'hippogriff', 'centaur', 'hydra', 'turtle'];
   // defaults for Build together / ⭐ default builds of the new body types (step title -> part id)
   window.FORGE_DEF3 = {
+    croc: {Body: 'kcr_body', Neck: 'kcr_neck', Head: 'kh_croc', Arms: 'kcr_limb_arm', Hands: 'kl_palm_beast', Legs: 'kcr_limb', Feet: 'kl_foot_dragon', 'Tail / tentacles': 'kcr_tailseg', Eyes: 'kp_eye_slit', Teeth: 'kcr_teeth', 'Tail tip': null, 'Back spikes': null, Horns: null, 'Face bits': null, _tailEnd: ['kcr_tailseg_fin', 3]},
+    croc2: {Body: 'kcr_body', Neck: 'kcr_neck', Head: 'kh_croc', Arms: 'kcr_limb_arm', Hands: 'kl_palm_beast', Legs: 'kcr_limb', Feet: 'kl_foot_dragon', 'Tail / tentacles': 'kcr_tailseg', Eyes: 'kp_eye_slit', Teeth: 'kcr_teeth', 'Tail tip': null, 'Back spikes': null, Horns: null, 'Face bits': null, _tailEnd: ['kcr_tailseg_fin', 3]},
     fish: {Body: 'ks_shark_body', Head: 'kh_shark', Wings: 'ks_fin_pectoral', 'Extra limbs': 'ks_fin_dorsal', 'Tail / tentacles': 'ks_shark_tail', 'Tail tip': null, Eyes: 'ks_eye_shark', Teeth: 'kp_row_saw', 'Back spikes': null},
     bonyfish: {Body: 'ks_fish_body', Head: 'kh_fish', Wings: 'ks_fin_round', 'Extra limbs': 'ks_fin_spiny', 'Tail / tentacles': 'ks_fish_tail', 'Tail tip': null, Eyes: 'ks_eye_fish', Teeth: null, 'Back spikes': null},
     lobster: {Body: 'ks_lob_carapace', Head: 'ks_lob_face', Arms: 'ks_lob_arm', Hands: 'ks_lob_claw', Legs: 'ks_lob_leg', 'Tail / tentacles': 'ks_lob_seg', 'Tail tip': 'ks_lob_fan', 'Extra limbs': 'ks_lob_antenna', Eyes: null, 'Back spikes': null},

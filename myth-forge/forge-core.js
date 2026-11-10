@@ -411,6 +411,7 @@ function bodyInfo() {                                           // trunk path, s
   let path = null;
   for (const r of tr.filter(r => !r[1] || !R[r[1]] || !TRUNK_TAGS.has(R[r[1]][4]))) { const p = [r]; for (;;) { const k = kidRows(p[p.length - 1][0]).find(x => TRUNK_TAGS.has(x[4]) && !/\.(L|R)$/.test(x[0])); if (!k) break; p.push(k); } if (!path || p.length > path.length) path = p; }
   if (!path) { const r = P.bones[0]; path = [r]; }
+  { const dir = r => v3(r[3]).sub(v3(r[2])).normalize(); for (let i = 2; i < path.length; i++) if (dir(path[i]).dot(dir(path[i - 1])) < .5) { path = path.slice(0, i); break; } }   // a trunk that turns sharply upward after the body (centaur: horse barrel, then the human torso): the body part covers the level part only
   const start = v3(path[0][2]), end = v3(path[path.length - 1][3]), len = Math.max(.3, start.distanceTo(end)), names = new Set(path.map(r => r[0]));
   let sh = 0, hp = 0; for (const r of P.bones) { if (!names.has(r[1])) continue;
     if (r[4] === 'armU') { const stub = kidRows(r[0]).find(k => k[4] === 'armU'); sh = Math.max(sh, Math.abs((stub ? r[3] : r[2])[0])); }
@@ -462,7 +463,7 @@ function fitPart(lib, bone) {
   if (kind === 'seg') {                                          // base-body piece: exactly this bone
     const r = R[bone], len = Math.max(.15, v3(r[2]).distanceTo(v3(r[3]))); let i = 0, c = r; while (c[1] && R[c[1]] && R[c[1]][4] === tag) { i++; c = R[c[1]]; }
     if (!c[1] && tag === 'tail') { i = 0; let d = r; for (;;) { const k = kidRows(d[0]).find(x => x[4] === tag); if (!k) break; i++; d = k; } }   // tail grows out of the root (naga): thick end is the body end
-    const T = FAMILY[tag] === 'trunk' ? thickFor(B, tag) * Math.pow(.93, i) : thickFor(B, tag, i); out.s = +(T / thick).toFixed(3); out.l = +(len / ((e.unitLen || plen) * out.s)).toFixed(3); if (e.keel) out.r = keelRot(R, bone, v3(r[3])); return out; }
+    const T = FAMILY[tag] === 'trunk' ? thickFor(B, tag) * Math.pow(.93, i) : thickFor(B, tag, e.even ? i * .35 : i); /* `even`: pieces that stay about the same size down the chain (giant spine) */ out.s = +(T / thick).toFixed(3); out.l = +(len / ((e.unitLen || plen) * out.s)).toFixed(3); if (e.keel) out.r = keelRot(R, bone, v3(r[3])); return out; }
   if (kind === 'head') {
     // a head dropped on the body, neck or jaw goes to the head slot it belongs to (the neck's own head, else the nearest head)
     if (FAMILY[tag] !== 'head' && (FAMILY[tag] === 'trunk' || FAMILY[tag] === 'neck' || FAMILY[tag] === 'jaw')) { const hb = headSlotFor(bone); if (hb) { bone = hb; out.bone = hb; out.fit.drop = hb; out.fit.cover = [hb]; } }
@@ -479,7 +480,9 @@ function fitPart(lib, bone) {
     const T = thickFor(B, ptag) * 1.3; out.s = +Math.min(4, Math.max(.15, T / pw)).toFixed(3);
     if (kind === 'foot' && FAMILY[tag] === 'foot') { // mech feet are modelled upright (+Y up, +Z forward): keep them level with the ground
       const q = restQOf(R[bone]).invert(), eu = new THREE.Euler().setFromQuaternion(q); out.r = [eu.x, eu.y, eu.z].map(v => +(v / D).toFixed(1));
-      const ank = v3(R[bone][2]), drop = new THREE.Vector3(0, -(ank.y + bx.min.y * out.s), .15 * W).applyQuaternion(q); out.p = drop.toArray().map(v => +v.toFixed(3)); }
+      const ank = v3(R[bone][2]), tl = v3(R[bone][3]), fh = -bx.min.y * out.s; let drop = new THREE.Vector3(0, -(ank.y + bx.min.y * out.s), .15 * W);
+      if (window.MF_V3 && e.plugs && ank.y > fh * 2 && ank.y > .9) { drop = new THREE.Vector3(tl.x - ank.x, fh * 1.05 - ank.y, tl.z - ank.z - .35 * out.s); out.fit.digi = 1; }   // raised ankle (dinosaur / bird leg): the foot sits at the toe end of the bone, V3 adds the long foot bone piece
+      drop.applyQuaternion(q); out.p = drop.toArray().map(v => +v.toFixed(3)); }
     return out; }
   if (kind === 'wing') { const ch = limbChain(R, bone), end = v3(ch[ch.length - 1][3]), len = v3(R[bone][2]).distanceTo(end);
     out.fit.cover = ch.map(r => r[0]); out.s = +Math.min(12, Math.max(.3, len * 1.05 / Math.max(plen, pw * .8))).toFixed(3);
@@ -578,6 +581,7 @@ function bodyUI() { const el = $('bodySl'); if (!el) return; el.innerHTML = '';
   for (const [k, name, lo, hi] of BODY_SL) { const row = document.createElement('div'); row.className = 'sl'; row.innerHTML = `<span>${name}</span><input type="range" min="${lo}" max="${hi}" step=".01" value="${bodyK(k)}"><span>${bodyK(k).toFixed(2)}</span>`;
     const inp = row.querySelector('input'), val = row.lastChild; inp.onpointerdown = () => snap(); inp.oninput = () => { P.body = P.body || {}; P.body[k] = +inp.value; val.textContent = (+inp.value).toFixed(2); applyBody(); }; el.append(row); } }
 function addPart(lib, bone, p, r, s) {
+  { const e0 = LIB[lib], r0 = e0 && e0.segBy && bone && boneRow(bone); if (r0 && e0.segBy[r0[4]] && LIB[e0.segBy[r0[4]]] && !(r0[4] === 'armU' && kidRows(bone).some(k => k[4] === 'armU'))) lib = e0.segBy[r0[4]]; }   // a plain limb segment becomes the thigh / shin / upper arm / forearm piece made for that bone (shoulder stubs keep the plain one)
   if (window.V3 && window.V3.tryAdd(lib, bone, p, r, s)) return;
   snap(); let pt, swapped = 0; const ff = s == null && modeBone !== false ? fitPart(lib, bone) : null;
   if (ff) { swapped = MAIN_KINDS.has(ff.fit.kind) ? swapOut(ff.fit) : 0; pt = newPart(lib, ff.bone, ff.p, ff.r, ff.s); pt.l = ff.l; pt.fit = ff.fit; bone = ff.bone; p = ff.p; }

@@ -226,7 +226,7 @@
     <details class="pick"><summary>🧸 Remix a ready-made creature ▾</summary><div class="chips wrap" id="starters"></div></details>
     <details class="pick"><summary>🦴 Start from an empty body ▾</summary><div class="hint">Comes with a grey mannequin to build on.</div><div class="seg"><span class="hint" style="margin:0 4px 0 0">Bones:</span><button data-bd="simple">Simple</button><button data-bd="normal">Normal</button><button data-bd="complex">Complex</button></div><div class="chips wrap" id="skels"></div></details>
     <details class="pick" open><summary>🎚 Body shape ▾</summary><div id="bodySl"></div>
-      <div class="row"><button id="bBase">🧱 Base body on/off</button><button id="bRefitAll">↻ Fit all parts</button></div></details>
+      <div class="row"><button id="bBase">🧱 Base body on/off</button><button id="bRefitAll">↻ Fit all parts</button><button id="bStance" style="display:none">🐊 Crawl ↔ Stand</button></div></details>
     <button class="next" id="bGoBuild" style="background:#33333d;color:var(--tx);border-color:#4c4c58">Next: add parts →</button>
   </div>
 
@@ -352,7 +352,7 @@
     <div class="row"><button data-bg="studio" class="on">Studio</button><button data-bg="neon">Neon city night</button><button data-bg="day">Daylight</button><button data-bg="hell">Hellfire</button><button data-bg="void">Void</button></div>
   </div>
 </div>
-<div id="vtools"><button id="bVT" class="vk">🛠</button><button id="bPickV" class="vk">👆 Pick only</button><button id="bFocus" class="on">🔍 Focus</button><button id="bJointV">🔗 Joint</button><button id="bTrash">🗑 Remove part</button><button id="bView">👁 View ▾</button><button id="bFWin" class="vx">🪟 Window</button><button id="bVBones" class="vx">🦴 Bones</button><button id="bVNums" class="vx"># Numbers</button></div>
+<div id="vtools"><button id="bVT" class="vk">🛠</button><button id="bPickV" class="vk">👆 Pick only</button><button id="bStanceV" class="vk" style="display:none">🧍 Stand up</button><button id="bFocus" class="on">🔍 Focus</button><button id="bJointV">🔗 Joint</button><button id="bTrash">🗑 Remove part</button><button id="bView">👁 View ▾</button><button id="bFWin" class="vx">🪟 Window</button><button id="bVBones" class="vx">🦴 Bones</button><button id="bVNums" class="vx"># Numbers</button></div>
 <div id="guide"></div>
 <div id="sections"><div class="sh">MYTHIC FORGE</div>
   <a class="sec on">🐉 Creature Forge <small>titans, mechs, monsters, parts</small></a>
@@ -400,6 +400,7 @@
 <script src="parts/kit-lowpoly.js"></script>
 <script src="parts/kit-elementals.js"></script>
 <script src="parts/kit-sea.js"></script>
+<script src="parts/kit-croc.js"></script>
 <script src="skeletons-v3.js"></script>
 <script src="packs/index.js"></script>
 <script type="importmap">
@@ -820,6 +821,7 @@ function bodyInfo() {                                           // trunk path, s
   let path = null;
   for (const r of tr.filter(r => !r[1] || !R[r[1]] || !TRUNK_TAGS.has(R[r[1]][4]))) { const p = [r]; for (;;) { const k = kidRows(p[p.length - 1][0]).find(x => TRUNK_TAGS.has(x[4]) && !/\.(L|R)$/.test(x[0])); if (!k) break; p.push(k); } if (!path || p.length > path.length) path = p; }
   if (!path) { const r = P.bones[0]; path = [r]; }
+  { const dir = r => v3(r[3]).sub(v3(r[2])).normalize(); for (let i = 2; i < path.length; i++) if (dir(path[i]).dot(dir(path[i - 1])) < .5) { path = path.slice(0, i); break; } }   // a trunk that turns sharply upward after the body (centaur: horse barrel, then the human torso): the body part covers the level part only
   const start = v3(path[0][2]), end = v3(path[path.length - 1][3]), len = Math.max(.3, start.distanceTo(end)), names = new Set(path.map(r => r[0]));
   let sh = 0, hp = 0; for (const r of P.bones) { if (!names.has(r[1])) continue;
     if (r[4] === 'armU') { const stub = kidRows(r[0]).find(k => k[4] === 'armU'); sh = Math.max(sh, Math.abs((stub ? r[3] : r[2])[0])); }
@@ -871,7 +873,7 @@ function fitPart(lib, bone) {
   if (kind === 'seg') {                                          // base-body piece: exactly this bone
     const r = R[bone], len = Math.max(.15, v3(r[2]).distanceTo(v3(r[3]))); let i = 0, c = r; while (c[1] && R[c[1]] && R[c[1]][4] === tag) { i++; c = R[c[1]]; }
     if (!c[1] && tag === 'tail') { i = 0; let d = r; for (;;) { const k = kidRows(d[0]).find(x => x[4] === tag); if (!k) break; i++; d = k; } }   // tail grows out of the root (naga): thick end is the body end
-    const T = FAMILY[tag] === 'trunk' ? thickFor(B, tag) * Math.pow(.93, i) : thickFor(B, tag, i); out.s = +(T / thick).toFixed(3); out.l = +(len / ((e.unitLen || plen) * out.s)).toFixed(3); if (e.keel) out.r = keelRot(R, bone, v3(r[3])); return out; }
+    const T = FAMILY[tag] === 'trunk' ? thickFor(B, tag) * Math.pow(.93, i) : thickFor(B, tag, e.even ? i * .35 : i); /* `even`: pieces that stay about the same size down the chain (giant spine) */ out.s = +(T / thick).toFixed(3); out.l = +(len / ((e.unitLen || plen) * out.s)).toFixed(3); if (e.keel) out.r = keelRot(R, bone, v3(r[3])); return out; }
   if (kind === 'head') {
     // a head dropped on the body, neck or jaw goes to the head slot it belongs to (the neck's own head, else the nearest head)
     if (FAMILY[tag] !== 'head' && (FAMILY[tag] === 'trunk' || FAMILY[tag] === 'neck' || FAMILY[tag] === 'jaw')) { const hb = headSlotFor(bone); if (hb) { bone = hb; out.bone = hb; out.fit.drop = hb; out.fit.cover = [hb]; } }
@@ -888,7 +890,9 @@ function fitPart(lib, bone) {
     const T = thickFor(B, ptag) * 1.3; out.s = +Math.min(4, Math.max(.15, T / pw)).toFixed(3);
     if (kind === 'foot' && FAMILY[tag] === 'foot') { // mech feet are modelled upright (+Y up, +Z forward): keep them level with the ground
       const q = restQOf(R[bone]).invert(), eu = new THREE.Euler().setFromQuaternion(q); out.r = [eu.x, eu.y, eu.z].map(v => +(v / D).toFixed(1));
-      const ank = v3(R[bone][2]), drop = new THREE.Vector3(0, -(ank.y + bx.min.y * out.s), .15 * W).applyQuaternion(q); out.p = drop.toArray().map(v => +v.toFixed(3)); }
+      const ank = v3(R[bone][2]), tl = v3(R[bone][3]), fh = -bx.min.y * out.s; let drop = new THREE.Vector3(0, -(ank.y + bx.min.y * out.s), .15 * W);
+      if (window.MF_V3 && e.plugs && ank.y > fh * 2 && ank.y > .9) { drop = new THREE.Vector3(tl.x - ank.x, fh * 1.05 - ank.y, tl.z - ank.z - .35 * out.s); out.fit.digi = 1; }   // raised ankle (dinosaur / bird leg): the foot sits at the toe end of the bone, V3 adds the long foot bone piece
+      drop.applyQuaternion(q); out.p = drop.toArray().map(v => +v.toFixed(3)); }
     return out; }
   if (kind === 'wing') { const ch = limbChain(R, bone), end = v3(ch[ch.length - 1][3]), len = v3(R[bone][2]).distanceTo(end);
     out.fit.cover = ch.map(r => r[0]); out.s = +Math.min(12, Math.max(.3, len * 1.05 / Math.max(plen, pw * .8))).toFixed(3);
@@ -987,6 +991,7 @@ function bodyUI() { const el = $('bodySl'); if (!el) return; el.innerHTML = '';
   for (const [k, name, lo, hi] of BODY_SL) { const row = document.createElement('div'); row.className = 'sl'; row.innerHTML = `<span>${name}</span><input type="range" min="${lo}" max="${hi}" step=".01" value="${bodyK(k)}"><span>${bodyK(k).toFixed(2)}</span>`;
     const inp = row.querySelector('input'), val = row.lastChild; inp.onpointerdown = () => snap(); inp.oninput = () => { P.body = P.body || {}; P.body[k] = +inp.value; val.textContent = (+inp.value).toFixed(2); applyBody(); }; el.append(row); } }
 function addPart(lib, bone, p, r, s) {
+  { const e0 = LIB[lib], r0 = e0 && e0.segBy && bone && boneRow(bone); if (r0 && e0.segBy[r0[4]] && LIB[e0.segBy[r0[4]]] && !(r0[4] === 'armU' && kidRows(bone).some(k => k[4] === 'armU'))) lib = e0.segBy[r0[4]]; }   // a plain limb segment becomes the thigh / shin / upper arm / forearm piece made for that bone (shoulder stubs keep the plain one)
   if (window.V3 && window.V3.tryAdd(lib, bone, p, r, s)) return;
   snap(); let pt, swapped = 0; const ff = s == null && modeBone !== false ? fitPart(lib, bone) : null;
   if (ff) { swapped = MAIN_KINDS.has(ff.fit.kind) ? swapOut(ff.fit) : 0; pt = newPart(lib, ff.bone, ff.p, ff.r, ff.s); pt.l = ff.l; pt.fit = ff.fit; bone = ff.bone; p = ff.p; }
@@ -2738,7 +2743,7 @@ const KIT_TIP = {dragon: 'kl_tip_spade', wyvern: 'kl_tip_stinger', hydra: 'kl_ti
 const KIT_BACK = {serpent: 'kl_back_fin', kaiju: 'kl_back_crystal', biped: 'kl_back_plate', dragon: 'kl_back_spike', hydra: 'kl_back_spike', hydra2: 'kl_back_spike', turtle: 'kl_back_spike', turtle2: 'kl_back_spike', theropod: null};
 // 🎨 creature themes (2.0): one skin family per default creature, so a default build never mixes green legs with a brown chest.
 // t = limb / neck kit type, m = main skin, belly = second skin for belly pieces, fam = per body-family overrides (see famKey)
-const THEME = {biped: {t: 'scaly', m: 'croc'}, kaiju: {t: 'scaly', m: 'scale'}, theropod: {t: 'scaly', m: 'monitor'}, dragon: {t: 'scaly', m: 'scale'}, wyvern: {t: 'scaly', m: 'iguanablack'}, hydra: {t: 'scaly', m: 'alligator'}, hydra2: {t: 'scaly', m: 'komodo'},
+const THEME = {croc: {t: 'scaly', m: 'croc'}, croc2: {t: 'scaly', m: 'croc'}, biped: {t: 'scaly', m: 'croc'}, kaiju: {t: 'scaly', m: 'scale'}, theropod: {t: 'scaly', m: 'monitor'}, dragon: {t: 'scaly', m: 'scale'}, wyvern: {t: 'scaly', m: 'iguanablack'}, hydra: {t: 'scaly', m: 'alligator'}, hydra2: {t: 'scaly', m: 'komodo'},
   turtle: {t: 'scaly', m: 'alligator'}, turtle2: {t: 'scaly', m: 'alligator'}, serpent: {t: 'scaly', m: 'snake'}, quad: {t: 'fur', m: 'fur'}, sphinx: {t: 'fur', m: 'fur'}, chimera: {t: 'fur', m: 'fur', fam: {tail: 'snake'}}, gorilla: {t: 'fur', m: 'blackfur', keep2: 1},
   centaur: {t: 'fur', m: 'fur', fam: {arm: 'skin', hand: 'skin', head: 'skin', jaw: 'skin', neck: 'skin'}, limbs: {Arms: 'skin', Neck: 'skin'}}, hippogriff: {t: 'fur', m: 'fur', fam: {head: 'feather', neck: 'feather'}, limbs: {Neck: 'feather'}},
   bird: {t: 'feather', m: 'feather', fam: {leg: 'horn', foot: 'horn'}, limbs: {Legs: 'scaly'}}, angel: {t: 'skin', m: 'skin'}, brute: {t: 'skin', m: 'skin'}, fourarm: {t: 'skin', m: 'skin'}, slim: {t: 'bone', m: 'oldbone', limbs: {Neck: 'skin'}},
@@ -2768,7 +2773,7 @@ V3X.defFor = (skel, t, style, level) => { const cx = true, mech = style === 'mec
   const own = (V3X.DEF3[skel] || {})[t]; if (own !== undefined && !mech) return own;
   if (cx && mech) { if (t === 'Hands') return 'kl_palm_mech'; if (t === 'Tail / tentacles' && !/walker|tank/.test(skel)) return 'kl_tailseg_mech'; }
   const kitHead = onModel(/^kh_/), hk = kitHead && kitHead.lib.slice(3);
-  if (t === 'Eyes') return mech ? null : kitHead ? (hk === 'shark' ? 'ks_eye_shark' : hk === 'fish' ? 'ks_eye_fish' : hk === 'bug' ? 'kp_eye_compound' : /golem|skull/.test(hk) ? 'kp_eye_glow' : /brute|ape/.test(hk) ? 'kp_eye_lidded' : /dragon|kaiju|serpent|croc/.test(hk) ? 'kp_eye_slit' : 'kp_eye_round') : null;
+  if (t === 'Eyes') return mech ? null : kitHead ? (hk === 'shark' ? 'ks_eye_shark' : hk === 'fish' ? 'ks_eye_fish' : hk === 'bug' ? 'kp_eye_compound' : /golem|skull/.test(hk) ? 'kp_eye_glow' : /brute|ape/.test(hk) ? 'kp_eye_lidded' : /dragon|kaiju|serpent|croc|cat|beast/.test(hk) ? 'kp_eye_slit' : 'kp_eye_round') : null;
   if (t === 'Teeth') return kitHead ? ({shark: 'kp_row_saw', fish: 'kp_row_needle', dragon: 'kp_row_fang', kaiju: 'kp_row_fang', beast: 'kp_row_fang', cat: 'kp_row_fang', croc: 'kp_row_saw', serpent: 'kp_row_needle', brute: 'kp_row_molar', ape: 'kp_row_fang', skull: 'kp_row_molar'}[hk] || null) : null;
   if (t === 'Fangs') return kitHead && hk === 'cat' ? 'kp_fang_saber' : kitHead && hk === 'serpent' ? 'kp_fang_venom' : null;
   if (t === 'Tongue') return kitHead && hk === 'serpent' ? 'kp_tongue_fork' : null;
@@ -2789,7 +2794,7 @@ V3X.DEF3 = window.FORGE_DEF3 || {};
 // ====================================================================== new body types: defaults, ⭐ default builds, fitting bodies (V3)
 if (V3X.bt) { const {DEF, BODY_FOR, defUI} = V3X.bt; for (const [k, d] of Object.entries(window.FORGE_DEF3 || {})) { if (!DEF[k]) DEF[k] = d; }
   Object.assign(BODY_FOR, {chimera: ['bb_lion', 'bb_beast'], hydra2: ['bd_torso_dragon'], mantis: ['bd_torso_thorax'], wasp: ['bd_torso_thorax', 'bd_torso_spider'], uprightbug: ['bd_torso_thorax', 'bd_torso_brawler'], kraken: ['kr_mantle'],
-    fish: ['ks_shark_body', 'ks_fish_body', 'bb_fish'], bonyfish: ['ks_fish_body', 'ks_shark_body', 'bb_fish'], lobster: ['ks_lob_carapace', 'bd_torso_crab'],
+    croc: ['kcr_body', 'bd_torso_dragon'], croc2: ['kcr_body', 'bd_torso_dragon'], fish: ['ks_shark_body', 'ks_fish_body', 'bb_fish'], bonyfish: ['ks_fish_body', 'ks_shark_body', 'bb_fish'], lobster: ['ks_lob_carapace', 'bd_torso_crab'],
     jellyfish: ['kj_bell'], turtle: ['kc_shell_snapper', 'tt_shell'], turtle2: ['kc_shell_snapper', 'tt_shell'], hippogriff: ['bb_horse', 'bb_beast'], ooze: ['ko_goo', 'ko_puddle', 'bb_blob'], beholder: ['ko_orb'], blob: ['ko_goo', 'bb_blob', 'bd_torso_slug', 'bd_torso_bloated']});
   try { defUI(); } catch (x) {} }
 // parts that keep their own size on the body (jellyfish bell)
@@ -2964,7 +2969,8 @@ const famKey = pt => { const r = boneRow(pt.bone); if (!r) return 'trunk'; const
 // extras for the older body types (same '_' keys as FORGE_DEF3): the centaur's human upper body, the angel's halo
 const EXTRA = {centaur: {_seg: [['kl_torso_human', 'torso']]}, angel: {_halo: 'kg_halo'}};
 V3X.afterDefault = k => { const d0 = (window.FORGE_DEF3 || {})[k], d = d0 || EXTRA[k] ? {...(d0 || {}), ...(EXTRA[k] || {})} : null; if (!d) return; if (P.fin === k) return; P.fin = k;   // once per creature (Build together calls it too when the part steps are done)
-  for (const [id, bn] of d._seg || []) if (LIB[id] && boneRow(bn) && !P.parts.some(p => p.lib === id)) { const mm = mirrorAdd; mirrorAdd = false; V3X.skip = true; addPart(id, bn, [0, 0, 0], [0, 0, 0]); V3X.skip = false; mirrorAdd = mm; const np = P.parts[P.parts.length - 1]; if (np && np.lib === id) V3X.theme([np.uid]); } const main = P.parts.filter(p => !p.host || /^(back|tailtip|jaw|finger|toe|ear|claw)$/.test((plugsOf((partBy(p.host.u) || {}).lib || '', partBy(p.host.u)).find(q => q.id === p.host.k) || {}).t || ''));
+  for (const [id, bn] of d._seg || []) if (LIB[id] && boneRow(bn) && !P.parts.some(p => p.lib === id)) { const mm = mirrorAdd; mirrorAdd = false; V3X.skip = true; addPart(id, bn, [0, 0, 0], [0, 0, 0]); V3X.skip = false; mirrorAdd = mm; const np = P.parts[P.parts.length - 1]; if (np && np.lib === id) V3X.theme([np.uid]); } if (d._tailEnd) { const [id, n] = d._tailEnd, tb = P.bones.filter(r => r[4] === 'tail'), ends = tb.filter(r => !tb.some(q => q[1] === r[0])); if (LIB[id] && !P.parts.some(p => p.lib === id)) for (const e0 of ends) { let r = e0; for (let i = 0; i < n && r && r[4] === 'tail'; i++) { if (!tb.some(q => q[0] === r[1])) break; const mm = mirrorAdd; mirrorAdd = false; V3X.skip = true; addPart(id, r[0], [0, 0, 0], [0, 0, 0]); V3X.skip = false; mirrorAdd = mm; const np = P.parts[P.parts.length - 1]; if (np && np.lib === id) V3X.theme([np.uid]); r = boneRow(r[1]); } } }
+  const main = P.parts.filter(p => !p.host || /^(back|tailtip|jaw|finger|toe|ear|claw)$/.test((plugsOf((partBy(p.host.u) || {}).lib || '', partBy(p.host.u)).find(q => q.id === p.host.k) || {}).t || ''));
   const pick = (map, pt) => { if (typeof map === 'string') return map; const [a, b] = famKey(pt); return map[a] ?? map[b] ?? map.all; };
   if (d._mat) for (const pt of P.parts) { const m = pick(d._mat, pt); if (m && !(LIB[pt.lib] && /eye|Weapons/.test(LIB[pt.lib].group + (LIB[pt.lib].plugAs || '')))) { pt.matAll = m; pt.mat = null; } }
   if (d._elem) for (const pt of main) { const e = pick(d._elem, pt); if (e && ELEM[e]) { pt.elemPrev = pt.matAll || null; pt.elem = e; pt.matAll = ELEM[e].mat; pt.mat = null; } }
@@ -2981,6 +2987,25 @@ const _v3p = v3PaintUI; v3PaintUI = function () { _v3p(); const el = $('v3paint'
   const r = document.createElement('div'); r.className = 'row'; r.style.flexWrap = 'wrap'; h.after(r); const list = () => paintAll ? P.parts.filter(p => !p.boxed && !p.host) : [pt];
   r.append(Object.assign(document.createElement('button'), {textContent: '🚫 None', className: pt.elem ? '' : 'on', onclick: () => { setElem(list(), null); v3PaintUI(); }}));
   for (const [k, e] of Object.entries(ELEM)) r.append(Object.assign(document.createElement('button'), {textContent: e.n, className: pt.elem === k ? 'on' : '', onclick: () => { setElem(list(), k); v3PaintUI(); tip(e.n + (paintAll ? ' on everything' : ''), 1400); }})); };
+
+// ====================================================================== 🐊 stance switch (Nov 9 late): body types that share bone names (SKEL[k].stance = the other key)
+// One creature, two poses: every bone moves to the other body type's place, fitted parts refit, plugged parts follow. Parts moved by hand keep their place on their bone.
+V3X.stance = () => { const cur = SKEL[P.skel], to = cur && cur.stance; if (!to || !SKEL[to]) return false; snap();
+  const nb = detailBones(JSON.parse(JSON.stringify(SKEL[to].bones))), names = new Set(nb.map(b => b[0])), fb = (nb.find(b => b[4] === 'chest') || nb[0])[0];
+  P.parts.forEach(p => { if (p.bone && !names.has(p.bone)) p.bone = fb; if (p.fit && p.fit.drop && !names.has(p.fit.drop)) p.fit.drop = p.bone; });
+  if (P.fin === P.skel) P.fin = to; P.skel = to; P.bones = nb; P.pose = {}; P.bodyBase = null; P.body = {};
+  rebuildSkeleton(); if (P.parts.length) { refitAll(false); if (hasBase()) buildBase(); } else buildBase(); rebuildParts(); skelUI(); bodyUI(); outliner(); saveCur(); frameAll();
+  tip((SKEL[to].name || '').replace(/^\S+\s/, '') + ' — same creature, other stance. Tap again to switch back.', 2600); return true; };
+{ const sync = () => { const s = SKEL[P.skel], on = !!(s && s.stance && SKEL[s.stance]); for (const id of ['bStance', 'bStanceV']) { const b = $(id); if (!b) continue; b.style.display = on ? '' : 'none'; if (on) b.textContent = id === 'bStanceV' ? (s.stanceName || '🔁 Other stance') : '🔁 ' + (s.stanceName || 'Other stance').replace(/^\S+\s/, '') + ' (same creature)'; } };
+  const _ol = outliner; outliner = function (...a) { const r = _ol.apply(this, a); try { sync(); } catch (x) {} return r; };
+  for (const id of ['bStance', 'bStanceV']) if ($(id)) $(id).onclick = () => V3X.stance(); sync(); }
+
+// ====================================================================== 🦶 raised ankles (looks round 2): a kit foot on a foot bone whose ankle is high off the ground (dinosaur, bird legs)
+// sits at the toe end of that bone (fitPart, `fit.digi`); the bone itself gets a limb segment (the long foot bone between ankle and toes), so the foot is not left floating under the shin.
+{ const _aa = V3X.afterAdd; let busy = false; V3X.afterAdd = pt => { _aa(pt); if (busy || !pt.fit || !pt.fit.digi || mainOnChain(pt.bone)) return; const par = (boneRow(pt.bone) || [])[1], up = par && P.parts.find(p => p.bone === par && p.fit && p.fit.kind === 'seg' && LIB[p.lib] && LIB[p.lib].perSeg && !p.boxed);
+    const id = up ? ((LIB[up.lib].segBy || {}).legL || up.lib) : 'kl_limb_scaly_low'; if (!LIB[id]) return; busy = true; const mm = mirrorAdd, sel0 = sel; mirrorAdd = false; V3X.skip = true;
+    try { addPart(id, pt.bone, [0, 0, 0], [0, 0, 0]); const np = P.parts[P.parts.length - 1]; if (np && np.lib === id) { if (up && up.mat) { np.mat = [...up.mat]; buildPart(np); } else V3X.theme([np.uid]); } } finally { V3X.skip = false; mirrorAdd = mm; busy = false; } if (sel0) select(sel0); }; }
+function mainOnChain(bone) { return P.parts.some(p => p.bone === bone && p.fit && p.fit.kind === 'seg' && !p.boxed && !p.lib.startsWith('base_')); }
 
 // ====================================================================== 📱 M (Nov 9 2026 5pm, TEST PAGE ONLY: window.MF_M)
 // Inlined after forge-core.js + forge-v3.js into test.html by build.py, so it shares their scope (P, LIB, views, select, paint, tab...).

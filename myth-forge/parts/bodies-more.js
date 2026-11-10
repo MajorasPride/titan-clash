@@ -13,17 +13,22 @@
   // fin from a 2D outline: outline x runs along the body (+Y), outline y sticks out along dir*Z
   const fin = (pts, th, y, dir) => extr(pts.map(([a, b2]) => [a, b2 * dir]), th, th * .3).applyMatrix4(new T.Matrix4().makeBasis(V3(0, 1, 0), V3(0, 0, 1), V3(1, 0, 0))).translate(0, y, 0);
   return [
-    S('beast', TB, 'Beast Bodies', 'Beast body (4 legs)', ['quad', 'wolf', 'bear', 'beast', 'animal', 'fur'], () => {
-      const g = body(4.6, t => (1.05 + .25 * Math.sin(t * Math.PI * .95) + .2 * sm(.55, .85, t)) * end(t * 1.02 + .01), 1.0, 1.15);
-      const p = g.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i), z = p.getZ(i); p.setZ(i, z + (z > 0 ? .25 * Math.sin(y / 4.6 * Math.PI) : 0) * .6); }
-      g.computeVertexNormals(); return [{geo: noise(g, .03, 2), mat: 'fur'}]; }),
-    S('lion', TB, 'Beast Bodies', 'Big cat / lion body', ['lion', 'tiger', 'sphinx', 'cat', 'beast'], () => {
-      const g = body(4.8, t => (.95 + .15 * Math.sin(t * Math.PI) + .45 * sm(.55, .9, t)) * end(t * 1.02 + .01), 1.0, 1.1);
-      const mane = body(1.6, t => (1.75 - .3 * t) * end(t), 1.05, 1.1, 48, 24); at(mane, 0, 3.4, .05); noise(mane, .12, 3);
-      return [{geo: noise(g, .02, 2), mat: 'fur'}, {geo: mane, mat: 'fur'}]; }),
-    S('horse', TB, 'Beast Bodies', 'Horse / centaur barrel', ['horse', 'centaur', 'taur', 'barrel', 'beast'], () => {
-      const g = body(5.2, t => (1.1 + .3 * Math.sin(t * Math.PI)) * end(t * 1.03 + .01), .95, 1.2);
-      return [{geo: noise(g, .02, 1.5), mat: 'skin'}]; }),
+    // Looks round 2 (Nov 9 late): four-legged bodies are shaped animals now (rump, haunches, tucked waist, deep chest, shoulders, brisket in front of the legs).
+    // The spine runs along the TOP of the body (short back side, deep belly side), so the leg roots sit inside the flanks. `fitBox` is the hips-to-neck span:
+    // the rump (behind y = 0) and the brisket (past the box) overhang it on purpose. Old egg bodies: archive/bodies-quad-eggs-v1.js
+    ...[['beast', 'Beast body (4 legs)', ['quad', 'wolf', 'bear', 'beast', 'animal', 'fur'], 'fur', 4.6, [.03, 3],
+        [[-.75, .25, .3, .25], [-.5, .62, .75, .5], [-.1, .95, 1.15, .62], [.5, 1.05, 1.3, .66], [1.5, .86, 1.0, .62], [2.6, .98, 1.3, .66], [3.6, 1.1, 1.55, .74], [4.3, 1.08, 1.5, .78], [4.9, .85, 1.15, .7], [5.3, .5, .7, .5], [5.5, .2, .3, .25]], [.44, .9, .95], [.44, .95, 1.0]],
+      ['lion', 'Big cat / lion body', ['lion', 'tiger', 'sphinx', 'cat', 'beast'], 'fur', 4.8, [.02, 3],
+        [[-.7, .25, .3, .25], [-.45, .6, .72, .5], [-.1, .9, 1.1, .6], [.5, 1.02, 1.25, .64], [1.6, .76, .86, .58], [2.8, .95, 1.25, .66], [3.8, 1.12, 1.6, .76], [4.5, 1.1, 1.55, .8], [5.1, .85, 1.15, .7], [5.5, .5, .7, .5], [5.7, .2, .3, .25]], [.46, .95, 1.0], [.48, 1.0, 1.05]],
+      ['horse', 'Horse / centaur barrel', ['horse', 'centaur', 'taur', 'barrel', 'beast'], 'skin', 5.2, [.015, 2],
+        [[-.8, .25, .3, .25], [-.55, .62, .75, .5], [-.1, .95, 1.2, .62], [.6, 1.06, 1.35, .68], [1.8, .98, 1.3, .64], [3.0, 1.04, 1.45, .66], [4.1, 1.1, 1.55, .72], [4.9, 1.04, 1.45, .76], [5.5, .82, 1.1, .68], [5.9, .5, .7, .5], [6.1, .2, .3, .25]], [.46, 1.0, 1.05], [.44, 1.0, 1.05]]
+    ].map(([id, name, tags, mat, H, nz, rows, hip, sh]) => ({...S(id, TB, 'Beast Bodies', name, tags, () => { const X = window.makeKit(T, K);
+      const g = X.loft(rows.map(([a, w, t, b]) => ({a, w, t, b, n: 2.5})), {axis: 'y', rad: 44, per: 5, noise: nz});
+      const bl = (r, x, y, z) => new T.SphereGeometry(1, 20, 14).scale(r[0], r[1], r[2]).translate(x, y, z);
+      const mus = noise(merge([-1, 1].flatMap(sd => [bl(hip, sd * .82, .2, .5), bl(sh, sd * .86, H - .3, .62)]).map(q => q.toNonIndexed())), nz[0], nz[1]);
+      const out = [{geo: g, mat}, {geo: mus, mat}];
+      if (id === 'lion') { const mane = body(1.5, t => (1.5 - .25 * t) * end(t), 1.05, 1.15, 48, 24); at(mane, 0, H - 1.2, .3); out.push({geo: noise(mane, .12, 3), mat: 'fur'}); }
+      return out; }), fitBox: [[-1.12, 0, -.8], [1.12, H, 1.6]]})),
     S('bird', TB, 'Bird Bodies', 'Bird body (feathered)', ['bird', 'griffin', 'feather', 'avian'], () => {
       const g = body(3.6, t => (1.2 * Math.sin(Math.min(1, t * 1.05) * Math.PI) ** .7 + .05) * (1 - .25 * t), 1.0, 1.25);
       const ruff = []; for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 2; ruff.push(at(new T.ConeGeometry(.22, .8, 6), Math.cos(a) * .95, 2.9, Math.sin(a) * 1.1, Math.sin(a) * 1.2, 0, -Math.cos(a) * 1.2)); }

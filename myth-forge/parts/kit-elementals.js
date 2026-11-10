@@ -62,7 +62,7 @@
     return [P(new T.CylinderGeometry(.55, .55, .45, 16, 1, true).translate(0, .3, 0), 'rust'), P(merge(links), 'darkmetal')]; });
   add('kg_chains', 'Accessories & Magic', GS, 'Draped chains (chest)', {tags: ['chain', 'chained', 'titan']}, () => { const links = []; for (const s of [-1, 1]) for (let i = 0; i < 18; i++) { const t = i / 17, x = s * (1.5 - t * 3) * .9, y = 3.6 - Math.sin(t * Math.PI) * 1.4; links.push(at(new T.TorusGeometry(.16, .05, 6, 12), x, y, 1.15 + Math.sin(t * Math.PI) * .2, 0, i % 2 ? 90 : 0, 0)); }
     return [P(merge(links), 'darkmetal')]; });
-  add('kg_belly_maw', 'Jaws & Teeth', GS, 'Belly maw (gaping mouth)', {plugAs: 'belly', tags: ['maw', 'mouth', 'hunger', 'horror', 'titan']}, () => [P(new T.TorusGeometry(.9, .3, 12, 28).scale(1, 1.4, .7), 'fleshraw'), P(ell(.8, 1.1, .3, 0, 0, -.1, 18), 'void'),
+  add('kg_belly_maw', 'Jaws & Teeth', GS, 'Belly maw (gaping mouth)', {plugAs: 'belly', tags: ['maw', 'mouth', 'hunger', 'horror', 'titan']}, () => [P(merge([new T.TorusGeometry(.9, .17, 12, 32).scale(1, 1.4, 1), K.noise(ell(1.3, 1.75, .5, 0, 0, -.42, 24), .04, 3)]), 'fleshraw'), P(ell(.84, 1.18, .34, 0, 0, -.1, 18), 'void'),   // looks round 2: thin lips on a mound of flesh that sinks into the belly, dark inside (was a floating ring)
     P(merge([...Array(18).keys()].map(i => { const a = i / 18 * Math.PI * 2; return at(spike(.35, .07), Math.cos(a) * .85, Math.sin(a) * 1.2, .1, 0, 0, a * 57.3 + 90); })), 'tooth')].map(pc => { pc.geo.rotateX(-Math.PI / 2); return pc; }));
   add('kg_star', 'Accessories & Magic', GS, 'Star sparkle', {plugAs: 'glow', tags: ['star', 'sparkle', 'cosmic', 'god']}, () => [P(merge([new T.OctahedronGeometry(.18, 0).scale(.4, 1.6, .4), new T.OctahedronGeometry(.18, 0).scale(1.6, .4, .4)]), 'glow')]);
   // god weapons (grip at the origin, along +Y; they go into the palm)
@@ -73,7 +73,7 @@
   add('kg_orb', W, WS, 'Galaxy orb (in the palm)', {tags: ['god', 'orb', 'galaxy', 'cosmic']}, () => [P(ell(.5, .5, .5, 0, .5, 0, 20), 'galaxy'), P(new T.TorusGeometry(.75, .04, 6, 32).rotateX(1.2).translate(0, .5, 0), 'glowblue')]);
   // ================= 🦴 COLOSSAL BONE TITAN (original; a giant bare spine with ribs carrying a skinless upper body) =================
   // vertebra: one per spine ('tail') bone, local +Z = up on a level spine; ribs arc down (-Z), a spike on top (+Z)
-  add('kt_vertebra', 'Tails', '🦴 Bone colossus', 'Giant vertebra + ribs', {fitKind: 'seg', unitLen: 1, perSeg: true, tags: ['bone', 'spine', 'ribs', 'colossus', 'titan', 'skeleton']}, () => {
+  add('kt_vertebra', 'Tails', '🦴 Bone colossus', 'Giant vertebra + ribs', {fitKind: 'seg', unitLen: 1, perSeg: true, fitBox: [[-.62, 0, -.62], [.62, 1, .62]], even: 1, tags: ['bone', 'spine', 'ribs', 'colossus', 'titan', 'skeleton']}, () => {
     const ribs = []; for (const s of [-1, 1]) for (const yy of [.3, .7]) ribs.push(K.taper(K.bez(V3(s * .3, yy, .1), V3(s * 1.6, yy - .05, .3), V3(s * 1.9, yy - .1, -1.6), V3(s * 1.1, yy - .1, -3.0)), .13, .05, 24, 8));
     return [P(merge([new T.CylinderGeometry(.55, .6, .9, 14).translate(0, .5, 0), at(spike(1.4, .25, .3), 0, .5, .4, 90, 0, 0), ...[-1, 1].map(s => at(spike(.7, .14, 0), s * .45, .5, .1, 0, 0, s * -80))]), 'bonedirty', 1), P(merge(ribs), 'bonedirty', 2)]; });
   add('kt_muscle_torso', 'Torsos & Bellies', '🦴 Bone colossus', 'Skinless titan chest (muscle + ribs)', {fitKind: 'torso', tags: ['muscle', 'skinless', 'titan', 'colossus']}, () => {

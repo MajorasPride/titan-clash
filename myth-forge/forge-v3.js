@@ -181,7 +181,7 @@ const KIT_TIP = {dragon: 'kl_tip_spade', wyvern: 'kl_tip_stinger', hydra: 'kl_ti
 const KIT_BACK = {serpent: 'kl_back_fin', kaiju: 'kl_back_crystal', biped: 'kl_back_plate', dragon: 'kl_back_spike', hydra: 'kl_back_spike', hydra2: 'kl_back_spike', turtle: 'kl_back_spike', turtle2: 'kl_back_spike', theropod: null};
 // 🎨 creature themes (2.0): one skin family per default creature, so a default build never mixes green legs with a brown chest.
 // t = limb / neck kit type, m = main skin, belly = second skin for belly pieces, fam = per body-family overrides (see famKey)
-const THEME = {biped: {t: 'scaly', m: 'croc'}, kaiju: {t: 'scaly', m: 'scale'}, theropod: {t: 'scaly', m: 'monitor'}, dragon: {t: 'scaly', m: 'scale'}, wyvern: {t: 'scaly', m: 'iguanablack'}, hydra: {t: 'scaly', m: 'alligator'}, hydra2: {t: 'scaly', m: 'komodo'},
+const THEME = {croc: {t: 'scaly', m: 'croc'}, croc2: {t: 'scaly', m: 'croc'}, biped: {t: 'scaly', m: 'croc'}, kaiju: {t: 'scaly', m: 'scale'}, theropod: {t: 'scaly', m: 'monitor'}, dragon: {t: 'scaly', m: 'scale'}, wyvern: {t: 'scaly', m: 'iguanablack'}, hydra: {t: 'scaly', m: 'alligator'}, hydra2: {t: 'scaly', m: 'komodo'},
   turtle: {t: 'scaly', m: 'alligator'}, turtle2: {t: 'scaly', m: 'alligator'}, serpent: {t: 'scaly', m: 'snake'}, quad: {t: 'fur', m: 'fur'}, sphinx: {t: 'fur', m: 'fur'}, chimera: {t: 'fur', m: 'fur', fam: {tail: 'snake'}}, gorilla: {t: 'fur', m: 'blackfur', keep2: 1},
   centaur: {t: 'fur', m: 'fur', fam: {arm: 'skin', hand: 'skin', head: 'skin', jaw: 'skin', neck: 'skin'}, limbs: {Arms: 'skin', Neck: 'skin'}}, hippogriff: {t: 'fur', m: 'fur', fam: {head: 'feather', neck: 'feather'}, limbs: {Neck: 'feather'}},
   bird: {t: 'feather', m: 'feather', fam: {leg: 'horn', foot: 'horn'}, limbs: {Legs: 'scaly'}}, angel: {t: 'skin', m: 'skin'}, brute: {t: 'skin', m: 'skin'}, fourarm: {t: 'skin', m: 'skin'}, slim: {t: 'bone', m: 'oldbone', limbs: {Neck: 'skin'}},
@@ -211,7 +211,7 @@ V3X.defFor = (skel, t, style, level) => { const cx = true, mech = style === 'mec
   const own = (V3X.DEF3[skel] || {})[t]; if (own !== undefined && !mech) return own;
   if (cx && mech) { if (t === 'Hands') return 'kl_palm_mech'; if (t === 'Tail / tentacles' && !/walker|tank/.test(skel)) return 'kl_tailseg_mech'; }
   const kitHead = onModel(/^kh_/), hk = kitHead && kitHead.lib.slice(3);
-  if (t === 'Eyes') return mech ? null : kitHead ? (hk === 'shark' ? 'ks_eye_shark' : hk === 'fish' ? 'ks_eye_fish' : hk === 'bug' ? 'kp_eye_compound' : /golem|skull/.test(hk) ? 'kp_eye_glow' : /brute|ape/.test(hk) ? 'kp_eye_lidded' : /dragon|kaiju|serpent|croc/.test(hk) ? 'kp_eye_slit' : 'kp_eye_round') : null;
+  if (t === 'Eyes') return mech ? null : kitHead ? (hk === 'shark' ? 'ks_eye_shark' : hk === 'fish' ? 'ks_eye_fish' : hk === 'bug' ? 'kp_eye_compound' : /golem|skull/.test(hk) ? 'kp_eye_glow' : /brute|ape/.test(hk) ? 'kp_eye_lidded' : /dragon|kaiju|serpent|croc|cat|beast/.test(hk) ? 'kp_eye_slit' : 'kp_eye_round') : null;
   if (t === 'Teeth') return kitHead ? ({shark: 'kp_row_saw', fish: 'kp_row_needle', dragon: 'kp_row_fang', kaiju: 'kp_row_fang', beast: 'kp_row_fang', cat: 'kp_row_fang', croc: 'kp_row_saw', serpent: 'kp_row_needle', brute: 'kp_row_molar', ape: 'kp_row_fang', skull: 'kp_row_molar'}[hk] || null) : null;
   if (t === 'Fangs') return kitHead && hk === 'cat' ? 'kp_fang_saber' : kitHead && hk === 'serpent' ? 'kp_fang_venom' : null;
   if (t === 'Tongue') return kitHead && hk === 'serpent' ? 'kp_tongue_fork' : null;
@@ -232,7 +232,7 @@ V3X.DEF3 = window.FORGE_DEF3 || {};
 // ====================================================================== new body types: defaults, ⭐ default builds, fitting bodies (V3)
 if (V3X.bt) { const {DEF, BODY_FOR, defUI} = V3X.bt; for (const [k, d] of Object.entries(window.FORGE_DEF3 || {})) { if (!DEF[k]) DEF[k] = d; }
   Object.assign(BODY_FOR, {chimera: ['bb_lion', 'bb_beast'], hydra2: ['bd_torso_dragon'], mantis: ['bd_torso_thorax'], wasp: ['bd_torso_thorax', 'bd_torso_spider'], uprightbug: ['bd_torso_thorax', 'bd_torso_brawler'], kraken: ['kr_mantle'],
-    fish: ['ks_shark_body', 'ks_fish_body', 'bb_fish'], bonyfish: ['ks_fish_body', 'ks_shark_body', 'bb_fish'], lobster: ['ks_lob_carapace', 'bd_torso_crab'],
+    croc: ['kcr_body', 'bd_torso_dragon'], croc2: ['kcr_body', 'bd_torso_dragon'], fish: ['ks_shark_body', 'ks_fish_body', 'bb_fish'], bonyfish: ['ks_fish_body', 'ks_shark_body', 'bb_fish'], lobster: ['ks_lob_carapace', 'bd_torso_crab'],
     jellyfish: ['kj_bell'], turtle: ['kc_shell_snapper', 'tt_shell'], turtle2: ['kc_shell_snapper', 'tt_shell'], hippogriff: ['bb_horse', 'bb_beast'], ooze: ['ko_goo', 'ko_puddle', 'bb_blob'], beholder: ['ko_orb'], blob: ['ko_goo', 'bb_blob', 'bd_torso_slug', 'bd_torso_bloated']});
   try { defUI(); } catch (x) {} }
 // parts that keep their own size on the body (jellyfish bell)
@@ -407,7 +407,8 @@ const famKey = pt => { const r = boneRow(pt.bone); if (!r) return 'trunk'; const
 // extras for the older body types (same '_' keys as FORGE_DEF3): the centaur's human upper body, the angel's halo
 const EXTRA = {centaur: {_seg: [['kl_torso_human', 'torso']]}, angel: {_halo: 'kg_halo'}};
 V3X.afterDefault = k => { const d0 = (window.FORGE_DEF3 || {})[k], d = d0 || EXTRA[k] ? {...(d0 || {}), ...(EXTRA[k] || {})} : null; if (!d) return; if (P.fin === k) return; P.fin = k;   // once per creature (Build together calls it too when the part steps are done)
-  for (const [id, bn] of d._seg || []) if (LIB[id] && boneRow(bn) && !P.parts.some(p => p.lib === id)) { const mm = mirrorAdd; mirrorAdd = false; V3X.skip = true; addPart(id, bn, [0, 0, 0], [0, 0, 0]); V3X.skip = false; mirrorAdd = mm; const np = P.parts[P.parts.length - 1]; if (np && np.lib === id) V3X.theme([np.uid]); } const main = P.parts.filter(p => !p.host || /^(back|tailtip|jaw|finger|toe|ear|claw)$/.test((plugsOf((partBy(p.host.u) || {}).lib || '', partBy(p.host.u)).find(q => q.id === p.host.k) || {}).t || ''));
+  for (const [id, bn] of d._seg || []) if (LIB[id] && boneRow(bn) && !P.parts.some(p => p.lib === id)) { const mm = mirrorAdd; mirrorAdd = false; V3X.skip = true; addPart(id, bn, [0, 0, 0], [0, 0, 0]); V3X.skip = false; mirrorAdd = mm; const np = P.parts[P.parts.length - 1]; if (np && np.lib === id) V3X.theme([np.uid]); } if (d._tailEnd) { const [id, n] = d._tailEnd, tb = P.bones.filter(r => r[4] === 'tail'), ends = tb.filter(r => !tb.some(q => q[1] === r[0])); if (LIB[id] && !P.parts.some(p => p.lib === id)) for (const e0 of ends) { let r = e0; for (let i = 0; i < n && r && r[4] === 'tail'; i++) { if (!tb.some(q => q[0] === r[1])) break; const mm = mirrorAdd; mirrorAdd = false; V3X.skip = true; addPart(id, r[0], [0, 0, 0], [0, 0, 0]); V3X.skip = false; mirrorAdd = mm; const np = P.parts[P.parts.length - 1]; if (np && np.lib === id) V3X.theme([np.uid]); r = boneRow(r[1]); } } }
+  const main = P.parts.filter(p => !p.host || /^(back|tailtip|jaw|finger|toe|ear|claw)$/.test((plugsOf((partBy(p.host.u) || {}).lib || '', partBy(p.host.u)).find(q => q.id === p.host.k) || {}).t || ''));
   const pick = (map, pt) => { if (typeof map === 'string') return map; const [a, b] = famKey(pt); return map[a] ?? map[b] ?? map.all; };
   if (d._mat) for (const pt of P.parts) { const m = pick(d._mat, pt); if (m && !(LIB[pt.lib] && /eye|Weapons/.test(LIB[pt.lib].group + (LIB[pt.lib].plugAs || '')))) { pt.matAll = m; pt.mat = null; } }
   if (d._elem) for (const pt of main) { const e = pick(d._elem, pt); if (e && ELEM[e]) { pt.elemPrev = pt.matAll || null; pt.elem = e; pt.matAll = ELEM[e].mat; pt.mat = null; } }
@@ -424,3 +425,22 @@ const _v3p = v3PaintUI; v3PaintUI = function () { _v3p(); const el = $('v3paint'
   const r = document.createElement('div'); r.className = 'row'; r.style.flexWrap = 'wrap'; h.after(r); const list = () => paintAll ? P.parts.filter(p => !p.boxed && !p.host) : [pt];
   r.append(Object.assign(document.createElement('button'), {textContent: '🚫 None', className: pt.elem ? '' : 'on', onclick: () => { setElem(list(), null); v3PaintUI(); }}));
   for (const [k, e] of Object.entries(ELEM)) r.append(Object.assign(document.createElement('button'), {textContent: e.n, className: pt.elem === k ? 'on' : '', onclick: () => { setElem(list(), k); v3PaintUI(); tip(e.n + (paintAll ? ' on everything' : ''), 1400); }})); };
+
+// ====================================================================== 🐊 stance switch (Nov 9 late): body types that share bone names (SKEL[k].stance = the other key)
+// One creature, two poses: every bone moves to the other body type's place, fitted parts refit, plugged parts follow. Parts moved by hand keep their place on their bone.
+V3X.stance = () => { const cur = SKEL[P.skel], to = cur && cur.stance; if (!to || !SKEL[to]) return false; snap();
+  const nb = detailBones(JSON.parse(JSON.stringify(SKEL[to].bones))), names = new Set(nb.map(b => b[0])), fb = (nb.find(b => b[4] === 'chest') || nb[0])[0];
+  P.parts.forEach(p => { if (p.bone && !names.has(p.bone)) p.bone = fb; if (p.fit && p.fit.drop && !names.has(p.fit.drop)) p.fit.drop = p.bone; });
+  if (P.fin === P.skel) P.fin = to; P.skel = to; P.bones = nb; P.pose = {}; P.bodyBase = null; P.body = {};
+  rebuildSkeleton(); if (P.parts.length) { refitAll(false); if (hasBase()) buildBase(); } else buildBase(); rebuildParts(); skelUI(); bodyUI(); outliner(); saveCur(); frameAll();
+  tip((SKEL[to].name || '').replace(/^\S+\s/, '') + ' — same creature, other stance. Tap again to switch back.', 2600); return true; };
+{ const sync = () => { const s = SKEL[P.skel], on = !!(s && s.stance && SKEL[s.stance]); for (const id of ['bStance', 'bStanceV']) { const b = $(id); if (!b) continue; b.style.display = on ? '' : 'none'; if (on) b.textContent = id === 'bStanceV' ? (s.stanceName || '🔁 Other stance') : '🔁 ' + (s.stanceName || 'Other stance').replace(/^\S+\s/, '') + ' (same creature)'; } };
+  const _ol = outliner; outliner = function (...a) { const r = _ol.apply(this, a); try { sync(); } catch (x) {} return r; };
+  for (const id of ['bStance', 'bStanceV']) if ($(id)) $(id).onclick = () => V3X.stance(); sync(); }
+
+// ====================================================================== 🦶 raised ankles (looks round 2): a kit foot on a foot bone whose ankle is high off the ground (dinosaur, bird legs)
+// sits at the toe end of that bone (fitPart, `fit.digi`); the bone itself gets a limb segment (the long foot bone between ankle and toes), so the foot is not left floating under the shin.
+{ const _aa = V3X.afterAdd; let busy = false; V3X.afterAdd = pt => { _aa(pt); if (busy || !pt.fit || !pt.fit.digi || mainOnChain(pt.bone)) return; const par = (boneRow(pt.bone) || [])[1], up = par && P.parts.find(p => p.bone === par && p.fit && p.fit.kind === 'seg' && LIB[p.lib] && LIB[p.lib].perSeg && !p.boxed);
+    const id = up ? ((LIB[up.lib].segBy || {}).legL || up.lib) : 'kl_limb_scaly_low'; if (!LIB[id]) return; busy = true; const mm = mirrorAdd, sel0 = sel; mirrorAdd = false; V3X.skip = true;
+    try { addPart(id, pt.bone, [0, 0, 0], [0, 0, 0]); const np = P.parts[P.parts.length - 1]; if (np && np.lib === id) { if (up && up.mat) { np.mat = [...up.mat]; buildPart(np); } else V3X.theme([np.uid]); } } finally { V3X.skip = false; mirrorAdd = mm; busy = false; } if (sel0) select(sel0); }; }
+function mainOnChain(bone) { return P.parts.some(p => p.bone === bone && p.fit && p.fit.kind === 'seg' && !p.boxed && !p.lib.startsWith('base_')); }
