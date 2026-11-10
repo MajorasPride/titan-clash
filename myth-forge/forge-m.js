@@ -56,6 +56,18 @@
   #markGroups button span{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:22px;height:22px;line-height:22px;border-radius:50%;background:rgba(0,0,0,.35);font-size:12px}
   #mintro{position:fixed;left:10px;right:10px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:35;background:rgba(30,26,20,.97);border:1px solid var(--ac);border-radius:14px;padding:12px;font-size:13.5px;line-height:1.4;max-width:460px;margin:0 auto;box-shadow:0 4px 18px rgba(0,0,0,.5)}
   #mintro b{color:var(--ac2,#ffd166)} #mintro button{margin-top:8px;min-height:42px;width:100%}
+  #sdock{position:fixed;left:6px;bottom:calc(68px + env(safe-area-inset-bottom));z-index:5;display:none;flex-direction:column;gap:6px;align-items:center;touch-action:none;user-select:none;-webkit-user-select:none}
+  body.sdockR #sdock{left:auto;right:6px} body.sdockR.sdockOn #vtools{right:auto;left:6px} body.sdockR.sdockOn #vtools .vk{align-self:flex-start}
+  body.sdockOn #sdock{display:flex} body.mup #sdock,body.guiding #sdock,body.full #sdock{display:none}
+  #sdock button{width:54px;min-height:46px;padding:2px;border-radius:14px;font:700 10px/1.1 system-ui;background:rgba(40,40,50,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+  #sdock button i{font-style:normal;font-size:19px;line-height:1}
+  #sdock button.big{min-height:58px;border-color:var(--ac,#ff8c32)} #sdock button.big i{font-size:26px}
+  #sdock button.on{background:#5a3a14;border-color:var(--ac,#ff8c32);color:#ffd9b0}
+  #sdock .pad{width:54px;height:96px;border-radius:14px;border:1px solid #4c4c58;background:rgba(40,40,50,.92);position:relative;overflow:hidden;font:700 10px/1.1 system-ui;color:#f4f0e6;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:5px 0;touch-action:none}
+  #sdock .pad .fill{position:absolute;left:0;right:0;bottom:0;background:rgba(255,140,50,.38);pointer-events:none}
+  #sdock .pad span{position:relative;pointer-events:none} #sdock .pad .v{font-size:13px}
+  #sdock .pad.drag{border-color:var(--ac,#ff8c32)}
+  #sdock.small .x2{display:none}
   `; document.head.append(css);
   const mk = (tag, props, ...kids) => { const x = Object.assign(document.createElement(tag), props || {}); x.append(...kids); return x; };
   const click = q => { const b = typeof q === 'string' ? document.querySelector(q) : q; if (b) b.click(); return !!b; };
@@ -204,7 +216,7 @@
   function markUI() { live(); bMark.textContent = markMode ? '🔖 Marking: ON (' + marks.size + ')' : marks.size ? '🔖 Mark parts (' + marks.size + ' marked)' : '🔖 Mark parts'; bMark.classList.toggle('on', markMode); mCol.style.display = bClr.style.display = bSave.style.display = marks.size ? '' : 'none';
     hint.textContent = markMode ? 'Tap every part you want on the model (both wings, the tail, the back spikes…). Tap one again to unmark it. Then tap a skin or pick a colour: it goes on all of them.' : marks.size ? 'Skins and the colour here go on the ' + marks.size + ' marked parts. Clear marks to paint one part at a time again.' : '';
     grp.innerHTML = ''; (P.markGroups || []).forEach((g, n) => { const b = mk('button', {textContent: '📁 ' + g.n + ' (' + g.m.length + ')', onclick: () => loadGroup(n)}); b.append(mk('span', {textContent: '✕', onclick: e => { e.stopPropagation(); snap(); P.markGroups.splice(n, 1); saveCur(); markUI(); }})); grp.append(b); }); }
-  function setMark(on) { markMode = !!on; if (on) { if (tab !== 'paint') click(tabBtn('paint')); if ($('bPaintAll').classList.contains('on')) click('#bPaintAll'); tip('🔖 Tap the parts you want to paint together', 2600); } markUI(); }
+  function setMark(on) { markMode = !!on; if (on) { if (tab === 'paint' && $('bPaintAll').classList.contains('on')) click('#bPaintAll'); tip(tab === 'paint' ? '🔖 Tap the parts you want to paint together' : '🔖 Tap the parts you want to mark. Tap one again to unmark it', 2600); } markUI(); }
   function clearMarks() { marks.clear(); markUI(); hlDraw(); }
   function toggleMark(u) { const pt = partBy(u); if (!pt) return; let key = u, ids = null;
     if (typeof piecePaint !== 'undefined' && piecePaint && lastPick && lastPick.uid === u) { const g = pieceClusters(pt, true).find(x => x.ids.includes(lastPick.mi)); ids = g ? g.ids : [lastPick.mi]; key = u + ':' + ids[0]; }
@@ -219,12 +231,68 @@
   function paintMarked(k) { snap(); for (const {pt, ids} of markedParts()) { if (ids) { const n = pieces(pt.lib, pt.params).length; pt.mat = pt.mat || Array(n).fill(pt.matAll || null); ids.forEach(i => pt.mat[i] = k); } else { pt.matAll = k; pt.mat = null; } buildPart(pt); }
     saveCur(); paintNowUI(); hlDraw(); tip(MATS.LIST.find(l => l[0] === k)[1] + ' on ' + marks.size + ' marked parts', 2000); }
   const _mPaint = paint; paint = function (k) { if (live().size && !(brushPaint && paintBrush === 'skin')) return paintMarked(k); return _mPaint(k); };
-  const _mSelect = select; select = function (u) { const r = _mSelect(u); if (markMode && tab === 'paint' && u) toggleMark(u); return r; };
+  const _mSelect = select; select = function (u) { const r = _mSelect(u); if (markMode && u && !markJump) toggleMark(u); return r; };
   mCol.onchange = e => { if (!live().size) return; snap(); for (const {pt} of markedParts()) { pt.tint = e.target.value; buildPart(pt); } saveCur(); tip('Colour on ' + marks.size + ' marked parts', 1800); };
   function saveGroupUI() { if (!live().size) return tip('Mark some parts first', 1800); hint.textContent = ''; const inp = mk('input', {type: 'text', placeholder: 'Group name (wings, back scales…)', style: 'flex:1;min-height:40px;padding:4px 8px;border-radius:8px;border:1px solid #4c4c58;background:#1c1c22;color:inherit'});
     const ok = mk('button', {textContent: 'Save', className: 'on', onclick: () => { snap(); P.markGroups = P.markGroups || []; const n = (inp.value || '').trim() || 'Group ' + (P.markGroups.length + 1); const ex = P.markGroups.findIndex(g => g.n === n), rec = {n, m: [...marks.values()].map(m => ({u: m.u, ids: m.ids}))};
       if (ex >= 0) P.markGroups[ex] = rec; else P.markGroups.push(rec); saveCur(); markUI(); tip('💾 Group "' + n + '" saved with this creature', 2200); }});
     hint.append(mk('div', {className: 'row'}, inp, ok)); inp.focus(); }
   function loadGroup(n) { const g = (P.markGroups || [])[n]; if (!g) return; marks.clear(); for (const m of g.m) if (partBy(m.u)) marks.set(m.ids ? m.u + ':' + m.ids[0] : m.u, {u: m.u, ids: m.ids || null}); if (tab !== 'paint') click(tabBtn('paint')); markUI(); hlDraw(); tip('📁 ' + g.n + ': ' + marks.size + ' parts marked. Tap a skin or colour.', 2400); }
+  // ---- 🔖 Mark everywhere (Nov 10 2026: "Mark part is way too handy to not use anywhere else. Like deleting etc and sculpting")
+  // Build (✋ Move & size): mark parts, then delete / hide / copy them all at once. Sculpt: with parts marked and Marking off, the brush works on whichever MARKED part
+  // is under it (it picks that part for you), so you can sculpt across both wings or every back plate without re-selecting; unmarked parts are left alone.
+  let markJump = false; const extraBtns = [], extraRows = [];
+  const mkRow = (pane, kind) => { const host = $(pane); if (!host) return; const r = mk('div', {className: 'row', style: 'flex-wrap:wrap'}), h = mk('div', {className: 'hint'}); const b = mk('button', {onclick: () => setMark(!markMode)}); extraBtns.push(b); r.append(b);
+    const act = (t, f) => { const x = mk('button', {textContent: t, onclick: f}); x.dataset.need = '1'; r.append(x); return x; };
+    if (kind === 'build') { act('🗑 Delete marked', () => { const ps = markedParts().map(m => m.pt).filter(Boolean); if (!ps.length) return; snap(); const n = ps.length; removeParts(ps); marks.clear(); rebuildParts(); outliner(); saveCur(); markUI(); hlDraw(); tip('🗑 ' + n + ' marked parts removed (↶ Undo brings them back)', 2600); });
+      act('🙈 Hide marked', () => { const ps = markedParts().map(m => m.pt).filter(Boolean); if (!ps.length) return; snap(); const hide = ps.some(q => !q.hidden); ps.forEach(q => q.hidden = hide); rebuildParts(); outliner(); saveCur(); hlDraw(); tip((hide ? '🙈 Hidden: ' : '👁 Shown: ') + ps.length + ' marked parts (tap again to ' + (hide ? 'show' : 'hide') + ')', 2400); });
+      act('↔ Bigger', () => sizeMarked(1.1)); act('↔ Smaller', () => sizeMarked(1 / 1.1)); }
+    else { act('Undo sculpt on marked', () => { const ps = markedParts().map(m => m.pt).filter(Boolean); if (!ps.length) return; snap(); ps.forEach(q => { q.sculpt = null; q.cut = []; buildPart(q); }); saveCur(); tip('Sculpt undone on ' + ps.length + ' marked parts', 2000); });
+      act('More detail on marked', () => { const ps = markedParts().map(m => m.pt).filter(Boolean); if (!ps.length) return; snap(); ps.forEach(q => { if ((q.subdiv || 0) < 2) { q.subdiv = (q.subdiv || 0) + 1; q.sculpt = null; q.cut = []; buildPart(q); } }); saveCur(); tip('More detail on ' + ps.length + ' marked parts', 2000); }); }
+    act('Clear marks', () => clearMarks()); host.prepend(r, h); extraRows.push({r, h, kind}); };
+  const sizeMarked = k => { const ps = markedParts().map(m => m.pt).filter(Boolean); if (!ps.length) return; snap(); ps.forEach(q => { q.s = +(q.s * k).toFixed(4); }); rebuildParts(); saveCur(); hlDraw(); };
+  mkRow('p-edit', 'build'); mkRow('p-sculpt', 'sculpt');
+  const _markUI = markUI; markUI = function () { _markUI(); for (const b of extraBtns) { b.textContent = markMode ? '🔖 Marking: ON (' + marks.size + ')' : marks.size ? '🔖 Mark parts (' + marks.size + ' marked)' : '🔖 Mark parts'; b.classList.toggle('on', markMode); }
+    for (const {r, h, kind} of extraRows) { r.querySelectorAll('[data-need]').forEach(x => x.style.display = marks.size ? '' : 'none');
+      h.textContent = markMode ? 'Tap every part you want on the model. Tap one again to unmark it. Then turn Marking off' + (kind === 'sculpt' ? ' and sculpt: the brush only works on the marked parts and moves between them by itself.' : ' and use the buttons here on all of them.') : marks.size ? (kind === 'sculpt' ? 'Sculpting only touches the ' + marks.size + ' marked parts. The brush picks the marked part under it.' : marks.size + ' parts marked.') : ''; } };
+  // Sculpt + marks: before the brush stroke starts, pick the marked part under the pointer (window capture runs before the canvas handlers)
+  addEventListener('pointerdown', e => { if (e.target !== canvas || tab !== 'sculpt' || markMode || !live().size) return; const h = cast(e.clientX, e.clientY - (e.pointerType === 'touch' ? fingerOff : 0), visibleMeshes()); const u = h && h.object.userData.uid; if (!u) return;
+    const ok = [...marks.values()].some(m => m.u === u); if (ok && u !== sel) { markJump = true; try { select(u); } finally { markJump = false; } }
+    else if (!ok && u !== sel) { /* an unmarked part: leave the pick where it is, the stroke only lands on the picked (marked) part */ } }, true);
   M.mark = {set: setMark, toggle: toggleMark, clear: clearMarks, marks, save: saveGroupUI, load: loadGroup, paint: paintMarked}; markUI();
+  // ------------------------------------------------------------------ 5. 👍 Thumb dock (sculpt + brush paint; Nov 10 2026, "sculpting is a little hard on the phone")
+  // Shows while a brush is in use (Sculpt tab, or Paint with a brush on). Undo / redo, brush size and strength as drag pads (drag up = more),
+  // dig in, quick smooth, and ☝ Offset: the brush works a bit above the finger so the finger does not cover it. ⇄ moves the dock to the other side.
+  {
+    const dock = mk('div', {id: 'sdock'}); document.body.append(dock);
+    let prevBrush = null, offOn = LS('mf-sd-off') === '1', small = LS('mf-sd-small') !== '0';
+    if (LS('mf-sd-side') === 'R') document.body.classList.add('sdockR');
+    const ids = () => tab === 'paint' ? ['sPSize', 'sPStr'] : ['sBrush', 'sStr'];
+    const btn = (ic, label, fn, cls) => mk('button', {className: cls || '', onclick: fn}, mk('i', {textContent: ic}), label);
+    const bU = btn('↶', 'Undo', () => click('#bUndo'), 'big'), bR = btn('↷', 'Redo', () => click('#bRedo'), 'x2');
+    const pad = (name, which) => { const fill = mk('div', {className: 'fill'}), v = mk('span', {className: 'v'}), el = mk('div', {className: 'pad'}, fill, mk('span', {textContent: name}), v, mk('span', {textContent: '↕'}));
+      const inp = () => $(ids()[which]); let d = null;
+      const show = () => { const i = inp(); if (!i) return; const t = (+i.value - +i.min) / (+i.max - +i.min); fill.style.height = Math.round(t * 100) + '%'; v.textContent = which ? Math.round(t * 100) + '%' : (+i.value).toFixed(1); };
+      const set = val => { const i = inp(); i.value = Math.min(+i.max, Math.max(+i.min, val)); i.dispatchEvent(new Event('input', {bubbles: true})); show();
+        if (!which) { const r = canvas.getBoundingClientRect(); ring(r.left + r.width / 2, r.top + r.height * .42); } };
+      el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); const i = inp(); d = {id: e.pointerId, y: e.clientY, v: +i.value, span: +i.max - +i.min, moved: false}; el.classList.add('drag'); try { el.setPointerCapture(e.pointerId); } catch (x) {} });
+      el.addEventListener('pointermove', e => { if (!d || e.pointerId !== d.id) return; if (Math.abs(e.clientY - d.y) > 3) d.moved = true; set(d.v + (d.y - e.clientY) / 150 * d.span); });
+      const end = e => { if (!d || e.pointerId !== d.id) return; const q = d; d = null; el.classList.remove('drag');
+        if (!q.moved) { const r = el.getBoundingClientRect(), i = inp(); set(+i.value + (e.clientY < r.top + r.height / 2 ? 1 : -1) * q.span / 12); }   // a tap on the top half = a step up, bottom half = a step down
+        if (!which) setTimeout(() => { if (!stroking) $('ring').style.display = 'none'; }, 700); tip((which ? 'Strength ' : 'Brush size ') + v.textContent, 900); };
+      el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end); el.show = show; return el; };
+    const pSize = pad('Size', 0), pStr = pad('Power', 1);
+    const bDig = btn('➖', 'Dig in', () => { click('#bInv'); ui(); }), bSm = btn('🧽', 'Smooth', () => { if (brush === 'smooth' && prevBrush) { click('[data-br="' + prevBrush + '"]'); prevBrush = null; } else { prevBrush = brush; click('[data-br="smooth"]'); } ui(); });
+    const bOff = btn('☝', 'Offset', () => { offOn = !offOn; LS('mf-sd-off', offOn ? '1' : '0'); ui(); tip(offOn ? '☝ Offset on: the brush works a little above your finger, so you can see it' : 'Offset off: the brush is right under your finger', 2600); }, 'x2');
+    const bSide = btn('⇄', 'Side', () => { const r = document.body.classList.toggle('sdockR'); LS('mf-sd-side', r ? 'R' : 'L'); try { resize(); } catch (e) {} }, 'x2');
+    const bMin = btn('⋯', '', () => { small = !small; LS('mf-sd-small', small ? '1' : '0'); ui(); });
+    dock.append(bU, bR, pSize, pStr, bDig, bSm, bOff, bSide, bMin);
+    function ui() { dock.classList.toggle('small', small); pSize.show(); pStr.show(); const sc = tab === 'sculpt';
+      bDig.style.display = bSm.style.display = sc ? '' : 'none'; bDig.classList.toggle('on', typeof sInv !== 'undefined' && !!sInv); bSm.classList.toggle('on', brush === 'smooth' && !!prevBrush); bOff.classList.toggle('on', offOn);
+      fingerOff = offOn && document.body.classList.contains('sdockOn') ? 64 : 0; }
+    const want = () => document.body.classList.contains('mfm') && sculpting() && !(typeof lpMode !== 'undefined' && lpMode) && !markMode;
+    const sync = () => { const on = want(); if (document.body.classList.contains('sdockOn') !== on) { document.body.classList.toggle('sdockOn', on); } if (on) ui(); else fingerOff = 0; };
+    setInterval(sync, 300); document.querySelectorAll('.tabs button,[data-pb],[data-br]').forEach(b => b.addEventListener('click', () => setTimeout(sync, 0)));
+    M.dock = {sync, ui, el: dock};
+  }
 }

@@ -29,10 +29,15 @@
       const out = [{geo: g, mat}, {geo: mus, mat}];
       if (id === 'lion') { const mane = body(1.5, t => (1.5 - .25 * t) * end(t), 1.05, 1.15, 48, 24); at(mane, 0, H - 1.2, .3); out.push({geo: noise(mane, .12, 3), mat: 'fur'}); }
       return out; }), fitBox: [[-1.12, 0, -.8], [1.12, H, 1.6]]})),
-    S('bird', TB, 'Bird Bodies', 'Bird body (feathered)', ['bird', 'griffin', 'feather', 'avian'], () => {
-      const g = body(3.6, t => (1.2 * Math.sin(Math.min(1, t * 1.05) * Math.PI) ** .7 + .05) * (1 - .25 * t), 1.0, 1.25);
-      const ruff = []; for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 2; ruff.push(at(new T.ConeGeometry(.22, .8, 6), Math.cos(a) * .95, 2.9, Math.sin(a) * 1.1, Math.sin(a) * 1.2, 0, -Math.cos(a) * 1.2)); }
-      return [{geo: noise(g, .025, 3), mat: 'feather'}, {geo: merge(ruff), mat: 'feather'}]; }),
+    // Looks round 3 (Nov 10): a real bird body (was an egg with a ruff). Deep keeled breast, shoulders, tapers to the tail end; rows of breast and back feathers.
+    // Old one: archive/bodies-bird-egg-v1.js
+    {...S('bird', TB, 'Bird Bodies', 'Bird body (feathered)', ['bird', 'griffin', 'feather', 'avian'], () => { const X = window.makeKit(T, K);
+      const R = [[-.55, .22, .22, .3], [-.1, .62, .55, .68], [.7, .95, .95, .85], [1.6, 1.08, 1.25, .86], [2.4, 1.0, 1.2, .78], [3.0, .74, .82, .6], [3.4, .45, .46, .42], [3.65, .25, .25, .25]];
+      const at_ = (y, c) => { for (let i = 1; i < R.length; i++) if (y <= R[i][0]) { const a = R[i - 1], b = R[i], t = (y - a[0]) / (b[0] - a[0]); return a[c] + (b[c] - a[c]) * t; } return R[R.length - 1][c]; };
+      const g = X.loft(R.map(([a, w, t, b]) => ({a, w, t, b, n: 2.2})), {axis: 'y', rad: 40, per: 5, noise: [.015, 3]}), fs = [];
+      for (let r = 0; r < 6; r++) { const y = 3.05 - r * .5, n = 11 + (r % 2); for (let i = 0; i < n; i++) { const a = (i + (r % 2) * .5) / n * Math.PI * 2, sn = Math.sin(a), cs = Math.cos(a), w = at_(y, 1), d = cs >= 0 ? at_(y, 2) : at_(y, 3);
+          const f = X.feather(.78 + .1 * Math.sin(i * 3.1), .2, .05); f.rotateZ(Math.PI); f.rotateX(-.2); f.translate(0, y, 0); f.rotateY(a); f.translate(sn * w * .97, 0, cs * d * .97); fs.push(f); } }
+      return [{geo: g, mat: 'feather'}, {geo: merge(fs.map(q => q.index ? q.toNonIndexed() : q)), mat: 'feather'}]; }), fitBox: [[-1.1, 0, -.86], [1.1, 3.6, 1.25]]},
     S('fish', TB, 'Sea Bodies', 'Fish / shark body', ['fish', 'shark', 'sea', 'aquatic'], () => {
       const g = body(5.4, t => (.25 + 1.0 * Math.sin(Math.min(1, t * 1.05) * Math.PI) ** .8) * (t > .97 ? (1 - t) / .03 : 1) + .02, .75, 1.0);
       const dorsal = fin([[0, -.95], [1.5, -.95], [.25, -2.4]], .1, 2.0, 1), side = [-1, 1].map(s => at(extr([[0, 0], [.9, -.2], [.1, .4]], .06, .02), s * .7, 3.2, .4, -.3, 0, s * .9));

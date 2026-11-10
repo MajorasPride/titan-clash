@@ -829,7 +829,7 @@ function shapeUI() { const el = $('shapeBox'), pt = partBy(sel), e = pt && LIB[p
   const b = document.createElement('button'); b.textContent = 'Reset sliders'; b.onclick = () => { snap(); pt.params = null; buildPart(pt); syncTwin(pt); saveCur(); shapeUI(); }; el.append(b); }
 
 // ====================================================================== paint tab
-let matCat = MATS.LIST[0][2], paintTwin = true;
+let matCat = MATS.LIST[0][2], paintTwin = false;   /* Nov 10 2026: mirroring is a feature you turn on, not the default (MajorasPride) */
 function matsUI() { const cats = [...new Set(MATS.LIST.map(l => l[2]))]; $('matCats').innerHTML = '';
   for (const c of cats) { const b = document.createElement('button'); b.textContent = c; b.className = c === matCat ? 'on' : ''; b.onclick = () => { matCat = c; matsUI(); }; $('matCats').append(b); }
   $('mats').innerHTML = ''; for (const [k, name, c] of MATS.LIST) { if (c !== matCat) continue; const b = document.createElement('button'); b.className = 'item';
@@ -891,7 +891,7 @@ $('bPaintTwin').onclick = e => { paintTwin = !paintTwin; e.target.classList.togg
 $('bPaintAllSame').onclick = () => { const pt = partBy(sel); if (!pt) return; snap(); for (const o of P.parts) if (o.lib === pt.lib) { o.matAll = pt.matAll; o.mat = pt.mat; o.tint = pt.tint; buildPart(o); } saveCur(); tip('Every ' + LIB[pt.lib].name + ' painted the same'); };
 
 // ====================================================================== sculpt
-let brush = 'inflate', symSculpt = true, fingerView = false, penSeen = false, pressure = 1, stroking = false, lastHit = null;
+let brush = 'inflate', symSculpt = false, fingerView = false, penSeen = false, pressure = 1, stroking = false, lastHit = null;
 document.querySelectorAll('[data-br]').forEach(b => b.onclick = () => { brush = b.dataset.br; document.querySelectorAll('[data-br]').forEach(x => x.classList.toggle('on', x === b)); });
 $('bSymSculpt').onclick = e => { symSculpt = !symSculpt; e.target.classList.toggle('on', symSculpt); };
 $('bFingerView').onclick = e => { fingerView = !fingerView; e.target.classList.toggle('on', fingerView); updateOrbit(); };
@@ -994,7 +994,9 @@ function stroke(x, y) {
 function buildPartOwn(pt) { pt.sculpt = pt.sculpt || {}; const v = views[pt.uid]; v.meshes.forEach(m => { const mi = m.userData.mi; if (m.geometry === pieces(pt.lib, pt.params)[mi].geo) m.geometry = m.geometry.clone(); }); }
 function updateOrbit() { controls.enabled = true; controls.touches.ONE = (!sculpting() || penSeen || stylus || fingerView) ? THREE.TOUCH.ROTATE : null;
   controls.touches.TWO = THREE.TOUCH.DOLLY_PAN; controls.mouseButtons.LEFT = sculpting() ? null : THREE.MOUSE.ROTATE; if (!sculpting()) $('ring').style.display = 'none'; }
-function ring(x, y) { const px = (+$('sBrush').value) * innerHeight / (camera.position.distanceTo(controls.target) * Math.tan(camera.fov * D / 2) * 2);
+let fingerOff = 0;   // phone sculpting: the brush works this many pixels above a finger, so the finger does not cover it (set by the 👍 thumb dock in forge-m.js)
+const offY = e => e.clientY - (e.pointerType === 'touch' ? fingerOff : 0);
+function ring(x, y) { const px = (+$(tab === 'paint' ? 'sPSize' : 'sBrush').value) * innerHeight / (camera.position.distanceTo(controls.target) * Math.tan(camera.fov * D / 2) * 2);
   const r = $('ring'); r.style.display = 'block'; r.style.left = x + 'px'; r.style.top = y + 'px'; r.style.width = r.style.height = px * 2 + 'px'; }
 
 // ====================================================================== pointer handling
@@ -1005,10 +1007,10 @@ canvas.addEventListener('pointerdown', e => {
   if (stroking && touches.size > 1) { stroking = false; saveCur(); }
   down = [e.clientX, e.clientY];
   const toolPtr = sculpting() && (e.pointerType === 'pen' || (e.pointerType === 'mouse' && e.button === 0) || (e.pointerType === 'touch' && !stylus && !penSeen && !fingerView && touches.size === 1));
-  if (toolPtr && sel) { pressure = e.pointerType === 'pen' && e.pressure > 0 ? .35 + e.pressure * 1.3 : 1; snap(); stroking = true; lastHit = null; brushAt(e.clientX, e.clientY); ring(e.clientX, e.clientY); }
+  if (toolPtr && sel) { pressure = e.pointerType === 'pen' && e.pressure > 0 ? .35 + e.pressure * 1.3 : 1; snap(); stroking = true; lastHit = null; brushAt(e.clientX, offY(e)); ring(e.clientX, offY(e)); }
 }, true);
-canvas.addEventListener('pointermove', e => { if (!sculpting()) return; if (e.pointerType !== 'touch' || stroking) ring(e.clientX, e.clientY);
-  if (stroking) { if (e.pointerType === 'pen' && e.pressure > 0) pressure = .35 + e.pressure * 1.3; brushAt(e.clientX, e.clientY); } });
+canvas.addEventListener('pointermove', e => { if (!sculpting()) return; if (e.pointerType !== 'touch' || stroking) ring(e.clientX, offY(e));
+  if (stroking) { if (e.pointerType === 'pen' && e.pressure > 0) pressure = .35 + e.pressure * 1.3; brushAt(e.clientX, offY(e)); } });
 const brushAt = (x, y) => (P.fx.lowpoly || P.fx.blocks) && !lpMode ? (lastHit ? null : (lastHit = true, tip('Turn off ' + (P.fx.blocks ? '🧱 Block toy look' : '🔷 Low-poly look') + ' (⚙ › View & look) to sculpt or brush paint', 2200))) : tab === 'paint' ? paintStroke(x, y) : lpMode ? (lastHit ? null : (lastHit = true, lpTap(x, y))) : sculptRoute(x, y);
 addEventListener('pointercancel', e => touches.delete(e.pointerId));
 canvas.addEventListener('contextmenu', e => e.preventDefault());

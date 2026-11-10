@@ -109,6 +109,52 @@
     upper: [[-.5, .5, .9, .1, 2.2], [-.1, .74, 1.25, .05, 2.2], [.4, .72, 1.25, .05, 2.3], [.8, .5, 1.0, .1, 2.4], [1.0, .3, .75, .2, 2.2]],
     jaw: {secs: [[-.05, .3, .04, -.1], [.3, .26, .04, -.12], [.55, .14, .04, -.08]]},
     hinge: [0, .18, .7], mouthLen: .5, eye: [.62, .78, .35], eyeDir: [1, .2, .3], eyeS: 1.15, brow: [0, 1.15, .7], horn: [.25, 1.24, .45], hornDir: [.3, .9, .3], hornS: .6, ear: [.6, 1.1, -.1], earS: .5, nose: [0, .9, .98], crest: [0, 1.25, -.1], fang: [.3, .12, .95], fangS: .5});
+  // ======== Nov 10 2026: heads for the new creature families (all original, made in code) ========
+  // ---- rot dragon: a dragon SKULL (undead dragons). Dark eye sockets, nose holes, cracked brow horns, scraps of flesh still on the cheeks
+  headPair({id: 'rotdragon', name: 'Undead dragon skull', kit: 'dragon', mat: 'bone', jawMat: 'bone', extraMats: ['mouthdark', 'bone', 'flesh'], tags: ['dragon', 'undead', 'zombie', 'skull', 'bone', 'lich', 'rot'],
+    upper: [[-.6, .4, .86, .32], [-.25, .56, 1.08, .24], [.3, .56, 1.12, .2], [.8, .44, .93, .2, 2.6], [1.4, .34, .72, .19, 2.8], [1.95, .27, .58, .19, 2.8], [2.3, .18, .47, .24, 2.4]],
+    jaw: {secs: [[-.05, .4, .05, -.13], [.4, .38, .05, -.16], [1.0, .3, .05, -.14], [1.6, .23, .05, -.11], [2.05, .15, .05, -.07]], extraMat: 'bone',
+      extra: () => [merge([-1, 1].map(sd => at(spike(.42, .07, .3, 0, 8, 8), sd * .4, -.1, .1, 150, 0, sd * 12)))]},
+    hinge: [0, .22, .05], mouthLen: 1.75, eye: [.45, .93, .6], eyeS: .55, eyeDir: [.75, .2, .6], brow: [0, 1.1, .6], horn: [.36, 1.1, -.08], hornS: .9, ear: [.55, .9, -.3], nose: [0, .62, 2.1], crest: [0, 1.12, -.36], fang: [.2, .19, 1.85],
+    extra: () => [merge([ell(.2, .17, .2, .45, .93, .6), ell(.2, .17, .2, -.45, .93, .6), ell(.07, .05, .15, .09, .56, 2.08), ell(.07, .05, .15, -.09, .56, 2.08), ell(.1, .2, .16, .5, .62, .1), ell(.1, .2, .16, -.5, .62, .1)]),
+      merge([...[-1, 1].flatMap(sd => [at(ell(.24, .08, .34, 0, 0, 0), sd * .4, 1.1, .56, 0, sd * 10, sd * -18), at(spike(.75, .09, .35, 0, 10, 8), sd * .52, .78, -.3, -105, sd * -20, 0), at(spike(.4, .06, .3, 0, 8, 8), sd * .5, .55, -.15, -120, sd * -30, 0)]),
+        ...[0, 1, 2, 3].map(i => at(spike(.42 - i * .07, .07, .4, 0, 8, 8), 0, 1.1 - i * .04, -.2 - i * .22, -50 - i * 6))]),
+      K.noise(merge([at(ell(.22, .16, .05, 0, 0, 0), .5, .62, .72, 0, 70, 0), at(ell(.18, .22, .05, 0, 0, 0), -.52, .7, .3, 0, -80, 0), at(ell(.2, .1, .3, 0, 0, 0), .12, 1.13, .2, 0, 0, 8), at(ell(.14, .05, .3, 0, 0, 0), -.2, .86, 1.3, 0, 0, -25)]), .03, 6)]});
+  // ---- demon: broad horned face, heavy angry brow, sharp cheekbones, long pointed chin
+  headPair({id: 'demon', name: 'Demon head', kit: 'kaiju', mat: 'skin', extraMats: ['skin', 'horn'], tags: ['demon', 'devil', 'fiend', 'oni', 'menacing', 'horned'],
+    upperY: [[.2, .3, .6, .2], [.42, .44, .72, .42], [.66, .56, .7, .62], [.92, .6, .76, .72], [1.2, .6, .7, .76], [1.48, .5, .5, .64], [1.68, .24, .2, .32]],
+    jaw: {secs: [[-.12, .47, .03, -.12], [.25, .46, .04, -.27, 2.6], [.52, .33, .04, -.36, 2.4], [.76, .14, .04, -.34, 2.2]], chin: -.34, extraMat: 'horn', extra: () => [at(spike(.3, .07, .2, 0, 8, 8), 0, -.3, .74, 160, 0, 0)]},
+    hinge: [0, .3, .0], mouthLen: .66, eye: [.26, .9, .62], eyeDir: [.2, 0, 1], eyeS: .46, brow: [0, 1.08, .76], horn: [.4, 1.48, .12], hornDir: [.7, .75, -.1], hornS: 1.15, ear: [.6, .86, -.05], earS: .75, nose: [0, .56, .8], noseS: .4, crest: [0, 1.68, -.15], fang: [.2, .3, .64], fangS: .55,
+    extra: () => [merge([...[-1, 1].flatMap(sd => [at(ell(.3, .09, .16, 0, 0, 0), sd * .27, 1.06, .68, 0, sd * 14, sd * -20), at(ell(.12, .09, .2, 0, 0, 0), sd * .5, .68, .42, 0, sd * 30, 0)]), at(ell(.1, .2, .13, 0, 0, 0), 0, .68, .74, -12, 0, 0), ell(.13, .07, .08, 0, .54, .76)]),
+      merge([...[-2, -1, 0, 1, 2].map(i => at(spike(.2 - Math.abs(i) * .03, .05, .2, 0, 6, 6), i * .13, 1.6 - Math.abs(i) * .05, .05, -20, 0, i * -14))])]});
+  // ---- goat: long face, flat forehead for the horns, a beard under the chin (chimera's second head, satyrs, beast-men)
+  headPair({id: 'goat', name: 'Goat head', kit: 'beast', mat: 'fur', extraMats: ['rubber', 'horn'], tags: ['goat', 'ram', 'chimera', 'satyr', 'beast'],
+    upper: [[-.5, .42, .98, .3, 2.2], [-.1, .52, 1.22, .22, 2.2], [.4, .46, 1.16, .2, 2.3], [.9, .33, .92, .2, 2.5], [1.4, .26, .74, .2, 2.6], [1.75, .2, .6, .25, 2.4]],
+    jaw: {secs: [[-.05, .3, .05, -.16], [.5, .26, .05, -.2], [1.1, .2, .05, -.17], [1.6, .14, .05, -.12]], extraMat: 'fur', extra: () => [K.noise(at(spike(.7, .13, .25, 0, 10, 10), 0, -.14, 1.15, 172, 0, 0), .02, 5)]},
+    hinge: [0, .22, .1], mouthLen: 1.4, eye: [.4, 1.0, .58], eyeDir: [.9, .2, .3], eyeS: .52, brow: [0, 1.18, .55], horn: [.22, 1.22, -.02], hornDir: [.3, .75, -.6], hornS: 1.1, ear: [.5, .98, -.22], earS: .95, nose: [0, .7, 1.72], crest: [0, 1.22, -.32], fang: [.13, .2, 1.45], fangS: .4,
+    extra: () => [merge([ell(.13, .09, .1, 0, .6, 1.76), ell(.045, .035, .05, .07, .6, 1.84), ell(.045, .035, .05, -.07, .6, 1.84)]),
+      merge([-1, 1].flatMap(sd => { const pts = [[sd * .2, 1.18, 0], [sd * .3, 1.75, -.25], [sd * .5, 2.1, -.75], [sd * .75, 2.1, -1.3], [sd * .95, 1.8, -1.7]].map(p => V3(...p)), c = K.cr(pts), gs = [K.taper(c, t => .15 * (1 - t * .9), 0, 20, 10)];
+        for (let i = 1; i <= 7; i++) { const t = i / 9, q = c.getPointAt(t), g = new T.TorusGeometry(.15 * (1 - t * .9) * 1.05, .014, 5, 12); g.lookAt(c.getTangentAt(t)); gs.push(g.translate(q.x, q.y, q.z)); } return gs; }))]});
+  // ---- raptor: narrow hunting snout, feather quills at the back of the skull
+  headPair({id: 'raptor', name: 'Raptor head (feathered dinosaur)', kit: 'kaiju', mat: 'scale', extraMats: ['feather'], tags: ['raptor', 'dinosaur', 'feathered', 'hunter'],
+    upper: [[-.5, .36, .84, .28], [-.15, .46, 1.02, .2], [.35, .44, 1.02, .18, 2.5], [.9, .32, .82, .17, 2.7], [1.5, .24, .63, .17, 2.8], [1.95, .16, .49, .2, 2.4]],
+    jaw: {secs: [[-.05, .33, .05, -.18], [.5, .3, .05, -.2], [1.1, .23, .05, -.17], [1.75, .13, .05, -.1]]},
+    hinge: [0, .2, .05], mouthLen: 1.5, eye: [.39, .88, .55], eyeS: .46, brow: [0, 1.02, .55], horn: [.3, 1.02, -.05], ear: [.45, .8, -.3], nose: [0, .6, 1.85], crest: [0, 1.04, -.3], fang: [.15, .17, 1.55],
+    extra: () => [merge([-2, -1, 0, 1, 2].map(i => at(X.feather(.8 - Math.abs(i) * .1, .15, .1), i * .13, .96 - Math.abs(i) * .04, -.3, -84 - Math.abs(i) * 3, 0, i * -10)))]});
+  // ---- pterosaur: very long toothless beak, a long blade crest sweeping back from the skull
+  headPair({id: 'ptero', name: 'Pterosaur head (beak + crest)', kit: 'bird', mat: 'skin', extraMats: ['horn'], jawMat: 'horn', tags: ['pterosaur', 'pterodactyl', 'dinosaur', 'beak', 'flyer'],
+    upper: [[-.5, .36, .82, .3], [-.1, .46, .97, .25], [.4, .4, .92, .25, 2.4], [1.0, .25, .68, .28, 2.4], [1.8, .16, .52, .3, 2.2], [2.6, .09, .42, .33, 2.2], [3.2, .035, .37, .34, 2]],
+    jaw: {secs: [[-.05, .3, .05, -.12], [.6, .24, .05, -.14], [1.5, .14, .05, -.1], [2.4, .07, .05, -.07], [3.05, .03, .05, -.03]]},
+    hinge: [0, .25, .05], mouthLen: 2.6, eye: [.37, .8, .42], eyeS: .5, brow: [0, .97, .4], horn: [.25, .97, -.1], hornS: .5, ear: [.42, .7, -.3], earS: .5, nose: [0, .5, 2.9], noseS: .4, crest: [0, .97, -.3], fang: [.08, .26, 2.4], fangS: .3,
+    extra: () => [merge([at(spike(2.0, .2, .25, 0, 14, 10, .3), 0, .86, -.2, -72, 0, 0), at(loft([{a: .9, w: .13, t: .1, b: .1, y: .72}, {a: 2.0, w: .1, t: .08, b: .08, y: .58}, {a: 3.1, w: .04, t: .04, b: .04, y: .42}], {rad: 12, per: 3}), 0, 0, 0)])]});
+  // ---- construct: a riveted war helm with a glowing visor slit instead of eyes, a fin crest on top (clockwork warriors, living statues)
+  headPair({id: 'construct', name: 'Construct helm (visor)', kit: 'kaiju', mat: 'metal', jawMat: 'darkmetal', extraMats: ['glow', 'darkmetal'], noise: [0, 1], tags: ['construct', 'golem', 'automaton', 'clockwork', 'statue', 'armor', 'knight'],
+    upperY: [[.2, .44, .6, .5, 3.2], [.5, .57, .67, .6, 3.2], [.9, .61, .7, .66, 3], [1.3, .59, .66, .66, 2.8], [1.6, .42, .44, .5, 2.6], [1.76, .16, .16, .2, 2.4]],
+    jaw: {secs: [[-.12, .46, .03, -.14, 3.2], [.3, .46, .04, -.32, 3.2], [.64, .32, .04, -.32, 3]], chin: -.3, extraMat: 'metal', extra: () => [merge([-.24, 0, .24].map(x => new T.BoxGeometry(.05, .26, .05).translate(x, -.16, .62)))]},
+    hinge: [0, .3, .0], mouthLen: .55, eye: [.24, .96, .62], eyeDir: [.15, 0, 1], eyeS: .4, brow: [0, 1.12, .7], horn: [.4, 1.5, .1], hornS: .8, ear: [.62, .9, -.05], earS: .6, nose: [0, .6, .7], noseS: .4, crest: [0, 1.76, -.15], fang: [.2, .3, .6], fangS: .4,
+    extra: () => [merge([new T.BoxGeometry(.86, .09, .1).translate(0, .96, .66), new T.BoxGeometry(.07, .34, .1).translate(0, .78, .68)]),
+      merge([K.extr([[-.75, 0], [-.45, .38], [.25, .46], [.7, .1], [.55, 0]], .07, .02).rotateY(-Math.PI / 2).translate(0, 1.66, 0), new T.BoxGeometry(1.3, .1, .16).translate(0, 1.16, .64), new T.TorusGeometry(.6, .05, 8, 28).rotateX(Math.PI / 2).translate(0, .42, .04),
+        ...[-1, 1].flatMap(sd => [-.3, 0, .3].map(z => new T.SphereGeometry(.05, 8, 6).translate(sd * .6, 1.0, z)))])]});
   out.forEach(e => { if (e.plugs) for (const p of e.plugs) if (p.id === 'hornC' && e.id === 'kh_bug') { p.t = 'antenna'; } });
   // bug heads: antenna plugs
   const bug = out.find(e => e.id === 'kh_bug'); bug.plugs.push(...pair('ant', 'antenna', [.25, 1.22, .55], [.35, .85, .45], 'out', {s: .9}));

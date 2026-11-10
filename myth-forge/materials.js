@@ -263,6 +263,25 @@ vec3 hue(float h){ return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.
   else if (uFx == 36) { vec3 g = abs(fract(vTP * 1.4) - .5); float ln = smoothstep(.025, .0, min(min(abs(g.x - .38), abs(g.y - .38)), abs(g.z - .38))) * step(.45, h3(floor(vTP * 1.4)));
     float pulse = .6 + .4 * sin(vTP.y * 2.0 - t * 2.5); fx = diffuse * 0.0 + vec3(.25, .75, 1.0) * ln * pulse * 1.6 + vec3(.5, .8, 1.0) * fr * .12; }
   else if (uFx == 37) { float n = fbm(q * 2.5 + vec3(0.0, t * .15, 0.0)), v = smoothstep(.04, .0, abs(vn(q * 5.0 + t * .1) - .5)); diffuseColor.rgb *= .7 + n * .6; fx = vec3(.5, .8, .1) * v * (.5 + .5 * sin(t * 2.0 + n * 6.0)) * .9 + vec3(.6, .7, .2) * fr * .2; }
+  // ---- ✨ Ethereal set (Nov 10 2026): 38 shadow mist, 39 moonlit spirit, 40 soul fire, 41 phantom, 42 star veil, 43 dream mist, 44 holy light, 45 abyss smoke, 46 will-o-wisp
+  else if (uFx == 38) { float n = fbm(q * 1.2 + vec3(t * .07, t * .11, -t * .05)), m = fbm(q * 2.6 - vec3(t * .1, -t * .16, t * .06)); float d = smoothstep(.28, .8, n * .7 + m * .45);
+    fx = vec3(.012, .008, .026) * (.3 + d) + vec3(.2, .12, .42) * fr * (.2 + d * .5) + vec3(.4, .3, .8) * pow(m, 6.0) * .5; diffuseColor.a *= (.62 + d * .38) * (1.0 - fr * .3); base = .0; }
+  else if (uFx == 39) { float n = fbm(q * 1.3 + vec3(0.0, -t * .35, 0.0)), m = fbm(q * 3.0 + vec3(t * .08, -t * .7, 0.0)), w = smoothstep(.35, .85, n * .6 + m * .5);
+    fx = vec3(.5, .72, 1.0) * (.18 + w * .8) + vec3(.92, .96, 1.0) * fr * .9; fx *= 0.50; diffuseColor.a *= .22 + w * .45 + fr * .5; base = .05; }
+  else if (uFx == 40) { float n = fbm(q * 1.8 + vec3(0.0, -t * 1.2, t * .2)), m = fbm(q * 4.0 + vec3(0.0, -t * 2.0, 0.0)), fl = smoothstep(.3, .9, n + m * .35);
+    fx = mix(vec3(.0, .1, .08), vec3(.1, .9, .62), fl) + vec3(.8, 1.0, .92) * pow(fl, 3.0) * .9 + vec3(.2, 1.0, .7) * fr * .3; fx *= 0.60; base = .02; }
+  else if (uFx == 41) { float fl = .85 + .15 * sin(t * 7.0 + vWP.y * 3.0), n = fbm(q * 2.0 + vec3(0.0, t * .2, 0.0));
+    fx = (vec3(.55, .85, 1.0) * (fr * 1.7 + .05) + vec3(.8, .95, 1.0) * pow(n, 4.0) * .35) * fl; diffuseColor.a *= .1 + fr * .88; base = .0; }
+  else if (uFx == 42) { float n = fbm(q * 1.1 + vec3(t * .04, 0.0, t * .03));
+    fx = hue(q.y * .07 + t * .025 + n * .5) * (.12 + fr * .7) * .8 + vec3(1.0) * (stars(q * 24.0, .08, t) * 2.6 + stars(q * 60.0, .1, t * 1.3) * 1.2); diffuseColor.a *= .3 + fr * .65; base = .0; }
+  else if (uFx == 43) { float n = fbm(q * 1.0 + vec3(t * .06, t * .04, 0.0)), m = fbm(q * 2.4 - vec3(t * .09, 0.0, t * .05)), d = smoothstep(.3, .8, n * .6 + m * .5);
+    fx = mix(mix(vec3(1.0, .68, .85), vec3(.6, .8, 1.0), n), vec3(1.0, .92, .7), pow(m, 3.0)) * (.3 + d * .55) + vec3(1.0) * fr * .3; fx *= 0.70; diffuseColor.a *= .45 + d * .55; base = .06; }
+  else if (uFx == 44) { float n = fbm(q * 1.2 + vec3(0.0, t * .1, 0.0)), rays = pow(abs(sin(atan(q.x, q.z) * 5.0 + t * .35 + n * 3.0)), 8.0);
+    fx = vec3(1.0, .8, .42) * (.32 + rays * .45 + fr * 1.3) + vec3(1.0) * pow(n, 5.0) * .5; fx *= 0.40; base = .15; }
+  else if (uFx == 45) { float n = fbm(q * 1.2 + vec3(t * .05, t * .18, 0.0)), m = fbm(q * 2.8 + vec3(0.0, t * .3, t * .08)), d = smoothstep(.3, .8, n * .65 + m * .45), cr = smoothstep(.05, .0, abs(vn(q * 2.6 + vec3(0.0, t * .05, 0.0)) - .5));
+    fx = vec3(.02, .018, .02) * (.4 + d) + vec3(1.0, .16, .04) * cr * 2.0 * (.6 + .4 * sin(t * 1.7 + n * 8.0)) + vec3(.9, .2, .1) * fr * .15; diffuseColor.a *= .55 + d * .45; base = .0; }
+  else if (uFx == 46) { float n = fbm(q * 1.6 + vec3(t * .15, -t * .25, t * .1)), p = .6 + .4 * sin(t * 1.6 + n * 7.0);
+    fx = mix(vec3(.1, .35, 1.0), vec3(.75, .95, 1.0), pow(n, 2.0)) * (.45 + p * .6) + vec3(.9, .97, 1.0) * fr * .9; fx *= 0.50; base = .1; }
   if (uFur > .5) fx *= .55 + diffuseColor.r * .9;
   if (uKeep > .5) totalEmissiveRadiance += fx; else { diffuseColor.rgb = (uFur > .5 ? diffuseColor.rgb * .2 : vec3(base)) + fx * .1; totalEmissiveRadiance += fx * diffuse; }
 }`;
@@ -445,6 +464,11 @@ vec3 hue(float h){ return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.
     ['blossom', 'Cherry blossom pink', 'Plants & Fungus', 'leaf', 0xffb8d0, .6, 0, {side: 2, emissive: 0x401020, emissiveIntensity: .3}], ['blossomwhite', 'White blossom', 'Plants & Fungus', 'leaf', 0xfff0f4, .6, 0, {side: 2}],
     ['blossomdeep', 'Deep pink blossom', 'Plants & Fungus', 'leaf', 0xf06a9a, .6, 0, {side: 2}], ['blossomglow', 'Spirit blossom (glow)', 'Plants & Fungus', 'leaf', 0xffc8e0, .5, 0, {side: 2, emissive: 0xff4a9a, emissiveIntensity: .9}],
     ['cherrybark', 'Cherry bark (dark red)', 'Plants & Fungus', 'img:bark9', 0x8a5a5a, .8, 0],
+    ['shadowmist', 'Shadow mist (drifting, see-through)', 'Ethereal', 'plain', 0xffffff, .9, 0, {fx: 38, transparent: true, side: 2}], ['shadowsolid', 'Living shadow (solid)', 'Ethereal', 'plain', 0xffffff, .9, 0, {fx: 38}],
+    ['spiritlight', 'Moonlit spirit', 'Ethereal', 'plain', 0xffffff, .5, 0, {fx: 39, transparent: true, side: 2}], ['soulfire', 'Soul fire (ghost green)', 'Ethereal', 'plain', 0xffffff, .6, 0, {fx: 40}],
+    ['phantom', 'Phantom (see-through, bright edge)', 'Ethereal', 'plain', 0xffffff, .3, 0, {fx: 41, transparent: true, side: 2}], ['starveil', 'Star veil', 'Ethereal', 'plain', 0xffffff, .3, 0, {fx: 42, transparent: true, side: 2}],
+    ['dreammist', 'Dream mist (pastel)', 'Ethereal', 'plain', 0xffffff, .8, 0, {fx: 43, transparent: true, side: 2}], ['holylight', 'Holy light', 'Ethereal', 'plain', 0xffffff, .4, 0, {fx: 44}],
+    ['abysssmoke', 'Abyss smoke (ember cracks)', 'Ethereal', 'plain', 0xffffff, .9, 0, {fx: 45, transparent: true, side: 2}], ['wisp', 'Will-o-wisp glow', 'Ethereal', 'plain', 0xffffff, .4, 0, {fx: 46}],
     ['toyrubber', 'Toy rubber', 'Craft (toy box)', 'plain', 0xe85a3a, .55, 0], ['toyplastic', 'Shiny toy plastic', 'Craft (toy box)', 'plain', 0x3a8ae8, .25, 0],
   ];
   const ALIAS = {paint2: 'paint2', fur: 'fur', feather: 'feather', stone: 'stone', wood: 'wood', cloth: 'cloth', leather: 'leather', chitin: 'chitin', glow: 'glow', screen: 'screen'};

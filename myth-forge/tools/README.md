@@ -8,3 +8,4 @@ Not part of the app. Paths inside assume the repo is at `/home/claude/titan-clas
 - Before building: `cat forge-core.js forge-v3.js forge-m.js > /tmp/all.mjs && node --check /tmp/all.mjs` (a syntax error means the page never loads and every tool times out after 60 s).
 - Two walks run side by side on 2 cores (about 7 minutes for all body types each).
 - `node stance.js` — crocodile stance switch (crawl → stand → crawl): part counts, button text, page errors. `node sheet12.js dir` — 15 creatures per contact sheet. `node parts0.js parts/bodies-more.js` — like parts.js for the core part files. `node bend.js` — body types whose trunk bends sharply.
+- `node dock.js` thumb dock at phone size; `node eth.js` every ethereal skin + the shadow version on the dragon; `node mk.js` Mark everywhere (mark, resize, delete, undo).

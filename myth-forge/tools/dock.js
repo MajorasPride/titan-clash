@@ -1,0 +1,20 @@
+const H=require('./lib');
+(async()=>{const {page,errs,close}=await H.open('phone');
+await page.evaluate(()=>{window.__fresh('biped');window.__def('biped');window.__frames(3);});
+const tabBtn=t=>page.evaluate(t=>{document.querySelector('.tabs [data-tab="'+t+'"]').click();},t);
+await tabBtn('sculpt'); await page.waitForTimeout(500);
+await page.evaluate(()=>{window.MFM.setUp(false);const p=window.__v3.P().parts.find(p=>/torso|chest/.test(p.bone)||true);window.__dbg().select?window.__dbg().select(p.uid):0;window.__frames(3);});
+await page.waitForTimeout(500);
+const st=await page.evaluate(()=>({on:document.body.classList.contains('sdockOn'),r:JSON.stringify(document.getElementById('sdock').getBoundingClientRect()),dbg:Object.keys(window.__dbg())}));
+console.log(st);
+await page.evaluate(()=>window.__frames(2));await page.screenshot({path:'dock1.png'});
+// drag size pad up
+const pad=await page.evaluate(()=>{const e=document.querySelectorAll('#sdock .pad')[0].getBoundingClientRect();return [e.left+e.width/2,e.top+e.height/2];});
+const before=await page.evaluate(()=>document.getElementById('sBrush').value);
+await page.mouse.move(pad[0],pad[1]);await page.mouse.down();await page.mouse.move(pad[0],pad[1]-60,{steps:5});await page.screenshot({path:'dock2.png'});await page.mouse.up();
+const after=await page.evaluate(()=>document.getElementById('sBrush').value);
+console.log('size',before,'->',after);
+await page.evaluate(()=>{[...document.querySelectorAll('#sdock button')].find(b=>/Side/.test(b.textContent)).click();[...document.querySelectorAll('#sdock button')].find(b=>/Offset/.test(b.textContent)).click();});
+await page.waitForTimeout(400);await page.evaluate(()=>window.__frames(2));await page.screenshot({path:'dock3.png'});
+await tabBtn('paint');await page.waitForTimeout(500);console.log('paint tab dock on',await page.evaluate(()=>document.body.classList.contains('sdockOn')));
+console.log('errs',errs);await close();H.stop();})();

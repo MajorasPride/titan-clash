@@ -91,7 +91,8 @@
   #help ol,#help ul{padding-left:20px;margin:4px 0}
   #help li{margin:4px 0}
   #help .x{position:sticky;top:0;float:right;min-height:40px}
-  #ring{position:fixed;border:2px solid #ff5a3a;border-radius:50%;pointer-events:none;display:none;transform:translate(-50%,-50%);z-index:3}
+  #ring{position:fixed;border:3px solid #ff5a3a;border-radius:50%;pointer-events:none;display:none;transform:translate(-50%,-50%);z-index:3;min-width:18px;min-height:18px;box-shadow:0 0 0 1.5px rgba(0,0,0,.65),inset 0 0 0 1.5px rgba(0,0,0,.45)}
+  #ring::after{content:'';position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#fff;box-shadow:0 0 0 1.5px #000}
   #menu{position:fixed;right:6px;top:52px;z-index:8;background:#24242c;border:1px solid var(--ln);border-radius:12px;padding:6px;display:none;flex-direction:column;gap:5px;min-width:220px}
   #menu.open{display:flex}
   #out{position:fixed;left:8px;right:8px;top:60px;height:120px;display:none;background:#000;color:#ffd9b0;border:1px solid var(--ac);border-radius:8px;font-size:10px;z-index:9}
@@ -281,7 +282,7 @@
     <div class="row" id="stampRow" style="display:none"><button data-stamp="scales" class="on">🐉 Scales</button><button data-stamp="rivets">🔩 Rivets</button><button data-stamp="pores">Skin pores</button><button data-stamp="hex">⬡ Hex plates</button><button data-stamp="cracks">Cracks</button><button data-stamp="bolt">Bolt</button></div>
     <div class="bgrp"><span>Cut</span><button data-br="trim">✂ Trim (draw)</button><button data-br="lineflat">📏 Line flatten</button><button data-br="erase">Erase</button></div>
     <div class="bgrp"><span>Protect</span><button data-br="mask">🛡 Mask</button><button data-mask="clear">Clear</button><button data-mask="invert">Invert</button><button data-mask="blur">Blur</button></div>
-    <div class="row"><button id="bInv">➖ Invert (dig in)</button><button id="bSymSculpt" class="on">🪞 Mirror</button></div>
+    <div class="row"><button id="bInv">➖ Invert (dig in)</button><button id="bSymSculpt">🪞 Mirror</button></div>
     <div class="sl"><span>Brush</span><input id="sBrush" type="range" min=".1" max="3" step=".05" value=".6"><span></span></div>
     <div class="sl"><span>Strength</span><input id="sStr" type="range" min=".05" max="1" step=".05" value=".4"><span></span></div>
     <div class="row"><span class="hint" style="margin:0">Edge:</span><button data-fall="soft">Soft</button><button data-fall="normal" class="on">Normal</button><button data-fall="hard">Hard</button><button data-fall="flat">Flat</button><button id="bPenSz">✒️ Pressure = size too</button></div>
@@ -302,7 +303,7 @@
   <div class="pane" id="p-paint">
     <div id="paintNow"></div>
     <div class="how">👉 Tap a part on the model, then tap a skin.</div>
-    <div class="row"><button id="bPaintAll">🎨 Paint all</button><button id="bPiecePaint">🎯 One piece only</button><button id="bPaintTwin" class="on">🪞 Both sides</button></div>
+    <div class="row"><button id="bPaintAll">🎨 Paint all</button><button id="bPiecePaint">🎯 One piece only</button><button id="bPaintTwin">🪞 Both sides</button></div>
     <div class="chips" id="matCats"></div>
     <div class="grid" id="mats"></div>
     <div class="sl" style="grid-template-columns:96px 1fr 46px"><span>🔆 Brightness</span><input id="sBright" type="range" min=".4" max="1.2" step=".05" value=".85"><span id="vBright"></span></div>

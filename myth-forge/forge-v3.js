@@ -185,7 +185,8 @@ const THEME = {croc: {t: 'scaly', m: 'croc'}, croc2: {t: 'scaly', m: 'croc'}, bi
   turtle: {t: 'scaly', m: 'alligator'}, turtle2: {t: 'scaly', m: 'alligator'}, serpent: {t: 'scaly', m: 'snake'}, quad: {t: 'fur', m: 'fur'}, sphinx: {t: 'fur', m: 'fur'}, chimera: {t: 'fur', m: 'fur', fam: {tail: 'snake'}}, gorilla: {t: 'fur', m: 'blackfur', keep2: 1},
   centaur: {t: 'fur', m: 'fur', fam: {arm: 'skin', hand: 'skin', head: 'skin', jaw: 'skin', neck: 'skin'}, limbs: {Arms: 'skin', Neck: 'skin'}}, hippogriff: {t: 'fur', m: 'fur', fam: {head: 'feather', neck: 'feather'}, limbs: {Neck: 'feather'}},
   bird: {t: 'feather', m: 'feather', fam: {leg: 'horn', foot: 'horn'}, limbs: {Legs: 'scaly'}}, angel: {t: 'skin', m: 'skin'}, brute: {t: 'skin', m: 'skin'}, fourarm: {t: 'skin', m: 'skin'}, slim: {t: 'bone', m: 'oldbone', limbs: {Neck: 'skin'}},
-  spider: {t: 'chitin', m: 'antblack'}, insect: {t: 'chitin', m: 'jewelbeetle'}, scorpion: {t: 'chitin', m: 'stagbeetle'}, crab: {t: 'chitin', m: 'chitinred'}, mantis: {t: 'chitin', m: 'mantis'}, wasp: {t: 'chitin', m: 'wasp'}, uprightbug: {t: 'chitin', m: 'chitin'}, moth: {t: 'chitin'}};
+  spider: {t: 'chitin', m: 'antblack'}, insect: {t: 'chitin', m: 'jewelbeetle'}, scorpion: {t: 'chitin', m: 'stagbeetle'}, crab: {t: 'chitin', m: 'chitinred'}, mantis: {t: 'chitin', m: 'mantis'}, wasp: {t: 'chitin', m: 'wasp'}, uprightbug: {t: 'chitin', m: 'chitin'}, moth: {t: 'chitin'},
+  demon: {t: 'skin', m: 'demonred', fam: {leg: 'blackfur', foot: 'blackfur', wing: 'demonash'}}, stego: {t: 'scaly', m: 'dinogreen'}, raptor: {t: 'feather', m: 'featherrust'}, ptero: {t: 'skin', m: 'dinoslate', fam: {wing: 'dinoslate'}}, spino: {t: 'scaly', m: 'dinoslate'}};
 V3X.THEME = THEME; V3X.noHead = k => !!(OVR[k] && OVR[k].Head === null);
 const BODYM = new Set(['skin', 'scale', 'fur', 'feather', 'chitin', 'bigscale', 'plates']);
 V3X.theme = uids => { const th = THEME[P.skel]; if (!th || !th.m || (V3X.bt && V3X.bt.BT.style === 'mech')) return; let ch = false;
@@ -408,6 +409,12 @@ const famKey = pt => { const r = boneRow(pt.bone); if (!r) return 'trunk'; const
 const EXTRA = {centaur: {_seg: [['kl_torso_human', 'torso']]}, angel: {_halo: 'kg_halo'}};
 V3X.afterDefault = k => { const d0 = (window.FORGE_DEF3 || {})[k], d = d0 || EXTRA[k] ? {...(d0 || {}), ...(EXTRA[k] || {})} : null; if (!d) return; if (P.fin === k) return; P.fin = k;   // once per creature (Build together calls it too when the part steps are done)
   for (const [id, bn] of d._seg || []) if (LIB[id] && boneRow(bn) && !P.parts.some(p => p.lib === id)) { const mm = mirrorAdd; mirrorAdd = false; V3X.skip = true; addPart(id, bn, [0, 0, 0], [0, 0, 0]); V3X.skip = false; mirrorAdd = mm; const np = P.parts[P.parts.length - 1]; if (np && np.lib === id) V3X.theme([np.uid]); } if (d._tailEnd) { const [id, n] = d._tailEnd, tb = P.bones.filter(r => r[4] === 'tail'), ends = tb.filter(r => !tb.some(q => q[1] === r[0])); if (LIB[id] && !P.parts.some(p => p.lib === id)) for (const e0 of ends) { let r = e0; for (let i = 0; i < n && r && r[4] === 'tail'; i++) { if (!tb.some(q => q[0] === r[1])) break; const mm = mirrorAdd; mirrorAdd = false; V3X.skip = true; addPart(id, r[0], [0, 0, 0], [0, 0, 0]); V3X.skip = false; mirrorAdd = mm; const np = P.parts[P.parts.length - 1]; if (np && np.lib === id) V3X.theme([np.uid]); r = boneRow(r[1]); } } }
+  // _swap: {bone: [from, to]} gives one head bone a different head (the chimera's goat head). The jaw follows; manes and sabre fangs come off that head
+  const swapped = []; for (const [bn, [from, to]] of Object.entries(d._swap || {})) { const hp = P.parts.find(p => p.bone === bn && p.lib === from); if (!hp || !LIB[to]) continue; hp.lib = to; hp.mat = null;
+    const jaw = P.parts.find(p => p.host && p.host.u === hp.uid && p.lib === from + '_jaw'); if (jaw && LIB[to + '_jaw']) { jaw.lib = to + '_jaw'; jaw.mat = null; }
+    const kids = P.parts.filter(p => p.host && (p.host.u === hp.uid || (jaw && p.host.u === jaw.uid)) && p !== jaw), drop = kids.filter(p => /kp_mane_|kp_fang_saber|kp_ear_/.test(p.lib)); if (drop.length) removeParts(drop);
+    swapped.push(hp, jaw, ...kids.filter(p => !drop.includes(p))); }
+  if (swapped.length) { rebuildParts(); swapped.filter(Boolean).forEach(p => { if (p.host) seat(p); }); V3X.theme(swapped.filter(Boolean).map(p => p.uid)); }
   const main = P.parts.filter(p => !p.host || /^(back|tailtip|jaw|finger|toe|ear|claw)$/.test((plugsOf((partBy(p.host.u) || {}).lib || '', partBy(p.host.u)).find(q => q.id === p.host.k) || {}).t || ''));
   const pick = (map, pt) => { if (typeof map === 'string') return map; const [a, b] = famKey(pt); return map[a] ?? map[b] ?? map.all; };
   if (d._mat) for (const pt of P.parts) { const m = pick(d._mat, pt); if (m && !(LIB[pt.lib] && /eye|Weapons/.test(LIB[pt.lib].group + (LIB[pt.lib].plugAs || '')))) { pt.matAll = m; pt.mat = null; } }
@@ -444,3 +451,13 @@ V3X.stance = () => { const cur = SKEL[P.skel], to = cur && cur.stance; if (!to |
     const id = up ? ((LIB[up.lib].segBy || {}).legL || up.lib) : 'kl_limb_scaly_low'; if (!LIB[id]) return; busy = true; const mm = mirrorAdd, sel0 = sel; mirrorAdd = false; V3X.skip = true;
     try { addPart(id, pt.bone, [0, 0, 0], [0, 0, 0]); const np = P.parts[P.parts.length - 1]; if (np && np.lib === id) { if (up && up.mat) { np.mat = [...up.mat]; buildPart(np); } else V3X.theme([np.uid]); } } finally { V3X.skip = false; mirrorAdd = mm; busy = false; } if (sel0) select(sel0); }; }
 function mainOnChain(bone) { return P.parts.some(p => p.bone === bone && p.fit && p.fit.kind === 'seg' && !p.boxed && !p.lib.startsWith('base_')); }
+
+// ====================================================================== 🌫 Shadow version (Nov 10 2026): the whole creature as drifting shadow mist, eyes left glowing. Tap again to get the skins back.
+V3X.shadowAll = () => { snap(); const on = !P.fx.shadow; let n = 0;
+  for (const pt of P.parts) { const e = LIB[pt.lib]; if (!e) continue; const eye = /eye/i.test((e.plugAs || '') + ' ' + e.id), keep = e.group === 'Weapons';
+    if (on) { if (keep) continue; pt.shPrev = {a: pt.matAll || null, m: pt.mat ? [...pt.mat] : null}; pt.matAll = eye ? 'glowpurple' : 'shadowmist'; pt.mat = null; n++; }
+    else if (pt.shPrev) { pt.matAll = pt.shPrev.a; pt.mat = pt.shPrev.m; delete pt.shPrev; n++; } }
+  P.fx.shadow = on ? 1 : 0; rebuildParts(); saveCur(); V3X.shadowUI(); tip(on ? '🌫 Shadow version: ' + n + ' parts turned to drifting shadow (tap again to bring the skins back)' : 'Skins are back', 2600); };
+V3X.shadowUI = () => { const b = $('bShadowAll'); if (b) { b.textContent = P.fx && P.fx.shadow ? '🌫 Shadow version: ON (tap for skins)' : '🌫 Shadow version (whole creature)'; b.classList.toggle('on', !!(P.fx && P.fx.shadow)); } };
+if ($('bPaintAll')) { const b = Object.assign(document.createElement('button'), {id: 'bShadowAll', onclick: () => V3X.shadowAll()}); $('bPaintAll').parentNode.append(b); V3X.shadowUI(); setInterval(V3X.shadowUI, 1500); }
+
