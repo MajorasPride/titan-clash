@@ -233,3 +233,8 @@ Task list section 1. Rule that came out of it: **parts that follow the bones alw
 - `parts/basic.js`: 37 more `bs_*` shapes in subs `Hard shapes` and `Flats`.
 - **✖ Multiply + curve** = forge-m.js section 6 (`#mulBox` after `#copyRow`, `MFM.multiply.set({n, gap, curve, twist, grow, axis})`). Copies are JSON clones of the picked part with `mulOf: <source uid>`, `host: null`, `fit.tweaked: true`; each copy's matrix = previous × (half bend · move one part length × gap · half bend · twist). Sliding regenerates the copies; ✔ Keep forgets the group.
 
+
+## Nov 10, 2026 (2:30am): paint round (Blend over the whole creature, Eraser, skins in brushes)
+- `forge-core.js` paint section: `LAYN`, `layOf`, `layAll`, `layerSlot` (up to 4 brushed skins per part: `pt.layer` + `pt.layerX`, masks `lmask`, `lmask1`…, `bl: 1` = made by Blend), `layerMat(pt, fR, j)`.
+- Brushes: `paintStroke` routes to `skinStroke` (any brush with a skin), `eraseStroke` (🧽), `blotchStroke` (colour or skin), `blendStroke` (whole creature: overlays softened, bare skins mixed across parts; `skinId` = skin + tint of a piece). `brushSrc` = 'color' | 'skin', button `#bBrushSrc`. `layCut` fades layers above new paint.
+- `mirrorAdd` starts false; `twinStroke()` decides if a stroke is copied to the twin. `window.MF_marked()` (forge-m.js) = uids of marked parts.

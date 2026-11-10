@@ -1,0 +1,38 @@
+const H=require('./lib');
+(async()=>{const T0=Date.now();const L=(...a)=>console.log(((Date.now()-T0)/1000|0)+"s",...a);const {page,errs,close}=await H.open(process.argv[2]||"pcs");L("open");
+const W=await page.evaluate(()=>[innerWidth,innerHeight]);
+await page.evaluate(()=>{window.__fresh('biped');window.__def('biped');window.__frames(3);});
+await page.evaluate(()=>{document.querySelector('.tabs [data-tab="paint"]').click();});
+await page.waitForTimeout(400);
+// give every part on the left half a lava skin (so two skins meet)
+const info=await page.evaluate(()=>{const V=window.__v3,P=V.P();let n=0;for(const p of P.parts){if((p.bone||'').endsWith('.L')||/arm|leg/i.test(p.bone||'')){p.matAll='lava';p.mat=null;n++;}}V.rebuild();V.look(null,[0,.1,1],2);window.__frames(3);return {n,parts:P.parts.length};});
+L('lava parts',info);
+const drag=async(x0,y0,x1,y1)=>{await page.mouse.move(x0,y0);await page.mouse.down();for(let k=1;k<=12;k++){await page.mouse.move(x0+(x1-x0)*k/12,y0+(y1-y0)*k/12);}await page.mouse.up();await page.evaluate(()=>window.__frames(2));};
+const cnt=()=>page.evaluate(()=>{const P=window.__v3.P();let bl=0,ov=0,vp=0;for(const p of P.parts){for(const L of [p.layer,...(p.layerX||[])])if(L){const c=Object.values(L.m).reduce((s,m)=>s+Object.keys(m).length,0);if(L.bl)bl+=c;else ov+=c;}if(p.vpaint)vp+=Object.values(p.vpaint).reduce((s,m)=>s+Object.keys(m).length,0);}return {bl,ov,vp,matAll:P.parts.map(p=>p.matAll).filter(Boolean).length,sel:window.__v3.sel()};});
+await page.evaluate(()=>window.__v3.select(null));
+L('pre-blend');await page.click('[data-pb="blend"]',{timeout:5000}); L('clicked'); await page.evaluate(()=>{document.getElementById('sPSize').value=1.2;document.getElementById('sPStr').value=1;});
+await page.screenshot({path:'p0.png'});
+for(let y=.3;y<=.8;y+=.05) await drag(W[0]*.35,W[1]*y,W[0]*.65,W[1]*y);
+L('after blend (no part picked)',await cnt());
+await page.screenshot({path:'p1.png'});
+// colour paint on a picked part, then tap a skin with the brush on: must not wipe
+const uid=await page.evaluate(()=>{const P=window.__v3.P();const p=P.parts.find(p=>/chest|spine/i.test(p.bone||''))||P.parts[0];window.__v3.select(p.uid);window.__v3.look(p.uid,[0,.1,1],1.6);window.__frames(2);return p.uid;});
+await page.click('[data-pb="color"]');
+await drag(W[0]*.4,W[1]*.5,W[0]*.6,W[1]*.5);
+const a=await cnt(); L('after colour',a);
+const mat0=await page.evaluate(u=>window.__v3.partBy(u).matAll,uid);
+await page.evaluate(()=>{document.querySelector('#mats .item').click();});
+const mat1=await page.evaluate(u=>window.__v3.partBy(u).matAll,uid);
+L('skin tap with brush on: matAll',mat0,'->',mat1,'src btn',await page.evaluate(()=>document.getElementById('bBrushSrc').textContent));
+await drag(W[0]*.4,W[1]*.45,W[0]*.6,W[1]*.45);
+L('after colour brush with a skin',await cnt());
+await page.click('[data-pb="blotch"]'); await page.mouse.click(W[0]*.5,W[1]*.5); await page.evaluate(()=>window.__frames(2));
+L('after blotch with skin',await cnt());
+await page.click('[data-pb="blend"]');
+await drag(W[0]*.4,W[1]*.45,W[0]*.6,W[1]*.45);
+await page.click('[data-pb="erase"]');
+for(let y=.38;y<=.55;y+=.02) await drag(W[0]*.4,W[1]*y,W[0]*.6,W[1]*y);
+L('after eraser',await cnt());
+L('mirror add on?',await page.evaluate(()=>document.getElementById('bMirrorAdd').classList.contains('on')));
+await page.screenshot({path:'p2.png'});
+L('errs',errs);await close();H.stop();})();
