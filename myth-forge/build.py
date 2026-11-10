@@ -9,8 +9,9 @@ open(d+'/index.html','w').write(h); print('built index.html',len(h))
 # test page (test.html): + 🔌 V3 (plugs, kits, new skeletons, ooze...) — window.MF_V3, extra part files, forge-v3.js after the core
 V3_FILES=['parts/kit-helpers.js','parts/kit-heads.js','parts/kit-limbs.js','parts/kit-wings.js','parts/kit-creatures.js','parts/kit-lowpoly.js','parts/kit-elementals.js','parts/kit-sea.js','skeletons-v3.js']
 v3=open(d+'/forge-v3.js').read()
+mm=open(d+'/forge-m.js').read()   # 📱 phone layout, radial wheels, Studio button, Mark tool (test page only)
 extra='\n'.join('<script src="%s"></script>'%f for f in V3_FILES if os.path.exists(os.path.join(d,f)))
-t=page.replace('<script>window.MF_V2 = 1;</script>','<script>window.MF_V2 = 1; window.MF_V3 = 1;</script>')
+t=page.replace('<script>window.MF_V2 = 1;</script>','<script>window.MF_V2 = 1; window.MF_V3 = 1; window.MF_M = 1;</script>')
 t=t.replace('<script src="starters.js"></script>','<script src="starters.js"></script>\n'+extra)
-t=t.replace(tag,'<script type="module">\n'+core+'\n'+v3+'\n</script>')
+t=t.replace(tag,'<script type="module">\n'+core+'\n'+v3+'\n'+mm+'\n</script>')
 open(d+'/test.html','w').write(t); print('built test.html (V3)',len(t))

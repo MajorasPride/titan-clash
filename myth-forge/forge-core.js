@@ -676,7 +676,7 @@ function loadPack(pk) { if (loadedPacks.has(pk.id)) { query = pk.name.toLowerCas
   s.onload = async () => { const data = window.FORGE_PACKS && window.FORGE_PACKS[pk.id]; if (!data) return tip('Pack failed to load');
     let n = 0; for (const [name, b64] of Object.entries(data.models)) { try { const buf = Uint8Array.from(atob(b64), c => c.charCodeAt(0)).buffer;
       const sc = await new Promise((res, rej) => new GLTFLoader().parse(buf, '', g => res(g.scene), rej)); const pcs = sceneToPieces(sc, pk.whole ? 9 : 3);
-      if (pcs.length) { LIB['pk:' + pk.id + ':' + name] = {group: 'Free Packs (CC0)', sub: pk.name, name: name.replace(/_/g, ' '), tags: [pk.name], src: data.credit, _p: pcs, whole: !!pk.whole}; n++; } } catch (e) { console.warn(name, e); } }
+      if (pcs.length) { LIB['pk:' + pk.id + ':' + name] = {group: 'Free Packs (CC0)', sub: pk.name, name: name.replace(/_/g, ' ') + (pk.whole ? ' (ready-made)' : ''), tags: pk.whole ? [pk.name, 'ready-made'] : [pk.name], src: data.credit, _p: pcs, whole: !!pk.whole}; n++; } } catch (e) { console.warn(name, e); } }
     loadedPacks.add(pk.id); query = pk.name.toLowerCase(); $('search').value = pk.name; libUI(); tip(n + ' models from ' + pk.name + ' ready', 2500); rebuildParts(); };
   s.onerror = () => tip('Could not load ' + pk.file); document.body.append(s); }
 function sceneToPieces(root, size = 3) {

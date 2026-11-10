@@ -7,7 +7,8 @@ Renamed from Myth Forge on Nov 8, 2026 (MajorasPride's call). The folder and lin
 MajorasPride's creature + mech builder for Titan Clash. Open `index.html` (GitHub Pages link or double-click). Not used by the game directly: it exports `.glb` models (⋯ → Download model) that Claude then puts into the game.
 
 ## Files
-- `index.html` (live) and `test.html` (test, + V3) — BUILT files (do not edit by hand). Run `python3 build.py` after editing `page.html`, `forge-core.js` or `forge-v3.js`. To keep the live page unchanged, run `git checkout index.html` after building.
+- `index.html` (live) and `test.html` (test, + V3) — BUILT files (do not edit by hand). Run `python3 build.py` after editing `page.html`, `forge-core.js`, `forge-v3.js` or `forge-m.js`. To keep the live page unchanged, run `git checkout index.html` after building.
+- `forge-m.js` — 📱 phone layout, 🎬 Studio button, ◎ tool wheels, 🔖 Mark tool (test page only; see the Nov 9 6pm section at the end).
 - `page.html` — page + UI. `forge-core.js` — the editor (inlined into index.html / test.html by build.py so it works from file://).
 - `k-helpers.js` — geometry helper kit `K` used by every parts file. `materials.js` — procedural textures (ours) + triplanar shader. `skeletons.js` — body types.
 - `parts/*.js` — part libraries (classic scripts, `FORGE_PARTS.push((THREE,K)=>[...])`). Spec: `PARTS-SPEC.md`.
@@ -171,7 +172,7 @@ MajorasPride's plan (talked through in chat with plug-map pictures, then "start 
 
 ## Nov 9, 2026 (3:40pm): notes that replace older lines above
 - `page-v2.html` no longer exists (it became `page.html` at 3:10am). `build.py` does NOT write an identical test.html any more: test.html = page.html + V3 files + forge-v3.js.
-- Body types today: 34 on live, 67 on test.
+- Body types today: 34 on live, 68 on test (69 entries with "No skeleton").
 - On-screen 🔗 Joint button id = `bJointV`; `bJoint` = Skeleton › Move joints only.
 - `frameAll()` fits width and height into the free area (top bar 50px, panel below on phone / at the side on wide screens).
 - Build method + next-up list + open questions: top of BUILD-LOG.md.
@@ -186,3 +187,10 @@ MajorasPride's plan (talked through in chat with plug-map pictures, then "start 
 - **Fitter:** `SKEL[k].bodyW` overrides the body width in `bodyInfo`; `e.keel` → `keelRot` (seg + tail/limb path of `fitPart`): +Y along the bone, -Z world up. `V3X.fillAll` skips `segEnd` plugs on tail segments that have a next segment.
 - Test hook `window.__drop(id, x, y)` = drop a library part at a screen point.
 
+
+## Nov 9, 2026 (6pm): 📱 forge-m.js — phone layout, Studio, tool wheels, Mark tool — TEST PAGE ONLY
+- `forge-m.js` is inlined last into test.html by build.py (after forge-core.js + forge-v3.js, same module scope; `window.MF_M`, API on `window.MFM`). Everything is inside one block; it wraps `paint` and `select` (same trick forge-v3.js uses).
+- **Layout:** `body.mfm` when not (width >= 760 and landscape). `#mbar` (bottom bar) + `#msub` (chips for the tool's tabs, 📌, ▾ Tuck) inside `#sheet`. The old `.tops` / `#subtabs` rows are hidden but still clicked from code (`TOOLS` maps a bar tool to its tabs). `body.mup` = options up. `setUp` re-runs `resize()` and `frameAll()` if the creature's centre would be behind the sheet. A capture `pointerdown` on the canvas tucks the sheet (not when pinned, `mf-m-pin`). Intro card flag: `mf-m-intro`.
+- **Wheel:** `WHEELS.build / paint / sculpt` return slices `{i, t, run | sub, keep, on, col}`; 8 slots, sub-levels get ↩ Back, lists longer than the free slots get ▶ / ◀ page slices. Hold mode = the opening pointer is still down (window capture listeners swallow its moves, OrbitControls is switched off until it lifts); tap mode = `#wheelBg` backdrop takes taps. Long-press is skipped while `stroking`, `placing`, sticky `drag`, a library drag, or low-poly face picking. Slices mostly `click()` existing buttons by id, so renaming a button id breaks its slice quietly.
+- **Mark:** `marks` Map (key = uid, or `uid:firstPieceIndex` for piece marks) → `paintMarked(k)`; groups in `P.markGroups = [{n, m: [{u, ids}]}]` (saved with the project). Highlight = `Box3Helper`s redrawn every 500 ms.
+- **Test harness (not in the repo, rebuild it if needed):** Playwright + system Chrome with `--use-gl=swiftshader`, three.js served from a local `npm i three@0.160.0` through a route (the CDN is blocked in the sandbox). Walk = `__fresh(k)`, click `#bGuide`, click the last `.gb` button until `__btx.BT.on` is false; then check `P.parts` for leftover `base_` parts, families without a part, plugged parts far from their host. About 25 minutes for all 68 at phone size on 2 cores; `__def(k)` + `__v3.look()` screenshots of every default take about 5 minutes.
