@@ -220,12 +220,36 @@ function lowpolyGeo(g, lv) { const key = g.uuid + '|' + lv; if (lowCache.has(key
     for (const k of [a, b, c]) { const s = sums[k]; pos.push(s.p[0] / s.n, s.p[1] / s.n, s.p[2] / s.n); extra.forEach((_, j) => ex[j].push(...s.e[j].map(v => v / s.n))); } }
   const o = new THREE.BufferGeometry(); o.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); extra.forEach((a, j) => o.setAttribute(a, new THREE.Float32BufferAttribute(ex[j], g.attributes[a].itemSize)));
   o.computeVertexNormals(); o.userData.low = true; if (lowCache.size > 400) lowCache.delete(lowCache.keys().next().value); lowCache.set(key, o); return o; }
+// ---- 🧱 block-toy look (2.0, P.fx.blocks 0..2): every part is shown (and exported) built out of toy bricks. Each part's surface is turned into cubes on a grid
+// that has the same brick size everywhere on the creature (the cell is divided by the part's own scale). Brush paint colours carry over to the bricks.
+const BLOCKLV = ['off', 'big bricks', 'small bricks'], blockCache = new Map();
+function blockGeo(g, lv, pt) { const s = Math.abs((pt && pt.s) || 1), l = Math.abs((pt && pt.l) || 1), key = g.uuid + '|' + lv + '|' + s + '|' + l; if (blockCache.has(key)) return blockCache.get(key);
+  const p = g.attributes.position, col = g.attributes.color, I = g.index ? g.index.array : null, nT = ((I ? I.length : p.count) / 3) | 0, v = new Float64Array(9), cc = new Float64Array(9); let C = lv === 1 ? .46 : .27, set, cx, cy, cz;
+  g.computeBoundingBox(); { const b = g.boundingBox, ex = [(b.max.x - b.min.x) * s / C, (b.max.y - b.min.y) * s * l / C, (b.max.z - b.min.z) * s / C];   // small pieces (eyes, teeth, claws): one brick of their own size, not a full-size brick
+    if (Math.max(...ex) < 1.6) { const o = new THREE.BoxGeometry(b.max.x - b.min.x || .01, b.max.y - b.min.y || .01, b.max.z - b.min.z || .01).translate((b.max.x + b.min.x) / 2, (b.max.y + b.min.y) / 2, (b.max.z + b.min.z) / 2).toNonIndexed(); o.deleteAttribute('uv');
+      if (col) { let r = 0, gg = 0, bl = 0; for (let i = 0; i < col.count; i++) { r += col.getX(i); gg += col.getY(i); bl += col.getZ(i); } const n = o.attributes.position.count, a = new Float32Array(n * 3); for (let i = 0; i < n; i++) { a[i * 3] = r / col.count; a[i * 3 + 1] = gg / col.count; a[i * 3 + 2] = bl / col.count; } o.setAttribute('color', new THREE.BufferAttribute(a, 3)); }
+      o.userData.low = true; blockCache.set(key, o); return o; } }
+  for (let tries = 0; tries < 5; tries++) { cx = C / s; cy = C / (s * l); cz = C / s; set = new Map();
+    for (let t = 0; t < nT; t++) { for (let k = 0; k < 3; k++) { const i = I ? I[t * 3 + k] : t * 3 + k; v[k * 3] = p.getX(i) / cx; v[k * 3 + 1] = p.getY(i) / cy; v[k * 3 + 2] = p.getZ(i) / cz; if (col) { cc[k * 3] = col.getX(i); cc[k * 3 + 1] = col.getY(i); cc[k * 3 + 2] = col.getZ(i); } }
+      const e = Math.max(Math.hypot(v[3] - v[0], v[4] - v[1], v[5] - v[2]), Math.hypot(v[6] - v[0], v[7] - v[1], v[8] - v[2]), Math.hypot(v[6] - v[3], v[7] - v[4], v[8] - v[5])), n = Math.min(48, Math.ceil(e * 2) + 1);
+      for (let a = 0; a <= n; a++) for (let b = 0; b <= n - a; b++) { const u = a / n, w = b / n, q = 1 - u - w, x = Math.floor(v[0] * q + v[3] * u + v[6] * w), y = Math.floor(v[1] * q + v[4] * u + v[7] * w), z = Math.floor(v[2] * q + v[5] * u + v[8] * w);
+        if (x < -500 || x > 500 || y < -500 || y > 500 || z < -500 || z > 500) continue; const k = (x + 512) + (y + 512) * 1024 + (z + 512) * 1048576; let m = set.get(k); if (!m) { m = col ? [0, 0, 0, 0] : 1; set.set(k, m); }
+        if (col) { m[0] += cc[0] * q + cc[3] * u + cc[6] * w; m[1] += cc[1] * q + cc[4] * u + cc[7] * w; m[2] += cc[2] * q + cc[5] * u + cc[8] * w; m[3]++; } } }
+    if (set.size <= 7000) break; C *= 1.45; }
+  const pos = [], cols = [], F = [[1, 0, 0, [1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1]], [-1, 0, 0, [0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0]], [0, 1, 0, [0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0]], [0, -1, 0, [0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1]], [0, 0, 1, [0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1]], [0, 0, -1, [0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0]]];
+  for (const [k, m] of set) { const x = (k % 1024) - 512, y = (Math.floor(k / 1024) % 1024) - 512, z = Math.floor(k / 1048576) - 512;
+    for (const [dx, dy, dz, q] of F) { if (set.has((x + dx + 512) + (y + dy + 512) * 1024 + (z + dz + 512) * 1048576)) continue;
+      for (const i of [0, 1, 2, 0, 2, 3]) { pos.push((x + q[i * 3]) * cx, (y + q[i * 3 + 1]) * cy, (z + q[i * 3 + 2]) * cz); if (col) cols.push(m[0] / m[3], m[1] / m[3], m[2] / m[3]); } } }
+  const o = new THREE.BufferGeometry(); o.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); if (col) o.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+  o.computeVertexNormals(); o.userData.low = true; if (blockCache.size > 600) blockCache.delete(blockCache.keys().next().value); blockCache.set(key, o); return o; }
 function resetMats() { for (const k in matCache) delete matCache[k]; rebuildParts(); }
+if ($('bBlocks')) $('bBlocks').onclick = () => { P.fx.blocks = ((P.fx.blocks || 0) + 1) % 3; lowLookUI(); rebuildParts(); saveCur(); tip(P.fx.blocks ? '🧱 Block toy look: ' + BLOCKLV[P.fx.blocks] + ' (sculpt/paint brushes pause while it is on)' : 'Block toy look off', 2400); };
 $('bToon').onclick = () => { P.fx.toon = !P.fx.toon; lowLookUI(); resetMats(); saveCur(); tip(P.fx.toon ? 'Toon shading on: flat cartoon light bands' : 'Toon shading off'); };
 $('bOutline').onclick = () => { P.fx.outline = !P.fx.outline; lowLookUI(); rebuildParts(); saveCur(); tip(P.fx.outline ? 'Outlines on' : 'Outlines off'); };
 $('bGameLook').onclick = () => { const on = !(P.fx.lowpoly && P.fx.toon && P.fx.outline); P.fx.lowpoly = on ? 1 : 0; P.fx.toon = on; P.fx.outline = on; lowLookUI(); resetMats(); saveCur(); tip(on ? 'Game look: low-poly + toon + outlines (Titan Clash style)' : 'Game look off'); };
 $('bLowLook').onclick = () => { P.fx.lowpoly = ((P.fx.lowpoly || 0) + 1) % 4; lowLookUI(); rebuildParts(); saveCur(); tip(P.fx.lowpoly ? 'Low-poly look: ' + LOWLV[P.fx.lowpoly] + ' (sculpt/paint brushes pause while it is on)' : 'Low-poly look off', 2400); };
 function lowLookUI() { const b = $('bLowLook'); if (b) { b.textContent = '🔷 Low-poly look: ' + LOWLV[P.fx.lowpoly || 0]; b.classList.toggle('on', !!P.fx.lowpoly); }
+  { const bb = $('bBlocks'); if (bb) { bb.textContent = '🧱 Block toy look: ' + BLOCKLV[P.fx.blocks || 0]; bb.classList.toggle('on', !!P.fx.blocks); } }
   if ($('bToon')) { $('bToon').classList.toggle('on', !!P.fx.toon); $('bOutline').classList.toggle('on', !!P.fx.outline); $('bGameLook').classList.toggle('on', !!(P.fx.lowpoly && P.fx.toon && P.fx.outline)); } }
 function partRadius(pt) { let R = .1; pieces(pt.lib, pt.params).forEach(pc => { const a = pc.geo.attributes.position; for (let i = 0; i < a.count; i++) R = Math.max(R, Math.hypot(a.getX(i), a.getY(i), a.getZ(i))); }); return R; }
 function fadeMat(key, tint, tile, vc, pt, R) {
@@ -277,7 +301,7 @@ function buildPart(pt) {
   const G = new THREE.Group(), M = new THREE.Group(); G.add(M); G.userData.uid = pt.uid;
   const parent = (pt.bone && bones[pt.bone]) || skelRoot; parent.add(G);
   const meshes = [], fR = pt.fade && !colorMode ? partRadius(pt) : 0;
-  (livePieces(pt) || pieces(pt.lib, pt.params)).forEach((pc, mi) => { if (pt.keep && !pt.keep.includes(mi)) return; let g = partGeo(pt, mi, pc.geo); if (P.fx.lowpoly && !(LIB[pt.lib] && LIB[pt.lib].lowpoly)) g = lowpolyGeo(g, P.fx.lowpoly);
+  (livePieces(pt) || pieces(pt.lib, pt.params)).forEach((pc, mi) => { if (pt.keep && !pt.keep.includes(mi)) return; let g = partGeo(pt, mi, pc.geo); if (P.fx.blocks) g = blockGeo(g, P.fx.blocks, pt); else if (P.fx.lowpoly && !(LIB[pt.lib] && LIB[pt.lib].lowpoly)) g = lowpolyGeo(g, P.fx.lowpoly);
     const mat = fR ? fadeMat(pt.mat && pt.mat[mi] != null ? pt.mat[mi] : (pt.matAll || pc.mat), pt.tint, pt.tile, !!(pt.vpaint && pt.vpaint[mi]), pt, fR) : colorMode ? new THREE.MeshStandardMaterial({color: new THREE.Color().setHSL((hash(pt.uid) % 360) / 360, .6, .55)}) : pc.matObj && !pt.mat ? pc.matObj : matFor(pt.mat && pt.mat[mi] != null ? pt.mat[mi] : (pt.matAll || pc.mat), pt.tint, pt.tile, !!(pt.vpaint && pt.vpaint[mi]));
     const mesh = new THREE.Mesh(g, mat); mesh.userData = {uid: pt.uid, mi}; M.add(mesh); meshes.push(mesh);
     if (!colorMode) addOutline(M, mesh, pt);
@@ -981,7 +1005,7 @@ canvas.addEventListener('pointerdown', e => {
 }, true);
 canvas.addEventListener('pointermove', e => { if (!sculpting()) return; if (e.pointerType !== 'touch' || stroking) ring(e.clientX, e.clientY);
   if (stroking) { if (e.pointerType === 'pen' && e.pressure > 0) pressure = .35 + e.pressure * 1.3; brushAt(e.clientX, e.clientY); } });
-const brushAt = (x, y) => P.fx.lowpoly && !lpMode ? (lastHit ? null : (lastHit = true, tip('Turn off 🔷 Low-poly look (FX / View) to sculpt or brush paint', 2200))) : tab === 'paint' ? paintStroke(x, y) : lpMode ? (lastHit ? null : (lastHit = true, lpTap(x, y))) : sculptRoute(x, y);
+const brushAt = (x, y) => (P.fx.lowpoly || P.fx.blocks) && !lpMode ? (lastHit ? null : (lastHit = true, tip('Turn off ' + (P.fx.blocks ? '🧱 Block toy look' : '🔷 Low-poly look') + ' (⚙ › View & look) to sculpt or brush paint', 2200))) : tab === 'paint' ? paintStroke(x, y) : lpMode ? (lastHit ? null : (lastHit = true, lpTap(x, y))) : sculptRoute(x, y);
 addEventListener('pointercancel', e => touches.delete(e.pointerId));
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 addEventListener('pointerup', e => {
@@ -1177,11 +1201,17 @@ $('fxCol').oninput = e => { P.fx.col = e.target.value; applyFX(); saveCur(); };
 let spin = false; $('bSpin').onclick = e => { spin = !spin; e.target.classList.toggle('on', spin); };
 function frameAll() { const b = new THREE.Box3().setFromObject(skelRoot); if (b.isEmpty()) return; const c = b.getCenter(new THREE.Vector3()), sz = b.getSize(new THREE.Vector3());
   // fit BOTH ways into the free area (not under the top bar / panel), so wide creatures aren't cut off on an upright phone
-  const sh = $('sheet').getBoundingClientRect(), land = innerWidth >= 760 && innerWidth > innerHeight, full = document.body.classList.contains('full');
-  const freeH = Math.max(120, innerHeight - 50 - (full || land ? 0 : Math.max(0, innerHeight - sh.top))), freeW = Math.max(120, innerWidth - (full || !land ? 0 : sh.width));
+  const {freeH, freeW} = freeArea();
   const t = Math.tan(camera.fov * D / 2), wide = Math.hypot(sz.x, sz.z) / 2, k = innerHeight / t;
   const dist = Math.max(sz.y / 2 * k / freeH, wide * k / freeW) * 1.12 + wide * .5;
-  const dir = camera.position.clone().sub(controls.target).normalize(); controls.target.copy(c); camera.position.copy(c).add(dir.multiplyScalar(dist)); }
+  const dir = camera.position.clone().sub(controls.target).normalize(); controls.target.copy(c); camera.position.copy(c).add(dir.multiplyScalar(dist)); viewShift(); }
+// 2.0: the free part of the screen (not under the top bar, the menu / side panel, or the Build together card) and a view shift that puts the middle of the 3D view
+// in the middle of that free part. Before, the creature was only made smaller and still sat in the middle of the whole screen, half behind the card or panel.
+function freeArea() { const land = innerWidth >= 760 && innerWidth > innerHeight, full = document.body.classList.contains('full'), g = $('guide'), sh = $('sheet').getBoundingClientRect();
+  const guiding = document.body.classList.contains('guiding') && !document.body.classList.contains('gside') && g && g.style.display !== 'none'; let bottom = 0, right = 0;
+  if (!full) { if (guiding) bottom = Math.max(0, innerHeight - g.getBoundingClientRect().top); else if (!land) bottom = sh.height ? Math.max(0, innerHeight - sh.top) : 0; else right = sh.width; }
+  bottom = Math.min(bottom, innerHeight * .62); return {freeH: Math.max(120, innerHeight - 50 - bottom), freeW: Math.max(120, innerWidth - right), top: full ? 0 : 50}; }
+function viewShift() { const f = freeArea(), ox = Math.round(innerWidth / 2 - f.freeW / 2), oy = Math.round(innerHeight / 2 - (f.top + f.freeH / 2)); camera.setViewOffset(innerWidth, innerHeight, ox, oy, innerWidth, innerHeight); }
 $('bFrame') && ($('bFrame').onclick = frameAll);
 const camTo = v => { const t = controls.target, d = camera.position.distanceTo(t); camera.position.copy(t).add(new THREE.Vector3(...v).normalize().multiplyScalar(d)); };
 document.querySelectorAll('[data-cam]').forEach(b => b.onclick = () => camTo({front: [0, .15, 1], side: [1, .15, 0], back: [0, .15, -1], top: [0, 1, .01]}[b.dataset.cam]));
@@ -1496,9 +1526,7 @@ $('mTour').onclick = tourStart;
 try { if (!localStorage.getItem(window.MF_V2 ? 'mf-tour2-done' : 'mf-tour-done')) setTimeout(tourStart, 700); } catch (e) {}
 // ====================================================================== loop
 function resize() { renderer.setSize(innerWidth, innerHeight, false); composer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight;
-  const sh = $('sheet'), land = innerWidth >= 760 && innerWidth > innerHeight, full = document.body.classList.contains('full');
-  const cover = full ? 0 : land ? 0 : Math.max(0, Math.min(sh.getBoundingClientRect().height, innerHeight - sh.getBoundingClientRect().top)), side = full || !land ? 0 : sh.getBoundingClientRect().width;   // cover = only the part of the panel that is on screen
-  camera.setViewOffset(innerWidth, innerHeight, side / 2, cover / 2 - 25, innerWidth, innerHeight); camera.updateProjectionMatrix(); }
+  viewShift(); camera.updateProjectionMatrix(); }   // 2.0: one place works out the free area (viewShift), it also knows about the Build together card
 new ResizeObserver(() => resize()).observe($('sheet'));
 addEventListener('resize', resize); resize();
 const clock = new THREE.Clock();
@@ -1749,7 +1777,7 @@ if (window.MF_V2) {
     else if (st.how === 'trunk' && e.perSeg) { mirrorAdd = false; P.bones.filter(r => TRUNK_TAGS.has(r[4])).forEach(r => addPart(id, r[0], [0, 0, 0], [0, 0, 0])); }
     else if (st.how === 'trunk' || st.how === 'decor') { mirrorAdd = false; if (st.fam === 'trunk') addPart(id, (P.bones.find(r => r[4] === 'chest') || P.bones.find(r => TRUNK_TAGS.has(r[4])) || P.bones[0])[0], [0, 0, 0], [0, 0, 0]); else rootsOf(st.fam).forEach(r => addPart(id, r, [0, 0, 0], [0, 0, 0])); }   // every head gets it (hydras, two-headed hounds…)
     else { const roots = rootsOf(st.fam); mirrorAdd = false; roots.forEach(r => addPart(id, r, [0, 0, 0], [0, 0, 0])); const fb = new Set(famBones(st.fam)); removeParts(P.parts.filter(p => p.lib.startsWith('base_') && fb.has(p.bone))); }   // whatever goes on a limb replaces the mannequin there
-    mirrorAdd = m; modeBone = keepMode; BT.added = P.parts.filter(p => !before.has(p.uid)).map(p => p.uid); (BT.addedBy = BT.addedBy || {})[BT.i] = BT.added;
+    mirrorAdd = m; modeBone = keepMode; BT.added = P.parts.filter(p => !before.has(p.uid)).map(p => p.uid); (BT.addedBy = BT.addedBy || {})[BT.i] = BT.added; if (quiet && window.V3 && window.V3.theme) window.V3.theme(BT.added);
     if (st.t === 'Head') { const jaws = new Set(st.root ? rootsOf('jaw') : P.bones.filter(r => r[4] === 'jaw').map(r => r[0])); removeParts(P.parts.filter(p => p.lib.startsWith('base_') && jaws.has(p.bone))); }   // heads come with their own lower jaw
     rebuildParts(); outliner(); saveCur(); if (quiet) return;
     tip(e.name + ' on ✓' + (st.how === 'decor' ? ' — drag it where you want it' : ''), 2200); btShow(); }
@@ -1766,7 +1794,7 @@ if (window.MF_V2) {
     head.innerHTML = `<b>🎓 ${BT.i + 1}/${N} · ${st.k === 'part' ? (st.label || st.t) : titles[st.k]}</b>`; const mini = Object.assign(document.createElement('button'), {className: 'mini', textContent: BT.small ? '▾' : '▴', onclick: () => { BT.small = !BT.small; document.body.classList.toggle('gside', BT.small); btShow(); }}); head.append(mini);
     if (BT.small) return;
     const q = t => h('div', 'gp', t), row = cls => h('div', cls || 'gc'), btn = (r, t, f, on) => { const b = Object.assign(document.createElement('button'), {textContent: t, onclick: f}); if (on) b.className = 'on'; r.append(b); return b; };
-    const nav = (nextLabel, extra) => { const r = row('gb'); btn(r, '✕', btEnd); if (BT.i) btn(r, '◀', () => btGo(BT.i - 1)); if (extra) extra(r); btn(r, nextLabel || 'Next ▶', () => BT.i === N - 1 ? btEnd(true) : btGo(BT.i + 1), true); };
+    const nav = (nextLabel, extra, pre) => { const r = row('gb'); btn(r, '✕', btEnd); if (BT.i) btn(r, '◀', () => btGo(BT.i - 1)); if (extra) extra(r); btn(r, nextLabel || 'Next ▶', () => { if (pre) pre(); BT.i === N - 1 ? btEnd(true) : btGo(BT.i + 1); }, true); };
     if (st.k === 'style') { q('A mech, a creature, or a mix of both? (You can always use any part later.)'); const r = row();
       for (const [k, t] of [['mech', '🤖 Mech'], ['creature', '🐲 Creature'], ['mix', '🔀 Mix of both']]) btn(r, t, () => { BT.style = k; btGo(1); }, BT.style === k);
       if (window.MF_V3) { q('Simple = whole heads, hands and tails. Complex = every little part: skull + jaw, eyes, teeth, fingers, claws, toes, tail tips.'); const r2 = row();
@@ -1802,22 +1830,30 @@ if (window.MF_V2) {
         const c = '#' + (l[4] | 0).toString(16).padStart(6, '0'); b.style.borderLeft = '14px solid ' + c; });
       nav(); return; }
     if (st.k === 'clean') { q(hasBase() ? 'Some grey mannequin pieces still show where you didn\'t put a part. Remove them?' : 'No mannequin pieces left — looking clean!'); const r = row();
-      if (hasBase()) { btn(r, '🧱 Remove them', () => { $('bBase').click(); btShow(); }, true); btn(r, 'Keep them', () => btGo(BT.i + 1)); } nav(); return; }
+      if (hasBase()) { btn(r, '🧱 Remove them', () => { $('bBase').click(); btShow(); }, true); btn(r, 'Keep them', () => btGo(BT.i + 1)); } nav(null, null, () => { if (hasBase()) $('bBase').click(); }); return; }   // 2.0: Next = clean up (a finished creature has no grey pieces); 'Keep them' keeps them
     if (st.k === 'look') { q('Titan Clash is low-poly with toon shading and outlines. See it that way?'); const r = row();
       btn(r, '🎮 Yes, game look', () => { if (!(P.fx.lowpoly && P.fx.toon)) $('bGameLook').click(); }, !!(P.fx.lowpoly && P.fx.toon)); btn(r, 'Not now', () => btGo(BT.i + 1)); nav(); return; }
     if (st.k === 'save') { q('You built a titan! 🎉 Save it so you can come back to it.'); const r = row(); btn(r, '💾 Save as…', () => $('mSave').click(), true); btn(r, '⬇ Download for the game (.glb)', () => $('mExport').click()); nav('🎉 Done'); return; } }
   function btGo(i) { if (window.MF_V3) { const dir = i < BT.i ? -1 : 1; let st0 = BT.steps[i]; while (st0 && st0.k === 'part' && (st0.how || '').startsWith('plug') && !window.V3.plugsFor(st0.how)) { i += dir; st0 = BT.steps[i]; } }
     BT.i = Math.max(0, Math.min(BT.steps.length - 1, i)); BT.addedBy = BT.addedBy || {}; BT.added = (BT.addedBy[BT.i] || []).filter(u => partBy(u)); BT.pick = null; BT.small = false; const st = BT.steps[BT.i];
     BT.defDone = BT.defDone || {}; if (st.k === 'part' && !BT.defDone[BT.i]) { BT.defDone[BT.i] = true; const d = defFor(st); if (d) btPlace(st, d, true); }
-    document.body.classList.remove('gside'); btShow(); }
-  function btStart() { $('menu').classList.remove('open'); BT.on = true; if (window.MF_V3) { try { BT.level = localStorage.getItem('mf-btlevel') || 'complex'; } catch (x) { BT.level = 'complex'; } } BT.addedBy = {}; BT.defDone = {}; btSteps(); BT.style = P.skel === 'mech' || P.skel === 'walker' || P.skel === 'tank' ? 'mech' : 'creature'; btGo(0); }
+    if (window.V3 && st.k !== 'part' && BT.steps.slice(0, BT.i).some(x => x.k === 'part')) { try {   // 2.0: the part steps are done -> Next all the way = the same creature as the ⭐ default build
+        // late plug pass: plug steps that were skipped because their plugs did not exist yet (beholder eyes go on the eye stalks, which come later)
+        const keep = BT.i; BT.steps.forEach((s2, j) => { if (j >= keep || s2.k !== 'part' || !(s2.how || '').startsWith('plug') || BT.defDone[j] || !hasFam(s2.fam) || !window.V3.plugsFor(s2.how)) return; BT.defDone[j] = true; BT.i = j; BT.added = []; const d2 = defFor(s2); if (d2) btPlace(s2, d2, true); });
+        // Simple level: the detail steps it does not ask about (fingers, claws, toes, teeth...) are filled in with their defaults now, once
+        if (window.MF_V3 && BT.level === 'simple' && !P.btLate) { P.btLate = 1; const simple = BT.steps; BT.level = 'complex'; btSteps(); const full = BT.steps; BT.level = 'simple'; BT.steps = simple;
+          full.forEach(s2 => { if (s2.k !== 'part' || simple.some(q => q.k === 'part' && q.t === s2.t && q.root === s2.root)) return; if ((s2.how || '').startsWith('plug') && (!hasFam(s2.fam) || !window.V3.plugsFor(s2.how))) return; BT.i = keep; BT.added = []; const d2 = defFor(s2); if (d2) btPlace(s2, d2, true); }); }
+        BT.i = keep; BT.added = ((BT.addedBy || {})[keep] || []).filter(u => partBy(u));
+        if (window.V3.afterDefault && BT.style !== 'mech') window.V3.afterDefault(P.skel); } catch (x) { console.error(x); } }   // 2.0: Next all the way = the same creature as the ⭐ default build
+    document.body.classList.remove('gside'); btShow(); if (window.MF_V3) { if (!BT.framed) { BT.framed = true; frameAll(); } else viewShift(); } }
+  function btStart() { $('menu').classList.remove('open'); BT.on = true; BT.framed = false; if (window.MF_V3) { try { BT.level = localStorage.getItem('mf-btlevel') || 'complex'; } catch (x) { BT.level = 'complex'; } } BT.addedBy = {}; BT.defDone = {}; btSteps(); BT.style = P.skel === 'mech' || P.skel === 'walker' || P.skel === 'tank' ? 'mech' : 'creature'; btGo(0); }
   // ↩ Resume: closing Build together (✕) keeps your place. A "🎓 Back to <step>" button stays on screen (also after a reload),
   // and Start › Build together picks up at that step on the same creature. Finishing (or Start over) clears it.
   const BTKEY = 'mf-bt-resume';
   const btSave = () => { try { if (BT.paused) localStorage.setItem(BTKEY, JSON.stringify(BT.paused)); else localStorage.removeItem(BTKEY); } catch (x) {} };
   function btPill() { let el = $('btResume'); if (!el) { el = Object.assign(document.createElement('button'), {id: 'btResume'}); el.onclick = btResume; document.body.append(el); }
     const p = BT.paused, ok = false && p && p.skel === P.skel && !BT.on; el.style.display = ok ? '' : 'none';   /* Nov 9: no pill on screen any more (✕ closes all the way; Start › Build together carries on) */ if (ok) el.textContent = '🎓 Back to ' + p.label + ' · ' + (p.i + 1) + '/' + p.n; }
-  function btEnd(won) { BT.on = false; $('guide').style.display = 'none'; document.body.classList.remove('guiding', 'gside');
+  function btEnd(won) { BT.on = false; $('guide').style.display = 'none'; document.body.classList.remove('guiding', 'gside'); setTimeout(() => { viewShift(); }, 30);
     const st = BT.steps[BT.i]; BT.paused = won === true || !st || BT.i < 2 ? null : {i: BT.i, skel: P.skel, style: BT.style, level: BT.level, n: BT.steps.length, label: st.k === 'part' ? (st.label || st.t) : ({shape: 'Body shape', move: 'Move things', paint: 'Paint', clean: 'Clean up', look: 'Game look', save: 'Save'}[st.k] || 'your build')};
     btSave(); btPill(); if (won === true) tip('🎉 Titan built! Start › 🎓 Build together to make another', 4000); else if (BT.paused) tip('Build together closed. To carry on later: Start › 🎓 Build together', 3200); }
   function btResume() { const p = BT.paused; if (!p || p.skel !== P.skel) return btStart(); $('menu').classList.remove('open'); BT.on = true; BT.style = p.style || BT.style; if (p.level) BT.level = p.level;
@@ -1827,9 +1863,9 @@ if (window.MF_V2) {
   $('bGuide').onclick = btOpen; $('mGuide').onclick = btOpen;
   // ⭐ Default builds: one finished creature per body type (Start tab), made from the same defaults
   function buildDefault(k, style) { if (P.parts.some(p => !p.lib.startsWith('base_')) && !confirm('Replace what is on screen with the default ' + (SKEL[k] || {}).name + '? (Save first if you want to keep it)')) return;
-    snap(); P = blankProject(k); rebuildSkeleton(); buildBase(); rebuildParts(); BT.style = style || (/^(mech|walker|tank)$/.test(k) ? 'mech' : 'creature'); btSteps(); BT.addedBy = {};
+    snap(); P = blankProject(k); rebuildSkeleton(); buildBase(); rebuildParts(); BT.style = style || (/^(mech|walker|tank)$/.test(k) ? 'mech' : 'creature'); const lvl0 = BT.level; BT.level = 'complex'; btSteps(); BT.level = lvl0; BT.addedBy = {};   /* a ⭐ default is always the full creature, whatever level Build together is set to */
     const order = BT.steps.map((st, i) => i); if (window.MF_V3) order.sort((a, b) => ((BT.steps[a].how || '').startsWith('plug') ? 1 : 0) - ((BT.steps[b].how || '').startsWith('plug') ? 1 : 0) || a - b);
-    order.forEach(i => { const st = BT.steps[i]; if (st.k !== 'part') return; BT.i = i; BT.added = []; const d = defFor(st); if (d) btPlace(st, d, true); }); BT.i = 0; if (window.V3 && window.V3.afterDefault) window.V3.afterDefault(k); outliner(); applyFX(); bodyUI(); skelUI(); saveCur(); frameAll(); tip('⭐ Default ' + (SKEL[k] || {}).name + ' — change anything you like', 2600); }
+    order.forEach(i => { const st = BT.steps[i]; if (st.k !== 'part') return; BT.i = i; BT.added = []; const d = defFor(st); if (d) btPlace(st, d, true); }); BT.i = 0; if (window.V3 && window.V3.afterDefault) window.V3.afterDefault(k); if (window.MF_V3) { const left = P.parts.filter(p => p.lib.startsWith('base_')); if (left.length) { removeParts(left); rebuildParts(); } } outliner(); applyFX(); bodyUI(); skelUI(); saveCur(); frameAll(); tip('⭐ Default ' + (SKEL[k] || {}).name + ' — change anything you like', 2600); }
   const defUI = () => { const el = $('defBuilds'); if (!el) return; el.innerHTML = ''; for (const [k, sk] of Object.entries(SKEL)) { if (k === 'none' || (!DEF[k] && !/^(mech|walker|tank)$/.test(k))) continue;
       el.append(Object.assign(document.createElement('button'), {textContent: sk.name, onclick: () => buildDefault(k)})); }
     el.append(Object.assign(document.createElement('button'), {textContent: '🤖 Mech (default)', onclick: () => buildDefault('mech', 'mech')})); }; defUI();

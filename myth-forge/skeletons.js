@@ -47,7 +47,7 @@
   T.gorilla = {name: 'Gorilla / knuckle walker', bones: [['hips', null, [0, 4.2, -1], [0, 5.2, -.4], 'spine'], ['spine', 'hips', [0, 5.2, -.4], [0, 6.4, .6], 'spine'], ['chest', 'spine', [0, 6.4, .6], [0, 7.2, 1.6], 'chest'],
     ['neck', 'chest', [0, 7.2, 1.6], [0, 7.6, 2.3], 'neck'], ['head', 'neck', [0, 7.6, 2.3], [0, 8.6, 2.6], 'head', {up: 1}], ['jaw', 'head', [0, 7.6, 2.6], [0, 7.3, 3.3], 'jaw', {up: 1}],
     ...both([['shoulder', 'chest', [.8, 7, 1.4], [2, 7, 1.4], 'armU'], ['upperarm', 'shoulder#', [2, 7, 1.4], [2.4, 4.2, 2.2], 'armU'], ['forearm', 'upperarm#', [2.4, 4.2, 2.2], [2.5, 1.2, 2.6], 'armF'], ['hand', 'forearm#', [2.5, 1.2, 2.6], [2.5, 0, 3], 'hand']]), ...legs(4.2, 1.1)]};
-  T.fourarm = {name: 'Four-armed warrior', bones: [...core(5.2, 8.8), ...arms(8.4, 1), ...arms(7.2, .9, .9, 'chest', 'B')]};
+  T.fourarm = {name: 'Four-armed warrior', bones: [...core(5.2, 8.8), ...arms(8.4, 1), ...arms(7.2, .9, .9, 'chest', 'B'), ...legs(5.2, 1)]};   // 2.0: it had no legs (a floating torso)
   T.angel = {name: 'Winged humanoid / angel', bones: [...core(5.6, 8.8, 1, 1.1), ...arms(8.6, .9), ...legs(5.6, .85),
     ...both([['wing', 'chest', [.4, 8.4, -.6], [2.8, 10.2, -1.4], 'wingA'], ['wingmid', 'wing#', [2.8, 10.2, -1.4], [5.6, 11, -2], 'wingB'], ['wingtip', 'wingmid#', [5.6, 11, -2], [8.2, 9.6, -2.6], 'wingC']])]};
   T.centaur = {name: 'Centaur / beast-taur', bones: [...T.quad.bones.filter(b => !['neck', 'head', 'jaw'].includes(b[0])), ['torso', 'chest', [0, 5.6, 2.2], [0, 7.6, 2.6], 'chest'],
@@ -80,7 +80,7 @@
       ['thigh', 'hips', [.95, 5.0, 0], [1.15, 3.2, .9], 'legU'], ['shin', 'thigh#', [1.15, 3.2, .9], [1.15, 1.4, -.4], 'legL'], ['foot', 'shin#', [1.15, 1.4, -.4], [1.15, 0, .9], 'foot']]),
     ...chain('tail', 'hips', [[0, 5.3, -.4], [0, 5.2, -2.4], [0, 4.9, -4.4], [0, 4.4, -6.4], [0, 3.8, -8.4], [0, 3.2, -10.2], [0, 2.8, -11.8]], 'tail')]};
   T.sphinx = {name: 'Sphinx (lion + wings)', bones: [...T.quad.bones.map(b => b[0] === 'neck' ? ['neck', 'chest', [0, 5.6, 2.2], [0, 7.4, 2.8], 'neck'] : b[0] === 'head' ? ['head', 'neck', [0, 7.4, 2.8], [0, 8.6, 3.1], 'head', {up: 1}] : b[0] === 'jaw' ? ['jaw', 'head', [0, 7.4, 3.1], [0, 7.2, 3.9], 'jaw', {up: 1}] : b), ...wings]};
-  T.blob = {name: 'Blob / no legs', bones: [['body', null, [0, 0, 0], [0, 4, 0], 'spine'], ['top', 'body', [0, 4, 0], [0, 7, .3], 'chest'], ['head', 'top', [0, 7, .3], [0, 8.5, .6], 'head', {up: 1}]]};
+  T.blob = {name: 'Blob / no legs', bones: [['body', null, [0, 0, 0], [0, 4, 0], 'spine'], ['top', 'body', [0, 4, 0], [0, 7, .3], 'chest'], ['head', 'top', [0, 4.4, 1.5], [0, 5.4, 1.9], 'head', {up: 1}]]};   // 2.0: the head bone sits in the front of the goo (a face / big eye goes there), it used to float above the body
   // ---- Nov 9 2026: myth creatures ----
   T.treefolk = {name: 'Treefolk (walking tree)', bones: [...core(4.6, 9.4, .25, 1.6), ...arms(9.0, 1.45, 1.35), ...legs(4.6, 1.15, .6),
     ...both([['branch', 'chest', [.8, 9.3, -.3], [2.2, 11.6, -.8], 'extra']])]};

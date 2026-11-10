@@ -14,16 +14,17 @@
       ...pair('ear', 'ear', c.ear, [1, .45, -.2], 'out', {s: c.earS || .8}), plug('brow', 'brow', c.brow, [0, 0, 1], 'frame', {s: c.browS || .85}),
       plug('nose', 'nose', c.nose, [0, 0, 1], 'frame', {s: c.noseS || .7}), plug('crest', 'crest', c.crest, [0, 1, -.35], 'out', {s: c.crestS || .8}),
       plug('teethU', 'teeth', [0, H[1] - .02, H[2] + .25], [0, -1, 0], 'frame', {s: mouthLen, r: [0, 0, 180]}),
-      ...pair('fangU', 'fang', c.fang, [0, -1, .15], 'out', {s: c.fangS || .7}), plug('mane', 'mane', c.mane || [0, c.horn[1] * .55, c.upper[0][0] + .1], [0, 0, -1], 'frame', {s: c.maneS || .55}),
+      ...pair('fangU', 'fang', c.fang, [0, -1, .15], 'out', {s: c.fangS || .7}), plug('mane', 'mane', c.mane || [0, c.horn[1] * .55, (c.upper ? c.upper[0][0] : -.6) + .1], [0, 0, -1], 'frame', {s: c.maneS || .55}),
       ...pair('cheek', 'cheek', c.cheek || [c.eye[0] * .9, c.eye[1] * .55, c.eye[2] + .55], [1, 0, .3], 'out', {s: .6}),
       plug('back1', 'back', [0, c.crest[1] - .05, c.crest[2] - .1], [0, .6, -1], 'out', {s: .5}), plug('crown', 'crown', [0, c.crest[1] + .02, (c.brow[2] + c.crest[2]) / 2], [0, 1, 0], 'frame', {s: .9})];
     const jplugs = [plug('teeth', 'teeth', [0, jw.rim || .04, .25], [0, 1, 0], 'frame', {s: mouthLen}), ...pair('fang', 'fang', c.fangJ || [c.fang[0], .04, mouthLen + .05], [0, 1, .1], 'out', {s: (c.fangS || .7) * .85}),
       plug('tongue', 'tongue', [0, (jw.rim || .04) - .06, .15], [0, 0, 1], 'frame', {s: mouthLen * .6}), plug('chin', 'chin', [0, jw.chin || -.25, mouthLen + .15], [0, -.6, .8], 'frame', {s: .7})];
-    const upGeo = () => { const gs = [loft(S(up), {rad: 32, per: 5, noise: c.noise || [.012, 5]})]; if (c.extra) gs.push(...c.extra()); return gs; };
+    // humanoid skulls are stacked bottom to top (upperY rows: [y, halfWidth, front(+Z), back(-Z), squareness]) so the face profile can be shaped; snouted heads are lofted back to front (upper)
+    const upGeo = () => { const gs = [c.upperY ? loft(c.upperY.map(([a, w, t, b, n]) => ({a, w, t, b: b ?? t, n: n || 2.3})), {axis: 'y', rad: 36, per: 5, noise: c.noise || [.012, 5]}) : loft(S(up), {rad: 32, per: 5, noise: c.noise || [.012, 5]})]; if (c.extra) gs.push(...c.extra()); return gs; };
     out.push({id: 'kh_' + c.id, group: 'Heads & Skulls', sub: '🔌 Plug heads', name: c.name + ' (upper)', tags: ['kit', 'plug', 'upper skull', ...(c.tags || [])], upperOnly: true, jawFor: 'kh_' + c.id + '_jaw', plugs, kit: c.kit,
-      make: () => upGeo().map((g, i) => P(g, i ? (c.extraMat || c.mat) : c.mat))});
+      make: () => upGeo().map((g, i) => P(g, i ? ((c.extraMats || [])[i - 1] || c.extraMat || c.mat) : c.mat))});
     out.push({id: 'kh_' + c.id + '_jaw', group: 'Jaws & Teeth', sub: 'Lower Jaws', name: c.name + ' jaw', tags: ['kit', 'plug', 'jaw', ...(c.tags || [])], plugAs: 'jaw', plugs: jplugs, kit: c.kit, upperFor: 'kh_' + c.id,
-      make: () => [P(loft(S(jw.secs), {rad: 28, per: 5, noise: c.noise || [.012, 5]}), c.jawMat || c.mat)]});
+      make: () => [P(loft(S(jw.secs), {rad: 28, per: 5, noise: c.noise || [.012, 5]}), c.jawMat || c.mat), ...(jw.extra ? jw.extra().map(g => P(g, jw.extraMat || 'tooth')) : [])]});
   }
   // ---- dragon: long, sleek, ridged brow
   headPair({id: 'dragon', name: 'Dragon head', kit: 'dragon', mat: 'scale', tags: ['dragon', 'wyvern', 'hydra'],
@@ -65,12 +66,37 @@
     jaw: {secs: [[-.05, .5, .05, -.25], [.6, .44, .05, -.3], [1.2, .3, .05, -.24], [1.55, .14, .08, -.16]], chin: -.3},
     hinge: [0, .2, .05], mouthLen: 1.3, eye: [.42, .9, .85], eyeDir: [.75, .3, .55], eyeS: .65, brow: [0, 1.0, .85], horn: [.35, 1.02, .2], hornS: .55, ear: [.55, .8, -.1], earS: .5, nose: [0, .78, 1.45], crest: [0, 1.05, -.2], fang: [.15, .2, 1.4], fangS: .4,
     extra: () => [loft(S([[1.1, .38, .82, .22, 2.4], [1.4, .3, .76, .2, 2.4], [1.62, .12, .62, .04, 2], [1.68, .04, .3, -.1, 2]]), {rad: 20, per: 4})]});
-  // ---- brute / ape: flat face, heavy brow (humanoids, kaiju-men, ogres)
-  headPair({id: 'brute', name: 'Brute head', kit: 'kaiju', mat: 'skin', tags: ['ape', 'ogre', 'humanoid', 'brute', 'gorilla'],
-    upper: [[-.55, .6, 1.5, .35, 2.1], [-.15, .74, 1.75, .25, 2.1], [.3, .72, 1.75, .22, 2.2], [.62, .6, 1.4, .25, 2.4], [.82, .45, 1.0, .3, 2.6]],
-    jaw: {secs: [[-.05, .62, .05, -.3], [.4, .6, .05, -.4], [.8, .46, .05, -.4], [1.0, .3, .05, -.3]], chin: -.42},
-    hinge: [0, .3, .1], mouthLen: .85, eye: [.36, 1.22, .62], eyeDir: [.3, .15, .95], eyeS: .7, brow: [0, 1.38, .66], horn: [.5, 1.7, .1], ear: [.74, 1.15, -.05], earS: .9, nose: [0, 1.0, .9], crest: [0, 1.76, -.15], fang: [.25, .3, .85], fangS: .6,
-    extra: () => [ell(.68, .14, .2, 0, 1.4, .6)]});
+  // ---- ogre / brute (reworked Nov 9): wide heavy face, thick brow, big underbite jaw for tusks (id stays kh_brute so old saves still open)
+  headPair({id: 'brute', name: 'Ogre head', kit: 'kaiju', mat: 'skin', tags: ['ogre', 'troll', 'humanoid', 'brute', 'giant'],
+    upperY: [[.26, .6, .78, .3], [.5, .7, .86, .52], [.82, .73, .8, .7], [1.06, .71, .88, .78], [1.27, .63, .62, .77], [1.5, .47, .36, .6], [1.66, .2, .12, .3]],
+    jaw: {secs: [[-.1, .62, .05, -.28], [.35, .72, .06, -.44, 2.8], [.75, .64, .07, -.48, 3], [1.0, .44, .07, -.38, 2.8]], chin: -.46, extra: () => [merge([-1, 1].map(sd => at(spike(.62, .11, -.35, sd * .12), sd * .42, .02, .86)))]},
+    hinge: [0, .3, .0], mouthLen: .92, eye: [.31, .9, .84], eyeDir: [.22, .02, 1], eyeS: .8, brow: [0, 1.08, .86], horn: [.42, 1.42, .1], hornS: .7, ear: [.74, .86, -.05], earS: .85, nose: [0, .5, .92], noseS: .6, crest: [0, 1.66, -.15], fang: [.34, .3, .8], fangJ: [.4, .07, .9], fangS: .75,
+    extra: () => [merge([ell(.34, .1, .2, .34, 1.17, .76), ell(.34, .1, .2, -.34, 1.17, .76), ell(.17, .2, .2, 0, .68, .86), ell(.13, .1, .12, .12, .58, .9), ell(.13, .1, .12, -.12, .58, .9), ell(.1, .22, .16, .72, .9, -.02), ell(.1, .22, .16, -.72, .9, -.02)])]});
+  // ---- human / giant: clean humanoid head (angels, centaurs, elemental giants, gods)
+  headPair({id: 'human', name: 'Giant head (humanoid)', kit: 'kaiju', mat: 'skin', tags: ['human', 'giant', 'angel', 'centaur', 'titan', 'god', 'humanoid'],
+    upperY: [[.28, .38, .6, .28], [.48, .49, .67, .48], [.78, .55, .65, .68], [1.02, .57, .69, .74], [1.3, .56, .62, .75], [1.56, .45, .42, .6], [1.72, .2, .16, .3]],
+    jaw: {secs: [[-.1, .38, .04, -.2], [.3, .42, .04, -.3], [.52, .34, .04, -.3, 2.6], [.64, .2, .04, -.24, 2.6]], chin: -.28},
+    hinge: [0, .3, .0], mouthLen: .62, eye: [.24, .86, .6], eyeDir: [.18, .02, 1], eyeS: .72, brow: [0, 1.0, .7], horn: [.34, 1.5, .15], hornS: .6, ear: [.57, .8, -.05], earS: .6, nose: [0, .5, .72], noseS: .45, crest: [0, 1.72, -.15], fang: [.18, .3, .6], fangS: .35,
+    extra: () => [merge([ell(.22, .06, .12, .25, 1.0, .62), ell(.22, .06, .12, -.25, 1.0, .62), at(ell(.1, .22, .16, 0, 0, 0), 0, .7, .72, -14), ell(.11, .07, .09, 0, .56, .76), ell(.07, .17, .12, .57, .82, -.02), ell(.07, .17, .12, -.57, .82, -.02), ell(.2, .05, .08, 0, .36, .6)])]});
+  // ---- ape: low skull with a crest, heavy brow, long muzzle
+  headPair({id: 'ape', name: 'Ape head', kit: 'beast', mat: 'fur', extraMat: 'skin', jawMat: 'skin', tags: ['ape', 'gorilla', 'kong', 'monkey', 'beast giant'],
+    upperY: [[.28, .5, .96, .3], [.5, .58, 1.02, .5], [.72, .62, .8, .66], [.95, .66, .74, .76], [1.12, .64, .8, .78], [1.3, .55, .5, .78], [1.54, .36, .2, .62], [1.68, .14, .02, .42]],
+    jaw: {secs: [[-.1, .5, .04, -.24], [.4, .56, .05, -.38], [.82, .5, .05, -.4, 2.8], [1.04, .34, .05, -.3, 2.6]], chin: -.4},
+    hinge: [0, .3, .0], mouthLen: .98, eye: [.27, .93, .78], eyeDir: [.18, 0, 1], eyeS: .68, brow: [0, 1.12, .78], horn: [.38, 1.4, .0], hornS: .6, ear: [.67, .92, -.1], earS: .7, nose: [0, .62, 1.0], noseS: .6, crest: [0, 1.68, -.3], fang: [.3, .3, .88], fangS: .7,
+    extra: () => [merge([ell(.5, .22, .3, 0, .47, .74), ell(.6, .09, .14, 0, 1.15, .74), ell(.12, .08, .1, .1, .66, 1.0), ell(.12, .08, .1, -.1, .66, 1.0), ell(.08, .2, .16, .66, .92, -.08), ell(.08, .2, .16, -.66, .92, -.08)])]});
+  // ---- golem: carved boulder head, slab brow, block jaw
+  headPair({id: 'golem', name: 'Golem head (stone)', kit: 'kaiju', mat: 'stone', tags: ['golem', 'stone', 'statue', 'construct', 'elemental'], noise: [.045, 2.6],
+    upperY: [[.26, .52, .62, .46, 3.6], [.6, .64, .7, .62, 3.6], [1.0, .68, .74, .68, 3.4], [1.3, .62, .6, .64, 3.2], [1.52, .42, .38, .44, 3]],
+    jaw: {secs: [[-.1, .54, .04, -.3, 3.6], [.35, .6, .05, -.4, 3.6], [.74, .52, .05, -.36, 3.4]], chin: -.4},
+    hinge: [0, .3, .0], mouthLen: .68, eye: [.3, .9, .76], eyeDir: [.1, 0, 1], eyeS: .7, brow: [0, 1.1, .76], horn: [.44, 1.4, .1], hornS: .7, ear: [.68, .9, 0], earS: .6, nose: [0, .56, .76], noseS: .5, crest: [0, 1.52, -.1], fang: [.3, .3, .6], fangS: .5,
+    extra: () => [merge([at(new T.BoxGeometry(1.34, .22, .34), 0, 1.13, .62, 8), at(new T.BoxGeometry(.24, .4, .26), 0, .72, .76, -10), at(new T.BoxGeometry(.3, .5, .5), .72, .8, .1, 0, 0, -8), at(new T.BoxGeometry(.3, .5, .5), -.72, .8, .1, 0, 0, 8)])]});
+  // ---- skull: bare humanoid skull with dark sockets (undead, reapers, bone titans)
+  headPair({id: 'skull', name: 'Giant skull', kit: 'kaiju', mat: 'bone', extraMats: ['mouthdark', 'bone'], tags: ['skull', 'undead', 'skeleton', 'reaper', 'bone', 'lich'],
+    upperY: [[.26, .32, .58, .18], [.46, .42, .64, .4], [.68, .56, .6, .62], [.95, .57, .67, .72], [1.25, .58, .63, .76], [1.52, .46, .42, .62], [1.69, .2, .16, .3]],
+    jaw: {secs: [[-.12, .46, .03, -.1], [.25, .46, .04, -.2, 2.8], [.5, .36, .04, -.24, 2.8], [.66, .22, .04, -.2, 2.6]], chin: -.22},
+    hinge: [0, .3, .0], mouthLen: .6, eye: [.24, .88, .5], eyeDir: [.15, 0, 1], eyeS: .5, brow: [0, 1.04, .68], horn: [.34, 1.5, .15], hornS: .6, ear: [.56, .8, -.05], earS: .5, nose: [0, .5, .7], noseS: .4, crest: [0, 1.69, -.15], fang: [.18, .3, .58], fangS: .4,
+    extra: () => [merge([ell(.17, .17, .12, .24, .88, .56), ell(.17, .17, .12, -.24, .88, .56), at(ell(.07, .13, .08, 0, 0, 0), .04, .6, .62, 0, 0, -12), at(ell(.07, .13, .08, 0, 0, 0), -.04, .6, .62, 0, 0, 12)]),
+      merge([ell(.26, .06, .12, .26, 1.07, .6), ell(.26, .06, .12, -.26, 1.07, .6), ell(.1, .14, .22, .55, .7, .3), ell(.1, .14, .22, -.55, .7, .3)])]});
   // ---- serpent: wedge head
   headPair({id: 'serpent', name: 'Serpent head', kit: 'sea', mat: 'scale', tags: ['snake', 'serpent', 'naga', 'viper', 'sea serpent'],
     upper: [[-.45, .45, .7, .2, 2.4], [0, .62, .82, .15, 2.6], [.6, .56, .78, .13, 2.8], [1.2, .4, .66, .14, 2.8], [1.65, .26, .52, .18, 2.4]],

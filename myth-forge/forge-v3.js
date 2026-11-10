@@ -171,15 +171,38 @@ const STEP_T = {eye: 1, teeth: 1, fang: 1, tongue: 1, horn: 1, ear: 1, finger: 1
 V3X.plugsFor = how => { const t = (how || '').split(':')[1]; const all = scenePlugs(t || null); return t ? all.length : all.filter(c => /brow|nose|cheek|chin|crest|mane|antenna/.test(c.pl.t)).length; };
 // what's on the model right now
 const onModel = re => P.parts.find(p => !p.boxed && re.test(p.lib));
-const KIT_HEAD = {dragon: 'kh_dragon', wyvern: 'kh_dragon', hydra: 'kh_dragon', hydra2: 'kh_dragon', kaiju: 'kh_kaiju', biped: 'kh_kaiju', theropod: 'kh_kaiju', quad: 'kh_beast', centaur: 'kh_brute', chimera: 'kh_cat', hippogriff: 'kh_bird', bird: 'kh_bird',
-  serpent: 'kh_serpent', naga: 'kh_serpent', turtle: 'kh_turtle', turtle2: 'kh_turtle', brute: 'kh_brute', gorilla: 'kh_brute', fourarm: 'kh_brute', fish: 'kh_shark', bonyfish: 'kh_fish', spider: 'kh_bug', insect: 'kh_bug', mantis: 'kh_bug', wasp: 'kh_bug', uprightbug: 'kh_bug', scorpion: 'kh_bug'};
+const KIT_HEAD = {dragon: 'kh_dragon', wyvern: 'kh_dragon', hydra: 'kh_dragon', hydra2: 'kh_dragon', kaiju: 'kh_kaiju', biped: 'kh_kaiju', theropod: 'kh_kaiju', quad: 'kh_beast', centaur: 'kh_human', angel: 'kh_human', slim: 'kh_skull', sphinx: 'kh_cat', chimera: 'kh_cat', hippogriff: 'kh_bird', bird: 'kh_bird',
+  serpent: 'kh_serpent', naga: 'kh_serpent', turtle: 'kh_turtle', turtle2: 'kh_turtle', brute: 'kh_brute', gorilla: 'kh_ape', fourarm: 'kh_brute', fish: 'kh_shark', bonyfish: 'kh_fish', spider: 'kh_bug', insect: 'kh_bug', mantis: 'kh_bug', wasp: 'kh_bug', uprightbug: 'kh_bug', scorpion: 'kh_bug'};
 const KIT_HAND = {kaiju: 'kl_palm_kaiju', biped: 'kl_palm_kaiju', theropod: 'kl_palm_kaiju', hydra2: 'kl_palm_beast', brute: 'kl_palm_human', gorilla: 'kl_palm_human', fourarm: 'kl_palm_human', angel: 'kl_palm_human', slim: 'kl_palm_human', naga: 'kl_palm_human', centaur: 'kl_palm_human', turtle2: 'kl_palm_kaiju', uprightbug: 'kl_arm_hook', mantis: 'kl_arm_scythe', wasp: 'kl_arm_drill'};
 const KIT_FOOT = {kaiju: 'kl_foot_kaiju', biped: 'kl_foot_kaiju', theropod: 'kl_foot_dragon', dragon: 'kl_foot_dragon', wyvern: 'kl_foot_dragon', hydra: 'kl_foot_dragon', hydra2: 'kl_foot_dragon', quad: 'kl_foot_paw', chimera: 'kl_foot_paw', sphinx: 'kl_foot_paw', centaur: 'kl_foot_paw',
   bird: 'kl_foot_bird', hippogriff: 'kl_foot_bird', brute: 'kl_foot_human', gorilla: 'kl_foot_human', slim: 'kl_foot_human', fourarm: 'kl_foot_human', angel: 'kl_foot_human', turtle: 'kl_foot_kaiju', turtle2: 'kl_foot_kaiju'};
 const KIT_TAIL = {kaiju: 'kl_tailseg_scaly', biped: 'kl_tailseg_scaly', theropod: 'kl_tailseg_scaly', dragon: 'kl_tailseg_scaly', wyvern: 'kl_tailseg_scaly', hydra: 'kl_tailseg_scaly', hydra2: 'kl_tailseg_scaly', scorpion: 'kl_tailseg_ringed', chimera: 'kl_tailseg_scaly', turtle: 'kl_tailseg_plated', turtle2: 'kl_tailseg_plated'};
 const KIT_TIP = {dragon: 'kl_tip_spade', wyvern: 'kl_tip_stinger', hydra: 'kl_tip_spade', hydra2: 'kl_tip_spade', scorpion: 'kl_tip_stinger', chimera: 'kl_tip_snakehead', sphinx: 'kl_tip_tuft', quad: 'kl_tip_tuft', fish: 'kl_tip_fin', kaiju: null, biped: null, wasp: 'kl_tip_stinger'};
-const KIT_BACK = {kaiju: 'kl_back_crystal', biped: 'kl_back_plate', dragon: 'kl_back_spike', hydra: 'kl_back_spike', hydra2: 'kl_back_spike', turtle: 'kl_back_spike', turtle2: 'kl_back_spike', theropod: null};
-V3X.defFor = (skel, t, style, level) => { const cx = level !== 'simple', mech = style === 'mech';
+const KIT_BACK = {serpent: 'kl_back_fin', kaiju: 'kl_back_crystal', biped: 'kl_back_plate', dragon: 'kl_back_spike', hydra: 'kl_back_spike', hydra2: 'kl_back_spike', turtle: 'kl_back_spike', turtle2: 'kl_back_spike', theropod: null};
+// 🎨 creature themes (2.0): one skin family per default creature, so a default build never mixes green legs with a brown chest.
+// t = limb / neck kit type, m = main skin, belly = second skin for belly pieces, fam = per body-family overrides (see famKey)
+const THEME = {biped: {t: 'scaly', m: 'croc'}, kaiju: {t: 'scaly', m: 'scale'}, theropod: {t: 'scaly', m: 'monitor'}, dragon: {t: 'scaly', m: 'scale'}, wyvern: {t: 'scaly', m: 'iguanablack'}, hydra: {t: 'scaly', m: 'alligator'}, hydra2: {t: 'scaly', m: 'komodo'},
+  turtle: {t: 'scaly', m: 'alligator'}, turtle2: {t: 'scaly', m: 'alligator'}, serpent: {t: 'scaly', m: 'snake'}, quad: {t: 'fur', m: 'fur'}, sphinx: {t: 'fur', m: 'fur'}, chimera: {t: 'fur', m: 'fur', fam: {tail: 'snake'}}, gorilla: {t: 'fur', m: 'blackfur', keep2: 1},
+  centaur: {t: 'fur', m: 'fur', fam: {arm: 'skin', hand: 'skin', head: 'skin', jaw: 'skin', neck: 'skin'}, limbs: {Arms: 'skin', Neck: 'skin'}}, hippogriff: {t: 'fur', m: 'fur', fam: {head: 'feather', neck: 'feather'}, limbs: {Neck: 'feather'}},
+  bird: {t: 'feather', m: 'feather', fam: {leg: 'horn', foot: 'horn'}, limbs: {Legs: 'scaly'}}, angel: {t: 'skin', m: 'skin'}, brute: {t: 'skin', m: 'skin'}, fourarm: {t: 'skin', m: 'skin'}, slim: {t: 'bone', m: 'oldbone', limbs: {Neck: 'skin'}},
+  spider: {t: 'chitin', m: 'antblack'}, insect: {t: 'chitin', m: 'jewelbeetle'}, scorpion: {t: 'chitin', m: 'stagbeetle'}, crab: {t: 'chitin', m: 'chitinred'}, mantis: {t: 'chitin', m: 'mantis'}, wasp: {t: 'chitin', m: 'wasp'}, uprightbug: {t: 'chitin', m: 'chitin'}, moth: {t: 'chitin'}};
+V3X.THEME = THEME; V3X.noHead = k => !!(OVR[k] && OVR[k].Head === null);
+const BODYM = new Set(['skin', 'scale', 'fur', 'feather', 'chitin', 'bigscale', 'plates']);
+V3X.theme = uids => { const th = THEME[P.skel]; if (!th || !th.m || (V3X.bt && V3X.bt.BT.style === 'mech')) return; let ch = false;
+  for (const u of uids || []) { const pt = partBy(u); if (!pt || pt.matAll || pt.mat || pt.elem || !LIB[pt.lib] || /^base_/.test(pt.lib)) continue; let pcs; try { pcs = pieces(pt.lib, pt.params); } catch (x) { continue; }
+    const body = pcs.map(q => q.mat).filter(m => BODYM.has(m)); if (!body.length) continue; const cnt = {}; body.forEach(m => cnt[m] = (cnt[m] || 0) + 1);
+    const dom = BODYM.has(pcs[0].mat) ? pcs[0].mat : Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0], host = pt.host && partBy(pt.host.u), fk = famKey(host || pt), m = (th.fam && (th.fam[fk[0]] ?? th.fam[fk[1]])) || th.m;
+    if (fk[1] === 'wing' && !(th.fam && th.fam.wing)) continue;   // wings keep their own feathers / membrane
+    const arr = pcs.map(q => q.mat === dom ? (m !== dom ? m : null) : /^paint2?$/.test(q.mat) ? (th.belly || m) : (BODYM.has(q.mat) && th.belly ? th.belly : null)); if (arr.some(Boolean)) { pt.mat = arr; ch = true; } }
+  if (ch) rebuildParts(); };
+// per-skeleton overrides that win over everything else (2.0 fixes): the octopus mantle IS the head, eye stalks get real stalks, serpents are built from bending segments
+const OVR = {octopus: {Head: null}, kraken: {Head: null}, blob: {Head: 'kp_eye_big', Body: 'bb_blob'}, crab: {Neck: 'kl_eyestalk', Hands: 'bd_hand_crab'}, lobster: {Neck: 'kl_eyestalk'}, serpent: {Body: 'kl_tailseg_scaly', Head: 'kh_serpent'},
+  scorpion: {Hands: 'bd_hand_scorpion'}, spider: {'Tail / tentacles': 'bb_abdomen'}, insect: {'Tail / tentacles': 'bb_abdomen'}};
+const NECKSEG = {scaly: 'kl_neckseg_scaly', fur: 'kl_neckseg_fur', skin: 'kl_neckseg_skin', feather: 'kl_neckseg_feather', chitin: 'kl_neckseg_chitin', bone: 'kl_neckseg_skin', rock: 'kl_neckseg_rock'};
+V3X.defFor = (skel, t, style, level) => { const cx = true, mech = style === 'mech';   // 2.0: Simple and Complex build the SAME creature (the kit parts are the ones that fit every skeleton); Simple only asks fewer questions
+  if (!mech && OVR[skel] && OVR[skel][t] !== undefined) return OVR[skel][t];
+  { const th = THEME[skel], own3 = (V3X.DEF3[skel] || {})[t]; if (cx && !mech && th && own3 === undefined && !/^naga/.test(skel)) { const lt = (th.limbs && th.limbs[t]) || th.t;
+      if (t === 'Legs') return 'kl_limb_' + lt; if (t === 'Arms') return 'kl_limb_' + lt + '_arm'; if (t === 'Neck') return NECKSEG[lt] || 'kl_neckseg_skin'; if (t === 'Feet' && th.t === 'chitin') return 'kl_foot_bugtip'; } }
   if (/^naga/.test(skel) && !mech && ['Body', 'Head', 'Tail / tentacles', 'Neck', 'Arms', 'Hands'].includes(t)) { const d = ((window.MF_DEF_CORE || {})[skel] || {})[t]; if (d !== undefined) return d; }   // 🐍 nagas: one-piece snake body + naga torsos/heads
   // custom per-skeleton defaults (new body types)
   const kitMain = cx && !mech && ({Head: KIT_HEAD, Hands: KIT_HAND, Feet: KIT_FOOT, 'Tail / tentacles': KIT_TAIL}[t] || {})[skel]; if (kitMain) return kitMain;
@@ -188,11 +211,11 @@ V3X.defFor = (skel, t, style, level) => { const cx = level !== 'simple', mech = 
   const own = (V3X.DEF3[skel] || {})[t]; if (own !== undefined && !mech) return own;
   if (cx && mech) { if (t === 'Hands') return 'kl_palm_mech'; if (t === 'Tail / tentacles' && !/walker|tank/.test(skel)) return 'kl_tailseg_mech'; }
   const kitHead = onModel(/^kh_/), hk = kitHead && kitHead.lib.slice(3);
-  if (t === 'Eyes') return mech ? null : kitHead ? (hk === 'shark' ? 'ks_eye_shark' : hk === 'fish' ? 'ks_eye_fish' : hk === 'bug' ? 'kp_eye_compound' : /dragon|kaiju|serpent|croc/.test(hk) ? 'kp_eye_slit' : 'kp_eye_round') : null;
-  if (t === 'Teeth') return kitHead ? ({shark: 'kp_row_saw', fish: 'kp_row_needle', dragon: 'kp_row_fang', kaiju: 'kp_row_fang', beast: 'kp_row_fang', cat: 'kp_row_fang', croc: 'kp_row_saw', serpent: 'kp_row_needle', brute: 'kp_row_molar'}[hk] || null) : null;
+  if (t === 'Eyes') return mech ? null : kitHead ? (hk === 'shark' ? 'ks_eye_shark' : hk === 'fish' ? 'ks_eye_fish' : hk === 'bug' ? 'kp_eye_compound' : /golem|skull/.test(hk) ? 'kp_eye_glow' : /brute|ape/.test(hk) ? 'kp_eye_lidded' : /dragon|kaiju|serpent|croc/.test(hk) ? 'kp_eye_slit' : 'kp_eye_round') : null;
+  if (t === 'Teeth') return kitHead ? ({shark: 'kp_row_saw', fish: 'kp_row_needle', dragon: 'kp_row_fang', kaiju: 'kp_row_fang', beast: 'kp_row_fang', cat: 'kp_row_fang', croc: 'kp_row_saw', serpent: 'kp_row_needle', brute: 'kp_row_molar', ape: 'kp_row_fang', skull: 'kp_row_molar'}[hk] || null) : null;
   if (t === 'Fangs') return kitHead && hk === 'cat' ? 'kp_fang_saber' : kitHead && hk === 'serpent' ? 'kp_fang_venom' : null;
   if (t === 'Tongue') return kitHead && hk === 'serpent' ? 'kp_tongue_fork' : null;
-  if (t === 'Horns') return mech ? undefined : kitHead ? ({dragon: 'kp_horn_swept', kaiju: 'kp_horn_short', brute: 'kp_horn_hook'}[hk] || null) : undefined;
+  if (t === 'Horns') return mech ? undefined : kitHead ? ({dragon: 'kp_horn_swept', kaiju: 'kp_horn_short'}[hk] || null) : undefined;
   if (t === 'Ears') return kitHead && /beast|cat/.test(hk) ? 'kp_ear_point' : null;
   if (t === 'Face bits') return kitHead && /dragon|kaiju/.test(hk) ? 'kp_brow_ridge' : null;
   if (t === 'Crest / mane') return kitHead && hk === 'cat' && /chimera|sphinx/.test(skel) ? 'kp_mane_fur' : kitHead && hk === 'bug' ? 'kp_ant_straight' : null;
@@ -381,7 +404,10 @@ function setElem(list, k) { snap(); for (const pt of list) for (const x of [pt, 
 V3X.setElem = setElem;
 // ⭐ default builds: elements, skins and god pieces (crown, halo, robe, hood, big eye, collar, weapon, belly maw, shackles, chains) from FORGE_DEF3 '_' keys
 const famKey = pt => { const r = boneRow(pt.bone); if (!r) return 'trunk'; const f = FAMILY[r[4]] || 'trunk', side = pt.bone.endsWith('.L') ? '.L' : pt.bone.endsWith('.R') ? '.R' : ''; return [f + side, f]; };
-V3X.afterDefault = k => { const d = (window.FORGE_DEF3 || {})[k]; if (!d) return; const main = P.parts.filter(p => !p.host || /^(back|tailtip|jaw|finger|toe|ear|claw)$/.test((plugsOf((partBy(p.host.u) || {}).lib || '', partBy(p.host.u)).find(q => q.id === p.host.k) || {}).t || ''));
+// extras for the older body types (same '_' keys as FORGE_DEF3): the centaur's human upper body, the angel's halo
+const EXTRA = {centaur: {_seg: [['kl_torso_human', 'torso']]}, angel: {_halo: 'kg_halo'}};
+V3X.afterDefault = k => { const d0 = (window.FORGE_DEF3 || {})[k], d = d0 || EXTRA[k] ? {...(d0 || {}), ...(EXTRA[k] || {})} : null; if (!d) return; if (P.fin === k) return; P.fin = k;   // once per creature (Build together calls it too when the part steps are done)
+  for (const [id, bn] of d._seg || []) if (LIB[id] && boneRow(bn) && !P.parts.some(p => p.lib === id)) { const mm = mirrorAdd; mirrorAdd = false; V3X.skip = true; addPart(id, bn, [0, 0, 0], [0, 0, 0]); V3X.skip = false; mirrorAdd = mm; const np = P.parts[P.parts.length - 1]; if (np && np.lib === id) V3X.theme([np.uid]); } const main = P.parts.filter(p => !p.host || /^(back|tailtip|jaw|finger|toe|ear|claw)$/.test((plugsOf((partBy(p.host.u) || {}).lib || '', partBy(p.host.u)).find(q => q.id === p.host.k) || {}).t || ''));
   const pick = (map, pt) => { if (typeof map === 'string') return map; const [a, b] = famKey(pt); return map[a] ?? map[b] ?? map.all; };
   if (d._mat) for (const pt of P.parts) { const m = pick(d._mat, pt); if (m && !(LIB[pt.lib] && /eye|Weapons/.test(LIB[pt.lib].group + (LIB[pt.lib].plugAs || '')))) { pt.matAll = m; pt.mat = null; } }
   if (d._elem) for (const pt of main) { const e = pick(d._elem, pt); if (e && ELEM[e]) { pt.elemPrev = pt.matAll || null; pt.elem = e; pt.matAll = ELEM[e].mat; pt.mat = null; } }
