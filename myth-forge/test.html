@@ -233,7 +233,7 @@
 
   <div class="pane on" id="p-add">
     <div class="how">👉 <b>Press and hold</b> a part, then <b>drag</b> it onto your model. Or tap it, then tap the model. Double-tap = add fast.</div>
-    <div class="seg" id="placeSeg"><button id="bModeBone" class="on">🦴 Snap to bone</button><button id="bModeSurf">✋ Free (where I drop it)</button><button id="bMirrorAdd" class="on">🪞 Both sides</button></div>
+    <div class="seg" id="placeSeg"><button id="bModeBone" class="on">🦴 Snap to bone</button><button id="bModeSurf">✋ Free (where I drop it)</button><button id="bMirrorAdd">🪞 Both sides</button></div>
     <div class="row"><button id="bWS1">🛠 Workshop (build a part by itself)</button></div>
     <div id="boxWrap" style="display:none"><div class="lbl">📦 Parts box (tap one, then tap the model)</div><div class="chips" id="boxRow"></div></div>
     <input type="search" id="search" placeholder="Search parts: skull, wing, fang, sword, TV…">
@@ -759,7 +759,7 @@ function mirrorInto(src, dst) {                                 // keep a mirror
 const syncTwin = pt => { const t = twinOf(pt); if (t) mirrorInto(pt, t); };
 
 // ====================================================================== adding parts
-let placing = null, modeBone = true, mirrorAdd = true;
+let placing = null, modeBone = true, mirrorAdd = false;   /* Nov 10 2026: adding a part adds ONE part. 🪞 Both sides is a button you turn on (MajorasPride: "shouldn't be 1 object that mirrors") */
 function newPart(lib, bone, p, r, s = 1) { const f = LIB[lib] && LIB[lib].fade; return {uid: uid(), lib, bone, p, r, s, l: 1, w: 1, flip: false, mat: null, matAll: null, tint: '#ffffff', subdiv: 0, sculpt: null, cut: [], hidden: false, twin: null, fade: f ? {amt: f.amt || .5, dust: true, style: f.style || 'dust'} : null}; }
 function autoScale(lib, bone) { return autoFit(lib, bone)[0]; }
 function autoFit(lib, bone) {                                  // fit limbs / tails / necks / wings to their bone chain -> [size, extra length stretch]
@@ -3324,6 +3324,41 @@ if ($('bPaintAll')) { const b = Object.assign(document.createElement('button'), 
     const sync = () => { const on = want(); if (document.body.classList.contains('sdockOn') !== on) { document.body.classList.toggle('sdockOn', on); } if (on) ui(); else fingerOff = 0; };
     setInterval(sync, 300); document.querySelectorAll('.tabs button,[data-pb],[data-br]').forEach(b => b.addEventListener('click', () => setTimeout(sync, 0)));
     M.dock = {sync, ui, el: dock};
+  }
+
+  // ------------------------------------------------------------------ 6. ✖ Multiply + curve (Nov 10 2026: "Add ways to connect easily. Then multiply if needed and curve out. Easily")
+  // ✋ Move & size › ✖ Multiply: pick a part, set Copies. The copies join end to end (Gap 1 = touching), Curve bends the whole row into an arc or a full ring,
+  // Twist turns each copy a bit more, Grow makes each copy bigger or smaller (tails, horns, tentacles, chains, fences, wheels of spikes). The copies are normal parts.
+  if ($('copyRow')) {
+    const box = mk('details', {className: 'more', id: 'mulBox'}, mk('summary', {textContent: '✖ Multiply + curve (row, arc, ring) ▾'})); $('copyRow').after(box);
+    const hint = mk('div', {className: 'hint', textContent: 'Pick a part, then slide Copies. They connect end to end. Curve bends the row, 360 makes a ring.'}); box.append(hint);
+    let mul = null, axis = 'y';   // mul = {src, uids}
+    const V = THREE.Vector3, M4 = THREE.Matrix4, Q = THREE.Quaternion, E = THREE.Euler, R = Math.PI / 180;
+    const sl = (label, min, max, step, val, fmt) => { const i = mk('input', {type: 'range', min, max, step, value: val}), v = mk('span', {textContent: fmt(val)}); i.addEventListener('pointerdown', () => { if (!mul || mul.src !== sel) begin(); });
+      i.addEventListener('input', () => { v.textContent = fmt(+i.value); regen(); }); i.addEventListener('change', () => saveCur()); box.append(mk('div', {className: 'sl'}, mk('span', {textContent: label}), i, v)); return i; };
+    const sN = sl('Copies', 0, 24, 1, 0, v => v ? '+' + v : 'none'), sGap = sl('Gap', 0, 3, .05, 1, v => v === 1 ? 'touching' : v.toFixed(2)), sCurve = sl('Curve', -360, 360, 5, 0, v => v + '°'), sTwist = sl('Twist', -180, 180, 5, 0, v => v + '°'), sGrow = sl('Grow', .7, 1.3, .01, 1, v => v === 1 ? 'same' : Math.round(v * 100) + '%');
+    const seg = mk('div', {className: 'row'}); box.append(seg); const AX = [['y', '⬆ Along the part'], ['x', '➡ Sideways'], ['z', '⬈ Front / back']];
+    const axUI = () => { seg.innerHTML = ''; seg.append(mk('span', {className: 'hint', textContent: 'Direction:', style: 'margin:0'})); for (const [k, t] of AX) seg.append(mk('button', {textContent: t, className: k === axis ? 'on' : '', onclick: () => { axis = k; axUI(); if (!mul || mul.src !== sel) begin(); regen(); saveCur(); }})); };
+    const row2 = mk('div', {className: 'row'}); box.append(row2);
+    const preset = (t, f) => row2.append(mk('button', {textContent: t, onclick: () => { if (!partBy(sel)) return tip('Pick a part first', 1600); if (!mul || mul.src !== sel) begin(); f(); [sN, sGap, sCurve, sTwist, sGrow].forEach(i => i.dispatchEvent(new Event('input'))); saveCur(); }}));
+    preset('⭕ Ring of 8', () => { sN.value = 7; sCurve.value = 360; sGap.value = 1.6; sTwist.value = 0; sGrow.value = 1; axis = 'x'; axUI(); });
+    preset('🐍 Tail (shrinks, curls)', () => { sN.value = 8; sCurve.value = 70; sGap.value = .9; sTwist.value = 0; sGrow.value = .9; axis = 'y'; axUI(); });
+    preset('▦ Straight row of 5', () => { sN.value = 4; sCurve.value = 0; sGap.value = 1; sTwist.value = 0; sGrow.value = 1; axis = 'x'; axUI(); });
+    row2.append(mk('button', {textContent: '✔ Keep', className: 'on', onclick: () => { if (mul) { tip('✔ ' + mul.uids.length + ' copies kept. Pick any of them to change it on its own', 2400); mul = null; sN.value = 0; sN.dispatchEvent(new Event('input')); } }}),
+      mk('button', {textContent: '✕ Remove copies', onclick: () => { if (mul && mul.uids.length) { removeParts(mul.uids.map(partBy).filter(Boolean)); mul.uids = []; rebuildParts(); outliner(); saveCur(); } sN.value = 0; hint.textContent = 'Copies removed.'; }}));
+    function begin() { const pt = partBy(sel); if (!pt) return; snap(); mul = {src: pt.uid, uids: []}; }
+    function regen() { if (!mul) { if (+sN.value) { begin(); if (!mul) return tip('Pick a part first', 1600); } else return; } const src = partBy(mul.src); if (!src) { mul = null; return; }
+      const old = mul.uids.map(partBy).filter(Boolean); if (old.length) removeParts(old); mul.uids = [];
+      const n = +sN.value, gap = +sGap.value, curve = +sCurve.value * R, twist = +sTwist.value * R, grow = +sGrow.value; if (!n) { rebuildParts(); outliner(); hint.textContent = 'Slide Copies to add copies of the picked part.'; return; }
+      const b = partBoxOf(src.lib, src.params), size = b.getSize(new V()), L = (axis === 'y' ? size.y * (src.l || 1) : axis === 'x' ? size.x * (src.w || 1) : size.z * (src.w || 1)) * gap;
+      const dir = axis === 'y' ? new V(0, 1, 0) : axis === 'x' ? new V(1, 0, 0) : new V(0, 0, 1), bend = axis === 'y' ? new V(1, 0, 0) : new V(0, 1, 0), th = curve / (n + (Math.abs(+sCurve.value) >= 360 ? 1 : 0));
+      const half = new M4().makeRotationAxis(bend, th / 2), step = new M4().multiply(half).multiply(new M4().makeTranslation(dir.x * L, dir.y * L, dir.z * L)).multiply(half).multiply(new M4().makeRotationAxis(dir, twist / n));
+      let m = new M4().compose(new V(...src.p), new Q().setFromEuler(new E(...src.r.map(x => x * R))), new V(1, 1, 1)), sc = src.s; const pos = new V(), q = new Q(), s3 = new V();
+      for (let i = 0; i < n; i++) { m = m.clone().multiply(step); if (grow !== 1) { /* each copy a bit bigger / smaller: the step shrinks with it so the pieces stay joined */ const k = new M4().makeScale(grow, grow, grow); step.copy(new M4().multiply(k).multiply(step).multiply(new M4().copy(k).invert())); step.setPosition(new V().setFromMatrixPosition(step).multiplyScalar(grow)); }
+        sc *= grow; m.decompose(pos, q, s3); const e = new E().setFromQuaternion(q), c = JSON.parse(JSON.stringify(src)); c.uid = uid(); c.twin = null; c.host = null; c.mulOf = src.uid; c.p = pos.toArray().map(x => +x.toFixed(4)); c.r = [e.x, e.y, e.z].map(x => +(x / R).toFixed(3)); c.s = +sc.toFixed(4);
+        if (c.fit) c.fit = {...c.fit, tweaked: true}; P.parts.push(c); buildPart(c); mul.uids.push(c.uid); }
+      outliner(); hint.textContent = n + ' copies. ✔ Keep when it looks right, or keep sliding.'; }
+    axUI(); M.multiply = {regen, set: (o) => { if (!mul || mul.src !== sel) begin(); if (o.axis) { axis = o.axis; axUI(); } for (const [k, i] of [['n', sN], ['gap', sGap], ['curve', sCurve], ['twist', sTwist], ['grow', sGrow]]) if (o[k] != null) i.value = o[k]; regen(); saveCur(); return mul ? mul.uids.length : 0; }};
   }
 }
 

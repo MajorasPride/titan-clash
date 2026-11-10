@@ -347,7 +347,7 @@ function mirrorInto(src, dst) {                                 // keep a mirror
 const syncTwin = pt => { const t = twinOf(pt); if (t) mirrorInto(pt, t); };
 
 // ====================================================================== adding parts
-let placing = null, modeBone = true, mirrorAdd = true;
+let placing = null, modeBone = true, mirrorAdd = false;   /* Nov 10 2026: adding a part adds ONE part. 🪞 Both sides is a button you turn on (MajorasPride: "shouldn't be 1 object that mirrors") */
 function newPart(lib, bone, p, r, s = 1) { const f = LIB[lib] && LIB[lib].fade; return {uid: uid(), lib, bone, p, r, s, l: 1, w: 1, flip: false, mat: null, matAll: null, tint: '#ffffff', subdiv: 0, sculpt: null, cut: [], hidden: false, twin: null, fade: f ? {amt: f.amt || .5, dust: true, style: f.style || 'dust'} : null}; }
 function autoScale(lib, bone) { return autoFit(lib, bone)[0]; }
 function autoFit(lib, bone) {                                  // fit limbs / tails / necks / wings to their bone chain -> [size, extra length stretch]

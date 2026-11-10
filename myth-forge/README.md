@@ -227,3 +227,9 @@ Task list section 1. Rule that came out of it: **parts that follow the bones alw
 - **🌫 Shadow version** = `V3X.shadowAll()` (end of forge-v3.js): stores each part's skin in `pt.shPrev`, sets `shadowmist` (eyes `glowpurple`, Weapons untouched), `P.fx.shadow` = 1; a second call restores.
 - `bb_bird` was rebuilt (loft + feather rows, `fitBox`).
 - **🔖 Mark everywhere** (forge-m.js, end of section 4): `mkRow('p-edit', 'build')` / `mkRow('p-sculpt', 'sculpt')` add the rows; marking no longer needs the Paint tab; a window-capture `pointerdown` selects the marked part under the brush in Sculpt (`markJump` stops that pick from toggling the mark).
+
+## Nov 10, 2026 (2am): one-part adding, basic shapes, Multiply + curve (LIVE)
+- `mirrorAdd` (forge-core.js) starts **false** and `#bMirrorAdd` starts unlit. `btPlace` and `V3X.afterDefault` already set `mirrorAdd` themselves, so defaults and Build together are unchanged.
+- `parts/basic.js`: 37 more `bs_*` shapes in subs `Hard shapes` and `Flats`.
+- **✖ Multiply + curve** = forge-m.js section 6 (`#mulBox` after `#copyRow`, `MFM.multiply.set({n, gap, curve, twist, grow, axis})`). Copies are JSON clones of the picked part with `mulOf: <source uid>`, `host: null`, `fit.tweaked: true`; each copy's matrix = previous × (half bend · move one part length × gap · half bend · twist). Sliding regenerates the copies; ✔ Keep forgets the group.
+
