@@ -238,3 +238,9 @@ Task list section 1. Rule that came out of it: **parts that follow the bones alw
 - `forge-core.js` paint section: `LAYN`, `layOf`, `layAll`, `layerSlot` (up to 4 brushed skins per part: `pt.layer` + `pt.layerX`, masks `lmask`, `lmask1`…, `bl: 1` = made by Blend), `layerMat(pt, fR, j)`.
 - Brushes: `paintStroke` routes to `skinStroke` (any brush with a skin), `eraseStroke` (🧽), `blotchStroke` (colour or skin), `blendStroke` (whole creature: overlays softened, bare skins mixed across parts; `skinId` = skin + tint of a piece). `brushSrc` = 'color' | 'skin', button `#bBrushSrc`. `layCut` fades layers above new paint.
 - `mirrorAdd` starts false; `twinStroke()` decides if a stroke is copied to the twin. `window.MF_marked()` (forge-m.js) = uids of marked parts.
+
+## Nov 13, 2026 (T031): wings and fins fit
+- `fitPart` wing branch (forge-core.js): returns `flip: true` on a right-hand bone (bone runs toward -X); `applyFit` and the three `newPart` sites that take a fit (addPart, loadStarter) copy it, so a single right wing is the mirror of the left one (before: the left shape turned 180°, membrane forward). Size = `len * 1.05 / max(height, width * .8, wingReach(lib))`; `wingReach` = farthest vertex from the root in X-Y, cached.
+- `placeAt`: a wing / side fin dropped on a non-wing bone goes on `wingBoneFor(bone, hit.point)` = the nearest wingA bone with no wing on it (parts tagged dorsal / pelvic / back are left alone).
+- Test hooks on `window.__v3`: `bones()`, `fit(lib, bone)`, `mirror(on)`, `drop(lib, bone, [x, y, z])` (= a hand drop at a world point). Tools: `tools/wings.js`, `tools/wshot.js`, `tools/wingdrop.js`.
+

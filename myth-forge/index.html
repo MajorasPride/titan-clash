@@ -864,6 +864,16 @@ function limbChain(R, bone) {                                   // bones of the 
 function thickFor(B, tag, i = 0) { const W = B.W; return {armU: .3, armF: .26, legU: .38, legL: .3, neck: .3, tail: .42 * Math.pow(.84, i), extra: .2, spine: .5, chest: .55, wingA: .12, wingB: .1, wingC: .08, hand: .28, foot: .32, head: .45, jaw: .3}[tag] * W || W * .25; }
 const MAIN_KINDS = new Set(['torso', 'head', 'jaw', 'limb', 'neck', 'tail', 'wing', 'hand', 'foot', 'seg', 'snake']);
 const mainOn = (bone, not) => P.parts.find(p => p !== not && p.bone === bone && p.fit && MAIN_KINDS.has(p.fit.kind) && !p.boxed);
+// T031 (Nov 13 2026): the wing / fin bone a wing goes on when it is dropped on the body: the free one nearest the drop point (else nearest, left first)
+function wingBoneFor(bone, near) { const ws = P.bones.filter(r => r[4] === 'wingA' && bones[r[0]]); if (!ws.length) return null;
+  const used = n => P.parts.some(p => p.bone === n && p.fit && p.fit.kind === 'wing' && !p.boxed), at = near || (bones[bone] ? bones[bone].getWorldPosition(new THREE.Vector3()) : new THREE.Vector3());
+  const d = r => bones[r[0]].getWorldPosition(new THREE.Vector3()).distanceTo(at) + (used(r[0]) ? 1e3 : 0) + (near ? 0 : r[0].endsWith('.R') ? .01 : 0);
+  return ws.sort((a, b) => d(a) - d(b))[0][0]; }
+const reachCache = {};
+function wingReach(lib) { if (reachCache[lib] != null) return reachCache[lib]; let m = 0;   // farthest point of a wing / fin from its root, in its own space
+  pieces(lib).forEach(pc => { const a = pc.geo.attributes && pc.geo.attributes.position; if (!a) return; const M = pc.mat4 || null; const v = new THREE.Vector3();
+    for (let i = 0; i < a.count; i++) { v.set(a.getX(i), a.getY(i), a.getZ(i)); if (M) v.applyMatrix4(M); m = Math.max(m, Math.hypot(v.x, v.y)); } });
+  return reachCache[lib] = m; }
 function fitPart(lib, bone) {
   const e = LIB[lib], kind = kindOf(e); if (!kind || kind === 'decor' || !bone || !boneRow(bone)) return null;
   const B = bodyInfo(), R = B.R, W = B.W, bx = e.fitBox ? new THREE.Box3(new THREE.Vector3(...e.fitBox[0]), new THREE.Vector3(...e.fitBox[1])) : partBoxOf(lib), pw = Math.max(.05, bx.max.x - bx.min.x), pd = Math.max(.05, bx.max.z - bx.min.z);
@@ -905,11 +915,15 @@ function fitPart(lib, bone) {
       drop.applyQuaternion(q); out.p = drop.toArray().map(v => +v.toFixed(3)); }
     return out; }
   if (kind === 'wing') { const ch = limbChain(R, bone), end = v3(ch[ch.length - 1][3]), len = v3(R[bone][2]).distanceTo(end);
-    out.fit.cover = ch.map(r => r[0]); out.s = +Math.min(12, Math.max(.3, len * 1.05 / Math.max(plen, pw * .8))).toFixed(3);
+    // Nov 13 2026 (T031): size by the part's farthest point from its root, not only its height: wide fan fins (fish fin) came on 1.6x too long and stuck out past the bone tip
+    out.fit.cover = ch.map(r => r[0]); out.s = +Math.min(12, Math.max(.3, len * 1.05 / Math.max(plen, pw * .8, e.fitBox ? 0 : wingReach(lib)))).toFixed(3);
     // aim the spar at the wing tip and roll it so the membrane (+X) trails backward and a bit down
     const r0 = R[bone], qi = restQOf(r0).invert(), y = end.clone().sub(v3(r0[2])).normalize(), side = Math.sign(r0[3][0] - r0[2][0]) || 1;
     let x = new THREE.Vector3(0, -.35, -1).addScaledVector(y, -new THREE.Vector3(0, -.35, -1).dot(y)); if (x.lengthSq() < 1e-4) x.set(0, -1, 0); x.normalize();
     if (side < 0) x.negate(); const z = new THREE.Vector3().crossVectors(x, y), m = new THREE.Matrix4().makeBasis(x, y, z), q = new THREE.Quaternion().setFromRotationMatrix(m).premultiply(qi);
+    // Nov 13 2026 (T031): a wing / fin on the right-hand bone is the MIRROR of the left one (flip), not the left one turned round. Before, a single wing
+    // dropped on the right side (one part per drop since Nov 10) came on with the membrane pointing forward and up; only mirrored pairs looked right.
+    out.flip = side < 0;
     const eu = new THREE.Euler().setFromQuaternion(q); out.r = [eu.x, eu.y, eu.z].map(v => +(v / D).toFixed(1)); out.fit.cover = ch.map(r => r[0]); return out; }
   // limbs / necks / tails: keep the part's own proportions (uniform size) and fill the limb; long parts cover the whole limb,
   // short ones (mech upper arm, shin…) one bone. Only stretch when the part would come out much too thick or thin for this body.
@@ -957,7 +971,7 @@ function swapOut(fit) {                                         // a new main pa
     && !(fit.kind === 'torso' && SLOT(p.fit.kind) !== 'torso' && !p.lib.startsWith('base_')));
   // a limb/neck/tail part also clears base pieces on the rest of the bones it covers
   if (window.V3) window.V3.keepKids = true; try { return old.length ? removeParts(old.filter(p => !p.twin || P.parts.includes(p))) : 0; } finally { if (window.V3) window.V3.keepKids = false; } }
-function applyFit(pt, f) { pt.bone = f.bone; pt.p = f.p; pt.r = f.r; pt.s = f.s; pt.l = f.l; pt.w = 1; pt.fit = {...f.fit, tweaked: false}; }
+function applyFit(pt, f) { pt.bone = f.bone; pt.p = f.p; pt.r = f.r; pt.s = f.s; pt.l = f.l; pt.w = 1; if (f.flip != null) pt.flip = f.flip; pt.fit = {...f.fit, tweaked: false}; }
 function refitPart(pt, force) { if (!pt.fit || (pt.fit.tweaked && !force) || pt.twin && P.parts.indexOf(partBy(pt.twin)) < P.parts.indexOf(pt) && partBy(pt.twin).fit) return false;
   const f = fitPart(pt.lib, pt.fit.drop && boneRow(pt.fit.drop) ? pt.fit.drop : pt.bone); if (!f) return false; applyFit(pt, f); buildPart(pt); syncTwin(pt); return true; }
 const fitOrder = p => !p.fit ? 3 : ['torso', 'neck', 'seg', 'limb'].includes(p.fit.kind) ? 0 : p.fit.kind === 'head' ? 1 : 2;   // necks first (heads size to them), then heads (jaws size to them)
@@ -1004,7 +1018,7 @@ function addPart(lib, bone, p, r, s) {
   { const e0 = LIB[lib], r0 = e0 && e0.segBy && bone && boneRow(bone); if (r0 && e0.segBy[r0[4]] && LIB[e0.segBy[r0[4]]] && !(r0[4] === 'armU' && kidRows(bone).some(k => k[4] === 'armU'))) lib = e0.segBy[r0[4]]; }   // a plain limb segment becomes the thigh / shin / upper arm / forearm piece made for that bone (shoulder stubs keep the plain one)
   if (window.V3 && window.V3.tryAdd(lib, bone, p, r, s)) return;
   snap(); let pt, swapped = 0; const ff = s == null && modeBone !== false ? fitPart(lib, bone) : null;
-  if (ff) { swapped = MAIN_KINDS.has(ff.fit.kind) ? swapOut(ff.fit) : 0; pt = newPart(lib, ff.bone, ff.p, ff.r, ff.s); pt.l = ff.l; pt.fit = ff.fit; bone = ff.bone; p = ff.p; }
+  if (ff) { swapped = MAIN_KINDS.has(ff.fit.kind) ? swapOut(ff.fit) : 0; pt = newPart(lib, ff.bone, ff.p, ff.r, ff.s); pt.l = ff.l; pt.fit = ff.fit; if (ff.flip) pt.flip = true; bone = ff.bone; p = ff.p; }
   else { const fit = s == null ? (kindOf(LIB[lib]) === 'decor' ? [decorScale(bone), 1] : autoFit(lib, bone)) : [s, 1]; pt = newPart(lib, bone, p, r, fit[0]); pt.l = fit[1]; }
   P.parts.push(pt);
   const tb = bone && twinName(bone);
@@ -1029,6 +1043,7 @@ function placeAt(hit) {
   const e = LIB[lib], along = modeBone && boneName && (isAlong(e) || MAIN_KINDS.has(kindOf(e)));
   if (addWeaponToPalm(lib, boneName)) return;
   if (e.whole) { const m = mirrorAdd; mirrorAdd = false; addPart(lib, null, [0, 0, 0], [0, 0, 0], 1); mirrorAdd = m; return tip(e.name + ' added as a whole body — sculpt it, erase bits, or add parts on top'); }
+  if (along && kindOf(e) === 'wing' && FAMILY[(boneRow(boneName) || [])[4]] !== 'wing' && !(e.tags || []).some(x => /dorsal|pelvic|back/.test(x))) boneName = wingBoneFor(boneName, hit.point) || boneName;   // T031: a wing / side fin dropped on the body goes on the nearest free wing / fin bone, not along the spine
   if (along) return addPart(lib, boneName, [0, 0, 0], [0, 0, 0]);
   const B = (boneName && bones[boneName]) || skelRoot; B.updateMatrixWorld(true);
   const inv = B.matrixWorld.clone().invert(), lp = hit.point.clone().applyMatrix4(inv);
@@ -1591,7 +1606,7 @@ function loadStarter(st) { const keep = mirrorAdd; snap(); P = blankProject(st.s
   // part: [lib, bone, pos, rot, size ('fit' = body fit system, null = old auto fit, number or [size, length]), flag ('solo' or {solo, mat, tint, fade})]
   for (const [lib, bone, p, r, s, flag] of st.parts) { if (!LIB[lib]) { console.warn('starter part missing', lib); continue; } if (!bones[bone]) { console.warn('starter bone missing', bone); continue; }
     const o = flag && typeof flag === 'object' ? flag : {solo: flag === 'solo'}; let pt = null;
-    if (s === 'fit') { const f = fitPart(lib, bone); if (f) { pt = newPart(lib, f.bone, f.p, f.r, f.s); pt.l = f.l; pt.fit = f.fit; } }
+    if (s === 'fit') { const f = fitPart(lib, bone); if (f) { pt = newPart(lib, f.bone, f.p, f.r, f.s); pt.l = f.l; pt.fit = f.fit; if (f.flip) pt.flip = true; } }
     if (!pt) { const fit = s === 'decor' ? [decorScale(bone), 1] : s == null || s === 'fit' ? autoFit(lib, bone) : Array.isArray(s) ? s : [s, 1]; pt = newPart(lib, bone, p, r, fit[0]); pt.l = fit[1]; }
     if (o.mat) pt.matAll = o.mat; if (o.tint) pt.tint = o.tint; if (o.fade) pt.fade = {amt: o.fade, dust: true}; if (o.glit) pt.glit = {amt: o.glit};
     P.parts.push(pt); buildPart(pt); const tb = twinName(pt.bone);
@@ -2798,7 +2813,7 @@ V3X.dropMoved = (pt, x, y) => { const want = plugAsOf(LIB[pt.lib]); if (!want) {
     tip(plugAlways ? '🔌 Blue dots = free plugs, orange = something is plugged in. Drag a part onto a dot.' : 'Plug dots hidden', 2600); };
   if (plugAlways) setTimeout(() => showPlugs(true), 600); })();
 // test hooks (headless checks only)
-window.__v3 = {addPart: (...a) => addPart(...a), P: () => P, LIB, views: () => views, partBy, sel: () => sel, select, rebuild: () => rebuildParts(), frame: () => frameAll(), frameObj: (u, k) => views[u] && frameObj(views[u].G, k || 1.3), nb: () => { showBones = false; boneHelpers.forEach(h => h.visible = false); applyNums && applyNums(); }, show: w => showPlugs(w), hide: () => clearDots(), cam: (x, y, z, tx, ty, tz) => { camera.position.set(x, y, z); controls.target.set(tx, ty, tz); controls.update(); }, removeParts, buildDefault: (k, s) => window.__def(k, s)};
+window.__v3 = {addPart: (...a) => addPart(...a), P: () => P, LIB, views: () => views, partBy, sel: () => sel, select, rebuild: () => rebuildParts(), frame: () => frameAll(), frameObj: (u, k) => views[u] && frameObj(views[u].G, k || 1.3), nb: () => { showBones = false; boneHelpers.forEach(h => h.visible = false); applyNums && applyNums(); }, show: w => showPlugs(w), hide: () => clearDots(), cam: (x, y, z, tx, ty, tz) => { camera.position.set(x, y, z); controls.target.set(tx, ty, tz); controls.update(); }, removeParts, buildDefault: (k, s) => window.__def(k, s), bones: () => bones, fit: (l, b) => fitPart(l, b), mirror: v => (v == null ? mirrorAdd : (mirrorAdd = v)), drop: (lib, bone, at) => { placing = lib; placeAt({object: {userData: {bone}}, point: new THREE.Vector3(...at), face: null}); }};
 window.__v3.look = (us, dir = [1, .2, .3], k = 2.4) => { const b = new THREE.Box3(); (us == null ? Object.keys(views) : Array.isArray(us) ? us : [us]).forEach(u => { if (views[u]) b.expandByObject(views[u].G); }); if (b.isEmpty()) b.setFromObject(skelRoot);
   const c = b.getCenter(new THREE.Vector3()), r = b.getSize(new THREE.Vector3()).length() / 2, d = new THREE.Vector3(...dir).normalize(); camera.position.copy(c).addScaledVector(d, r * k + .5); controls.target.copy(c); camera.near = .01; camera.updateProjectionMatrix(); controls.update(); };
 window.__v3.ids = lib => P.parts.filter(p => !lib || p.lib === lib || (lib.test && lib.test(p.lib))).map(p => p.uid);
