@@ -23,6 +23,18 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 25 (Nov 13, 2026): HEAVY FEEL ("make them feel bigger")
+MajorasPride wanted to feel the punches: giants carrying their mass, bigger and not faster than normal fighters. References: Pacific Rim (thrown through buildings, sent flying), Attack on Titan, Transformers, early Hunt: Showdown ("slow yet impactful"), Elden Ring. He picked all four feel parts, all four fight tools (next build) and "a bit slower". File: `src/25-heavy-feel.js`. Every part has its own switch in ⚙ > HEAVY FEEL (NEW), plus ALL OFF / ON to compare.
+- **HIT WEIGHT:** lights get a short freeze and a small shake, heavies and enders a long freeze and a big shake (lights 0.035s, heavies up to 0.26s; tested: INFERNOTH's jaw grab went from 0.06s to 0.25s). Heavies do +15% damage and push 20% farther, lights do -15%.
+- **WIND-UP:** heavies take ~40% longer to come out (mediums ~18%), with a lean back before the hit and a lean in after it. A whiffed heavy recovers 25% slower, so it can be punished.
+- **MOMENTUM:** titans speed up and slow down, turn slower, and walk 15% slower. Footsteps puff dust and thump; jump landings shake the ground and leave a ring.
+- **SENT FLYING:** big launches, wall splats and through-the-wall crashes get a short slow-mo. A titan skidding from a hit leaves a dust trail.
+- **CAMERA + RUMBLE:** a quick zoom on heavy hits, a phone buzz (Android), and a deep bass boom on heavies.
+- **BIGGER:** a lower, over-the-right-shoulder camera that looks up at the titans, with a slightly narrower view. Buildings tower, and the rival stays in view.
+- Not in this build: the balance numbers need a CPU vs CPU check before anything moves into the game.
+- **Next (already picked):** Titan Impact (armored heavy, wall-splats near buildings), Brace + Clash (perfect-block slow-mo, heavies colliding), Lock-up + wrestling throws, buildings/cars as weapons, missiles (light chip/pressure only: punches and powers stay the real damage), Elden Ring-style stance break (keep hitting hard, they stagger open for a critical).
+- **Feedback questions for this test:** Do heavies feel heavy now, or is the freeze too long? Is walking too slow or too floaty? Do footsteps and the bass get annoying? Does the BIGGER camera feel huge, and can you still see the rival on your phone? Is the slow-mo on crashes too much?
+
 ### Sandbox 20 (Nov 8, 2026): everything moved into the game (v8.5) + on/off switches
 - MajorasPride: put everything we did into the main game. The game never has more than the sandbox; the sandbox has everything the game has, with switches to turn things off, and all new work starts here.
 - Moved into the game as `game/tools/v8-src/44` to `50`: fluid motion (was 17-motion), lock-on flash + roomier city (18), MAGMA SURGE (19; old Magma Wall archived in `game/archive/titan-clash-magma-wall-archive.js`), camera views (20), flow / hit-pause (21), the new VALOR model (22), LIMB HITS (from 23-fight-lab). Status of Sandbox 17 to 19: **in the game (v8.5)**.

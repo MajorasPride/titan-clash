@@ -20,6 +20,13 @@ Hi Claude. This is MajorasPride's game, and we build it together, one chat at a 
 6. I play on PC and on my phone.
 
 =====================================================================
+## Sandbox 25 HEAVY FEEL (Nov 13, 2026, sandbox only)
+=====================================================================
+- `sandbox/src/25-heavy-feel.js` (`HV` switches): hit weight per move class (uses `feelClass` and the `FLOW` hit-pause numbers per hit), wind-up/commitment (wraps `FP.updateAtk` time), momentum/footsteps/landings (wraps `FP.update` input), slow-mo on `startSplat`/`bContact` crashes (wraps `loop`), FOV punch + low over-the-shoulder "giant" camera (wraps `updateCamera` and undoes itself before the next frame), bass boom (WebAudio) and `navigator.vibrate`. Full notes are in `sandbox/SANDBOX.md`.
+- **Waiting on MajorasPride's feedback** (questions in SANDBOX.md), then a CPU vs CPU balance run, before any of it moves into the game.
+- **Next build (picked Nov 13):** Titan Impact, Brace + Clash, Lock-up + throws, buildings/cars as weapons, missiles (chip damage only), Elden Ring-style stance break. Feel references: Pacific Rim, Attack on Titan, Transformers, Godzilla/Ultraman wrestling, Gundam/Evangelion clashes, early Hunt: Showdown, Elden Ring.
+
+=====================================================================
 ## v8.5 everything from the sandbox (Nov 8, 2026)
 =====================================================================
 - **Rule from MajorasPride:** the game never has more than the sandbox. The sandbox has everything the game has, with ⚙ switches to turn things off, and all new work starts in the sandbox.
