@@ -244,3 +244,8 @@ Task list section 1. Rule that came out of it: **parts that follow the bones alw
 - `placeAt`: a wing / side fin dropped on a non-wing bone goes on `wingBoneFor(bone, hit.point)` = the nearest wingA bone with no wing on it (parts tagged dorsal / pelvic / back are left alone).
 - Test hooks on `window.__v3`: `bones()`, `fit(lib, bone)`, `mirror(on)`, `drop(lib, bone, [x, y, z])` (= a hand drop at a world point). Tools: `tools/wings.js`, `tools/wshot.js`, `tools/wingdrop.js`.
 
+
+## Nov 13, 2026 (T035): modes
+- `modes.js` (plain script, loaded first by build.py): mode table `MF_MODES` (creature, character, prop, titan, blank), body type lists TITAN and CHARACTER (everything else is Creature, `none` is Prop), `mfModeHas(skel)`, `mfGroupOk(group)`, `mfPartOk(entry)`, `mfModeOf(skel)`, `mfTitanExportShown()`. Current mode in localStorage `mf-mode`; `mf-tc-all` shows the Titan Clash export in every mode; `mf-buddy` = person for scale.
+- forge-core.js asks those in `skelUI`, `startersUI`, `defUI` (now `window.__mfDefUI`), the Build together body step, `libUI` groups and `visibleIds` (browsing only, search is not filtered). `blankProject` saves `mode`. `mExport` names the file `titanclash-…` when `window.__tcExport` is set. The welcome tour's first card picks a mode.
+- forge-v3.js end: the mode box at the top of 🏁 Start (`#modeBox`, `#modeSeg`), ⋯ `#mExportTC`, the 📏 scale person (`scaleBuddy`, added to the scene, not to `skelRoot`, so it is never exported), and a watcher that gives old saves the mode of their body type. Test hook `window.__mode` (`set`, `cur`, `of`, `buddy`, `tc`). Tool: `tools/modes.js`.

@@ -69,7 +69,7 @@ function piecesOld(id) {
 
 // ====================================================================== state
 const uid = () => Math.random().toString(36).slice(2, 9);
-const blankProject = (skel = 'biped') => ({v: 1, name: 'New creature', skel, bones: detailBones(JSON.parse(JSON.stringify(SKEL[skel].bones))), pose: {}, parts: [], fx: {glow: true, fog: false, mist: false, aura: false, drip: false, col: '#8a2aff', bg: 'studio'}});
+const blankProject = (skel = 'biped') => ({v: 1, name: 'New ' + (window.mfModeWord ? window.mfModeWord().replace('build', 'creature') : 'creature'), skel, mode: window.mfMode ? window.mfMode() : undefined, bones: detailBones(JSON.parse(JSON.stringify(SKEL[skel].bones))), pose: {}, parts: [], fx: {glow: true, fog: false, mist: false, aura: false, drip: false, col: '#8a2aff', bg: 'studio'}});
 let P = blankProject();
 try { const s = JSON.parse(localStorage.getItem('titan-forge-cur') || 'null'); if (s && s.v) P = s; } catch (e) {}
 const saveCur = () => { try { localStorage.setItem(typeof inWS !== 'undefined' && inWS ? 'titan-forge-ws' : 'titan-forge-cur', JSON.stringify(P)); } catch (e) { tip('Too big for quick save — use ⋯ Save as'); } };
@@ -669,10 +669,10 @@ function tagEdUI() { const el = $('tagEd'); if (!el) return; const pt = partBy(s
   add.onclick = () => { const t = (prompt('New tags for ' + LIB[id].name + ' (comma separated)') || '').toLowerCase().split(',').map(x => x.trim().replace(/^#/, '').replace(/\s+/g, '-')).filter(Boolean); if (!t.length) return;
     const u = new Set(userTags[id] || []); t.forEach(x => { u.delete('-' + x); if (!(LIB[id].tags || []).includes(x)) u.add(x); }); userTags[id] = [...u]; saveTags(); tagEdUI(); if (tab === 'add') libUI(); tip('Tagged ' + t.map(x => '#' + x).join(' '), 1600); }; el.append(add);
   const hid = (userTags[id] || []).filter(t => t[0] === '-'); if (hid.length) { const r = document.createElement('button'); r.textContent = '↺ Bring back ' + hid.length + ' removed'; r.onclick = () => { userTags[id] = (userTags[id] || []).filter(t => t[0] !== '-'); saveTags(); tagEdUI(); }; el.append(r); } }
-const visibleIds = () => Object.keys(LIB).filter(id => { const e = LIB[id]; if (lpParts ? e.hasLpv : e.lpv) return false; if (tagFilter && !tagsOf(id).includes(tagFilter)) return false; if (tagFilter === 'fav') return true; if (gFilter === MY && !query) return e.mine && (!sFilter || e.sub === sFilter); if (query) return (e.name + ' ' + e.group + ' ' + e.sub + ' ' + tagsOf(id).join(' ')).toLowerCase().includes(query);
+const visibleIds = () => Object.keys(LIB).filter(id => { const e = LIB[id]; if (lpParts ? e.hasLpv : e.lpv) return false; if (!query && tagFilter !== 'fav' && window.mfPartOk && !window.mfPartOk(e)) return false; if (tagFilter && !tagsOf(id).includes(tagFilter)) return false; if (tagFilter === 'fav') return true; if (gFilter === MY && !query) return e.mine && (!sFilter || e.sub === sFilter); if (query) return (e.name + ' ' + e.group + ' ' + e.sub + ' ' + tagsOf(id).join(' ')).toLowerCase().includes(query);
   return e.group === gFilter && (!sFilter || e.sub === sFilter); });
 function libUI() {
-  const groups = [MY, ...GROUP_ORDER].filter(g => g === 'Free Packs (CC0)' || g === 'My Imports' || g === MY || Object.values(LIB).some(e => e.group === g));
+  const groups = [MY, ...GROUP_ORDER].filter(g => !window.mfGroupOk || window.mfGroupOk(g)).filter(g => g === 'Free Packs (CC0)' || g === 'My Imports' || g === MY || Object.values(LIB).some(e => e.group === g));
   const SEC = {'My Parts': '⭐ YOURS', 'Basic Shapes & Clay': '🧱 START FROM CLAY + SLIDER MAKERS', 'Heads & Skulls': '🐲 CREATURE PARTS', 'Mech Heads': '🤖 MECH PARTS', 'Mecha Dragon': '🐉 KITS', 'Weapons': '⚔️ GEAR & MAGIC', 'Free Packs (CC0)': '📦 FREE MODEL PACKS'};
   $('grpToggle').textContent = (catsOpen ? '📂 Categories ▴' : '📂 ' + (query ? 'Search results' : gFilter) + '  ▾ (tap for all categories)'); $('groups').style.display = catsOpen ? '' : 'none';
   $('groups').innerHTML = ''; for (const g of groups) { if (SEC[g]) $('groups').append(Object.assign(document.createElement('div'), {className: 'sec', textContent: SEC[g]}));
@@ -1200,13 +1200,13 @@ function loadStarter(st) { const keep = mirrorAdd; snap(); P = blankProject(st.s
     if (!o.solo && (tb ? bones[tb] : Math.abs(p[0]) > .25)) { const t = newPart(lib, tb || pt.bone, [0, 0, 0], [0, 0, 0]); t.twin = pt.uid; pt.twin = t.uid;
       if (pt.fit) t.fit = {...pt.fit, drop: twinName(pt.fit.drop) || pt.fit.drop, cover: pt.fit.cover.map(c => twinName(c) || c)}; P.parts.push(t); mirrorInto(pt, t); } }
   mirrorAdd = keep; sel = null; applyFX(); outliner(); saveCur(); frameAll(); tip(st.name + ' loaded — tap any part to change it'); }
-function startersUI() { const el = $('starters'); if (!el) return; el.innerHTML = ''; for (const st of STARTERS) { const b = document.createElement('button'); b.textContent = st.name;
+function startersUI() { const el = $('starters'); if (!el) return; el.innerHTML = ''; for (const st of STARTERS) { if (!(typeof window.mfModeHas !== 'function' || window.mfModeHas(st.skel))) continue; const b = document.createElement('button'); b.textContent = st.name;
   b.onclick = () => { if (P.parts.length && !confirm('Load ' + st.name + '? Your current creature is replaced (save it first with ⋯ if you want it).')) return; loadStarter(st); skelUI(); }; el.append(b); } }
 const mySkels = (() => { try { return JSON.parse(localStorage.getItem('titan-forge-skels') || '{}'); } catch (e) { return {}; } })();
 for (const [k, v] of Object.entries(mySkels)) SKEL[k] = v;
 $('bSaveSkel').onclick = () => { const n = prompt('Name this body type (e.g. My mech frame)'); if (!n) return; const k = 'my_' + Date.now().toString(36);
   mySkels[k] = SKEL[k] = {name: '★ ' + n, bones: JSON.parse(JSON.stringify(P.bones))}; localStorage.setItem('titan-forge-skels', JSON.stringify(mySkels)); P.skel = k; skelUI(); saveCur(); tip('Saved — it is in the body type list now'); };
-function skelUI() { startersUI(); $('skels').innerHTML = ''; for (const [k, s] of Object.entries(SKEL)) { const b = document.createElement('button'); b.textContent = s.name; b.className = P.skel === k ? 'on' : '';
+function skelUI() { startersUI(); $('skels').innerHTML = ''; for (const [k, s] of Object.entries(SKEL)) { if (!(typeof window.mfModeHas !== 'function' || window.mfModeHas(k))) continue; const b = document.createElement('button'); b.textContent = s.name; b.className = P.skel === k ? 'on' : '';
   b.onclick = () => { if (P.parts.length && !confirm('Switch body type? Parts stay on bones with the same name; others move to the body.')) return; snap(); P.skel = k; P.bones = detailBones(JSON.parse(JSON.stringify(s.bones))); P.pose = {};
     const names = new Set(P.bones.map(b => b[0])), fb = (P.bones.find(b => b[4] === 'chest') || P.bones[0])[0]; P.parts.forEach(p => { if (p.bone && !names.has(p.bone)) p.bone = fb; if (p.fit && p.fit.drop && !names.has(p.fit.drop)) p.fit.drop = p.bone; }); P.bodyBase = null; P.body = {};
     rebuildSkeleton(); const had = P.parts.length; if (had) { refitAll(false); if (hasBase()) buildBase(); } else buildBase(); rebuildParts(); skelUI(); bodyUI(); outliner(); saveCur(); frameAll(); if (!had) tip('Base body ready — tap a body part, then pick a part to swap it in', 3500); }; $('skels').append(b); } }
@@ -1392,8 +1392,8 @@ $('mCopy').onclick = () => { const txt = 'MYTH FORGE: ' + JSON.stringify(P); con
   try { navigator.clipboard.writeText(txt).then(() => tip('Copied! Paste it to Claude.')); } catch (e) {} };
 $('mPaste').onclick = () => { const t = prompt('Paste a MYTH FORGE project'); if (!t) return; try { const j = t.replace(/^(TITAN|MYTH) FORGE:\s*/, ''); JSON.parse(j); snap(); restore(j); applyFX(); } catch (e) { tip('That text is not a project'); } };
 $('mExport').onclick = async () => { const {GLTFExporter} = await import('three/addons/exporters/GLTFExporter.js'); const was = showBones; boneHelpers.forEach(h => h.visible = false); gizmo.detach();
-  new GLTFExporter().parse(skelRoot, r => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([r], {type: 'model/gltf-binary'})); a.download = (P.name || 'creature').replace(/\W+/g, '-') + '.glb'; a.click();
-    boneHelpers.forEach(h => h.visible = was); attachGizmo(); tip('Downloaded — send it to Claude to put in the game'); }, e => tip('Export failed'), {binary: true, onlyVisible: true}); };
+  new GLTFExporter().parse(skelRoot, r => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([r], {type: 'model/gltf-binary'})); const tc = window.__tcExport; window.__tcExport = false; a.download = (tc ? 'titanclash-' : '') + (P.name || 'creature').replace(/\W+/g, '-') + '.glb'; a.click();
+    boneHelpers.forEach(h => h.visible = was); attachGizmo(); tip(tc ? 'Downloaded for Titan Clash — send it to Claude to put in the game' : 'Downloaded (.glb)'); }, e => tip('Export failed'), {binary: true, onlyVisible: true}); };
 $('mCredits').onclick = () => { const used = [...new Set(P.parts.map(p => LIB[p.lib] && LIB[p.lib].src).filter(Boolean))];
   alert('Parts used in this creature come from:\n\n' + (used.length ? used.map(s => '• ' + s).join('\n') : '• (no parts yet)') + '\n\nMade-in-code parts and materials are ours. Free Packs are CC0 (public domain): free for any use, credit optional. "Your file" imports: check their license.'); };
 
@@ -1594,7 +1594,7 @@ $('mHelp').onclick = () => { $('menu').classList.remove('open'); $('help').class
 $('helpX').onclick = () => $('help').classList.remove('open');
 const tabBtn = t => document.querySelector('.tabs [data-tab="' + t + '"]');
 const TOUR = [
-  {t: 'Welcome to Mythic Forge', p: 'Build monsters and mechs like a toy: snap parts on, drag them around, sculpt and paint. Pick something to start with:', start: true},
+  {t: 'Welcome to Mythic Forge', p: 'Build creatures, characters, props and titans like a toy: snap parts on, drag them around, sculpt and paint. What are you making? (Change it any time in 🏁 Start.)', start: true},
   {sel: '.tabs [data-tab="add"]', pre: () => tabBtn('add').click(), t: 'Add parts', p: 'The Add tab has every part. Tap a category, then a part.'},
   {sel: '#lib', pre: () => tabBtn('add').click(), t: 'Snap it on', p: 'After picking a part, tap an orange dot (a bone) or the body. It snaps on. Mirror L/R adds the other side too.'},
   {sel: '.tabs [data-tab="edit"]', pre: () => tabBtn('edit').click(), t: 'Move', p: 'Tap any part on the model, then use Move / Turn / Stretch and the Size slider.'},
@@ -1608,7 +1608,7 @@ function tourShow() { const s = TOUR[tourI], el = $('tour'), card = el.querySele
   card.querySelector('h4').textContent = s.t; card.querySelector('p').textContent = s.p; const bs = card.querySelector('.btns'); bs.innerHTML = '';
   bs.append(Object.assign(document.createElement('span'), {className: 'dots', textContent: (tourI + 1) + ' / ' + TOUR.length}));
   const add = (t, f, on) => { const b = document.createElement('button'); b.textContent = t; if (on) b.className = 'on'; b.onclick = f; bs.append(b); };
-  if (s.start) { for (const [t, id] of [['🤖 Mech', 'heromech'], ['🦖 Kaiju', 'basaltkaiju'], ['🦕 Dino', 'sailback']]) add(t, () => { const st = STARTERS.find(x => x.id === id); if (st) { loadStarter(st); skelUI(); } tourI++; tourShow(); }, true);
+  if (s.start) { for (const [m, md] of Object.entries(window.MF_MODES || {})) add(md.name, () => { if (window.mfSetMode) window.mfSetMode(m); tourI++; tourShow(); }, (window.mfMode && window.mfMode()) === m);
     add('Keep what I have', () => { tourI++; tourShow(); }); add('Skip tour', tourEnd); }
   else { add('Skip', tourEnd); if (tourI > 0) add('Back', () => { tourI--; tourShow(); }); add(tourI === TOUR.length - 1 ? 'Done' : 'Next', () => { if (tourI === TOUR.length - 1) tourEnd(); else { tourI++; tourShow(); } }, true); }
   requestAnimationFrame(() => { const t = s.sel && document.querySelector(s.sel); if (t) { t.scrollIntoView({block: 'nearest', inline: 'nearest'}); const r = t.getBoundingClientRect(), pad = 6;
@@ -1897,7 +1897,7 @@ if (window.MF_V2) {
       nav(); return; }
     if (st.k === 'body') { q('Which body (skeleton)? Every body comes with a grey mannequin to build on. Tap one:'); const r = row('gc scroll');
       btn(r, '✓ Keep the one I have', () => { btSteps(); btGo(2); }, true);
-      for (const [k, sk] of Object.entries(SKEL)) { if (k === 'none') continue; btn(r, sk.name, () => { if (mineNow().length && !confirm('Start fresh on a ' + sk.name + '? Parts you added will be cleared (save first if you want them).')) return;
+      for (const [k, sk] of Object.entries(SKEL)) { if (k === 'none' || !(typeof window.mfModeHas !== 'function' || window.mfModeHas(k))) continue; btn(r, sk.name, () => { if (mineNow().length && !confirm('Start fresh on a ' + sk.name + '? Parts you added will be cleared (save first if you want them).')) return;
         snap(); P = blankProject(k); rebuildSkeleton(); buildBase(); rebuildParts(); outliner(); applyFX(); bodyUI(); saveCur(); frameAll(); BT.addedBy = {}; BT.defDone = {}; btSteps(); btGo(2); }, P.skel === k); } nav(); return; }
     if (st.k === 'shape') { q('What shape should it be? (Fine-tune any time with the sliders in 🏁 Start.)'); const r = row();
       for (const [t, v] of SHAPES) btn(r, t, () => { snap(); P.body = {...v}; applyBody(); bodyUI(); }, JSON.stringify(P.body || {}) === JSON.stringify(v));
@@ -1928,7 +1928,7 @@ if (window.MF_V2) {
       if (hasBase()) { btn(r, '🧱 Remove them', () => { $('bBase').click(); btShow(); }, true); btn(r, 'Keep them', () => btGo(BT.i + 1)); } nav(null, null, () => { if (hasBase()) $('bBase').click(); }); return; }   // 2.0: Next = clean up (a finished creature has no grey pieces); 'Keep them' keeps them
     if (st.k === 'look') { q('Titan Clash is low-poly with toon shading and outlines. See it that way?'); const r = row();
       btn(r, '🎮 Yes, game look', () => { if (!(P.fx.lowpoly && P.fx.toon)) $('bGameLook').click(); }, !!(P.fx.lowpoly && P.fx.toon)); btn(r, 'Not now', () => btGo(BT.i + 1)); nav(); return; }
-    if (st.k === 'save') { q('You built a titan! 🎉 Save it so you can come back to it.'); const r = row(); btn(r, '💾 Save as…', () => $('mSave').click(), true); btn(r, '⬇ Download for the game (.glb)', () => $('mExport').click()); nav('🎉 Done'); return; } }
+    if (st.k === 'save') { q('You built a ' + (window.mfModeWord ? window.mfModeWord().replace('build', 'creature') : 'titan') + '! 🎉 Save it so you can come back to it.'); const r = row(); btn(r, '💾 Save as…', () => $('mSave').click(), true); btn(r, '⬇ Download for the game (.glb)', () => $('mExport').click()); nav('🎉 Done'); return; } }
   function btGo(i) { if (window.MF_V3) { const dir = i < BT.i ? -1 : 1; let st0 = BT.steps[i]; while (st0 && st0.k === 'part' && (st0.how || '').startsWith('plug') && !window.V3.plugsFor(st0.how)) { i += dir; st0 = BT.steps[i]; } }
     BT.i = Math.max(0, Math.min(BT.steps.length - 1, i)); BT.addedBy = BT.addedBy || {}; BT.added = (BT.addedBy[BT.i] || []).filter(u => partBy(u)); BT.pick = null; BT.small = false; const st = BT.steps[BT.i];
     BT.defDone = BT.defDone || {}; if (st.k === 'part' && !BT.defDone[BT.i]) { BT.defDone[BT.i] = true; const d = defFor(st); if (d) btPlace(st, d, true); }
@@ -1950,7 +1950,7 @@ if (window.MF_V2) {
     const p = BT.paused, ok = false && p && p.skel === P.skel && !BT.on; el.style.display = ok ? '' : 'none';   /* Nov 9: no pill on screen any more (✕ closes all the way; Start › Build together carries on) */ if (ok) el.textContent = '🎓 Back to ' + p.label + ' · ' + (p.i + 1) + '/' + p.n; }
   function btEnd(won) { BT.on = false; $('guide').style.display = 'none'; document.body.classList.remove('guiding', 'gside'); setTimeout(() => { viewShift(); }, 30);
     const st = BT.steps[BT.i]; BT.paused = won === true || !st || BT.i < 2 ? null : {i: BT.i, skel: P.skel, style: BT.style, level: BT.level, n: BT.steps.length, label: st.k === 'part' ? (st.label || st.t) : ({shape: 'Body shape', move: 'Move things', paint: 'Paint', clean: 'Clean up', look: 'Game look', save: 'Save'}[st.k] || 'your build')};
-    btSave(); btPill(); if (won === true) tip('🎉 Titan built! Start › 🎓 Build together to make another', 4000); else if (BT.paused) tip('Build together closed. To carry on later: Start › 🎓 Build together', 3200); }
+    btSave(); btPill(); if (won === true) tip('🎉 Done! Start › 🎓 Build together to make another', 4000); else if (BT.paused) tip('Build together closed. To carry on later: Start › 🎓 Build together', 3200); }
   function btResume() { const p = BT.paused; if (!p || p.skel !== P.skel) return btStart(); $('menu').classList.remove('open'); BT.on = true; BT.style = p.style || BT.style; if (p.level) BT.level = p.level;
     BT.addedBy = BT.addedBy || {}; BT.defDone = BT.defDone || {}; btSteps(); BT.added = []; BT.paused = null; btSave(); btPill(); btGo(Math.min(p.i, BT.steps.length - 1)); }
   try { BT.paused = JSON.parse(localStorage.getItem(BTKEY) || 'null'); } catch (x) {} setTimeout(btPill, 400);
@@ -1961,9 +1961,9 @@ if (window.MF_V2) {
     snap(); P = blankProject(k); rebuildSkeleton(); buildBase(); rebuildParts(); BT.style = style || (/^(mech|walker|tank)$/.test(k) ? 'mech' : 'creature'); const lvl0 = BT.level; BT.level = 'complex'; btSteps(); BT.level = lvl0; BT.addedBy = {};   /* a ⭐ default is always the full creature, whatever level Build together is set to */
     const order = BT.steps.map((st, i) => i); if (window.MF_V3) order.sort((a, b) => ((BT.steps[a].how || '').startsWith('plug') ? 1 : 0) - ((BT.steps[b].how || '').startsWith('plug') ? 1 : 0) || a - b);
     order.forEach(i => { const st = BT.steps[i]; if (st.k !== 'part') return; BT.i = i; BT.added = []; const d = defFor(st); if (d) btPlace(st, d, true); }); BT.i = 0; if (window.V3 && window.V3.afterDefault) window.V3.afterDefault(k); if (window.MF_V3) { const left = P.parts.filter(p => p.lib.startsWith('base_')); if (left.length) { removeParts(left); rebuildParts(); } } outliner(); applyFX(); bodyUI(); skelUI(); saveCur(); frameAll(); tip('⭐ Default ' + (SKEL[k] || {}).name + ' — change anything you like', 2600); }
-  const defUI = () => { const el = $('defBuilds'); if (!el) return; el.innerHTML = ''; for (const [k, sk] of Object.entries(SKEL)) { if (k === 'none' || (!DEF[k] && !/^(mech|walker|tank)$/.test(k))) continue;
+  const defUI = () => { const el = $('defBuilds'); if (!el) return; el.innerHTML = ''; for (const [k, sk] of Object.entries(SKEL)) { if (k === 'none' || (!DEF[k] && !/^(mech|walker|tank)$/.test(k)) || !(typeof window.mfModeHas !== 'function' || window.mfModeHas(k))) continue;
       el.append(Object.assign(document.createElement('button'), {textContent: sk.name, onclick: () => buildDefault(k)})); }
-    el.append(Object.assign(document.createElement('button'), {textContent: '🤖 Mech (default)', onclick: () => buildDefault('mech', 'mech')})); }; defUI();
+    if ((typeof window.mfModeHas !== 'function' || window.mfModeHas('mech'))) el.append(Object.assign(document.createElement('button'), {textContent: '🤖 Mech (default)', onclick: () => buildDefault('mech', 'mech')})); if (!el.children.length) el.append(Object.assign(document.createElement('div'), {className: 'hint', textContent: 'No default builds in this mode. Start from an empty body, or switch mode above.'})); }; defUI(); window.__mfDefUI = defUI;
   window.__def = buildDefault; if (window.MF_V3) window.__btx = {BT, DEF, BODY_FOR, PARTSTEPS, btSteps, btGo, btShow, defUI, C};
   const bdUI = () => document.querySelectorAll('[data-bd]').forEach(b => b.classList.toggle('on', b.dataset.bd === boneDetail));
   document.querySelectorAll('[data-bd]').forEach(b => b.onclick = () => { boneDetail = b.dataset.bd; try { localStorage.setItem('mf-bones', boneDetail); } catch (x) {} bdUI();
@@ -1971,8 +1971,8 @@ if (window.MF_V2) {
   window.__fresh = k => { P = blankProject(k); rebuildSkeleton(); buildBase(); rebuildParts(); outliner(); frameAll(); }; window.__fits = () => fitsFor(); window.__btAuto = (style, skipOpt) => { BT.style = style || 'creature'; btSteps(); for (const st of BT.steps) { if (st.k !== 'part' || (skipOpt && st.opt)) continue; BT.pick = null; const ch = choicesOf(st)[0]; if (!ch) continue; const ids = partsOf(ch); if (ids[0]) { BT.added = []; btPlace(st, ids[0]); } BT.added = []; } }; window.__bones = () => P.bones;   // test hooks
   // ---- first-time tour for the new layout
   TOUR.length = 0; TOUR.push(
-    {t: 'Welcome to Mythic Forge', p: 'Build monsters and mechs like a toy: drag parts on, move them around, sculpt and paint. Pick something to start with:', start: true},
-    {sel: '#tops [data-top="start"]', pre: () => tabBtn('start').click(), t: '🏁 Start', p: 'Starters to remix, empty body types, and body shape sliders. 🎓 Build a titan step by step walks you from a bare skeleton to a finished mech or kaiju.'},
+    {t: 'Welcome to Mythic Forge', p: 'Build creatures, characters, props and titans like a toy: drag parts on, move them around, sculpt and paint. What are you making? (Change it any time in 🏁 Start.)', start: true},
+    {sel: '#tops [data-top="start"]', pre: () => tabBtn('start').click(), t: '🏁 Start', p: 'Pick what you are making (Creature, Character, Prop, Titan or Blank), then starters to remix, empty body types, and body shape sliders. 🎓 Build together walks you from a bare skeleton to a finished one.'},
     {sel: '#lib', pre: () => tabBtn('add').click(), t: '🧩 Build › Add parts', p: 'Press and hold a part, then drag it onto your model. (Or tap it, then tap the model. Double-tap = add it fast.)'},
     {sel: '#placeSeg', pre: () => tabBtn('add').click(), t: 'Snap or Free', p: '🦴 Snap lines parts up with the bones and sizes them to fit. ✋ Free puts it exactly where you let go — even floating in the air.'},
     {sel: '#bWS1', pre: () => tabBtn('add').click(), t: '🛠 Workshop', p: 'Build a part on its own, no skeleton: stack shapes, sculpt, paint, then 💾 Save part. It shows up in My Parts to drag onto any creature.'},

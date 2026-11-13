@@ -461,3 +461,37 @@ V3X.shadowAll = () => { snap(); const on = !P.fx.shadow; let n = 0;
 V3X.shadowUI = () => { const b = $('bShadowAll'); if (b) { b.textContent = P.fx && P.fx.shadow ? '🌫 Shadow version: ON (tap for skins)' : '🌫 Shadow version (whole creature)'; b.classList.toggle('on', !!(P.fx && P.fx.shadow)); } };
 if ($('bPaintAll')) { const b = Object.assign(document.createElement('button'), {id: 'bShadowAll', onclick: () => V3X.shadowAll()}); $('bPaintAll').parentNode.append(b); V3X.shadowUI(); setInterval(V3X.shadowUI, 1500); }
 
+
+// ====================================================================== 🧭 Modes (T035, Nov 13 2026): Mythic Forge is a general builder. Start › "What are you making?": 🐾 Creature (default), 🧑 Character, 🪑 Prop, 🦖 Titan, ✨ Blank.
+// Data + list filters live in modes.js (window.mfModeHas / mfGroupOk / mfPartOk). A mode only hides things in lists; search still finds every part.
+// Each project remembers its mode (P.mode). Old saves have none: they open in the mode that fits their body type (window.mfModeOf).
+// 🦖 Titan mode also shows: kaiju + mech body types, mech kits + mech weapons, a 📏 person for scale (1.8 m, not exported), and ⋯ › 🦖 Export for Titan Clash.
+{ const MD = window.MF_MODES || {}; let lastP = null, buddy = null;
+  const wrap = Object.assign(document.createElement('div'), {id: 'modeBox'}); wrap.style.cssText = 'margin:2px 0 8px;padding:6px;border:1px solid #4c4c58;border-radius:10px';
+  const ps = $('p-start'); if (ps) ps.prepend(wrap);
+  const tcBtn = Object.assign(document.createElement('button'), {id: 'mExportTC', textContent: '🦖 Export for Titan Clash (.glb)', onclick: () => { window.__tcExport = true; $('mExport').click(); }});
+  if ($('mExport')) $('mExport').after(tcBtn);
+  function buddyOn(on) { if (!on) { if (buddy) buddy.visible = false; return; }
+    if (!buddy) { buddy = new THREE.Group(); buddy.name = 'scaleBuddy'; const m = new THREE.MeshStandardMaterial({color: 0xb8b8c4, roughness: .8});
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(.06, .07, .3, 10), m); body.position.y = .15; const head = new THREE.Mesh(new THREE.SphereGeometry(.055, 12, 10), m); head.position.y = .36;
+      buddy.add(body, head); scene.add(buddy); }   // a titan is about 11 units tall (about 50 m), so a 1.8 m person is about 0.4 units
+    const bx = new THREE.Box3().setFromObject(skelRoot); buddy.position.set(isFinite(bx.max.x) ? bx.max.x + .5 : 3, isFinite(bx.min.y) ? Math.max(0, bx.min.y) : 0, isFinite(bx.max.z) ? (bx.min.z + bx.max.z) / 2 + .6 : 1); buddy.visible = true; }
+  function ui() { const cur = window.mfMode ? window.mfMode() : 'creature'; wrap.innerHTML = '';
+    wrap.append(Object.assign(document.createElement('div'), {className: 'lbl', textContent: 'What are you making?'}));
+    const seg = Object.assign(document.createElement('div'), {className: 'chips wrap', id: 'modeSeg'}); for (const [m, d] of Object.entries(MD)) { const b = Object.assign(document.createElement('button'), {textContent: d.name, className: m === cur ? 'on' : ''}); b.dataset.mode = m; b.onclick = () => window.mfSetMode(m, true); seg.append(b); } wrap.append(seg);
+    wrap.append(Object.assign(document.createElement('div'), {className: 'hint', textContent: (MD[cur] || {}).hint || ''}));
+    const r = Object.assign(document.createElement('div'), {className: 'row'});
+    if (cur === 'prop' || cur === 'blank') r.append(Object.assign(document.createElement('button'), {id: 'bModeEmpty', textContent: cur === 'prop' ? '📦 Start a new prop (no skeleton)' : '✨ Start empty (no skeleton)', onclick: () => { if (P.parts.some(p => !p.lib.startsWith('base_')) && !confirm('Start empty? What is on screen is replaced (save first if you want to keep it).')) return; snap(); P = blankProject('none'); rebuildSkeleton(); rebuildParts(); outliner(); applyFX(); bodyUI(); skelUI(); saveCur(); frameAll(); tip(cur === 'prop' ? '📦 New prop: drag shapes, gear and magic items from 🧩 Build' : '✨ Empty: drag in anything from 🧩 Build', 2600); }}));
+    if (cur === 'titan') r.append(Object.assign(document.createElement('button'), {id: 'bScaleBuddy', textContent: '📏 Person for scale: ' + (localStorage.getItem('mf-buddy') === '0' ? 'off' : 'on'), onclick: () => { try { localStorage.setItem('mf-buddy', localStorage.getItem('mf-buddy') === '0' ? '1' : '0'); } catch (x) {} ui(); }}));
+    else { const on = window.mfTitanExportShown && window.mfTitanExportShown(); r.append(Object.assign(document.createElement('button'), {id: 'bTcAll', textContent: '🦖 Titan Clash export in every mode: ' + (on ? 'on' : 'off'), onclick: () => { try { localStorage.setItem('mf-tc-all', on ? '0' : '1'); } catch (x) {} ui(); }})); }
+    if (r.children.length) wrap.append(r);
+    tcBtn.style.display = window.mfTitanExportShown && window.mfTitanExportShown() ? '' : 'none';
+    let bOn = false; try { bOn = cur === 'titan' && localStorage.getItem('mf-buddy') !== '0'; } catch (x) {} buddyOn(bOn); }
+  function relist() { skelUI(); if (window.__mfDefUI) window.__mfDefUI(); try { if (!window.mfGroupOk(gFilter)) { gFilter = GROUP_ORDER.find(g => window.mfGroupOk(g) && Object.values(LIB).some(e => e.group === g)) || gFilter; sFilter = null; } } catch (x) {} libUI(); ui(); }
+  // user picks a mode: lists change, and the creature on screen is marked with it (nothing on it is removed)
+  window.mfSetMode = (m, user) => { if (!window.mfSetModeRaw(m)) return; if (user && P) { P.mode = m; saveCur(); } relist(); if (user) tip((MD[m] || {}).name + ' mode: ' + ((MD[m] || {}).hint || ''), 2600); };
+  // a project opened (save, starter, paste, undo): old saves get the mode of their body type; the app follows the project's mode
+  const watch = () => { if (P === lastP) return; lastP = P; if (!P) return; if (!P.mode || !MD[P.mode]) P.mode = window.mfModeOf(P.skel);
+    if (P.mode !== window.mfMode()) { window.mfSetModeRaw(P.mode); relist(); } else ui(); };
+  watch(); setInterval(watch, 400);
+  window.__mode = {set: (m, u) => window.mfSetMode(m, u), cur: () => window.mfMode(), of: k => window.mfModeOf(k), buddy: () => !!(buddy && buddy.visible), tc: () => tcBtn.style.display !== 'none'}; }

@@ -11,3 +11,4 @@ Not part of the app. Paths inside assume the repo is at `/home/claude/titan-clas
 - `node dock.js` thumb dock at phone size; `node eth.js` every ethereal skin + the shadow version on the dragon; `node mk.js` Mark everywhere (mark, resize, delete, undo).
 - `node shp.js` adding one part vs a mirrored pair + a picture of the basic shapes; `node mul.js` Multiply + curve (row, arc, ring, tail).
 - `node wings.js [libs] [body types]` wing / fin fit numbers (root gap, reach past the bone tip, membrane side; `MODES=L,R,both` or `def`); `node wshot.js out "k:lib" ...` pictures of a wing dropped on the body on each side (`k:def` = the ⭐ default); `node wingdrop.js` which bone a wing dropped on the body goes to (T031, Nov 13).
+- `node modes.js <phone|pc>` the five modes: lists, Prop empty start, Titan Clash export, person for scale, old saves open in the mode of their body type (T035, Nov 13).
