@@ -463,7 +463,7 @@ V3X.shadowUI = () => { const b = $('bShadowAll'); if (b) { b.textContent = P.fx 
 if ($('bPaintAll')) { const b = Object.assign(document.createElement('button'), {id: 'bShadowAll', onclick: () => V3X.shadowAll()}); $('bPaintAll').parentNode.append(b); V3X.shadowUI(); setInterval(V3X.shadowUI, 1500); }
 
 
-// ====================================================================== 🧭 Modes (T035, Nov 13 2026): Mythic Forge is a general builder. Start › "What are you making?": 🐾 Creature (default), 🧑 Character, 🪑 Prop, 🦖 Titan, ✨ Blank.
+// ====================================================================== 🧭 Modes (T035, Nov 13 2026): Mythic Forge is a general builder. Start › "What are you making?": ✨ Blank (default, T040), 🐾 Creature, 🧑 Character, 🪑 Prop, 🦖 Titan.
 // Data + list filters live in modes.js (window.mfModeHas / mfGroupOk / mfPartOk). A mode only hides things in lists; search still finds every part.
 // Each project remembers its mode (P.mode). Old saves have none: they open in the mode that fits their body type (window.mfModeOf).
 // 🦖 Titan mode also shows: kaiju + mech body types, mech kits + mech weapons, a 📏 person for scale (1.8 m, not exported), and ⋯ › 🦖 Export for Titan Clash.
@@ -477,7 +477,7 @@ if ($('bPaintAll')) { const b = Object.assign(document.createElement('button'), 
       const body = new THREE.Mesh(new THREE.CylinderGeometry(.06, .07, .3, 10), m); body.position.y = .15; const head = new THREE.Mesh(new THREE.SphereGeometry(.055, 12, 10), m); head.position.y = .36;
       buddy.add(body, head); scene.add(buddy); }   // a titan is about 11 units tall (about 50 m), so a 1.8 m person is about 0.4 units
     const bx = new THREE.Box3().setFromObject(skelRoot); buddy.position.set(isFinite(bx.max.x) ? bx.max.x + .5 : 3, isFinite(bx.min.y) ? Math.max(0, bx.min.y) : 0, isFinite(bx.max.z) ? (bx.min.z + bx.max.z) / 2 + .6 : 1); buddy.visible = true; }
-  function ui() { const cur = window.mfMode ? window.mfMode() : 'creature'; wrap.innerHTML = '';
+  function ui() { const cur = window.mfMode ? window.mfMode() : 'blank'; wrap.innerHTML = '';
     wrap.append(Object.assign(document.createElement('div'), {className: 'lbl', textContent: 'What are you making?'}));
     const seg = Object.assign(document.createElement('div'), {className: 'chips wrap', id: 'modeSeg'}); for (const [m, d] of Object.entries(MD)) { const b = Object.assign(document.createElement('button'), {textContent: d.name, className: m === cur ? 'on' : ''}); b.dataset.mode = m; b.onclick = () => window.mfSetMode(m, true); seg.append(b); } wrap.append(seg);
     wrap.append(Object.assign(document.createElement('div'), {className: 'hint', textContent: (MD[cur] || {}).hint || ''}));
