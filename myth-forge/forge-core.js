@@ -36,13 +36,13 @@ let useBloom = true;
 
 // ====================================================================== parts library
 const LIB = {}, GROUP_ORDER = ['Base Body', 'Basic Shapes & Clay', 'Part Makers (sliders)', 'Heads & Skulls', 'Jaws & Teeth', 'Horns & Crests', 'Eyes & Faces', 'Necks & Spines', 'Torsos & Bellies', 'Arms & Shoulders', 'Hands & Claws',
-  'Legs & Feet', 'Tails', 'Wings', 'Back & Armor Plates', 'Tentacles & Extra Limbs', 'Bones & Skeleton', 'Mech Heads', 'Mech Eyes & Faces', 'Mech Torso & Core', 'Mech Arms & Legs', 'Mech Details', 'Mecha Dragon', 'Kaiju Kit', 'Turtle Kit', 'Dino Kit', 'Cloth & Capes', 'Weapons', 'Accessories & Magic', 'Low-Poly Builds', 'Free Packs (CC0)', 'My Imports'];
+  'Legs & Feet', 'Tails', 'Wings', 'Back & Armor Plates', 'Tentacles & Extra Limbs', 'Bones & Skeleton', 'Mech Heads', 'Mech Eyes & Faces', 'Mech Torso & Core', 'Mech Arms & Legs', 'Mech Details', 'Mecha Dragon', 'Kaiju Kit', 'Turtle Kit', 'Dino Kit', 'New Kits', 'Cloth & Capes', 'Weapons', 'Accessories & Magic', 'Low-Poly Builds', 'Free Packs (CC0)', 'My Imports'];
 const MY = 'My Parts';
 const ALONG = new Set(['Necks & Spines', 'Arms & Shoulders', 'Legs & Feet', 'Tails', 'Wings', 'Tentacles & Extra Limbs', 'Mech Arms & Legs', 'Heads & Skulls', 'Mech Heads', 'Torsos & Bellies', 'Mech Torso & Core', 'Hands & Claws']);
 const isAlong = e => e.along != null ? e.along : ALONG.has(e.group) || (e.group === 'Mecha Dragon' && /Head|Neck|Wings|Limbs/.test(e.sub)) || e.id === 'md_chest' || e.id === 'md_belly';
 for (const reg of (window.FORGE_PARTS || [])) { try { for (const p of reg(THREE, K)) LIB[p.id] = {...p, src: p.src || 'Made in code for Titan Forge (ours)'}; } catch (e) { console.error('parts file failed', e); } }
 // 🔷 low-poly versions of every body / mech / gear part (Nov 9): lpv_<id>, same group + body slot, faceted with fewer polygons (mech parts a bit finer so they keep their shape)
-const LP_SKIP = /^(Base Body|Basic Shapes & Clay|Part Makers \(sliders\)|Free Packs \(CC0\)|My Imports|My Parts|Low-Poly Builds)$/;
+const LP_SKIP = /^(New Kits|Base Body|Basic Shapes & Clay|Part Makers \(sliders\)|Free Packs \(CC0\)|My Imports|My Parts|Low-Poly Builds)$/;
 for (const id of Object.keys(LIB)) { const e = LIB[id]; if (LP_SKIP.test(e.group) || e.params || e.lowpoly) continue; const lv = /^Mech |Mecha Dragon/.test(e.group) ? 4 : 2;
   LIB['lpv_' + id] = {...e, id: 'lpv_' + id, name: e.name + ' (low-poly)', lpv: id, tags: [...(e.tags || []), 'low poly'], make: () => pieces(id).map(pc => ({geo: lowpolyGeo(pc.geo, lv), mat: pc.mat, num: pc.num})), _p: undefined};
   e.hasLpv = 'lpv_' + id; }
@@ -396,7 +396,7 @@ const kidRows = n => P.bones.filter(r => r[1] === n);
 const restQOf = r => basisFor(v3(r[3]).sub(v3(r[2])), r[5] && r[5].up);
 const TRUNK_TAGS = new Set(['spine', 'chest']);
 const FAMILY = {armU: 'arm', armF: 'arm', legU: 'leg', legL: 'leg', tail: 'tail', neck: 'neck', wingA: 'wing', wingB: 'wing', wingC: 'wing', extra: 'extra', spine: 'trunk', chest: 'trunk', hand: 'hand', foot: 'foot', head: 'head', jaw: 'jaw'};
-const KITS = /^(Mecha Dragon|Kaiju Kit|Dino Kit|Turtle Kit|Free Packs \(CC0\)|My Imports|My Parts|Basic Shapes & Clay|Part Makers \(sliders\))$/;
+const KITS = /^(New Kits|Mecha Dragon|Kaiju Kit|Dino Kit|Turtle Kit|Free Packs \(CC0\)|My Imports|My Parts|Basic Shapes & Clay|Part Makers \(sliders\))$/;
 function kindOf(e) { if (!e) return null; if (e.fitKind) return e.fitKind; const g = e.group, id = e.id, sub = e.sub || '';
   if (KITS.test(g) || e.whole || e.params) return null;
   if (g === 'Torsos & Bellies' || (g === 'Mech Torso & Core' && (sub === 'Chests' || sub === 'Frames') && id !== 'mk_torso_collar')) return 'torso';
@@ -673,7 +673,7 @@ const visibleIds = () => Object.keys(LIB).filter(id => { const e = LIB[id]; if (
   return e.group === gFilter && (!sFilter || e.sub === sFilter); });
 function libUI() {
   const groups = [MY, ...GROUP_ORDER].filter(g => !window.mfGroupOk || window.mfGroupOk(g)).filter(g => g === 'Free Packs (CC0)' || g === 'My Imports' || g === MY || Object.values(LIB).some(e => e.group === g));
-  const SEC = {'My Parts': '⭐ YOURS', 'Basic Shapes & Clay': '🧱 START FROM CLAY + SLIDER MAKERS', 'Heads & Skulls': '🐲 CREATURE PARTS', 'Mech Heads': '🤖 MECH PARTS', 'Mecha Dragon': '🐉 KITS', 'Weapons': '⚔️ GEAR & MAGIC', 'Free Packs (CC0)': '📦 FREE MODEL PACKS'};
+  const SEC = {'My Parts': '⭐ YOURS', 'Basic Shapes & Clay': '🧱 START FROM CLAY + SLIDER MAKERS', 'Heads & Skulls': '🐲 CREATURE PARTS', 'Mech Heads': '🤖 MECH PARTS', 'Mecha Dragon': '🐉 KITS', 'New Kits': '🧩 2.0 KITS (made in Blender)', 'Weapons': '⚔️ GEAR & MAGIC', 'Free Packs (CC0)': '📦 FREE MODEL PACKS'};
   $('grpToggle').textContent = (catsOpen ? '📂 Categories ▴' : '📂 ' + (query ? 'Search results' : gFilter) + '  ▾ (tap for all categories)'); $('groups').style.display = catsOpen ? '' : 'none';
   $('groups').innerHTML = ''; for (const g of groups) { if (SEC[g]) $('groups').append(Object.assign(document.createElement('div'), {className: 'sec', textContent: SEC[g]}));
     const n = Object.values(LIB).filter(e => !(lpParts ? e.hasLpv : e.lpv) && (g === MY ? e.mine : e.group === g)).length, b = document.createElement('button');

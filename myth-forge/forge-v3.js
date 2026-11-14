@@ -6,7 +6,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 // and follows its host whenever the host is rebuilt (moved, refit, swapped). Moving it by hand unplugs it (it stays where you put it).
 const V3X = window.V3 = {bt: window.__btx};
 const PLUG_NAMES = {crown: 'crown', bigeye: 'big eye', eye: 'eye', horn: 'horn', ear: 'ear', brow: 'brow', nose: 'nose', crest: 'crest', teeth: 'teeth', fang: 'fang', tongue: 'tongue', chin: 'chin', mane: 'mane', cheek: 'cheek', back: 'back / spikes', jaw: 'jaw',
-  finger: 'finger', claw: 'claw', toe: 'toe', tailtip: 'tail tip', antenna: 'antenna', belly: 'belly plate', feather: 'feather', combine: 'combine', any: 'any part', glow: 'glow spot', face: 'face', mouth: 'mouth', inside: 'inside', tentacle: 'tentacle', oral: 'oral arm', weapon: 'weapon', armor: 'armor'};
+  finger: 'finger', claw: 'claw', toe: 'toe', tailtip: 'tail tip', antenna: 'antenna', belly: 'belly plate', feather: 'feather', combine: 'combine', any: 'any part', glow: 'glow spot', face: 'face', mouth: 'mouth', inside: 'inside', tentacle: 'tentacle', oral: 'oral arm', weapon: 'weapon', 'k-waist': 'waist', 'k-neck': 'neck', 'k-jaw': 'jaw hinge', 'k-arm': 'shoulder', 'k-elbow': 'elbow', 'k-hand': 'wrist', 'k-leg': 'hip', 'k-knee': 'knee', 'k-foot': 'ankle', 'k-tail': 'tail', 'k-wing': 'wing root', 'k-wing2': 'wing tip', 'k-feather': 'feather row', 'k-back': 'back', 'k-face': 'face', 'k-crown': 'crown', 'k-shield': 'shield mount', 'k-pod': 'shoulder pod', armor: 'armor'};
 function plugAsOf(e) { if (!e) return null; if (e.plugAs !== undefined) return e.plugAs; const g = e.group, s = e.sub || '', id = e.id || '';
   if (g === 'Eyes & Faces') { if (s === 'Eyes') return /third|cluster/.test(id) ? 'brow' : 'eye'; if (s === 'Ears') return 'ear';
     if (s === 'Face Pieces') return /brow/.test(id) ? 'brow' : /whisker|cheek/.test(id) ? 'cheek' : /barbel|beard/.test(id) ? 'chin' : /snout|snarl|pig/.test(id) ? 'nose' : null; return null; }
@@ -75,6 +75,7 @@ function seat(pt) { const h = pt.host && partBy(pt.host.u); if (!h) { if (pt.hos
   const pl = plugsOf(h.lib, h).find(q => q.id === pt.host.k); if (!pl) { pt.host = null; return false; }
   const hm = hostMatrix(h), T = hm.both.clone().multiply(plugMatrix(pl, hm.both, h.bone)); let bone = h.bone;
   if (pl.t === 'jaw' && h.bone) { const jb = P.bones.find(r => r[1] === h.bone && r[4] === 'jaw'); if (jb && bones[jb[0]]) { const rel = restWorld(h.bone).invert().multiply(restWorld(jb[0])); T.premultiply(rel.invert()); bone = jb[0]; } }
+  if (pl.side === 'L' && LIB[pt.lib] && LIB[pt.lib].sided) T.multiply(new THREE.Matrix4().makeScale(-1, 1, 1));   // 2.0 kits (T049): a right-side kit part on a left-side plug is mirrored
   let flip = false; if (T.determinant() < 0) { T.multiply(new THREE.Matrix4().makeScale(-1, 1, 1)); flip = true; }
   const p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(); T.decompose(p, q, s); const eu = new THREE.Euler().setFromQuaternion(q);
   const base = +(((s.x + s.y + s.z) / 3) * (pl.s || 1) * plugNorm(pt.lib, pl.t)).toFixed(4);
