@@ -54,6 +54,7 @@ function autoPlugs(lib) { if (autoCache[lib]) return autoCache[lib]; const e = L
   return autoCache[lib] = out; }
 function plugsOf(lib, pt) { const e = LIB[lib]; let base = e && e.plugs ? e.plugs : autoPlugs(lib); if (pt && pt.plugs && pt.plugs.length) base = base.concat(pt.plugs); return base; }
 V3X.plugsOf = plugsOf; V3X.plugAsOf = plugAsOf;
+V3X.plugNames = PLUG_NAMES;
 const fits = (want, t) => want === t || t === 'any' || (want === 'finger' && t === 'toe') || (want === 'fang' && t === 'teeth') || (want === 'horn' && (t === 'crest' || t === 'antenna')) || (want === 'claw' && t === 'finger') || (want === 'back' && t === 'belly');
 // size normalisation for some plug types (a part's own size -> standard size)
 function plugNorm(lib, t) { const b = partBoxOf(lib), sz = b.getSize(new THREE.Vector3()); if (t === 'eye') return .52 / Math.max(.2, Math.max(sz.x, sz.y));
@@ -102,6 +103,17 @@ function findPlug(lib, bone, sx, sy) { const want = plugAsOf(LIB[lib]); if (!wan
   const order = c => (lastSeg(c) ? 0 : 100) + (near(bone).includes(c.h.bone) ? 0 : famOfBone(c.h.bone) === famOfBone(bone) ? 1 : 2) * 10 + (c.used ? 5 : 0) + (c.pl.side === 'L' ? 1 : 0) + (c.h.bone && c.h.bone.endsWith('.L') ? 2 : 0);
   return all.sort((a, b) => order(a) - order(b))[0]; }
 V3X.findPlug = findPlug;
+V3X.fits = (want, t) => fits(want, t);
+// T060 "Fits here": plug a library part straight into the part picked on the model (its first free matching plug, right side first; Both sides adds the mirror twin)
+V3X.plugOnPicked = (lib, onlyT) => { const host = partBy(sel), e = LIB[lib]; if (!host || !e) return false; const want = plugAsOf(e); if (!want) return false;
+  let c = onlyT === 'swap' ? null : scenePlugs(want).filter(q => q.h.uid === host.uid && !q.used && !q.pl.id.endsWith('~') && (!onlyT || q.pl.t === onlyT)).sort((a, b) => (a.pl.side === 'L' ? 1 : 0) - (b.pl.side === 'L' ? 1 : 0))[0], swap = false;
+  if (!c && host.host && (!onlyT || onlyT === 'swap')) { const h2 = partBy(host.host.u), pl2 = h2 && plugsOf(h2.lib, h2).find(q => q.id === host.host.k); if (pl2 && fits(want, pl2.t)) { const keep = P.parts.filter(k => k.host && k.host.u === host.uid); c = {h: h2, pl: pl2, used: host}; swap = keep; } }   // ⇄ swap the picked part
+  if (!c) { tip('No free spot for the ' + e.name + ' on this part', 2000); return false; }
+  if (swap) { const m = mirrorAdd; mirrorAdd = !!(c.pl.pairOf || c.h.twin || host.twin); snap(); const kids = swap, tw = twinOf(host), twKids = tw ? P.parts.filter(k => k.host && k.host.u === tw.uid) : [];
+    V3X.keepKids = true; let pt; try { pt = plugIn(lib, c); } finally { V3X.keepKids = false; } mirrorAdd = m; kids.forEach(k => k.host.u = pt.uid); const nt = pt.twin && partBy(pt.twin); twKids.forEach(k => { if (nt) k.host.u = nt.uid; });
+    V3X.adopt(pt); V3X.orphans(); P.parts.forEach(k => { if (k.host && (k.host.u === pt.uid || (nt && k.host.u === nt.uid))) { seat(k); } }); rebuildParts(); select(pt.uid); outliner(); saveCur(); libUI(); tip('⇄ Swapped in the ' + e.name + (pt.twin ? ' (both sides)' : ''), 1800); return pt; }
+  const m = mirrorAdd; if (c.pl.pairOf) mirrorAdd = true; snap(); const pt = plugIn(lib, c); mirrorAdd = m; if (window.V3.afterPlug) window.V3.afterPlug(pt);
+  outliner(); saveCur(); libUI(); tip('🔌 ' + e.name + ' plugged into the ' + (PLUG_NAMES[c.pl.t] || c.pl.t) + (pt.twin ? ' (both sides)' : ''), 1800); return pt; };
 // plug a library part in (with a mirrored twin on the paired plug); returns the new part or null
 function plugIn(lib, c, opts = {}) { const {h, pl} = c; if (c.used && !opts.keep) removeParts([c.used]);
   const pt = newPart(lib, h.bone, [0, 0, 0], [0, 0, 0]); pt.host = {u: h.uid, k: pl.id}; seat(pt); P.parts.push(pt);
@@ -251,7 +263,8 @@ function numLabelsUI() { if (numLabels) { numLabels.removeFromParent(); numLabel
   for (const [num, mis] of nums) { if (num === 0) continue; const b = new THREE.Box3(); mis.forEach(mi => { pcs[mi].geo.computeBoundingBox(); b.union(pcs[mi].geo.boundingBox); }); const c = b.getCenter(new THREE.Vector3());
     const sp = numberSprite(num); sp.material = sp.material.clone(); sp.material.depthTest = false; sp.material.sizeAttenuation = false; sp.renderOrder = 30; const w = c.clone().applyMatrix4(v.M.matrixWorld); sp.position.copy(w); sp.scale.set(.04, .04, 1); numLabels.add(sp); }
   scene.add(numLabels); }
-function v3PaintUI() { let el = $('v3paint'); if (!el) { el = document.createElement('div'); el.id = 'v3paint'; $('paintNow').after(el); }
+function v3PaintUI() { { let ge = $('k2glow'); if (!ge && $('paintNow')) { ge = document.createElement('div'); ge.id = 'k2glow'; $('paintNow').after(ge); } const gp = partBy(sel); if (ge) { ge.innerHTML = ''; if (gp && window.mfGlowUI) window.mfGlowUI(ge, gp); } }   // ✦ T060 glow slot, always in view for kit parts
+  let el = $('v3paint'); if (!el) { el = document.createElement('div'); el.id = 'v3paint'; $('paintNow').after(el); }
   const pt = partBy(sel), e = pt && LIB[pt.lib]; el.innerHTML = ''; if (!pt || !e) return numLabelsUI();
   const h = (tag, html, cls) => { const x = document.createElement(tag); x.innerHTML = html; if (cls) x.className = cls; el.append(x); return x; };
   const nums = numsOf(pt);
@@ -496,3 +509,70 @@ if ($('bPaintAll')) { const b = Object.assign(document.createElement('button'), 
     if (P.mode !== window.mfMode()) { window.mfSetModeRaw(P.mode); relist(); } else ui(); };
   watch(); setInterval(watch, 400);
   window.__mode = {set: (m, u) => window.mfSetMode(m, u), cur: () => window.mfMode(), of: k => window.mfModeOf(k), buddy: () => !!(buddy && buddy.visible), tc: () => tcBtn.style.display !== 'none'}; }
+
+// ====================================================================== ⭐ T060: one-tap kit starters (Q054). Clicks a kit's sample build together through its plugs, paints it in its scheme, stands it on the floor.
+{ const POSE = {wing_in: [0, 0, 105]};   // degrees on the plug; the left side is mirrored
+  const ROOTS = ['pelvis', 'hips', 'body', 'trunk'], WING = new Set(['wing_in', 'wing_out', 'wing']), HEADY = new Set(['head']);
+  const slotOf = id => (LIB[id] || {}).kslot;
+  function pickChild(st, host, pl, state) { const hs = slotOf(host.lib), m = pl.id.match(/^(.*?)(?:_(\d+\w?))?(?:_([RL]))?$/), nm = m[1], numbered = m[2] != null;
+    if (nm === 'coat') return st.coat || null;
+    if (nm === 'back' && numbered) return hs === 'neck' || hs === 'head' || hs === 'tail' ? (st.back && slotOf(st.back) === 'back' ? st.back : null) : st.back || null;
+    const ids = st.ids.filter(id => LIB[id]), want = id => plugAsOf(LIB[id]), ok = id => { const w = want(id); return w && fits(w, pl.t); };
+    if (WING.has(hs)) { const c = ids.filter(id => ok(id) && ['wing_out', 'feathers', 'hand'].includes(slotOf(id)) && (slotOf(id) !== 'hand' || /wing_thumb/.test(id))); return c[0] || null; }
+    if (pl.t === 'weapon') return pl.side === 'L' || state.weapon ? null : (state.weapon = ids.find(id => ['melee', 'gun'].includes(slotOf(id))) || null);
+    if (pl.t === 'k-shield') return pl.side === 'L' || state.shield ? null : (state.shield = ids.find(id => slotOf(id) === 'shield') || null);
+    if (pl.t === 'k-pod') return ids.find(id => slotOf(id) === 'mount') || null;
+    if (pl.t === 'k-neck') { const heads = st.heads.length ? st.heads : ids.filter(id => slotOf(id) === 'head'), neck = ids.find(id => slotOf(id) === 'neck');
+      if (hs === 'neck' || !neck) { const h = heads[state.head % Math.max(1, heads.length)]; state.head++; return h || null; } return neck; }
+    if (pl.t === 'k-jaw') return ids.find(id => slotOf(id) === 'jaw') || null;
+    if (pl.t === 'k-tail') { const tails = ids.filter(id => ['tail', 'tail_tip'].includes(slotOf(id))); const i = tails.indexOf(host.lib); return i < 0 ? (hs === 'tail' || hs === 'tail_tip' ? null : tails[0] || null) : tails[i + 1] || null; }
+    if (pl.t === 'k-hand') return ids.find(id => slotOf(id) === 'hand' && !/wing_thumb/.test(id)) || null;
+    if (pl.t === 'k-arm') { const pref = hs === 'shoulder' ? ['upperarm', 'arm_up'] : ['shoulder', 'upperarm', 'arm_up']; for (const s of pref) { const c = ids.find(id => slotOf(id) === s && ok(id)); if (c) return c; } return null; }
+    if (pl.t === 'horn' || pl.t === 'crest') return HEADY.has(hs) ? ids.find(id => ['horn', 'crest'].includes(slotOf(id)) && ok(id)) || null : null;
+    return ids.find(id => slotOf(id) !== hs && ok(id) && !ROOTS.includes(slotOf(id))) || null; }
+  function paintScheme(pt, scheme) { const e = LIB[pt.lib]; if (!e || !e.patterns) return; const want = scheme.replace(/_/g, ' ').toLowerCase(); const k = Object.keys(e.patterns).find(n => n.toLowerCase() === want); if (!k) return;
+    for (const [n, c] of Object.entries(e.patterns[k])) setNum(pt, +n, 'col:' + c); }
+  window.mfLoadKitStarter = st => { if (P.parts.length && !confirm('Start from ' + st.name + '? Your current build is replaced (save it first with ⋯ if you want it).')) return;
+    const keep = mirrorAdd; snap(); P = blankProject('none'); P.name = st.name; rebuildSkeleton(); rebuildParts(); boneHelpers.forEach(bh => bh.visible = false);   // kit builds hang off their own plugs; the lone root bone stick would only clutter the view
+    const rootId = st.ids.find(id => LIB[id] && ROOTS.includes(slotOf(id))); if (!rootId) return tip('This starter is missing its body part');
+    const root = newPart(rootId, null, [0, 0, 0], [0, 0, 0], 1); P.parts.push(root); buildPart(root);
+    const state = {head: 0, weapon: null, shield: null}, queue = [root]; let guard = 0;
+    while (queue.length && guard++ < 160) { const h = queue.shift();
+      for (const pl of plugsOf(h.lib, h)) { if ((pl.side === 'L' && pl.pairOf) || pl.id.endsWith('~')) continue; if (P.parts.some(c => c.host && c.host.u === h.uid && c.host.k === pl.id)) continue;
+        const id = pickChild(st, h, pl, state); if (!id || !LIB[id]) continue;
+        mirrorAdd = !!pl.pairOf || !!h.twin; if (pl.t === 'weapon' || pl.t === 'k-shield') mirrorAdd = false;
+        let use = pl; const pose = POSE[slotOf(id)];
+        if (pose && pl.o === 'frame') { const pid = pl.id + '~', tw = pl.pairOf, tp = tw && plugsOf(h.lib, h).find(q => q.id === tw); h.plugs = h.plugs || [];   // pose it like the kit pictures (wings spread): a posed copy of the plug on this host
+          use = {...pl, id: pid, r: pose, pairOf: tp ? tw + '~' : undefined}; h.plugs.push(use); if (tp) h.plugs.push({...tp, id: tw + '~', r: [pose[0], -pose[1], -pose[2]], pairOf: pid}); }
+        const pt = plugIn(id, {h, pl: use}); if (pt && plugsOf(id, pt).length) queue.push(pt); } }
+    mirrorAdd = keep;
+    for (const pt of P.parts) paintScheme(pt, st.scheme);
+    // stand it on the floor: lift the root so the lowest point touches y = 0, then re-seat everything
+    skelRoot.updateMatrixWorld(true); const b = new THREE.Box3(); for (const pt of P.parts) { const v = views[pt.uid]; if (v && v.M) b.expandByObject(v.M); }
+    if (!b.isEmpty()) { root.p = [0, +(-b.min.y).toFixed(3), 0]; for (const pt of P.parts) if (pt.host) seat(pt); rebuildParts(); }
+    sel = null; P.fx.bg = P.fx.bg || 'studio'; applyFX(); outliner(); saveCur(); frameAll(); if (tab === 'add') libUI();
+    tip(st.name + ' ready (' + P.parts.length + ' parts) — tap a part, then 🔌 Fits here to swap or add pieces', 3200); };
+}
+
+// ====================================================================== ✦ T060: glow slot. Pick which numbered bits of a kit part shine and in what colour (default = the part's element colour). Preview on the dark night look with bloom.
+{ const GK = /G([0-9a-fA-F]{6})(?:x([\d.]+))?/;
+  const keyOf = (pt, num) => { const mi = (numsOf(pt).get(num) || [])[0]; return mi == null ? null : (pt.mat && pt.mat[mi]) || pieces(pt.lib, pt.params)[mi].mat; };
+  const elementCol = (pt) => { const e = LIB[pt.lib]; if (!e || !e.pbnNames) return '#ffcf3a'; for (const nm of ['glow', 'eye', 'crystal', 'fire', 'storm', 'venom']) { const i = e.pbnNames.indexOf(nm); if (i >= 0) { const k = keyOf(pt, i + 1); if (k && k.startsWith('col:')) return k.slice(4, 11); } } return '#ffcf3a'; };
+  const glowOf = pt => { for (const [n] of numsOf(pt)) { const k = keyOf(pt, n), g = k && k.match(GK); if (g) return {col: '#' + g[1], k: g[2] ? +g[2] : 2.2}; } return null; };
+  const setGlow = (pt, num, on, col, k) => { const cur = keyOf(pt, num) || ''; let base = cur.startsWith('col:') ? cur.replace(GK, '').replace(/:+$/, '') : 'col:' + curCol(pt, (numsOf(pt).get(num) || [0])[0]);
+    if (on) base = base + (base.slice(4).includes(':') ? '' : ':') + 'G' + col.slice(1) + (k && k !== 2.2 ? 'x' + k : ''); setNum(pt, num, base); };
+  window.mfGlowUI = (el, pt) => { const e = LIB[pt.lib]; if (!e || !e.kit2) return; const nums = [...numsOf(pt).keys()].filter(n => n > 0).sort((a, b) => a - b); if (!nums.length) return;
+    const g = glowOf(pt), col = g ? g.col : elementCol(pt), k = g ? g.k : 2.2;
+    const box = document.createElement('div'); box.className = 'how'; box.innerHTML = '✦ <b>Glow</b> — tap the bits that shine (veins, plates, eyes, light strips, seams). One glow colour per part.'; el.append(box);
+    const r = document.createElement('div'); r.className = 'row'; r.style.flexWrap = 'wrap'; el.append(r);
+    for (const n of nums) { const on = GK.test(keyOf(pt, n) || ''), b = document.createElement('button'); b.textContent = (on ? '✦ ' : '') + n + ' ' + ((e.pbnNames || [])[n - 1] || ''); if (on) b.className = 'on';
+      b.onclick = () => { snap(); setGlow(pt, n, !on, col, k); saveCur(); v3PaintUI(); }; r.append(b); }
+    const r2 = document.createElement('div'); r2.className = 'row'; r2.style.alignItems = 'center'; el.append(r2);
+    const ci = Object.assign(document.createElement('input'), {type: 'color', value: col}); ci.style.cssText = 'width:38px;height:30px;border:0;background:none;padding:0';
+    const sl = Object.assign(document.createElement('input'), {type: 'range', min: '0.5', max: '5', step: '0.1', value: String(k)}); sl.style.flex = '1';
+    const apply = () => { snap(); for (const n of nums) if (GK.test(keyOf(pt, n) || '')) setGlow(pt, n, true, ci.value, +sl.value); saveCur(); };
+    ci.onchange = () => { apply(); v3PaintUI(); }; sl.onchange = apply;
+    r2.append(Object.assign(document.createElement('span'), {textContent: 'Colour', className: 'hint'}), ci, Object.assign(document.createElement('span'), {textContent: 'Strength', className: 'hint'}), sl);
+    const night = P.fx.bg === 'neon' && P.fx.glow, nb = Object.assign(document.createElement('button'), {textContent: night ? '☀ Back to studio' : '🌙 Night preview (bloom)'}); if (night) nb.className = 'on';
+    nb.onclick = () => { if (night) { P.fx.bg = P.fx.prevBg || 'studio'; } else { P.fx.prevBg = P.fx.bg; P.fx.bg = 'neon'; P.fx.glow = true; } applyFX(); saveCur(); v3PaintUI(); }; const r3 = document.createElement('div'); r3.className = 'row'; r3.append(nb); el.append(r3); };
+}

@@ -35,15 +35,16 @@ const bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), .4, .45, .92); co
 let useBloom = true;
 
 // ====================================================================== parts library
-const LIB = {}, GROUP_ORDER = ['Base Body', 'Basic Shapes & Clay', 'Part Makers (sliders)', 'Heads & Skulls', 'Jaws & Teeth', 'Horns & Crests', 'Eyes & Faces', 'Necks & Spines', 'Torsos & Bellies', 'Arms & Shoulders', 'Hands & Claws',
-  'Legs & Feet', 'Tails', 'Wings', 'Back & Armor Plates', 'Tentacles & Extra Limbs', 'Bones & Skeleton', 'Mech Heads', 'Mech Eyes & Faces', 'Mech Torso & Core', 'Mech Arms & Legs', 'Mech Details', 'Mecha Dragon', 'Kaiju Kit', 'Turtle Kit', 'Dino Kit', 'New Kits', 'Cloth & Capes', 'Weapons', 'Accessories & Magic', 'Low-Poly Builds', 'Free Packs (CC0)', 'My Imports'];
+const KIT_GROUPS = window.MF_KIT_GROUPS || [];   // T060: the 2.0 kits are the parts list (Parts tab); every other group is under Old
+const LIB = {}, GROUP_ORDER = [...KIT_GROUPS, 'Base Body', 'Basic Shapes & Clay', 'Part Makers (sliders)', 'Heads & Skulls', 'Jaws & Teeth', 'Horns & Crests', 'Eyes & Faces', 'Necks & Spines', 'Torsos & Bellies', 'Arms & Shoulders', 'Hands & Claws',
+  'Legs & Feet', 'Tails', 'Wings', 'Back & Armor Plates', 'Tentacles & Extra Limbs', 'Bones & Skeleton', 'Mech Heads', 'Mech Eyes & Faces', 'Mech Torso & Core', 'Mech Arms & Legs', 'Mech Details', 'Mecha Dragon', 'Kaiju Kit', 'Turtle Kit', 'Dino Kit', 'Cloth & Capes', 'Weapons', 'Accessories & Magic', 'Low-Poly Builds', 'Free Packs (CC0)', 'My Imports'];
 const MY = 'My Parts';
 const ALONG = new Set(['Necks & Spines', 'Arms & Shoulders', 'Legs & Feet', 'Tails', 'Wings', 'Tentacles & Extra Limbs', 'Mech Arms & Legs', 'Heads & Skulls', 'Mech Heads', 'Torsos & Bellies', 'Mech Torso & Core', 'Hands & Claws']);
 const isAlong = e => e.along != null ? e.along : ALONG.has(e.group) || (e.group === 'Mecha Dragon' && /Head|Neck|Wings|Limbs/.test(e.sub)) || e.id === 'md_chest' || e.id === 'md_belly';
 for (const reg of (window.FORGE_PARTS || [])) { try { for (const p of reg(THREE, K)) LIB[p.id] = {...p, src: p.src || 'Made in code for Titan Forge (ours)'}; } catch (e) { console.error('parts file failed', e); } }
 // 🔷 low-poly versions of every body / mech / gear part (Nov 9): lpv_<id>, same group + body slot, faceted with fewer polygons (mech parts a bit finer so they keep their shape)
-const LP_SKIP = /^(New Kits|Base Body|Basic Shapes & Clay|Part Makers \(sliders\)|Free Packs \(CC0\)|My Imports|My Parts|Low-Poly Builds)$/;
-for (const id of Object.keys(LIB)) { const e = LIB[id]; if (LP_SKIP.test(e.group) || e.params || e.lowpoly) continue; const lv = /^Mech |Mecha Dragon/.test(e.group) ? 4 : 2;
+const LP_SKIP = /^(Base Body|Basic Shapes & Clay|Part Makers \(sliders\)|Free Packs \(CC0\)|My Imports|My Parts|Low-Poly Builds)$/;
+for (const id of Object.keys(LIB)) { const e = LIB[id]; if (e.kit2 || LP_SKIP.test(e.group) || e.params || e.lowpoly) continue; const lv = /^Mech |Mecha Dragon/.test(e.group) ? 4 : 2;
   LIB['lpv_' + id] = {...e, id: 'lpv_' + id, name: e.name + ' (low-poly)', lpv: id, tags: [...(e.tags || []), 'low poly'], make: () => pieces(id).map(pc => ({geo: lowpolyGeo(pc.geo, lv), mat: pc.mat, num: pc.num})), _p: undefined};
   e.hasLpv = 'lpv_' + id; }
 let lpParts = false; try { lpParts = localStorage.getItem('mf-lpparts') === '1'; } catch (x) {}
@@ -128,9 +129,9 @@ function groupForBone(n) { const tag = (boneRow(n) || [])[4], mech = MECH_SKELS.
     : {head: 'Heads & Skulls', jaw: 'Jaws & Teeth', neck: 'Necks & Spines', chest: 'Torsos & Bellies', spine: 'Torsos & Bellies', armU: 'Arms & Shoulders', armF: 'Arms & Shoulders', hand: 'Hands & Claws', legU: 'Legs & Feet', legL: 'Legs & Feet', foot: 'Legs & Feet', tail: 'Tails', wingA: 'Wings', wingB: 'Wings', wingC: 'Wings', extra: 'Tentacles & Extra Limbs'};
   const subFor = {foot: /foot|feet|hoof|paw/i, hand: null}; let g = m[tag]; if (g && !Object.values(LIB).some(e => e.group === g)) g = tag === 'tail' ? 'Part Makers (sliders)' : 'Part Makers (sliders)'; return [g, tag]; }
 let manualCat = false;                                          // you picked a category yourself: bones stop changing it until you tap a bone again
-function catForBone(n) { const [g] = groupForBone(n); if (!g) return; gFilter = g; sFilter = null; query = ''; tagFilter = null; $('search').value = ''; catsOpen = false; manualCat = false; if (tab === 'add') libUI(); }
+function catForBone(n) { if (libTab !== 'old') return; const [g] = groupForBone(n); if (!g) return; gFilter = g; sFilter = null; query = ''; tagFilter = null; $('search').value = ''; catsOpen = false; manualCat = false; if (tab === 'add') libUI(); }
 function goBone(n, add) { selBone = n; markBone(); boneNumsUI(); syncBoneUI(); if (!(add && placing)) catForBone(n);
-  if (add && placing) { const lib = placing; placing = null; libUI(); const e = LIB[lib];
+  if (add && placing) { const lib = placing; placing = null; libMark(); const e = LIB[lib];
     if (e.whole) return placeAt({object: {userData: {bone: n}}, point: new THREE.Vector3(), face: null});
     if (addWeaponToPalm(lib, n)) return;
     return addPart(lib, n, [0, 0, 0], [0, 0, 0], isAlong(e) && modeBone ? undefined : 1); }
@@ -396,9 +397,9 @@ const kidRows = n => P.bones.filter(r => r[1] === n);
 const restQOf = r => basisFor(v3(r[3]).sub(v3(r[2])), r[5] && r[5].up);
 const TRUNK_TAGS = new Set(['spine', 'chest']);
 const FAMILY = {armU: 'arm', armF: 'arm', legU: 'leg', legL: 'leg', tail: 'tail', neck: 'neck', wingA: 'wing', wingB: 'wing', wingC: 'wing', extra: 'extra', spine: 'trunk', chest: 'trunk', hand: 'hand', foot: 'foot', head: 'head', jaw: 'jaw'};
-const KITS = /^(New Kits|Mecha Dragon|Kaiju Kit|Dino Kit|Turtle Kit|Free Packs \(CC0\)|My Imports|My Parts|Basic Shapes & Clay|Part Makers \(sliders\))$/;
+const KITS = /^(Mecha Dragon|Kaiju Kit|Dino Kit|Turtle Kit|Free Packs \(CC0\)|My Imports|My Parts|Basic Shapes & Clay|Part Makers \(sliders\))$/;
 function kindOf(e) { if (!e) return null; if (e.fitKind) return e.fitKind; const g = e.group, id = e.id, sub = e.sub || '';
-  if (KITS.test(g) || e.whole || e.params) return null;
+  if (e.kit2 || KITS.test(g) || e.whole || e.params) return null;
   if (g === 'Torsos & Bellies' || (g === 'Mech Torso & Core' && (sub === 'Chests' || sub === 'Frames') && id !== 'mk_torso_collar')) return 'torso';
   if (g === 'Heads & Skulls') return /mane/.test(id) ? 'decor' : 'head';
   if (g === 'Mech Heads') return 'head';
@@ -623,7 +624,7 @@ function addWeaponToPalm(lib, bone) { const g = palmGrip(lib, bone); if (!g) ret
 function placeAt(hit) {
   if (window.V3 && hit && hit.point && !window.V3.at) { const q = toScreen(hit.point); window.V3.at = [q[0], q[1]]; }
   if (window.V3) window.V3.hit = (hit && hit.object && hit.object.userData.uid) || null;
-  const lib = placing; placing = null; libUI();
+  const lib = placing; placing = null; libMark();
   let boneName = null;
   if (hit.object.userData.bone) boneName = hit.object.userData.bone;
   else if (hit.object.userData.uid) { const pt = partBy(hit.object.userData.uid); boneName = pt && pt.bone; }
@@ -642,7 +643,7 @@ function placeAt(hit) {
 $('bModeBone').onclick = () => { modeBone = true; $('bModeBone').classList.add('on'); $('bModeSurf').classList.remove('on'); };
 $('bModeSurf').onclick = () => { modeBone = false; $('bModeSurf').classList.add('on'); $('bModeBone').classList.remove('on'); };
 $('bMirrorAdd').onclick = e => { mirrorAdd = !mirrorAdd; e.target.classList.toggle('on', mirrorAdd); };
-$('bAddCenter').onclick = () => { const lib = placing || visibleIds()[0]; if (!lib) return; placing = null; libUI();
+$('bAddCenter').onclick = () => { const lib = placing || visibleIds()[0]; if (!lib) return; placing = null; libMark();
   const b = (selBone && bones[selBone] && selBone) || (P.bones.find(b => b[4] === 'chest') || P.bones[0])[0]; addPart(lib, b, [0, 0, 0], [0, 0, 0]); };
 
 // ====================================================================== library UI
@@ -671,32 +672,77 @@ function tagEdUI() { const el = $('tagEd'); if (!el) return; const pt = partBy(s
   const hid = (userTags[id] || []).filter(t => t[0] === '-'); if (hid.length) { const r = document.createElement('button'); r.textContent = '↺ Bring back ' + hid.length + ' removed'; r.onclick = () => { userTags[id] = (userTags[id] || []).filter(t => t[0] !== '-'); saveTags(); tagEdUI(); }; el.append(r); } }
 const visibleIds = () => Object.keys(LIB).filter(id => { const e = LIB[id]; if (lpParts ? e.hasLpv : e.lpv) return false; if (!query && tagFilter !== 'fav' && window.mfPartOk && !window.mfPartOk(e)) return false; if (tagFilter && !tagsOf(id).includes(tagFilter)) return false; if (tagFilter === 'fav') return true; if (gFilter === MY && !query) return e.mine && (!sFilter || e.sub === sFilter); if (query) return (e.name + ' ' + e.group + ' ' + e.sub + ' ' + tagsOf(id).join(' ')).toLowerCase().includes(query);
   return e.group === gFilter && (!sFilter || e.sub === sFilter); });
+// T060 parts browser: two tabs. Parts = the 2.0 kits (one category per kit, slot chips) + ⭐ starters + your own parts. Old = every older group + other people's packs.
+// Tapping a part only re-marks the tiles (no rebuild, so nothing blinks or scrolls). With a part picked on the model, "Fits here" lists what clicks into it.
+let libTab = (() => { try { return localStorage.getItem('mf-libtab') || 'parts'; } catch (e) { return 'parts'; } })();
+let oldSec = null, fitsOn = false, fitsT = null;
+const STARTERS_CAT = '★ Starters';
+const isOldG = g => !KIT_GROUPS.includes(g) && g !== MY && g !== STARTERS_CAT;
+const OLD_SECS = (() => { const SEC = {'Base Body': 'Base body', 'Basic Shapes & Clay': 'Clay & sliders', 'Heads & Skulls': 'Creature parts', 'Mech Heads': 'Mech parts', 'Mecha Dragon': 'Kits', 'Cloth & Capes': 'Gear & magic', 'Free Packs (CC0)': 'Packs & imports'};
+  const out = []; let cur = null; for (const g of GROUP_ORDER) { if (KIT_GROUPS.includes(g)) continue; if (SEC[g] || !cur) { cur = {name: SEC[g] || 'Other', groups: []}; out.push(cur); } cur.groups.push(g); } return out; })();
+const secOf = g => (OLD_SECS.find(s => s.groups.includes(g)) || OLD_SECS[0]);
+if (!(KIT_GROUPS.includes(gFilter) || gFilter === MY) && libTab === 'parts') gFilter = KIT_GROUPS[0] || gFilter;
+const selPlugs = () => { const pt = sel && partBy(sel); if (!pt || !window.V3) return []; const used = new Set(P.parts.filter(c => c.host && c.host.u === pt.uid).map(c => c.host.k));
+  return window.V3.plugsOf(pt.lib, pt).filter(q => !used.has(q.id) && !(q.side === 'L' && q.pairOf)); };
+const selSwap = () => { const pt = sel && partBy(sel); if (!pt || !pt.host || !window.V3) return null; const h = partBy(pt.host.u); const pl = h && window.V3.plugsOf(h.lib, h).find(q => q.id === pt.host.k); return pl ? {h, pl, pt} : null; };
+const fitsIds = () => { const ps = fitsT === 'swap' ? [] : selPlugs().filter(q => !fitsT || q.t === fitsT), types = new Set(ps.map(q => q.t)); const sw = (!fitsT || fitsT === 'swap') && selSwap(); if (sw) types.add(sw.pl.t); if (!types.size) return [];
+  return Object.keys(LIB).filter(id => { const e = LIB[id]; if (lpParts ? e.hasLpv : e.lpv) return false; const w = window.V3.plugAsOf(e); return w && [...types].some(t => window.V3.fits(w, t)); })
+    .map(id => { const e = LIB[id], me = sel && partBy(sel), pe = me && LIB[me.lib]; return [id, (e.kit2 ? 0 : 100) + (sw && pe && e.kslot && e.kslot === pe.kslot ? 0 : 10) + (pe && e.kit === pe.kit ? 0 : 1)]; })
+    .sort((x, y) => x[1] - y[1]).map(x => x[0]); };   // same slot as the picked part first, then its own kit, then other kits, older parts last
+function chip(parent, text, on, click, n, cls) { const b = document.createElement('button'); b.textContent = text; if (n) b.append(Object.assign(document.createElement('span'), {className: 'n', textContent: n})); if (on) b.classList.add('on'); if (cls) b.classList.add(cls); b.onclick = click; parent.append(b); return b; }
+function libMark() { document.querySelectorAll('#lib .item[data-id]').forEach(b => b.classList.toggle('on', b.dataset.id === placing));
+  const e = placing && LIB[placing]; $('libHint').textContent = e ? (fitsOn ? 'Tap ' + e.name + ' again to plug it in' : isAlong(e) && modeBone ? 'Tap a bone dot for the ' + e.name : 'Tap the model where the ' + e.name + ' goes') : fitsOn ? 'Tap a part to plug it in' : 'Tap a part, then tap the model'; }
+let lastHasFits = false;
 function libUI() {
-  const groups = [MY, ...GROUP_ORDER].filter(g => !window.mfGroupOk || window.mfGroupOk(g)).filter(g => g === 'Free Packs (CC0)' || g === 'My Imports' || g === MY || Object.values(LIB).some(e => e.group === g));
-  const SEC = {'My Parts': '⭐ YOURS', 'Basic Shapes & Clay': '🧱 START FROM CLAY + SLIDER MAKERS', 'Heads & Skulls': '🐲 CREATURE PARTS', 'Mech Heads': '🤖 MECH PARTS', 'Mecha Dragon': '🐉 KITS', 'New Kits': '🧩 2.0 KITS (made in Blender)', 'Weapons': '⚔️ GEAR & MAGIC', 'Free Packs (CC0)': '📦 FREE MODEL PACKS'};
-  $('grpToggle').textContent = (catsOpen ? '📂 Categories ▴' : '📂 ' + (query ? 'Search results' : gFilter) + '  ▾ (tap for all categories)'); $('groups').style.display = catsOpen ? '' : 'none';
-  $('groups').innerHTML = ''; for (const g of groups) { if (SEC[g]) $('groups').append(Object.assign(document.createElement('div'), {className: 'sec', textContent: SEC[g]}));
-    const n = Object.values(LIB).filter(e => !(lpParts ? e.hasLpv : e.lpv) && (g === MY ? e.mine : e.group === g)).length, b = document.createElement('button');
-    b.textContent = g + (n ? ` ${n}` : ''); b.className = !query && g === gFilter ? 'on' : ''; b.onclick = () => { gFilter = g; sFilter = null; query = ''; tagFilter = null; $('search').value = ''; catsOpen = false; manualCat = true; libUI(); }; $('groups').append(b); }
-  const subs = [...new Set(Object.values(LIB).filter(e => gFilter === MY ? e.mine : e.group === gFilter).map(e => e.sub))];
-  $('subs').innerHTML = ''; if (!query && subs.length > 1) for (const s of [null, ...subs]) { const b = document.createElement('button'); b.textContent = s || 'All'; b.className = s === sFilter ? 'on' : ''; b.onclick = () => { sFilter = s; libUI(); }; $('subs').append(b); }
-  const cnt = {}; Object.keys(LIB).filter(id => query ? true : (gFilter === MY ? LIB[id].mine : LIB[id].group === gFilter)).forEach(id => tagsOf(id).forEach(t => cnt[t] = (cnt[t] || 0) + 1));
-  const top = Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, 24).map(x => x[0]); if (tagFilter && !top.includes(tagFilter)) top.unshift(tagFilter);
-  $('tags').innerHTML = ''; for (const t of top) { const b = document.createElement('button'); b.textContent = '#' + t; b.className = t === tagFilter ? 'on' : ''; b.onclick = () => { tagFilter = tagFilter === t ? null : t; libUI(); }; $('tags').append(b); }
-  { const b = document.createElement('button'); b.textContent = '＋ tag'; b.onclick = () => { if (!placing) return tip('Tap a part in the grid first, then ＋ tag'); const t = (prompt('Add tags to ' + LIB[placing].name + ' (comma separated)') || '').toLowerCase().split(',').map(x => x.trim().replace(/^#/, '')).filter(Boolean);
-    if (!t.length) return; userTags[placing] = [...new Set([...(userTags[placing] || []), ...t])]; localStorage.setItem('titan-forge-tags', JSON.stringify(userTags)); libUI(); tip('Tagged'); }; $('tags').append(b); }
-  { const b = document.createElement('button'); b.textContent = '⭐ favorites'; b.className = tagFilter === 'fav' ? 'on' : ''; b.onclick = () => { tagFilter = tagFilter === 'fav' ? null : 'fav'; query = tagFilter ? ' ' : ''; libUI(); }; $('tags').prepend(b); }
+  lastHasFits = selPlugs().length > 0 || !!selSwap();
+  document.querySelectorAll('#libTabs button').forEach(b => b.classList.toggle('on', b.dataset.lt === libTab));
+  const has = g => g === MY || Object.values(LIB).some(e => e.group === g);
+  const okG = g => !window.mfGroupOk || window.mfGroupOk(g) || KIT_GROUPS.includes(g);
+  const grp = $('groups'), subs = $('subs'), tags = $('tags'), keepX = [grp, subs, tags].map(x => x.scrollLeft); grp.innerHTML = ''; subs.innerHTML = ''; tags.innerHTML = '';
+  const go = g => () => { gFilter = g; sFilter = null; query = ''; tagFilter = null; fitsOn = false; $('search').value = ''; manualCat = true; libUI(); libTopScroll(); };
+  const fitsTypes = [...new Set(selPlugs().map(q => q.t))], swapOk = !!selSwap();
+  if ((fitsTypes.length || swapOk) && !query) chip(grp, '🔌 Fits here', fitsOn, () => { fitsOn = !fitsOn; fitsT = null; placing = null; libUI(); }, null, 'fits');
+  if (libTab === 'parts') {
+    if (window.MF_KIT_STARTERS && window.MF_KIT_STARTERS.length) chip(grp, STARTERS_CAT, !fitsOn && !query && gFilter === STARTERS_CAT, go(STARTERS_CAT));
+    for (const g of KIT_GROUPS) if (has(g)) chip(grp, g.replace(/ parts$/, ''), !fitsOn && !query && gFilter === g, go(g), Object.values(LIB).filter(e => e.group === g).length);
+    chip(grp, '⭐ Mine', !fitsOn && !query && gFilter === MY, go(MY));
+  } else {
+    const cur = oldSec || secOf(gFilter).name;
+    for (const sc of OLD_SECS) { const gs = sc.groups.filter(g => okG(g) && (g === 'Free Packs (CC0)' || g === 'My Imports' || has(g))); if (!gs.length) continue;
+      chip(grp, sc.name, !fitsOn && !query && sc.name === cur, () => { oldSec = sc.name; go(gs.includes(gFilter) ? gFilter : gs[0])(); }); }
+  }
+  if (fitsOn) { const names = window.V3.plugNames || {}; if (fitsTypes.length + (swapOk ? 1 : 0) > 1) { chip(subs, 'All', !fitsT, () => { fitsT = null; libUI(); }); if (swapOk) chip(subs, '⇄ Swap this part', fitsT === 'swap', () => { fitsT = 'swap'; libUI(); }); for (const t of fitsTypes) chip(subs, '＋ ' + (names[t] || t), fitsT === t, () => { fitsT = t; libUI(); }); } }
+  else if (libTab === 'old' && !query) { const sc = OLD_SECS.find(s => s.name === (oldSec || secOf(gFilter).name)); const gs = sc ? sc.groups.filter(g => okG(g) && (g === 'Free Packs (CC0)' || g === 'My Imports' || has(g))) : [];
+    if (gs.length > 1) for (const g of gs) chip(subs, g, g === gFilter, go(g), g === 'Free Packs (CC0)' || g === 'My Imports' ? null : Object.values(LIB).filter(e => e.group === g && !e.lpv).length); }
+  const subList = [...new Set(Object.values(LIB).filter(e => gFilter === MY ? e.mine : e.group === gFilter).map(e => e.sub))];
+  const subRow = libTab === 'old' && !fitsOn && subs.childElementCount ? tags : subs;   // Old: groups on row 2, sub-kinds on row 3
+  if (!fitsOn && !query && gFilter !== STARTERS_CAT && subList.length > 1) { chip(subRow, 'All', !sFilter, () => { sFilter = null; libUI(); }); for (const s of subList) chip(subRow, s, s === sFilter, () => { sFilter = s; libUI(); }); }
+  tags.style.display = tags.childElementCount ? '' : 'none';
+  [grp, subs, tags].forEach((x, i) => { x.scrollLeft = keepX[i]; const on = x.querySelector('button.on'); if (on && (on.offsetLeft < x.scrollLeft || on.offsetLeft + on.offsetWidth > x.scrollLeft + x.clientWidth)) x.scrollLeft = Math.max(0, on.offsetLeft - 12); });   // strips keep their scroll; the picked chip stays in view
   const gr = $('lib'); gr.innerHTML = '';
-  if (gFilter === 'Free Packs (CC0)' && !query) packButtons(gr);
-  for (const id of visibleIds().slice(0, 240)) { const e = LIB[id], b = document.createElement('button'); b.className = 'item' + (placing === id ? ' on' : '');
-    const img = document.createElement('img'); img.dataset.id = id; img.alt = ''; const fav = (userTags[id] || []).includes('fav'), st = Object.assign(document.createElement('span'), {textContent: fav ? '⭐' : '☆'}); st.style.cssText = 'position:absolute;top:2px;right:4px;font-size:16px';
-    st.onclick = ev => { ev.stopPropagation(); const t = new Set(userTags[id] || []); t.has('fav') ? t.delete('fav') : t.add('fav'); userTags[id] = [...t]; localStorage.setItem('titan-forge-tags', JSON.stringify(userTags)); libUI(); };
-    b.style.position = 'relative'; b.append(img, Object.assign(document.createElement('span'), {textContent: e.name}), st);
-    b.onclick = ev => { const now = ev.timeStamp; if (lastLibTap.id === id && now - lastLibTap.t < 450) { lastLibTap = {}; placing = null; libUI(); boneNumsUI(); return quickAdd(id); } lastLibTap = {id, t: now};
-      placing = placing === id ? null : id; libUI(); boneNumsUI(); if (placing) tip(isAlong(e) && modeBone ? `Tap a bone dot for the ${e.name}` : `Tap the body where the ${e.name} goes`, 4000); };
-    gr.append(b); thumbObs.observe(img); }
-  if (!visibleIds().length && gFilter !== 'Free Packs (CC0)') gr.innerHTML = gFilter === MY ? '<div class="hint">Your own parts land here. Open ⋯ → 🛠 Create Asset (Workshop), build a hand, wing, head… then 💾 Save part.</div>' : '<div class="hint">Nothing here yet.</div>';
+  if (!fitsOn && !query && gFilter === STARTERS_CAT) { for (const st of window.MF_KIT_STARTERS || []) { const b = document.createElement('button'); b.className = 'item starter'; const img = document.createElement('img'); img.dataset.id = st.face; img.alt = '';
+      const sw = document.createElement('div'); sw.className = 'sw'; (st.swatch || []).forEach(c => { const i = document.createElement('i'); i.style.background = c; sw.append(i); });
+      b.append(img, Object.assign(document.createElement('span'), {textContent: st.name}), sw); b.title = st.about || ''; b.onclick = () => window.mfLoadKitStarter(st); gr.append(b); if (thumbCache[st.face]) img.src = thumbCache[st.face]; else thumbObs.observe(img); }
+    $('libHint').textContent = 'Tap a ready-made build to start from it'; return; }
+  if (!fitsOn && gFilter === 'Free Packs (CC0)' && !query) packButtons(gr);
+  const ids = fitsOn ? fitsIds() : visibleIds();
+  for (const id of ids.slice(0, 240)) { const e = LIB[id], b = document.createElement('button'); b.className = 'item' + (placing === id ? ' on' : ''); b.dataset.id = id;
+    const img = document.createElement('img'); img.dataset.id = id; img.alt = ''; const fav = (userTags[id] || []).includes('fav'), st = Object.assign(document.createElement('span'), {textContent: fav ? '★' : '☆', className: 'st' + (fav ? ' fav' : '')});
+    st.onclick = ev => { ev.stopPropagation(); const t = new Set(userTags[id] || []); t.has('fav') ? t.delete('fav') : t.add('fav'); userTags[id] = [...t]; saveTags(); st.textContent = t.has('fav') ? '★' : '☆'; st.classList.toggle('fav', t.has('fav')); };
+    b.style.position = 'relative'; b.append(img, Object.assign(document.createElement('span'), {textContent: e.name}), st); if (e.about) b.title = e.about;
+    b.onclick = ev => { const now = ev.timeStamp;
+      if (fitsOn) { if (placing === id || (lastLibTap.id === id && now - lastLibTap.t < 450)) { lastLibTap = {}; placing = null; window.V3.plugOnPicked(id, fitsT); return; } lastLibTap = {id, t: now}; placing = id; libMark(); boneNumsUI(); return; }
+      if (lastLibTap.id === id && now - lastLibTap.t < 450) { lastLibTap = {}; placing = null; libMark(); boneNumsUI(); return quickAdd(id); } lastLibTap = {id, t: now};
+      placing = placing === id ? null : id; libMark(); boneNumsUI(); };
+    gr.append(b); if (thumbCache[id]) img.src = thumbCache[id]; else thumbObs.observe(img); }
+  if (!ids.length && !(gFilter === 'Free Packs (CC0)' && !query && !fitsOn)) gr.innerHTML = fitsOn ? '<div class="hint">Nothing clicks into the free spots of this part.</div>' : gFilter === MY ? '<div class="hint">Your own parts land here. Open More › 🛠 Workshop, build a hand, wing, head… then 💾 Save part.</div>' : '<div class="hint">Nothing here yet.</div>';
+  libMark();
 }
+document.querySelectorAll('#libTabs button').forEach(b => b.onclick = () => { libTab = b.dataset.lt; try { localStorage.setItem('mf-libtab', libTab); } catch (e) {} fitsOn = false; query = ''; $('search').value = ''; tagFilter = null; sFilter = null;
+  if (libTab === 'parts' && isOldG(gFilter)) gFilter = KIT_GROUPS.find(g => Object.values(LIB).some(e => e.group === g)) || MY;
+  if (libTab === 'old' && !isOldG(gFilter)) { oldSec = null; gFilter = GROUP_ORDER.find(g => isOldG(g) && Object.values(LIB).some(e => e.group === g) && (!window.mfGroupOk || window.mfGroupOk(g))) || 'Basic Shapes & Clay'; }
+  placing = null; libUI(); libTopScroll(); });
+function libTopScroll() { const pn = $('lib').closest('.pane'); if (pn) pn.scrollTop = 0; }
 $('grpToggle').onclick = () => { catsOpen = !catsOpen; libUI(); };
 const lpPartsUI = () => { $('bLPParts').textContent = '🔷 Low-poly parts: ' + (lpParts ? 'on' : 'off'); $('bLPParts').classList.toggle('on', lpParts); }; lpPartsUI();
 $('bLPParts').onclick = () => { lpParts = !lpParts; try { localStorage.setItem('mf-lpparts', lpParts ? '1' : '0'); } catch (x) {} lpPartsUI(); libUI(); tip(lpParts ? 'Showing the low-poly version of every part' : 'Showing the normal smooth parts', 2000); };
@@ -770,10 +816,11 @@ $('fImport').onchange = async e => { for (const f of e.target.files) { tip('Read
   e.target.value = ''; gFilter = 'My Imports'; sFilter = null; libUI(); };
 
 // ====================================================================== selection + outliner
-function select(u) { if (u && u !== sel && navigator.vibrate) try { navigator.vibrate(10); } catch (e) {} const was = sel; sel = u; if (jointSet && u && u !== was) jointApply(false); attachGizmo(); outliner(); syncEdit(); highlight(); if (tab === 'shape') shapeUI(); }
+function select(u) { if (u && u !== sel && navigator.vibrate) try { navigator.vibrate(10); } catch (e) {} const was = sel; sel = u; if (jointSet && u && u !== was) jointApply(false); attachGizmo(); outliner(); syncEdit(); highlight(); if (tab === 'shape') shapeUI();
+  try { if (tab === 'add' && u !== was) { const has = selPlugs().length > 0 || !!selSwap(); if (!has && fitsOn) fitsOn = false; if (fitsOn || has !== lastHasFits) libUI(); } } catch (x) {} }   // T060: the Fits here chip follows the picked part
 let hl = null;
 function highlight() { if (hl) { hl.removeFromParent(); hl = null; } const v = sel && views[sel]; if (!v || !v.meshes.length) return;
-  const box = new THREE.Box3().setFromObject(v.M); hl = new THREE.Box3Helper(box, 0xffd166); hl.material.depthTest = false; hl.renderOrder = 11; scene.add(hl); setTimeout(() => { if (hl) { hl.removeFromParent(); hl = null; } }, 900); }
+  const box = new THREE.Box3().setFromObject(v.M); hl = new THREE.Box3Helper(box, 0xff8a3a); hl.material.depthTest = false; hl.renderOrder = 11; scene.add(hl); setTimeout(() => { if (hl) { hl.removeFromParent(); hl = null; } }, 900); }
 function outliner() {
   const el = $('outliner'); el.innerHTML = '';
   const add = (h) => { const x = document.createElement('h3'); x.textContent = h; el.append(x); };

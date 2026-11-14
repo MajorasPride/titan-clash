@@ -6,7 +6,7 @@
 <title>Mythic Forge</title>
 <script>window.MF_V2 = 1;</script>
 <style>
-  :root{--bg:#18181c;--pn:rgba(28,28,34,.96);--ln:#3a3a46;--tx:#ecebf2;--ac:#ff8a3a;--ac2:#ffd166}
+  :root{--bg:#18181c;--pn:rgba(28,28,34,.96);--ln:#3a3a46;--tx:#ecebf2;--ac:#ff8a3a;--ac2:#d8d4e6}   /* T060: one accent (orange) for what is picked; the second colour is now a calm light grey instead of a competing yellow */
   html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font-family:system-ui,Roboto,sans-serif;color:var(--tx);user-select:none;-webkit-user-select:none}
   #c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
   button{font:600 14px system-ui,sans-serif;color:var(--tx);background:#33333d;border:1px solid #4c4c58;border-radius:10px;padding:8px 11px;min-height:40px;touch-action:manipulation}
@@ -153,6 +153,31 @@
   #guide .gg button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:3px;font-size:11px;line-height:1.1;min-height:92px}#guide .gg img{width:60px;height:60px;border-radius:6px;background:#22222a}
   #guide .gb{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}#guide .gb button{min-height:36px;padding:4px 10px}
   body.guiding #tip{top:auto;bottom:calc(46vh + 56px)} body.guiding #nav{display:none}
+
+  /* T060 calm parts browser: one accent (orange) only marks what is picked; everything else stays neutral. The header keeps one height so nothing jumps. */
+  #libHead{position:sticky;top:0;z-index:3;background:#1c1c22;padding:2px 0 6px;border-bottom:1px solid var(--ln)}
+  .libTop{display:flex;gap:6px;align-items:center}.libTop input{flex:1;min-width:0;margin:0}
+  .seg2{display:flex;border:1px solid var(--ln);border-radius:9px;overflow:hidden;flex:none}
+  .seg2 button{border:0;border-radius:0;margin:0;padding:7px 14px;background:transparent;color:#a9a9b6;font-weight:700}
+  .seg2 button.on{background:#34343e;color:var(--tx);box-shadow:inset 0 -2px 0 var(--ac)}
+  .strip{position:relative;display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;height:34px;align-items:center;margin-top:6px;scrollbar-width:none}
+  .strip::-webkit-scrollbar{display:none}
+  .strip button{flex:none;margin:0;padding:6px 11px;border-radius:16px;background:#26262e;border:1px solid #34343e;color:#c9c9d4;font-size:13px}
+  .strip button.on{background:#26262e;border-color:var(--ac);color:var(--tx);box-shadow:inset 0 0 0 1px var(--ac)}
+  .strip button.fits{border-style:dashed}
+  .strip button .n{color:#7d7d8a;margin-left:5px;font-size:11px}
+  .placeRow{display:flex;gap:6px;align-items:center;margin-top:6px;height:30px}
+  .placeRow button{margin:0;padding:5px 10px;white-space:nowrap;font-size:12.5px;background:#26262e;border:1px solid #34343e;color:#a9a9b6;border-radius:8px}
+  .placeRow button.on{background:#26262e;border-color:#6a6a78;color:var(--tx)}
+  .libHint{margin-left:auto;font-size:12px;color:#8b8b98;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  #p-add .grid{margin-top:8px}
+  #p-add .grid .item{background:#24242c;border:1px solid #31313a;color:#d6d6de;transition:border-color .12s}
+  #p-add .grid .item.on{background:#24242c;border-color:var(--ac);color:var(--tx);box-shadow:inset 0 0 0 1px var(--ac)}
+  #p-add .grid .item img{background:#1d1d23;border-radius:8px}
+  #p-add .grid .item .st{position:absolute;top:2px;right:4px;font-size:14px;color:#6d6d7a}
+  #p-add .grid .item .st.fav{color:var(--ac2)}
+  #p-add .grid .item.starter img{background:#15151a}
+  #p-add .grid .item .sw{display:flex;gap:2px;justify-content:center;margin-top:3px}#p-add .grid .item .sw i{width:10px;height:10px;border-radius:3px;display:block}
 </style>
 </head>
 <body>
@@ -232,17 +257,21 @@
   </div>
 
   <div class="pane on" id="p-add">
-    <div class="how">👉 <b>Press and hold</b> a part, then <b>drag</b> it onto your model. Or tap it, then tap the model. Double-tap = add fast.</div>
-    <div class="seg" id="placeSeg"><button id="bModeBone" class="on">🦴 Snap to bone</button><button id="bModeSurf">✋ Free (where I drop it)</button><button id="bMirrorAdd">🪞 Both sides</button></div>
-    <div class="row"><button id="bWS1">🛠 Workshop (build a part by itself)</button></div>
+    <!-- T060: steady parts browser. The header (Parts | Old, search, category + slot strips) never changes height; only the grid below it scrolls. -->
+    <div id="libHead">
+      <div class="libTop"><div class="seg2" id="libTabs"><button data-lt="parts" class="on">Parts</button><button data-lt="old">Old</button></div>
+        <input type="search" id="search" placeholder="Search parts"></div>
+      <div class="strip" id="groups"></div>
+      <div class="strip" id="subs"></div>
+      <div class="strip" id="tags" style="display:none"></div>
+      <div class="placeRow" id="placeSeg"><button id="bModeBone" class="on" title="Limbs, tails, necks and wings line up with the bone and size to fit">Snap</button><button id="bModeSurf" title="The part goes exactly where you let go">Free</button><button id="bMirrorAdd" title="Add the same part on the other side too">Both sides</button><span class="libHint" id="libHint">Tap a part, then tap the model</span></div>
+    </div>
+    <button id="grpToggle" style="display:none"></button>
     <div id="boxWrap" style="display:none"><div class="lbl">📦 Parts box (tap one, then tap the model)</div><div class="chips" id="boxRow"></div></div>
-    <input type="search" id="search" placeholder="Search parts: skull, wing, fang, sword, TV…">
-    <button id="grpToggle" style="width:100%;text-align:left;margin:4px 0">📂 Categories</button>
-    <div class="cats" id="groups"></div>
-    <div class="chips" id="subs"></div>
-    <div class="chips" id="tags"></div>
     <div class="grid" id="lib"></div>
     <details class="more"><summary>More ▾</summary>
+      <div class="how">Press and hold a part, then drag it onto your model. Or tap it, then tap the model. Double-tap = add fast. With a part picked on the model, the <b>Fits here</b> chip lists only parts that click into it; tap one and it plugs straight in.</div>
+      <div class="row"><button id="bWS1">🛠 Workshop (build a part by itself)</button></div>
       <div class="lbl">Put it on bone # (or tap a dot on the model)</div>
       <div class="chips" id="boneNumsAdd"></div>
       <div class="numctl" id="numCtlAdd"></div>

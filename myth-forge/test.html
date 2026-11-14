@@ -6,7 +6,7 @@
 <title>Mythic Forge</title>
 <script>window.MF_V2 = 1; window.MF_V3 = 1; window.MF_M = 1;</script>
 <style>
-  :root{--bg:#18181c;--pn:rgba(28,28,34,.96);--ln:#3a3a46;--tx:#ecebf2;--ac:#ff8a3a;--ac2:#ffd166}
+  :root{--bg:#18181c;--pn:rgba(28,28,34,.96);--ln:#3a3a46;--tx:#ecebf2;--ac:#ff8a3a;--ac2:#d8d4e6}   /* T060: one accent (orange) for what is picked; the second colour is now a calm light grey instead of a competing yellow */
   html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font-family:system-ui,Roboto,sans-serif;color:var(--tx);user-select:none;-webkit-user-select:none}
   #c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
   button{font:600 14px system-ui,sans-serif;color:var(--tx);background:#33333d;border:1px solid #4c4c58;border-radius:10px;padding:8px 11px;min-height:40px;touch-action:manipulation}
@@ -153,6 +153,31 @@
   #guide .gg button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:3px;font-size:11px;line-height:1.1;min-height:92px}#guide .gg img{width:60px;height:60px;border-radius:6px;background:#22222a}
   #guide .gb{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}#guide .gb button{min-height:36px;padding:4px 10px}
   body.guiding #tip{top:auto;bottom:calc(46vh + 56px)} body.guiding #nav{display:none}
+
+  /* T060 calm parts browser: one accent (orange) only marks what is picked; everything else stays neutral. The header keeps one height so nothing jumps. */
+  #libHead{position:sticky;top:0;z-index:3;background:#1c1c22;padding:2px 0 6px;border-bottom:1px solid var(--ln)}
+  .libTop{display:flex;gap:6px;align-items:center}.libTop input{flex:1;min-width:0;margin:0}
+  .seg2{display:flex;border:1px solid var(--ln);border-radius:9px;overflow:hidden;flex:none}
+  .seg2 button{border:0;border-radius:0;margin:0;padding:7px 14px;background:transparent;color:#a9a9b6;font-weight:700}
+  .seg2 button.on{background:#34343e;color:var(--tx);box-shadow:inset 0 -2px 0 var(--ac)}
+  .strip{position:relative;display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;height:34px;align-items:center;margin-top:6px;scrollbar-width:none}
+  .strip::-webkit-scrollbar{display:none}
+  .strip button{flex:none;margin:0;padding:6px 11px;border-radius:16px;background:#26262e;border:1px solid #34343e;color:#c9c9d4;font-size:13px}
+  .strip button.on{background:#26262e;border-color:var(--ac);color:var(--tx);box-shadow:inset 0 0 0 1px var(--ac)}
+  .strip button.fits{border-style:dashed}
+  .strip button .n{color:#7d7d8a;margin-left:5px;font-size:11px}
+  .placeRow{display:flex;gap:6px;align-items:center;margin-top:6px;height:30px}
+  .placeRow button{margin:0;padding:5px 10px;white-space:nowrap;font-size:12.5px;background:#26262e;border:1px solid #34343e;color:#a9a9b6;border-radius:8px}
+  .placeRow button.on{background:#26262e;border-color:#6a6a78;color:var(--tx)}
+  .libHint{margin-left:auto;font-size:12px;color:#8b8b98;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  #p-add .grid{margin-top:8px}
+  #p-add .grid .item{background:#24242c;border:1px solid #31313a;color:#d6d6de;transition:border-color .12s}
+  #p-add .grid .item.on{background:#24242c;border-color:var(--ac);color:var(--tx);box-shadow:inset 0 0 0 1px var(--ac)}
+  #p-add .grid .item img{background:#1d1d23;border-radius:8px}
+  #p-add .grid .item .st{position:absolute;top:2px;right:4px;font-size:14px;color:#6d6d7a}
+  #p-add .grid .item .st.fav{color:var(--ac2)}
+  #p-add .grid .item.starter img{background:#15151a}
+  #p-add .grid .item .sw{display:flex;gap:2px;justify-content:center;margin-top:3px}#p-add .grid .item .sw i{width:10px;height:10px;border-radius:3px;display:block}
 </style>
 </head>
 <body>
@@ -232,17 +257,21 @@
   </div>
 
   <div class="pane on" id="p-add">
-    <div class="how">👉 <b>Press and hold</b> a part, then <b>drag</b> it onto your model. Or tap it, then tap the model. Double-tap = add fast.</div>
-    <div class="seg" id="placeSeg"><button id="bModeBone" class="on">🦴 Snap to bone</button><button id="bModeSurf">✋ Free (where I drop it)</button><button id="bMirrorAdd">🪞 Both sides</button></div>
-    <div class="row"><button id="bWS1">🛠 Workshop (build a part by itself)</button></div>
+    <!-- T060: steady parts browser. The header (Parts | Old, search, category + slot strips) never changes height; only the grid below it scrolls. -->
+    <div id="libHead">
+      <div class="libTop"><div class="seg2" id="libTabs"><button data-lt="parts" class="on">Parts</button><button data-lt="old">Old</button></div>
+        <input type="search" id="search" placeholder="Search parts"></div>
+      <div class="strip" id="groups"></div>
+      <div class="strip" id="subs"></div>
+      <div class="strip" id="tags" style="display:none"></div>
+      <div class="placeRow" id="placeSeg"><button id="bModeBone" class="on" title="Limbs, tails, necks and wings line up with the bone and size to fit">Snap</button><button id="bModeSurf" title="The part goes exactly where you let go">Free</button><button id="bMirrorAdd" title="Add the same part on the other side too">Both sides</button><span class="libHint" id="libHint">Tap a part, then tap the model</span></div>
+    </div>
+    <button id="grpToggle" style="display:none"></button>
     <div id="boxWrap" style="display:none"><div class="lbl">📦 Parts box (tap one, then tap the model)</div><div class="chips" id="boxRow"></div></div>
-    <input type="search" id="search" placeholder="Search parts: skull, wing, fang, sword, TV…">
-    <button id="grpToggle" style="width:100%;text-align:left;margin:4px 0">📂 Categories</button>
-    <div class="cats" id="groups"></div>
-    <div class="chips" id="subs"></div>
-    <div class="chips" id="tags"></div>
     <div class="grid" id="lib"></div>
     <details class="more"><summary>More ▾</summary>
+      <div class="how">Press and hold a part, then drag it onto your model. Or tap it, then tap the model. Double-tap = add fast. With a part picked on the model, the <b>Fits here</b> chip lists only parts that click into it; tap one and it plugs straight in.</div>
+      <div class="row"><button id="bWS1">🛠 Workshop (build a part by itself)</button></div>
       <div class="lbl">Put it on bone # (or tap a dot on the model)</div>
       <div class="chips" id="boneNumsAdd"></div>
       <div class="numctl" id="numCtlAdd"></div>
@@ -456,15 +485,16 @@ const bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), .4, .45, .92); co
 let useBloom = true;
 
 // ====================================================================== parts library
-const LIB = {}, GROUP_ORDER = ['Base Body', 'Basic Shapes & Clay', 'Part Makers (sliders)', 'Heads & Skulls', 'Jaws & Teeth', 'Horns & Crests', 'Eyes & Faces', 'Necks & Spines', 'Torsos & Bellies', 'Arms & Shoulders', 'Hands & Claws',
-  'Legs & Feet', 'Tails', 'Wings', 'Back & Armor Plates', 'Tentacles & Extra Limbs', 'Bones & Skeleton', 'Mech Heads', 'Mech Eyes & Faces', 'Mech Torso & Core', 'Mech Arms & Legs', 'Mech Details', 'Mecha Dragon', 'Kaiju Kit', 'Turtle Kit', 'Dino Kit', 'New Kits', 'Cloth & Capes', 'Weapons', 'Accessories & Magic', 'Low-Poly Builds', 'Free Packs (CC0)', 'My Imports'];
+const KIT_GROUPS = window.MF_KIT_GROUPS || [];   // T060: the 2.0 kits are the parts list (Parts tab); every other group is under Old
+const LIB = {}, GROUP_ORDER = [...KIT_GROUPS, 'Base Body', 'Basic Shapes & Clay', 'Part Makers (sliders)', 'Heads & Skulls', 'Jaws & Teeth', 'Horns & Crests', 'Eyes & Faces', 'Necks & Spines', 'Torsos & Bellies', 'Arms & Shoulders', 'Hands & Claws',
+  'Legs & Feet', 'Tails', 'Wings', 'Back & Armor Plates', 'Tentacles & Extra Limbs', 'Bones & Skeleton', 'Mech Heads', 'Mech Eyes & Faces', 'Mech Torso & Core', 'Mech Arms & Legs', 'Mech Details', 'Mecha Dragon', 'Kaiju Kit', 'Turtle Kit', 'Dino Kit', 'Cloth & Capes', 'Weapons', 'Accessories & Magic', 'Low-Poly Builds', 'Free Packs (CC0)', 'My Imports'];
 const MY = 'My Parts';
 const ALONG = new Set(['Necks & Spines', 'Arms & Shoulders', 'Legs & Feet', 'Tails', 'Wings', 'Tentacles & Extra Limbs', 'Mech Arms & Legs', 'Heads & Skulls', 'Mech Heads', 'Torsos & Bellies', 'Mech Torso & Core', 'Hands & Claws']);
 const isAlong = e => e.along != null ? e.along : ALONG.has(e.group) || (e.group === 'Mecha Dragon' && /Head|Neck|Wings|Limbs/.test(e.sub)) || e.id === 'md_chest' || e.id === 'md_belly';
 for (const reg of (window.FORGE_PARTS || [])) { try { for (const p of reg(THREE, K)) LIB[p.id] = {...p, src: p.src || 'Made in code for Titan Forge (ours)'}; } catch (e) { console.error('parts file failed', e); } }
 // 🔷 low-poly versions of every body / mech / gear part (Nov 9): lpv_<id>, same group + body slot, faceted with fewer polygons (mech parts a bit finer so they keep their shape)
-const LP_SKIP = /^(New Kits|Base Body|Basic Shapes & Clay|Part Makers \(sliders\)|Free Packs \(CC0\)|My Imports|My Parts|Low-Poly Builds)$/;
-for (const id of Object.keys(LIB)) { const e = LIB[id]; if (LP_SKIP.test(e.group) || e.params || e.lowpoly) continue; const lv = /^Mech |Mecha Dragon/.test(e.group) ? 4 : 2;
+const LP_SKIP = /^(Base Body|Basic Shapes & Clay|Part Makers \(sliders\)|Free Packs \(CC0\)|My Imports|My Parts|Low-Poly Builds)$/;
+for (const id of Object.keys(LIB)) { const e = LIB[id]; if (e.kit2 || LP_SKIP.test(e.group) || e.params || e.lowpoly) continue; const lv = /^Mech |Mecha Dragon/.test(e.group) ? 4 : 2;
   LIB['lpv_' + id] = {...e, id: 'lpv_' + id, name: e.name + ' (low-poly)', lpv: id, tags: [...(e.tags || []), 'low poly'], make: () => pieces(id).map(pc => ({geo: lowpolyGeo(pc.geo, lv), mat: pc.mat, num: pc.num})), _p: undefined};
   e.hasLpv = 'lpv_' + id; }
 let lpParts = false; try { lpParts = localStorage.getItem('mf-lpparts') === '1'; } catch (x) {}
@@ -549,9 +579,9 @@ function groupForBone(n) { const tag = (boneRow(n) || [])[4], mech = MECH_SKELS.
     : {head: 'Heads & Skulls', jaw: 'Jaws & Teeth', neck: 'Necks & Spines', chest: 'Torsos & Bellies', spine: 'Torsos & Bellies', armU: 'Arms & Shoulders', armF: 'Arms & Shoulders', hand: 'Hands & Claws', legU: 'Legs & Feet', legL: 'Legs & Feet', foot: 'Legs & Feet', tail: 'Tails', wingA: 'Wings', wingB: 'Wings', wingC: 'Wings', extra: 'Tentacles & Extra Limbs'};
   const subFor = {foot: /foot|feet|hoof|paw/i, hand: null}; let g = m[tag]; if (g && !Object.values(LIB).some(e => e.group === g)) g = tag === 'tail' ? 'Part Makers (sliders)' : 'Part Makers (sliders)'; return [g, tag]; }
 let manualCat = false;                                          // you picked a category yourself: bones stop changing it until you tap a bone again
-function catForBone(n) { const [g] = groupForBone(n); if (!g) return; gFilter = g; sFilter = null; query = ''; tagFilter = null; $('search').value = ''; catsOpen = false; manualCat = false; if (tab === 'add') libUI(); }
+function catForBone(n) { if (libTab !== 'old') return; const [g] = groupForBone(n); if (!g) return; gFilter = g; sFilter = null; query = ''; tagFilter = null; $('search').value = ''; catsOpen = false; manualCat = false; if (tab === 'add') libUI(); }
 function goBone(n, add) { selBone = n; markBone(); boneNumsUI(); syncBoneUI(); if (!(add && placing)) catForBone(n);
-  if (add && placing) { const lib = placing; placing = null; libUI(); const e = LIB[lib];
+  if (add && placing) { const lib = placing; placing = null; libMark(); const e = LIB[lib];
     if (e.whole) return placeAt({object: {userData: {bone: n}}, point: new THREE.Vector3(), face: null});
     if (addWeaponToPalm(lib, n)) return;
     return addPart(lib, n, [0, 0, 0], [0, 0, 0], isAlong(e) && modeBone ? undefined : 1); }
@@ -817,9 +847,9 @@ const kidRows = n => P.bones.filter(r => r[1] === n);
 const restQOf = r => basisFor(v3(r[3]).sub(v3(r[2])), r[5] && r[5].up);
 const TRUNK_TAGS = new Set(['spine', 'chest']);
 const FAMILY = {armU: 'arm', armF: 'arm', legU: 'leg', legL: 'leg', tail: 'tail', neck: 'neck', wingA: 'wing', wingB: 'wing', wingC: 'wing', extra: 'extra', spine: 'trunk', chest: 'trunk', hand: 'hand', foot: 'foot', head: 'head', jaw: 'jaw'};
-const KITS = /^(New Kits|Mecha Dragon|Kaiju Kit|Dino Kit|Turtle Kit|Free Packs \(CC0\)|My Imports|My Parts|Basic Shapes & Clay|Part Makers \(sliders\))$/;
+const KITS = /^(Mecha Dragon|Kaiju Kit|Dino Kit|Turtle Kit|Free Packs \(CC0\)|My Imports|My Parts|Basic Shapes & Clay|Part Makers \(sliders\))$/;
 function kindOf(e) { if (!e) return null; if (e.fitKind) return e.fitKind; const g = e.group, id = e.id, sub = e.sub || '';
-  if (KITS.test(g) || e.whole || e.params) return null;
+  if (e.kit2 || KITS.test(g) || e.whole || e.params) return null;
   if (g === 'Torsos & Bellies' || (g === 'Mech Torso & Core' && (sub === 'Chests' || sub === 'Frames') && id !== 'mk_torso_collar')) return 'torso';
   if (g === 'Heads & Skulls') return /mane/.test(id) ? 'decor' : 'head';
   if (g === 'Mech Heads') return 'head';
@@ -1044,7 +1074,7 @@ function addWeaponToPalm(lib, bone) { const g = palmGrip(lib, bone); if (!g) ret
 function placeAt(hit) {
   if (window.V3 && hit && hit.point && !window.V3.at) { const q = toScreen(hit.point); window.V3.at = [q[0], q[1]]; }
   if (window.V3) window.V3.hit = (hit && hit.object && hit.object.userData.uid) || null;
-  const lib = placing; placing = null; libUI();
+  const lib = placing; placing = null; libMark();
   let boneName = null;
   if (hit.object.userData.bone) boneName = hit.object.userData.bone;
   else if (hit.object.userData.uid) { const pt = partBy(hit.object.userData.uid); boneName = pt && pt.bone; }
@@ -1063,7 +1093,7 @@ function placeAt(hit) {
 $('bModeBone').onclick = () => { modeBone = true; $('bModeBone').classList.add('on'); $('bModeSurf').classList.remove('on'); };
 $('bModeSurf').onclick = () => { modeBone = false; $('bModeSurf').classList.add('on'); $('bModeBone').classList.remove('on'); };
 $('bMirrorAdd').onclick = e => { mirrorAdd = !mirrorAdd; e.target.classList.toggle('on', mirrorAdd); };
-$('bAddCenter').onclick = () => { const lib = placing || visibleIds()[0]; if (!lib) return; placing = null; libUI();
+$('bAddCenter').onclick = () => { const lib = placing || visibleIds()[0]; if (!lib) return; placing = null; libMark();
   const b = (selBone && bones[selBone] && selBone) || (P.bones.find(b => b[4] === 'chest') || P.bones[0])[0]; addPart(lib, b, [0, 0, 0], [0, 0, 0]); };
 
 // ====================================================================== library UI
@@ -1092,32 +1122,77 @@ function tagEdUI() { const el = $('tagEd'); if (!el) return; const pt = partBy(s
   const hid = (userTags[id] || []).filter(t => t[0] === '-'); if (hid.length) { const r = document.createElement('button'); r.textContent = '↺ Bring back ' + hid.length + ' removed'; r.onclick = () => { userTags[id] = (userTags[id] || []).filter(t => t[0] !== '-'); saveTags(); tagEdUI(); }; el.append(r); } }
 const visibleIds = () => Object.keys(LIB).filter(id => { const e = LIB[id]; if (lpParts ? e.hasLpv : e.lpv) return false; if (!query && tagFilter !== 'fav' && window.mfPartOk && !window.mfPartOk(e)) return false; if (tagFilter && !tagsOf(id).includes(tagFilter)) return false; if (tagFilter === 'fav') return true; if (gFilter === MY && !query) return e.mine && (!sFilter || e.sub === sFilter); if (query) return (e.name + ' ' + e.group + ' ' + e.sub + ' ' + tagsOf(id).join(' ')).toLowerCase().includes(query);
   return e.group === gFilter && (!sFilter || e.sub === sFilter); });
+// T060 parts browser: two tabs. Parts = the 2.0 kits (one category per kit, slot chips) + ⭐ starters + your own parts. Old = every older group + other people's packs.
+// Tapping a part only re-marks the tiles (no rebuild, so nothing blinks or scrolls). With a part picked on the model, "Fits here" lists what clicks into it.
+let libTab = (() => { try { return localStorage.getItem('mf-libtab') || 'parts'; } catch (e) { return 'parts'; } })();
+let oldSec = null, fitsOn = false, fitsT = null;
+const STARTERS_CAT = '★ Starters';
+const isOldG = g => !KIT_GROUPS.includes(g) && g !== MY && g !== STARTERS_CAT;
+const OLD_SECS = (() => { const SEC = {'Base Body': 'Base body', 'Basic Shapes & Clay': 'Clay & sliders', 'Heads & Skulls': 'Creature parts', 'Mech Heads': 'Mech parts', 'Mecha Dragon': 'Kits', 'Cloth & Capes': 'Gear & magic', 'Free Packs (CC0)': 'Packs & imports'};
+  const out = []; let cur = null; for (const g of GROUP_ORDER) { if (KIT_GROUPS.includes(g)) continue; if (SEC[g] || !cur) { cur = {name: SEC[g] || 'Other', groups: []}; out.push(cur); } cur.groups.push(g); } return out; })();
+const secOf = g => (OLD_SECS.find(s => s.groups.includes(g)) || OLD_SECS[0]);
+if (!(KIT_GROUPS.includes(gFilter) || gFilter === MY) && libTab === 'parts') gFilter = KIT_GROUPS[0] || gFilter;
+const selPlugs = () => { const pt = sel && partBy(sel); if (!pt || !window.V3) return []; const used = new Set(P.parts.filter(c => c.host && c.host.u === pt.uid).map(c => c.host.k));
+  return window.V3.plugsOf(pt.lib, pt).filter(q => !used.has(q.id) && !(q.side === 'L' && q.pairOf)); };
+const selSwap = () => { const pt = sel && partBy(sel); if (!pt || !pt.host || !window.V3) return null; const h = partBy(pt.host.u); const pl = h && window.V3.plugsOf(h.lib, h).find(q => q.id === pt.host.k); return pl ? {h, pl, pt} : null; };
+const fitsIds = () => { const ps = fitsT === 'swap' ? [] : selPlugs().filter(q => !fitsT || q.t === fitsT), types = new Set(ps.map(q => q.t)); const sw = (!fitsT || fitsT === 'swap') && selSwap(); if (sw) types.add(sw.pl.t); if (!types.size) return [];
+  return Object.keys(LIB).filter(id => { const e = LIB[id]; if (lpParts ? e.hasLpv : e.lpv) return false; const w = window.V3.plugAsOf(e); return w && [...types].some(t => window.V3.fits(w, t)); })
+    .map(id => { const e = LIB[id], me = sel && partBy(sel), pe = me && LIB[me.lib]; return [id, (e.kit2 ? 0 : 100) + (sw && pe && e.kslot && e.kslot === pe.kslot ? 0 : 10) + (pe && e.kit === pe.kit ? 0 : 1)]; })
+    .sort((x, y) => x[1] - y[1]).map(x => x[0]); };   // same slot as the picked part first, then its own kit, then other kits, older parts last
+function chip(parent, text, on, click, n, cls) { const b = document.createElement('button'); b.textContent = text; if (n) b.append(Object.assign(document.createElement('span'), {className: 'n', textContent: n})); if (on) b.classList.add('on'); if (cls) b.classList.add(cls); b.onclick = click; parent.append(b); return b; }
+function libMark() { document.querySelectorAll('#lib .item[data-id]').forEach(b => b.classList.toggle('on', b.dataset.id === placing));
+  const e = placing && LIB[placing]; $('libHint').textContent = e ? (fitsOn ? 'Tap ' + e.name + ' again to plug it in' : isAlong(e) && modeBone ? 'Tap a bone dot for the ' + e.name : 'Tap the model where the ' + e.name + ' goes') : fitsOn ? 'Tap a part to plug it in' : 'Tap a part, then tap the model'; }
+let lastHasFits = false;
 function libUI() {
-  const groups = [MY, ...GROUP_ORDER].filter(g => !window.mfGroupOk || window.mfGroupOk(g)).filter(g => g === 'Free Packs (CC0)' || g === 'My Imports' || g === MY || Object.values(LIB).some(e => e.group === g));
-  const SEC = {'My Parts': '⭐ YOURS', 'Basic Shapes & Clay': '🧱 START FROM CLAY + SLIDER MAKERS', 'Heads & Skulls': '🐲 CREATURE PARTS', 'Mech Heads': '🤖 MECH PARTS', 'Mecha Dragon': '🐉 KITS', 'New Kits': '🧩 2.0 KITS (made in Blender)', 'Weapons': '⚔️ GEAR & MAGIC', 'Free Packs (CC0)': '📦 FREE MODEL PACKS'};
-  $('grpToggle').textContent = (catsOpen ? '📂 Categories ▴' : '📂 ' + (query ? 'Search results' : gFilter) + '  ▾ (tap for all categories)'); $('groups').style.display = catsOpen ? '' : 'none';
-  $('groups').innerHTML = ''; for (const g of groups) { if (SEC[g]) $('groups').append(Object.assign(document.createElement('div'), {className: 'sec', textContent: SEC[g]}));
-    const n = Object.values(LIB).filter(e => !(lpParts ? e.hasLpv : e.lpv) && (g === MY ? e.mine : e.group === g)).length, b = document.createElement('button');
-    b.textContent = g + (n ? ` ${n}` : ''); b.className = !query && g === gFilter ? 'on' : ''; b.onclick = () => { gFilter = g; sFilter = null; query = ''; tagFilter = null; $('search').value = ''; catsOpen = false; manualCat = true; libUI(); }; $('groups').append(b); }
-  const subs = [...new Set(Object.values(LIB).filter(e => gFilter === MY ? e.mine : e.group === gFilter).map(e => e.sub))];
-  $('subs').innerHTML = ''; if (!query && subs.length > 1) for (const s of [null, ...subs]) { const b = document.createElement('button'); b.textContent = s || 'All'; b.className = s === sFilter ? 'on' : ''; b.onclick = () => { sFilter = s; libUI(); }; $('subs').append(b); }
-  const cnt = {}; Object.keys(LIB).filter(id => query ? true : (gFilter === MY ? LIB[id].mine : LIB[id].group === gFilter)).forEach(id => tagsOf(id).forEach(t => cnt[t] = (cnt[t] || 0) + 1));
-  const top = Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, 24).map(x => x[0]); if (tagFilter && !top.includes(tagFilter)) top.unshift(tagFilter);
-  $('tags').innerHTML = ''; for (const t of top) { const b = document.createElement('button'); b.textContent = '#' + t; b.className = t === tagFilter ? 'on' : ''; b.onclick = () => { tagFilter = tagFilter === t ? null : t; libUI(); }; $('tags').append(b); }
-  { const b = document.createElement('button'); b.textContent = '＋ tag'; b.onclick = () => { if (!placing) return tip('Tap a part in the grid first, then ＋ tag'); const t = (prompt('Add tags to ' + LIB[placing].name + ' (comma separated)') || '').toLowerCase().split(',').map(x => x.trim().replace(/^#/, '')).filter(Boolean);
-    if (!t.length) return; userTags[placing] = [...new Set([...(userTags[placing] || []), ...t])]; localStorage.setItem('titan-forge-tags', JSON.stringify(userTags)); libUI(); tip('Tagged'); }; $('tags').append(b); }
-  { const b = document.createElement('button'); b.textContent = '⭐ favorites'; b.className = tagFilter === 'fav' ? 'on' : ''; b.onclick = () => { tagFilter = tagFilter === 'fav' ? null : 'fav'; query = tagFilter ? ' ' : ''; libUI(); }; $('tags').prepend(b); }
+  lastHasFits = selPlugs().length > 0 || !!selSwap();
+  document.querySelectorAll('#libTabs button').forEach(b => b.classList.toggle('on', b.dataset.lt === libTab));
+  const has = g => g === MY || Object.values(LIB).some(e => e.group === g);
+  const okG = g => !window.mfGroupOk || window.mfGroupOk(g) || KIT_GROUPS.includes(g);
+  const grp = $('groups'), subs = $('subs'), tags = $('tags'), keepX = [grp, subs, tags].map(x => x.scrollLeft); grp.innerHTML = ''; subs.innerHTML = ''; tags.innerHTML = '';
+  const go = g => () => { gFilter = g; sFilter = null; query = ''; tagFilter = null; fitsOn = false; $('search').value = ''; manualCat = true; libUI(); libTopScroll(); };
+  const fitsTypes = [...new Set(selPlugs().map(q => q.t))], swapOk = !!selSwap();
+  if ((fitsTypes.length || swapOk) && !query) chip(grp, '🔌 Fits here', fitsOn, () => { fitsOn = !fitsOn; fitsT = null; placing = null; libUI(); }, null, 'fits');
+  if (libTab === 'parts') {
+    if (window.MF_KIT_STARTERS && window.MF_KIT_STARTERS.length) chip(grp, STARTERS_CAT, !fitsOn && !query && gFilter === STARTERS_CAT, go(STARTERS_CAT));
+    for (const g of KIT_GROUPS) if (has(g)) chip(grp, g.replace(/ parts$/, ''), !fitsOn && !query && gFilter === g, go(g), Object.values(LIB).filter(e => e.group === g).length);
+    chip(grp, '⭐ Mine', !fitsOn && !query && gFilter === MY, go(MY));
+  } else {
+    const cur = oldSec || secOf(gFilter).name;
+    for (const sc of OLD_SECS) { const gs = sc.groups.filter(g => okG(g) && (g === 'Free Packs (CC0)' || g === 'My Imports' || has(g))); if (!gs.length) continue;
+      chip(grp, sc.name, !fitsOn && !query && sc.name === cur, () => { oldSec = sc.name; go(gs.includes(gFilter) ? gFilter : gs[0])(); }); }
+  }
+  if (fitsOn) { const names = window.V3.plugNames || {}; if (fitsTypes.length + (swapOk ? 1 : 0) > 1) { chip(subs, 'All', !fitsT, () => { fitsT = null; libUI(); }); if (swapOk) chip(subs, '⇄ Swap this part', fitsT === 'swap', () => { fitsT = 'swap'; libUI(); }); for (const t of fitsTypes) chip(subs, '＋ ' + (names[t] || t), fitsT === t, () => { fitsT = t; libUI(); }); } }
+  else if (libTab === 'old' && !query) { const sc = OLD_SECS.find(s => s.name === (oldSec || secOf(gFilter).name)); const gs = sc ? sc.groups.filter(g => okG(g) && (g === 'Free Packs (CC0)' || g === 'My Imports' || has(g))) : [];
+    if (gs.length > 1) for (const g of gs) chip(subs, g, g === gFilter, go(g), g === 'Free Packs (CC0)' || g === 'My Imports' ? null : Object.values(LIB).filter(e => e.group === g && !e.lpv).length); }
+  const subList = [...new Set(Object.values(LIB).filter(e => gFilter === MY ? e.mine : e.group === gFilter).map(e => e.sub))];
+  const subRow = libTab === 'old' && !fitsOn && subs.childElementCount ? tags : subs;   // Old: groups on row 2, sub-kinds on row 3
+  if (!fitsOn && !query && gFilter !== STARTERS_CAT && subList.length > 1) { chip(subRow, 'All', !sFilter, () => { sFilter = null; libUI(); }); for (const s of subList) chip(subRow, s, s === sFilter, () => { sFilter = s; libUI(); }); }
+  tags.style.display = tags.childElementCount ? '' : 'none';
+  [grp, subs, tags].forEach((x, i) => { x.scrollLeft = keepX[i]; const on = x.querySelector('button.on'); if (on && (on.offsetLeft < x.scrollLeft || on.offsetLeft + on.offsetWidth > x.scrollLeft + x.clientWidth)) x.scrollLeft = Math.max(0, on.offsetLeft - 12); });   // strips keep their scroll; the picked chip stays in view
   const gr = $('lib'); gr.innerHTML = '';
-  if (gFilter === 'Free Packs (CC0)' && !query) packButtons(gr);
-  for (const id of visibleIds().slice(0, 240)) { const e = LIB[id], b = document.createElement('button'); b.className = 'item' + (placing === id ? ' on' : '');
-    const img = document.createElement('img'); img.dataset.id = id; img.alt = ''; const fav = (userTags[id] || []).includes('fav'), st = Object.assign(document.createElement('span'), {textContent: fav ? '⭐' : '☆'}); st.style.cssText = 'position:absolute;top:2px;right:4px;font-size:16px';
-    st.onclick = ev => { ev.stopPropagation(); const t = new Set(userTags[id] || []); t.has('fav') ? t.delete('fav') : t.add('fav'); userTags[id] = [...t]; localStorage.setItem('titan-forge-tags', JSON.stringify(userTags)); libUI(); };
-    b.style.position = 'relative'; b.append(img, Object.assign(document.createElement('span'), {textContent: e.name}), st);
-    b.onclick = ev => { const now = ev.timeStamp; if (lastLibTap.id === id && now - lastLibTap.t < 450) { lastLibTap = {}; placing = null; libUI(); boneNumsUI(); return quickAdd(id); } lastLibTap = {id, t: now};
-      placing = placing === id ? null : id; libUI(); boneNumsUI(); if (placing) tip(isAlong(e) && modeBone ? `Tap a bone dot for the ${e.name}` : `Tap the body where the ${e.name} goes`, 4000); };
-    gr.append(b); thumbObs.observe(img); }
-  if (!visibleIds().length && gFilter !== 'Free Packs (CC0)') gr.innerHTML = gFilter === MY ? '<div class="hint">Your own parts land here. Open ⋯ → 🛠 Create Asset (Workshop), build a hand, wing, head… then 💾 Save part.</div>' : '<div class="hint">Nothing here yet.</div>';
+  if (!fitsOn && !query && gFilter === STARTERS_CAT) { for (const st of window.MF_KIT_STARTERS || []) { const b = document.createElement('button'); b.className = 'item starter'; const img = document.createElement('img'); img.dataset.id = st.face; img.alt = '';
+      const sw = document.createElement('div'); sw.className = 'sw'; (st.swatch || []).forEach(c => { const i = document.createElement('i'); i.style.background = c; sw.append(i); });
+      b.append(img, Object.assign(document.createElement('span'), {textContent: st.name}), sw); b.title = st.about || ''; b.onclick = () => window.mfLoadKitStarter(st); gr.append(b); if (thumbCache[st.face]) img.src = thumbCache[st.face]; else thumbObs.observe(img); }
+    $('libHint').textContent = 'Tap a ready-made build to start from it'; return; }
+  if (!fitsOn && gFilter === 'Free Packs (CC0)' && !query) packButtons(gr);
+  const ids = fitsOn ? fitsIds() : visibleIds();
+  for (const id of ids.slice(0, 240)) { const e = LIB[id], b = document.createElement('button'); b.className = 'item' + (placing === id ? ' on' : ''); b.dataset.id = id;
+    const img = document.createElement('img'); img.dataset.id = id; img.alt = ''; const fav = (userTags[id] || []).includes('fav'), st = Object.assign(document.createElement('span'), {textContent: fav ? '★' : '☆', className: 'st' + (fav ? ' fav' : '')});
+    st.onclick = ev => { ev.stopPropagation(); const t = new Set(userTags[id] || []); t.has('fav') ? t.delete('fav') : t.add('fav'); userTags[id] = [...t]; saveTags(); st.textContent = t.has('fav') ? '★' : '☆'; st.classList.toggle('fav', t.has('fav')); };
+    b.style.position = 'relative'; b.append(img, Object.assign(document.createElement('span'), {textContent: e.name}), st); if (e.about) b.title = e.about;
+    b.onclick = ev => { const now = ev.timeStamp;
+      if (fitsOn) { if (placing === id || (lastLibTap.id === id && now - lastLibTap.t < 450)) { lastLibTap = {}; placing = null; window.V3.plugOnPicked(id, fitsT); return; } lastLibTap = {id, t: now}; placing = id; libMark(); boneNumsUI(); return; }
+      if (lastLibTap.id === id && now - lastLibTap.t < 450) { lastLibTap = {}; placing = null; libMark(); boneNumsUI(); return quickAdd(id); } lastLibTap = {id, t: now};
+      placing = placing === id ? null : id; libMark(); boneNumsUI(); };
+    gr.append(b); if (thumbCache[id]) img.src = thumbCache[id]; else thumbObs.observe(img); }
+  if (!ids.length && !(gFilter === 'Free Packs (CC0)' && !query && !fitsOn)) gr.innerHTML = fitsOn ? '<div class="hint">Nothing clicks into the free spots of this part.</div>' : gFilter === MY ? '<div class="hint">Your own parts land here. Open More › 🛠 Workshop, build a hand, wing, head… then 💾 Save part.</div>' : '<div class="hint">Nothing here yet.</div>';
+  libMark();
 }
+document.querySelectorAll('#libTabs button').forEach(b => b.onclick = () => { libTab = b.dataset.lt; try { localStorage.setItem('mf-libtab', libTab); } catch (e) {} fitsOn = false; query = ''; $('search').value = ''; tagFilter = null; sFilter = null;
+  if (libTab === 'parts' && isOldG(gFilter)) gFilter = KIT_GROUPS.find(g => Object.values(LIB).some(e => e.group === g)) || MY;
+  if (libTab === 'old' && !isOldG(gFilter)) { oldSec = null; gFilter = GROUP_ORDER.find(g => isOldG(g) && Object.values(LIB).some(e => e.group === g) && (!window.mfGroupOk || window.mfGroupOk(g))) || 'Basic Shapes & Clay'; }
+  placing = null; libUI(); libTopScroll(); });
+function libTopScroll() { const pn = $('lib').closest('.pane'); if (pn) pn.scrollTop = 0; }
 $('grpToggle').onclick = () => { catsOpen = !catsOpen; libUI(); };
 const lpPartsUI = () => { $('bLPParts').textContent = '🔷 Low-poly parts: ' + (lpParts ? 'on' : 'off'); $('bLPParts').classList.toggle('on', lpParts); }; lpPartsUI();
 $('bLPParts').onclick = () => { lpParts = !lpParts; try { localStorage.setItem('mf-lpparts', lpParts ? '1' : '0'); } catch (x) {} lpPartsUI(); libUI(); tip(lpParts ? 'Showing the low-poly version of every part' : 'Showing the normal smooth parts', 2000); };
@@ -1191,10 +1266,11 @@ $('fImport').onchange = async e => { for (const f of e.target.files) { tip('Read
   e.target.value = ''; gFilter = 'My Imports'; sFilter = null; libUI(); };
 
 // ====================================================================== selection + outliner
-function select(u) { if (u && u !== sel && navigator.vibrate) try { navigator.vibrate(10); } catch (e) {} const was = sel; sel = u; if (jointSet && u && u !== was) jointApply(false); attachGizmo(); outliner(); syncEdit(); highlight(); if (tab === 'shape') shapeUI(); }
+function select(u) { if (u && u !== sel && navigator.vibrate) try { navigator.vibrate(10); } catch (e) {} const was = sel; sel = u; if (jointSet && u && u !== was) jointApply(false); attachGizmo(); outliner(); syncEdit(); highlight(); if (tab === 'shape') shapeUI();
+  try { if (tab === 'add' && u !== was) { const has = selPlugs().length > 0 || !!selSwap(); if (!has && fitsOn) fitsOn = false; if (fitsOn || has !== lastHasFits) libUI(); } } catch (x) {} }   // T060: the Fits here chip follows the picked part
 let hl = null;
 function highlight() { if (hl) { hl.removeFromParent(); hl = null; } const v = sel && views[sel]; if (!v || !v.meshes.length) return;
-  const box = new THREE.Box3().setFromObject(v.M); hl = new THREE.Box3Helper(box, 0xffd166); hl.material.depthTest = false; hl.renderOrder = 11; scene.add(hl); setTimeout(() => { if (hl) { hl.removeFromParent(); hl = null; } }, 900); }
+  const box = new THREE.Box3().setFromObject(v.M); hl = new THREE.Box3Helper(box, 0xff8a3a); hl.material.depthTest = false; hl.renderOrder = 11; scene.add(hl); setTimeout(() => { if (hl) { hl.removeFromParent(); hl = null; } }, 900); }
 function outliner() {
   const el = $('outliner'); el.innerHTML = '';
   const add = (h) => { const x = document.createElement('h3'); x.textContent = h; el.append(x); };
@@ -2718,6 +2794,7 @@ function autoPlugs(lib) { if (autoCache[lib]) return autoCache[lib]; const e = L
   return autoCache[lib] = out; }
 function plugsOf(lib, pt) { const e = LIB[lib]; let base = e && e.plugs ? e.plugs : autoPlugs(lib); if (pt && pt.plugs && pt.plugs.length) base = base.concat(pt.plugs); return base; }
 V3X.plugsOf = plugsOf; V3X.plugAsOf = plugAsOf;
+V3X.plugNames = PLUG_NAMES;
 const fits = (want, t) => want === t || t === 'any' || (want === 'finger' && t === 'toe') || (want === 'fang' && t === 'teeth') || (want === 'horn' && (t === 'crest' || t === 'antenna')) || (want === 'claw' && t === 'finger') || (want === 'back' && t === 'belly');
 // size normalisation for some plug types (a part's own size -> standard size)
 function plugNorm(lib, t) { const b = partBoxOf(lib), sz = b.getSize(new THREE.Vector3()); if (t === 'eye') return .52 / Math.max(.2, Math.max(sz.x, sz.y));
@@ -2766,6 +2843,17 @@ function findPlug(lib, bone, sx, sy) { const want = plugAsOf(LIB[lib]); if (!wan
   const order = c => (lastSeg(c) ? 0 : 100) + (near(bone).includes(c.h.bone) ? 0 : famOfBone(c.h.bone) === famOfBone(bone) ? 1 : 2) * 10 + (c.used ? 5 : 0) + (c.pl.side === 'L' ? 1 : 0) + (c.h.bone && c.h.bone.endsWith('.L') ? 2 : 0);
   return all.sort((a, b) => order(a) - order(b))[0]; }
 V3X.findPlug = findPlug;
+V3X.fits = (want, t) => fits(want, t);
+// T060 "Fits here": plug a library part straight into the part picked on the model (its first free matching plug, right side first; Both sides adds the mirror twin)
+V3X.plugOnPicked = (lib, onlyT) => { const host = partBy(sel), e = LIB[lib]; if (!host || !e) return false; const want = plugAsOf(e); if (!want) return false;
+  let c = onlyT === 'swap' ? null : scenePlugs(want).filter(q => q.h.uid === host.uid && !q.used && !q.pl.id.endsWith('~') && (!onlyT || q.pl.t === onlyT)).sort((a, b) => (a.pl.side === 'L' ? 1 : 0) - (b.pl.side === 'L' ? 1 : 0))[0], swap = false;
+  if (!c && host.host && (!onlyT || onlyT === 'swap')) { const h2 = partBy(host.host.u), pl2 = h2 && plugsOf(h2.lib, h2).find(q => q.id === host.host.k); if (pl2 && fits(want, pl2.t)) { const keep = P.parts.filter(k => k.host && k.host.u === host.uid); c = {h: h2, pl: pl2, used: host}; swap = keep; } }   // ⇄ swap the picked part
+  if (!c) { tip('No free spot for the ' + e.name + ' on this part', 2000); return false; }
+  if (swap) { const m = mirrorAdd; mirrorAdd = !!(c.pl.pairOf || c.h.twin || host.twin); snap(); const kids = swap, tw = twinOf(host), twKids = tw ? P.parts.filter(k => k.host && k.host.u === tw.uid) : [];
+    V3X.keepKids = true; let pt; try { pt = plugIn(lib, c); } finally { V3X.keepKids = false; } mirrorAdd = m; kids.forEach(k => k.host.u = pt.uid); const nt = pt.twin && partBy(pt.twin); twKids.forEach(k => { if (nt) k.host.u = nt.uid; });
+    V3X.adopt(pt); V3X.orphans(); P.parts.forEach(k => { if (k.host && (k.host.u === pt.uid || (nt && k.host.u === nt.uid))) { seat(k); } }); rebuildParts(); select(pt.uid); outliner(); saveCur(); libUI(); tip('⇄ Swapped in the ' + e.name + (pt.twin ? ' (both sides)' : ''), 1800); return pt; }
+  const m = mirrorAdd; if (c.pl.pairOf) mirrorAdd = true; snap(); const pt = plugIn(lib, c); mirrorAdd = m; if (window.V3.afterPlug) window.V3.afterPlug(pt);
+  outliner(); saveCur(); libUI(); tip('🔌 ' + e.name + ' plugged into the ' + (PLUG_NAMES[c.pl.t] || c.pl.t) + (pt.twin ? ' (both sides)' : ''), 1800); return pt; };
 // plug a library part in (with a mirrored twin on the paired plug); returns the new part or null
 function plugIn(lib, c, opts = {}) { const {h, pl} = c; if (c.used && !opts.keep) removeParts([c.used]);
   const pt = newPart(lib, h.bone, [0, 0, 0], [0, 0, 0]); pt.host = {u: h.uid, k: pl.id}; seat(pt); P.parts.push(pt);
@@ -2915,7 +3003,8 @@ function numLabelsUI() { if (numLabels) { numLabels.removeFromParent(); numLabel
   for (const [num, mis] of nums) { if (num === 0) continue; const b = new THREE.Box3(); mis.forEach(mi => { pcs[mi].geo.computeBoundingBox(); b.union(pcs[mi].geo.boundingBox); }); const c = b.getCenter(new THREE.Vector3());
     const sp = numberSprite(num); sp.material = sp.material.clone(); sp.material.depthTest = false; sp.material.sizeAttenuation = false; sp.renderOrder = 30; const w = c.clone().applyMatrix4(v.M.matrixWorld); sp.position.copy(w); sp.scale.set(.04, .04, 1); numLabels.add(sp); }
   scene.add(numLabels); }
-function v3PaintUI() { let el = $('v3paint'); if (!el) { el = document.createElement('div'); el.id = 'v3paint'; $('paintNow').after(el); }
+function v3PaintUI() { { let ge = $('k2glow'); if (!ge && $('paintNow')) { ge = document.createElement('div'); ge.id = 'k2glow'; $('paintNow').after(ge); } const gp = partBy(sel); if (ge) { ge.innerHTML = ''; if (gp && window.mfGlowUI) window.mfGlowUI(ge, gp); } }   // ✦ T060 glow slot, always in view for kit parts
+  let el = $('v3paint'); if (!el) { el = document.createElement('div'); el.id = 'v3paint'; $('paintNow').after(el); }
   const pt = partBy(sel), e = pt && LIB[pt.lib]; el.innerHTML = ''; if (!pt || !e) return numLabelsUI();
   const h = (tag, html, cls) => { const x = document.createElement(tag); x.innerHTML = html; if (cls) x.className = cls; el.append(x); return x; };
   const nums = numsOf(pt);
@@ -3160,6 +3249,73 @@ if ($('bPaintAll')) { const b = Object.assign(document.createElement('button'), 
     if (P.mode !== window.mfMode()) { window.mfSetModeRaw(P.mode); relist(); } else ui(); };
   watch(); setInterval(watch, 400);
   window.__mode = {set: (m, u) => window.mfSetMode(m, u), cur: () => window.mfMode(), of: k => window.mfModeOf(k), buddy: () => !!(buddy && buddy.visible), tc: () => tcBtn.style.display !== 'none'}; }
+
+// ====================================================================== ⭐ T060: one-tap kit starters (Q054). Clicks a kit's sample build together through its plugs, paints it in its scheme, stands it on the floor.
+{ const POSE = {wing_in: [0, 0, 105]};   // degrees on the plug; the left side is mirrored
+  const ROOTS = ['pelvis', 'hips', 'body', 'trunk'], WING = new Set(['wing_in', 'wing_out', 'wing']), HEADY = new Set(['head']);
+  const slotOf = id => (LIB[id] || {}).kslot;
+  function pickChild(st, host, pl, state) { const hs = slotOf(host.lib), m = pl.id.match(/^(.*?)(?:_(\d+\w?))?(?:_([RL]))?$/), nm = m[1], numbered = m[2] != null;
+    if (nm === 'coat') return st.coat || null;
+    if (nm === 'back' && numbered) return hs === 'neck' || hs === 'head' || hs === 'tail' ? (st.back && slotOf(st.back) === 'back' ? st.back : null) : st.back || null;
+    const ids = st.ids.filter(id => LIB[id]), want = id => plugAsOf(LIB[id]), ok = id => { const w = want(id); return w && fits(w, pl.t); };
+    if (WING.has(hs)) { const c = ids.filter(id => ok(id) && ['wing_out', 'feathers', 'hand'].includes(slotOf(id)) && (slotOf(id) !== 'hand' || /wing_thumb/.test(id))); return c[0] || null; }
+    if (pl.t === 'weapon') return pl.side === 'L' || state.weapon ? null : (state.weapon = ids.find(id => ['melee', 'gun'].includes(slotOf(id))) || null);
+    if (pl.t === 'k-shield') return pl.side === 'L' || state.shield ? null : (state.shield = ids.find(id => slotOf(id) === 'shield') || null);
+    if (pl.t === 'k-pod') return ids.find(id => slotOf(id) === 'mount') || null;
+    if (pl.t === 'k-neck') { const heads = st.heads.length ? st.heads : ids.filter(id => slotOf(id) === 'head'), neck = ids.find(id => slotOf(id) === 'neck');
+      if (hs === 'neck' || !neck) { const h = heads[state.head % Math.max(1, heads.length)]; state.head++; return h || null; } return neck; }
+    if (pl.t === 'k-jaw') return ids.find(id => slotOf(id) === 'jaw') || null;
+    if (pl.t === 'k-tail') { const tails = ids.filter(id => ['tail', 'tail_tip'].includes(slotOf(id))); const i = tails.indexOf(host.lib); return i < 0 ? (hs === 'tail' || hs === 'tail_tip' ? null : tails[0] || null) : tails[i + 1] || null; }
+    if (pl.t === 'k-hand') return ids.find(id => slotOf(id) === 'hand' && !/wing_thumb/.test(id)) || null;
+    if (pl.t === 'k-arm') { const pref = hs === 'shoulder' ? ['upperarm', 'arm_up'] : ['shoulder', 'upperarm', 'arm_up']; for (const s of pref) { const c = ids.find(id => slotOf(id) === s && ok(id)); if (c) return c; } return null; }
+    if (pl.t === 'horn' || pl.t === 'crest') return HEADY.has(hs) ? ids.find(id => ['horn', 'crest'].includes(slotOf(id)) && ok(id)) || null : null;
+    return ids.find(id => slotOf(id) !== hs && ok(id) && !ROOTS.includes(slotOf(id))) || null; }
+  function paintScheme(pt, scheme) { const e = LIB[pt.lib]; if (!e || !e.patterns) return; const want = scheme.replace(/_/g, ' ').toLowerCase(); const k = Object.keys(e.patterns).find(n => n.toLowerCase() === want); if (!k) return;
+    for (const [n, c] of Object.entries(e.patterns[k])) setNum(pt, +n, 'col:' + c); }
+  window.mfLoadKitStarter = st => { if (P.parts.length && !confirm('Start from ' + st.name + '? Your current build is replaced (save it first with ⋯ if you want it).')) return;
+    const keep = mirrorAdd; snap(); P = blankProject('none'); P.name = st.name; rebuildSkeleton(); rebuildParts(); boneHelpers.forEach(bh => bh.visible = false);   // kit builds hang off their own plugs; the lone root bone stick would only clutter the view
+    const rootId = st.ids.find(id => LIB[id] && ROOTS.includes(slotOf(id))); if (!rootId) return tip('This starter is missing its body part');
+    const root = newPart(rootId, null, [0, 0, 0], [0, 0, 0], 1); P.parts.push(root); buildPart(root);
+    const state = {head: 0, weapon: null, shield: null}, queue = [root]; let guard = 0;
+    while (queue.length && guard++ < 160) { const h = queue.shift();
+      for (const pl of plugsOf(h.lib, h)) { if ((pl.side === 'L' && pl.pairOf) || pl.id.endsWith('~')) continue; if (P.parts.some(c => c.host && c.host.u === h.uid && c.host.k === pl.id)) continue;
+        const id = pickChild(st, h, pl, state); if (!id || !LIB[id]) continue;
+        mirrorAdd = !!pl.pairOf || !!h.twin; if (pl.t === 'weapon' || pl.t === 'k-shield') mirrorAdd = false;
+        let use = pl; const pose = POSE[slotOf(id)];
+        if (pose && pl.o === 'frame') { const pid = pl.id + '~', tw = pl.pairOf, tp = tw && plugsOf(h.lib, h).find(q => q.id === tw); h.plugs = h.plugs || [];   // pose it like the kit pictures (wings spread): a posed copy of the plug on this host
+          use = {...pl, id: pid, r: pose, pairOf: tp ? tw + '~' : undefined}; h.plugs.push(use); if (tp) h.plugs.push({...tp, id: tw + '~', r: [pose[0], -pose[1], -pose[2]], pairOf: pid}); }
+        const pt = plugIn(id, {h, pl: use}); if (pt && plugsOf(id, pt).length) queue.push(pt); } }
+    mirrorAdd = keep;
+    for (const pt of P.parts) paintScheme(pt, st.scheme);
+    // stand it on the floor: lift the root so the lowest point touches y = 0, then re-seat everything
+    skelRoot.updateMatrixWorld(true); const b = new THREE.Box3(); for (const pt of P.parts) { const v = views[pt.uid]; if (v && v.M) b.expandByObject(v.M); }
+    if (!b.isEmpty()) { root.p = [0, +(-b.min.y).toFixed(3), 0]; for (const pt of P.parts) if (pt.host) seat(pt); rebuildParts(); }
+    sel = null; P.fx.bg = P.fx.bg || 'studio'; applyFX(); outliner(); saveCur(); frameAll(); if (tab === 'add') libUI();
+    tip(st.name + ' ready (' + P.parts.length + ' parts) — tap a part, then 🔌 Fits here to swap or add pieces', 3200); };
+}
+
+// ====================================================================== ✦ T060: glow slot. Pick which numbered bits of a kit part shine and in what colour (default = the part's element colour). Preview on the dark night look with bloom.
+{ const GK = /G([0-9a-fA-F]{6})(?:x([\d.]+))?/;
+  const keyOf = (pt, num) => { const mi = (numsOf(pt).get(num) || [])[0]; return mi == null ? null : (pt.mat && pt.mat[mi]) || pieces(pt.lib, pt.params)[mi].mat; };
+  const elementCol = (pt) => { const e = LIB[pt.lib]; if (!e || !e.pbnNames) return '#ffcf3a'; for (const nm of ['glow', 'eye', 'crystal', 'fire', 'storm', 'venom']) { const i = e.pbnNames.indexOf(nm); if (i >= 0) { const k = keyOf(pt, i + 1); if (k && k.startsWith('col:')) return k.slice(4, 11); } } return '#ffcf3a'; };
+  const glowOf = pt => { for (const [n] of numsOf(pt)) { const k = keyOf(pt, n), g = k && k.match(GK); if (g) return {col: '#' + g[1], k: g[2] ? +g[2] : 2.2}; } return null; };
+  const setGlow = (pt, num, on, col, k) => { const cur = keyOf(pt, num) || ''; let base = cur.startsWith('col:') ? cur.replace(GK, '').replace(/:+$/, '') : 'col:' + curCol(pt, (numsOf(pt).get(num) || [0])[0]);
+    if (on) base = base + (base.slice(4).includes(':') ? '' : ':') + 'G' + col.slice(1) + (k && k !== 2.2 ? 'x' + k : ''); setNum(pt, num, base); };
+  window.mfGlowUI = (el, pt) => { const e = LIB[pt.lib]; if (!e || !e.kit2) return; const nums = [...numsOf(pt).keys()].filter(n => n > 0).sort((a, b) => a - b); if (!nums.length) return;
+    const g = glowOf(pt), col = g ? g.col : elementCol(pt), k = g ? g.k : 2.2;
+    const box = document.createElement('div'); box.className = 'how'; box.innerHTML = '✦ <b>Glow</b> — tap the bits that shine (veins, plates, eyes, light strips, seams). One glow colour per part.'; el.append(box);
+    const r = document.createElement('div'); r.className = 'row'; r.style.flexWrap = 'wrap'; el.append(r);
+    for (const n of nums) { const on = GK.test(keyOf(pt, n) || ''), b = document.createElement('button'); b.textContent = (on ? '✦ ' : '') + n + ' ' + ((e.pbnNames || [])[n - 1] || ''); if (on) b.className = 'on';
+      b.onclick = () => { snap(); setGlow(pt, n, !on, col, k); saveCur(); v3PaintUI(); }; r.append(b); }
+    const r2 = document.createElement('div'); r2.className = 'row'; r2.style.alignItems = 'center'; el.append(r2);
+    const ci = Object.assign(document.createElement('input'), {type: 'color', value: col}); ci.style.cssText = 'width:38px;height:30px;border:0;background:none;padding:0';
+    const sl = Object.assign(document.createElement('input'), {type: 'range', min: '0.5', max: '5', step: '0.1', value: String(k)}); sl.style.flex = '1';
+    const apply = () => { snap(); for (const n of nums) if (GK.test(keyOf(pt, n) || '')) setGlow(pt, n, true, ci.value, +sl.value); saveCur(); };
+    ci.onchange = () => { apply(); v3PaintUI(); }; sl.onchange = apply;
+    r2.append(Object.assign(document.createElement('span'), {textContent: 'Colour', className: 'hint'}), ci, Object.assign(document.createElement('span'), {textContent: 'Strength', className: 'hint'}), sl);
+    const night = P.fx.bg === 'neon' && P.fx.glow, nb = Object.assign(document.createElement('button'), {textContent: night ? '☀ Back to studio' : '🌙 Night preview (bloom)'}); if (night) nb.className = 'on';
+    nb.onclick = () => { if (night) { P.fx.bg = P.fx.prevBg || 'studio'; } else { P.fx.prevBg = P.fx.bg; P.fx.bg = 'neon'; P.fx.glow = true; } applyFX(); saveCur(); v3PaintUI(); }; const r3 = document.createElement('div'); r3.className = 'row'; r3.append(nb); el.append(r3); };
+}
 
 // ====================================================================== 📱 M (Nov 9 2026 5pm, TEST PAGE ONLY: window.MF_M)
 // Inlined after forge-core.js + forge-v3.js into test.html by build.py, so it shares their scope (P, LIB, views, select, paint, tab...).
