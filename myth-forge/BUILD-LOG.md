@@ -3,6 +3,17 @@
 Live: https://majoraspride.github.io/titan-clash/myth-forge/ · Newest first. Every change gets a line here (what was built + what still needs fixing).
 Deeper technical notes for Claude are in `README.md` (same folder).
 
+## Nov 13, 2026 (T049): the 2.0 kits are in the parts library (New Kits tab)
+- **What:** the six Blender kits (mech 57, kaiju 88, weapons 25, dragon 74, hydra 37 + 12 shared with the dragon and kaiju kits, tree shepherd 42 = 323 parts) are in the library in their own **New Kits** category, next to the old parts, in every mode (Creature, Character, Prop, Titan, Blank). One sub-tab per kit; tags for the slot (#head, #tail, #shin...).
+- **Plugs:** every kit part carries the kit's plugs. Drop a hips / body / trunk part, then tap the next part: it clicks into its plug (hip, knee, ankle, waist, neck, jaw, shoulder, elbow, wrist, tail, wing, back, crown, face). Left-side plugs mirror right-side parts. Kaiju plates, fur, tree moss and leaves go on the back / coat plugs; kit weapons go in a kit hand (grip), shields on a forearm, pods on a shoulder. Old horns, crests and back plates fit the new heads and bodies too.
+- **Hitboxes:** each part keeps its box + capsule at Forge size (`LIB[id].hitbox`), ready for the sandbox (T050). Not drawn on screen yet.
+- **Colours:** each kit material is a paint-by-number colour; every kit colour scheme (Vanguard, Gorunda, Oak...) is a one-tap pattern on the part.
+- **Size:** kit units x 2.4. Kit parts are already low-poly, so they have no extra low-poly copy and always show faceted.
+- **Files:** new `parts/k2-kits.js` (loader) + `parts/k2-mech.js`, `k2-kaiju.js`, `k2-weapons.js`, `k2-dragon.js`, `k2-hydra.js`, `k2-tree.js` (data, about 2 MB together, loaded with the page), `tools/kits2js.py` (rebuilds the data files from the kit json), `tools/kits.js` (test). Changed: `forge-core.js` (category lists), `forge-v3.js` (plug names; a right-side kit part on a left plug is mirrored), `modes.js` (Prop shows New Kits), `build.py`, `index.html`, `test.html`.
+- **Tested:** `node kits.js pc` and `phone`: 22/22 each (all 323 parts build, no inside-out or empty parts, a figure from each kit clicks together through the plugs with the left side mirrored, no page errors); `node modes.js pc` 22/22; `node walk.js pc simple biped` PASS.
+- **Not done / next:** the kits' ready-made sample builds (Vanguard, Gorunda, RAGNAVOX...) are not one-tap starters yet (parts click together unposed; the kit poses are not applied). A wing used as an arm (wyvern, RAGNAVOX) has to be placed by hand on the shoulder. Hitboxes are not drawn. The kit `.glb` files are not used: the json already holds the same meshes.
+- **Not pushed from the scheduled run** (no push access): bundle in Drive, needs a chat or the PC courier to publish. T040 (open in Blank) is also still unpushed and is NOT in this build (two versions exist, Q052).
+
 ## 👉 START HERE (handoff for a new chat, updated Nov 13 2026 — after T035 modes (Creature, Character, Prop, Titan, Blank) and T031 wings / fins fit; before that Nov 10 2:40am: paint round (🌫 whole-creature Blend, 🧽 Eraser, skins in every brush) and the 2am round (one-part adding, 37 basic shapes, ✖ Multiply + curve))
 - **BUILD METHOD (MajorasPride, Nov 9 3pm). Follow this, it keeps chats cheap:**
   1. Read ONLY this START HERE section, then start working. Don't re-read the whole README / log / review unless the task needs it.

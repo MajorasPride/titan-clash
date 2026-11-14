@@ -4,7 +4,7 @@
 (function () {
   const TITAN = ['biped', 'kaiju', 'mech', 'walker', 'tank', 'bone_colossus', 'primordial', 'chained_titan'];
   const CHARACTER = ['slim', 'brute', 'fourarm', 'angel', 'centaur', 'naga', 'naga_coil', 'naga_four', 'sixarm', 'cosmic_god', 'sea_god', 'death_god', 'city_god', 'reaper', 'shade', 'demon', 'construct', 'turtle2'];
-  const PROP_GROUPS = ['Basic Shapes & Clay', 'Part Makers (sliders)', 'Weapons', 'Accessories & Magic', 'Cloth & Capes', 'Mech Details', 'Low-Poly Builds', 'My Parts', 'My Imports', 'Free Packs (CC0)'];
+  const PROP_GROUPS = ['Basic Shapes & Clay', 'Part Makers (sliders)', 'Weapons', 'Accessories & Magic', 'Cloth & Capes', 'Mech Details', 'Low-Poly Builds', 'New Kits', 'My Parts', 'My Imports', 'Free Packs (CC0)'];
   const TITAN_ONLY_GROUP = /^(Mech |Mecha Dragon|Kaiju Kit)/;   // mech parts, the mecha dragon and kaiju kits
   const TITAN_ONLY_SUB = ['Mech weapons'];                        // missile pod, energy blade, energy shield
   const MODES = {
