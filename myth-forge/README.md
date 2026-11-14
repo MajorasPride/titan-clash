@@ -8,6 +8,7 @@ MajorasPride's creature + mech builder for Titan Clash. Open `index.html` (GitHu
 
 ## Files
 - `index.html` (live) and `test.html` — BUILT files (do not edit by hand), **the same build since Nov 9 2026 (2.0 round 1)**: page.html + V3 part files + forge-core.js + forge-v3.js + forge-m.js. Run `python3 build.py` after editing any of them. MajorasPride (Nov 9, 5:37pm): no test-page gate, build straight into the real page. The old live page (no V3) is `archive/index-live-before-2.0-nov9.html`.
+- `prop-edit.js` — 🫧 Soft move (proportional edit, T036): parts in ✋ Move & size and points in 🔷 Low-poly; built in after forge-m.js.
 - `forge-m.js` — 📱 phone layout, 🎬 Studio button, ◎ tool wheels, 🔖 Mark tool (test page only; see the Nov 9 6pm section at the end).
 - `page.html` — page + UI. `forge-core.js` — the editor (inlined into index.html / test.html by build.py so it works from file://).
 - `k-helpers.js` — geometry helper kit `K` used by every parts file. `materials.js` — procedural textures (ours) + triplanar shader. `skeletons.js` — body types.
@@ -62,6 +63,7 @@ MajorasPride's creature + mech builder for Titan Clash. Open `index.html` (GitHu
 ## Credits
 - Texture Pack by Lynocs (CC0 1.0) — Tree Bark. Thank you, Lynocs!
 - Quaternius packs (CC0) — see packs/index.js.
+- 🫧 Soft move (T036) is our own code, after the idea of Blender's proportional edit (no Blender code used). Libraries planned next: SculptGL (MIT) brush ideas, three-bvh-csg + three-mesh-bvh (MIT) for Slice / Carve.
 
 - **Candy** skins (Nov 9, ours, made in code): candy cane, peppermint swirl, pink frosting + sprinkles, chocolate glaze + sprinkles, chocolate bar, cotton candy, marshmallow, honeycomb toffee, waffle cone, licorice, jelly bean, caramel, rainbow lollipop, vanilla frosting, gummy (red/green/blue/orange, see-through), rock candy, hard candy. No free 3D candy texture pack worth using turned up (mostly 2D candy icons), so these are original.
 - **Toy** skins (Nov 9, ours): 'Toys: clear plastic' (see-through toy plastic like clear-block toys: red, yellow, green, blue, purple, pink, orange, smoke, crystal), 'Toys: army men' (molded plastic: green, tan, grey, blue, red, black), 'Toys: plastic' (glossy toy-brick red/yellow/blue/green/white/black/orange/purple, vinyl figure, glitter plastic).

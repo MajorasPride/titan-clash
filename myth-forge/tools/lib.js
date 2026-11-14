@@ -19,7 +19,7 @@ async function open(size = 'phone', file = 'test.html') {
     fs.readFile(f, (e, d) => e ? route.fulfill({status: 404}) : route.fulfill({status: 200, contentType: 'text/javascript', body: d})); });
   await ctx.route(/^https?:\/\/(?!127\.0\.0\.1|localhost|cdn\.jsdelivr)/, r => r.abort());
   const page = await ctx.newPage(); const errs = [];
-  page.on('pageerror', e => errs.push(String(e.message).slice(0, 300)));
+  page.on('pageerror', e => errs.push(String(e.stack || e.message).slice(0, 600)));
   page.on('dialog', d => d.accept());
   await page.addInitScript(() => { const raf = window.requestAnimationFrame.bind(window); let q = []; window.__free = false; window.requestAnimationFrame = f => { if (window.__free) return raf(f); q.push(f); return q.length; }; window.__frames = n => { for (let i = 0; i < n; i++) { const qq = q; q = []; const t = performance.now(); qq.forEach(f => { try { f(t); } catch (e) { console.error(e); } }); } }; try { localStorage.setItem('mf-tour2-done', '1'); localStorage.setItem('mf-m-intro', '1'); localStorage.setItem('mf-tour-done', '1'); } catch (e) {} });
   await page.goto(`http://127.0.0.1:${port}/${file}`);
