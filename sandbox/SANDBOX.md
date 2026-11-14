@@ -23,6 +23,18 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 27 (Nov 13, 2026, T050): kit bodies for the core six
+Status: **testing**. Code: `sandbox/src/27-kit-bodies.js` + `27-kit-bodies-data.js` (written by `sandbox/tools/kit_bodies_data.py` from the kit json files). Sandbox only, the game keeps the old bodies.
+- VALOR, ASHVIN, RAIKOU (mech kit), INFERNOTH (kaiju kit, crystal back), RAGNAVOX (hydra kit: three heads, wings as arms) and WORLDROOT (tree shepherd kit, great oak) are rebuilt from the Blender kits. The old joints stay, so every move, pose and ultimate drives the new body: the old shapes are hidden, each joint moves to the kit's plug, and the kit part hangs on that joint.
+- Weapons kit: VALOR holds the kit great sword and kite shield, RAIKOU the kit katana. ASHVIN keeps the bow-staff (the weapons kit has no staff).
+- **KIT HITBOXES:** every kit part brings its hitbox. A limb hit (claw, fist, foot, jaw, tail, sword, staff) lands only if it sweeps through one of the rival's part boxes. Beams, stomps and other no-limb moves keep the old check.
+- **LIMB DAMAGE:** the damage of a hit is counted on the part it landed on (head, body, each arm or wing, each leg, tail). At 10% of the titan's health on one part it looks scorched, at 22% badly scorched, with sparks and a callout. Looks only: no stat changes yet (T052 decides what a hurt limb does).
+- ⚙ section **2.0 KIT BODIES**: KIT BODIES ↻ (off = the old bodies), KIT HITBOXES, LIMB DAMAGE, SHOW KIT HITBOXES (yellow limbs, red head, blue body).
+- RAIKOU, RAGNAVOX and WORLDROOT can be picked as YOU or DUMMY in the sandbox (still hidden / off the roster in the game). WORLDROOT has his new body but no move kit: he uses the basic kaiju attacks.
+- Sandbox 26 (Neon City kit test, branch city-kit-test) is merged in under this build.
+- Headless test: all six build with no page errors; a limb hit landed on a kit box of each of the six; far swings (distance 30) miss; KIT BODIES off brings the old bodies back. Builds chosen: VALOR = Vanguard sheet and colours, ASHVIN = Falcon sheet in his own colours, RAIKOU = knight torso + layered shoulders in his own colours, INFERNOTH / RAGNAVOX / WORLDROOT = the kit's own builds and colour schemes.
+- Not done: RAGNAVOX's side heads do not bite or turn (only the centre head is on the head joint); VALOR's rifle and thrown shield keep their old look; kit poses (the kit's own stance angles) are not used, the game's poses drive the parts; no pods or cannons.
+
 ### Sandbox 25 (Nov 13, 2026): HEAVY FEEL ("make them feel bigger")
 MajorasPride wanted to feel the punches: giants carrying their mass, bigger and not faster than normal fighters. References: Pacific Rim (thrown through buildings, sent flying), Attack on Titan, Transformers, early Hunt: Showdown ("slow yet impactful"), Elden Ring. He picked all four feel parts, all four fight tools (next build) and "a bit slower". File: `src/25-heavy-feel.js`. Every part has its own switch in ⚙ > HEAVY FEEL (NEW), plus ALL OFF / ON to compare.
 - **HIT WEIGHT:** lights get a short freeze and a small shake, heavies and enders a long freeze and a big shake (lights 0.035s, heavies up to 0.26s; tested: INFERNOTH's jaw grab went from 0.06s to 0.25s). Heavies do +15% damage and push 20% farther, lights do -15%.
