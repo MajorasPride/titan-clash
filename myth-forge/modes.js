@@ -15,7 +15,7 @@
     blank: {name: '✨ Blank', word: 'build', hint: 'Make anything: every body type and every part.'}};
   const mine = k => typeof k === 'string' && (k.startsWith('mix_') || k.startsWith('my_') || /^★/.test(((window.FORGE_SKEL || {})[k] || {}).name || ''));
   const modeOf = skel => !skel || skel === 'none' ? 'prop' : TITAN.includes(skel) ? 'titan' : CHARACTER.includes(skel) ? 'character' : 'creature';
-  let cur = 'creature'; try { const m = localStorage.getItem('mf-mode'); if (MODES[m]) cur = m; } catch (e) {}
+  let cur = 'blank'; try { const m = localStorage.getItem('mf-mode'); if (MODES[m]) cur = m; } catch (e) {}
   window.MF_MODES = MODES;
   window.mfModeOf = modeOf;
   window.mfMode = () => cur;
