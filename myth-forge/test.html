@@ -236,7 +236,7 @@
 
 <div id="sheet">
   <div id="grab">Mythic Forge</div>
-  <div class="tops" id="tops"><button data-top="start">🏁 Start</button><button data-top="build" class="on">🧩 Build</button><button data-top="paint">🎨 Paint</button><button data-top="sculpt">🗿 Sculpt</button><button data-top="more" class="gear" title="Skeleton, pose, view">⚙</button></div>
+  <div class="tops" id="tops"><button data-top="build" class="on">🧩 Build</button><button data-top="paint">🎨 Paint</button><button data-top="sculpt">🗿 Sculpt</button><button data-top="studio">🎬 Studio</button><button data-top="more" title="Start, skeleton, pose, view">⚙ More</button></div>
   <div class="tabs sub" id="subtabs">
     <button data-tab="start">Start</button>
     <button data-tab="add" class="on">＋ Add parts</button><button data-tab="edit">✋ Move &amp; size</button>
@@ -2161,15 +2161,16 @@ function floatPart(pt, v) { const wp = new THREE.Vector3(); v.G.getWorldPosition
   tip('Floating here' + (bn ? ' — it moves with the ' + niceBone(bn) : ''), 1800); }
 if (window.MF_V2) {
   // ---- main tabs: Start / Build / Paint / Sculpt / ⚙ ; each holds one or two of the old panes
-  const GROUPS = {start: ['start'], build: ['add', 'edit'], paint: ['paint'], sculpt: ['sculpt', 'shape'], more: ['skel', 'fx']};
-  const lastSub = {start: 'start', build: 'add', paint: 'paint', sculpt: 'sculpt', more: 'skel'};
+  // UI floor A (Nov 16): same names as the phone bar: Build / Paint / Sculpt / Studio / More (Start sits under More)
+  const GROUPS = {build: ['add', 'edit'], paint: ['paint'], sculpt: ['sculpt', 'shape'], more: ['start', 'skel', 'fx']};
+  const lastSub = {build: 'add', paint: 'paint', sculpt: 'sculpt', more: 'start'};
   const topOf = t => Object.keys(GROUPS).find(g => GROUPS[g].includes(t)) || 'build';
   function syncTops() { const g = topOf(tab); lastSub[g] = tab; let n = 0;
     document.querySelectorAll('#tops button').forEach(b => b.classList.toggle('on', b.dataset.top === g));
     document.querySelectorAll('#subtabs button').forEach(b => { const show = GROUPS[g].includes(b.dataset.tab); b.style.display = show ? '' : 'none'; if (show) n++; });
     $('subtabs').style.display = n > 1 ? '' : 'none'; }
   document.querySelectorAll('#subtabs button').forEach(b => { const f = b.onclick; b.onclick = ev => { f(ev); syncTops(); }; });
-  document.querySelectorAll('#tops button').forEach(b => b.onclick = () => tabBtn(lastSub[b.dataset.top]).click());
+  document.querySelectorAll('#tops button').forEach(b => b.onclick = () => b.dataset.top === 'studio' ? (window.MFM && window.MFM.studio && window.MFM.studio()) : tabBtn(lastSub[b.dataset.top]).click());
   $('bGoBuild').onclick = () => tabBtn('add').click();
   syncTops();
 
@@ -2469,14 +2470,14 @@ if (window.MF_V2) {
   // ---- first-time tour for the new layout
   TOUR.length = 0; TOUR.push(
     {t: 'Welcome to Mythic Forge', p: 'Build creatures, characters, props and titans like a toy: drag parts on, move them around, sculpt and paint. What are you making? (Change it any time in 🏁 Start.)', start: true},
-    {sel: '#tops [data-top="start"]', pre: () => tabBtn('start').click(), t: '🏁 Start', p: 'Pick what you are making (Creature, Character, Prop, Titan or Blank), then starters to remix, empty body types, and body shape sliders. 🎓 Build together walks you from a bare skeleton to a finished one.'},
+    {sel: '#tops [data-top="more"]', pre: () => tabBtn('start').click(), t: '⚙ More › 🏁 Start', p: 'Pick what you are making (Creature, Character, Prop, Titan or Blank), then starters to remix, empty body types, and body shape sliders. 🎓 Build together walks you from a bare skeleton to a finished one.'},
     {sel: '#lib', pre: () => tabBtn('add').click(), t: '🧩 Build › Add parts', p: 'Press and hold a part, then drag it onto your model. (Or tap it, then tap the model. Double-tap = add it fast.)'},
     {sel: '#placeSeg', pre: () => tabBtn('add').click(), t: 'Snap or Free', p: '🦴 Snap lines parts up with the bones and sizes them to fit. ✋ Free puts it exactly where you let go — even floating in the air.'},
     {sel: '#bWS1', pre: () => tabBtn('add').click(), t: '🛠 Workshop', p: 'Build a part on its own, no skeleton: stack shapes, sculpt, paint, then 💾 Save part. It shows up in My Parts to drag onto any creature.'},
     {sel: '[data-tab="edit"]', pre: () => tabBtn('edit').click(), t: '✋ Move & size', p: 'Tap a part to pick it, then drag it. Drop it on the body and it sticks; drop it in the air and it floats. 🎯 Arrows are there for fine-tuning.'},
     {sel: '#copyRow', pre: () => tabBtn('edit').click(), t: '📄 Copy / 📋 Paste', p: 'Copy a part (or all of them) and paste it into another creature or the Workshop.'},
     {sel: '#vtools', t: '🔍 Focus', p: 'These stay on screen: 🔍 shows only the picked part, 🪟 keeps a zoomed window on it.'},
-    {sel: '#tops', t: 'Paint, Sculpt, ⚙', p: '🎨 Paint = skins, brushes and effects. 🗿 Sculpt = push and pull like clay, plus shape sliders. ⚙ = skeleton, poses, view and look.'},
+    {sel: '#tops', t: 'Build, Paint, Sculpt, Studio, More', p: '🧩 Build = add and move parts. 🎨 Paint = skins, brushes and effects. 🗿 Sculpt = push and pull like clay, plus shape sliders. 🎬 Studio = Level Builder, Sketch Pad, FX Lab. ⚙ More = start, skeleton, poses, view and look.'},
     {sel: '#bMenu', t: 'Save + help', p: '⋯ has Save as, Download model, ❓ How to build, and this tour again. Have fun!'});
 }
 window.__dbg = () => ({LIB, SKEL, MATS, FAMILY});   // test hook
@@ -3341,8 +3342,13 @@ if ($('bPaintAll')) { const b = Object.assign(document.createElement('button'), 
   #msub .sp{flex:1}
   body.mfm #vtools{bottom:calc(68px + env(safe-area-inset-bottom))}
   body.mfm.mup #vtools{display:none}
-  body.mfm #tip{top:auto;bottom:calc(72px + env(safe-area-inset-bottom))}
-  body.mfm.mup #tip{bottom:calc(50vh + 72px)}
+  body.mfm #tip{top:58px;bottom:auto}
+  body.mfm.mup #tip{top:58px;bottom:auto}
+  body.mfm .top button{min-width:44px;min-height:44px;font-size:18px}
+  body.mfm #vtools > :not(#bWheelV):not(#bTrash):not(#bStanceV){display:none!important}
+  body.mfm #vtools #bTrash{display:none}
+  body.mfm.hassel #vtools #bTrash{display:block!important;min-height:48px;min-width:48px;border-radius:24px}
+  body.mfm #bWheelV{min-width:56px;min-height:56px;border-radius:28px;font-size:13px}
   body.mfm.guiding #mbar,body.mfm.full #mbar{display:none}
   body.mfm .top h1{display:none}
   body.mfm.guiding:not(.gside) #vtools{bottom:calc(56vh + 8px)}
@@ -3394,10 +3400,11 @@ if ($('bPaintAll')) { const b = Object.assign(document.createElement('button'), 
   const LS = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} return null; };
 
   // ------------------------------------------------------------------ 1. phone layout
-  const TOOLS = {add: ['add'], select: ['edit', 'shape'], paint: ['paint'], sculpt: ['sculpt', 'shape'], more: ['start', 'skel', 'fx']};
-  const TOOL_BTN = [['add', '＋', 'Add'], ['select', '👆', 'Select'], ['paint', '🎨', 'Paint'], ['sculpt', '🗿', 'Sculpt'], ['more', '⚙', 'More']];
+  // UI floor A (Nov 16): same 5 names on phone + PC: Build / Paint / Sculpt / Studio / More (Studio opens its own space, it is not a tool)
+  const TOOLS = {build: ['add', 'edit'], paint: ['paint'], sculpt: ['sculpt', 'shape'], more: ['start', 'skel', 'fx']};
+  const TOOL_BTN = [['build', '🧩', 'Build'], ['paint', '🎨', 'Paint'], ['sculpt', '🗿', 'Sculpt'], ['studio', '🎬', 'Studio'], ['more', '⚙', 'More']];
   const TAB_NAME = {add: '＋ Add parts', edit: '✋ Move & size', shape: '🎚 Shape sliders', paint: '🎨 Paint', sculpt: '🗿 Sculpt', start: '🏁 Start', skel: '🦴 Skeleton & pose', fx: '👁 View & look'};
-  let tool = 'add', pinned = LS('mf-m-pin') === '1';
+  let tool = 'build', pinned = LS('mf-m-pin') === '1';
   const bar = mk('div', {id: 'mbar'}); document.body.append(bar);
   const msub = mk('div', {id: 'msub'}); $('grab').after(msub);
   const up = () => document.body.classList.contains('mup');
@@ -3405,7 +3412,7 @@ if ($('bPaintAll')) { const b = Object.assign(document.createElement('button'), 
   const hiddenBehind = () => { try { const b = new THREE.Box3().setFromObject(skelRoot); if (b.isEmpty()) return false; const c = b.getCenter(new THREE.Vector3()).project(camera), y = (1 - c.y) / 2 * innerHeight; return y > $('sheet').getBoundingClientRect().top - 30; } catch (e) { return false; } };
   const setUp = on => { if (up() === !!on) return; document.body.classList.toggle('mup', !!on); setTimeout(() => { resize(); if (on && hiddenBehind()) frameAll(); }, 200); barUI(); };
   const toolOf = t => (TOOLS[tool].includes(t) ? tool : Object.keys(TOOLS).find(k => TOOLS[k].includes(t))) || 'more';
-  function barUI() { bar.innerHTML = ''; for (const [k, ic, name] of TOOL_BTN) bar.append(mk('button', {className: k === tool ? 'on' : '', onclick: () => setTool(k, !(k === tool && up()))}, mk('i', {textContent: ic}), name + (k === tool && up() ? ' ▾' : '')));
+  function barUI() { bar.innerHTML = ''; for (const [k, ic, name] of TOOL_BTN) bar.append(mk('button', {className: k === tool ? 'on' : '', onclick: () => k === 'studio' ? studioOpen() : setTool(k, !(k === tool && up()))}, mk('i', {textContent: ic}), name + (k === tool && up() ? ' ▾' : '')));
     msub.innerHTML = ''; const tabs = TOOLS[tool]; if (tabs.length > 1) for (const t of tabs) msub.append(mk('button', {textContent: TAB_NAME[t], className: t === tab ? 'on' : '', onclick: () => click(tabBtn(t))}));
     else msub.append(mk('b', {textContent: TAB_NAME[tabs[0]], style: 'font-size:13px;padding:0 4px'}));
     msub.append(mk('span', {className: 'sp'}), mk('button', {textContent: pinned ? '📌 Stays open' : '📌', title: 'Keep this open while I work on the model', className: pinned ? 'on' : '', onclick: () => { pinned = !pinned; LS('mf-m-pin', pinned ? '1' : '0'); barUI(); tip(pinned ? '📌 The menu stays open while you work' : 'The menu tucks away when you touch the model', 2200); }}),
@@ -3437,7 +3444,8 @@ if ($('bPaintAll')) { const b = Object.assign(document.createElement('button'), 
       const c = mk('a', {className: 'card' + (here ? ' here' : '')}, mk('i', {textContent: ICONS[name] || '🧰'}), name, mk('small', {textContent: here ? 'You are here' : sm ? sm.textContent : ''}));
       if (here) c.onclick = () => studio.classList.remove('open'); else { c.href = a.getAttribute('href'); if (a.target) { c.target = a.target; c.rel = 'noopener'; } } cards.append(c); });
     studio.classList.add('open'); }
-  const bStudio = mk('button', {id: 'bStudio', textContent: '🎬 Studio', onclick: studioOpen}); $('bList').after(bStudio); M.studio = studioOpen;
+  M.studio = studioOpen;
+  setInterval(() => document.body.classList.toggle('hassel', !!sel), 250);   // phone: 🗑 shows only while a part is picked   // UI floor A: Studio lives in the bottom bar (phone) and the main tabs (PC), not the top bar
 
   // ------------------------------------------------------------------ 3. radial tool wheels
   const R = 126, R0 = 38, MAXS = 8;

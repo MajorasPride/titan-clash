@@ -22,8 +22,13 @@
   #msub .sp{flex:1}
   body.mfm #vtools{bottom:calc(68px + env(safe-area-inset-bottom))}
   body.mfm.mup #vtools{display:none}
-  body.mfm #tip{top:auto;bottom:calc(72px + env(safe-area-inset-bottom))}
-  body.mfm.mup #tip{bottom:calc(50vh + 72px)}
+  body.mfm #tip{top:58px;bottom:auto}
+  body.mfm.mup #tip{top:58px;bottom:auto}
+  body.mfm .top button{min-width:44px;min-height:44px;font-size:18px}
+  body.mfm #vtools > :not(#bWheelV):not(#bTrash):not(#bStanceV){display:none!important}
+  body.mfm #vtools #bTrash{display:none}
+  body.mfm.hassel #vtools #bTrash{display:block!important;min-height:48px;min-width:48px;border-radius:24px}
+  body.mfm #bWheelV{min-width:56px;min-height:56px;border-radius:28px;font-size:13px}
   body.mfm.guiding #mbar,body.mfm.full #mbar{display:none}
   body.mfm .top h1{display:none}
   body.mfm.guiding:not(.gside) #vtools{bottom:calc(56vh + 8px)}
@@ -75,10 +80,11 @@
   const LS = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} return null; };
 
   // ------------------------------------------------------------------ 1. phone layout
-  const TOOLS = {add: ['add'], select: ['edit', 'shape'], paint: ['paint'], sculpt: ['sculpt', 'shape'], more: ['start', 'skel', 'fx']};
-  const TOOL_BTN = [['add', '＋', 'Add'], ['select', '👆', 'Select'], ['paint', '🎨', 'Paint'], ['sculpt', '🗿', 'Sculpt'], ['more', '⚙', 'More']];
+  // UI floor A (Nov 16): same 5 names on phone + PC: Build / Paint / Sculpt / Studio / More (Studio opens its own space, it is not a tool)
+  const TOOLS = {build: ['add', 'edit'], paint: ['paint'], sculpt: ['sculpt', 'shape'], more: ['start', 'skel', 'fx']};
+  const TOOL_BTN = [['build', '🧩', 'Build'], ['paint', '🎨', 'Paint'], ['sculpt', '🗿', 'Sculpt'], ['studio', '🎬', 'Studio'], ['more', '⚙', 'More']];
   const TAB_NAME = {add: '＋ Add parts', edit: '✋ Move & size', shape: '🎚 Shape sliders', paint: '🎨 Paint', sculpt: '🗿 Sculpt', start: '🏁 Start', skel: '🦴 Skeleton & pose', fx: '👁 View & look'};
-  let tool = 'add', pinned = LS('mf-m-pin') === '1';
+  let tool = 'build', pinned = LS('mf-m-pin') === '1';
   const bar = mk('div', {id: 'mbar'}); document.body.append(bar);
   const msub = mk('div', {id: 'msub'}); $('grab').after(msub);
   const up = () => document.body.classList.contains('mup');
@@ -86,7 +92,7 @@
   const hiddenBehind = () => { try { const b = new THREE.Box3().setFromObject(skelRoot); if (b.isEmpty()) return false; const c = b.getCenter(new THREE.Vector3()).project(camera), y = (1 - c.y) / 2 * innerHeight; return y > $('sheet').getBoundingClientRect().top - 30; } catch (e) { return false; } };
   const setUp = on => { if (up() === !!on) return; document.body.classList.toggle('mup', !!on); setTimeout(() => { resize(); if (on && hiddenBehind()) frameAll(); }, 200); barUI(); };
   const toolOf = t => (TOOLS[tool].includes(t) ? tool : Object.keys(TOOLS).find(k => TOOLS[k].includes(t))) || 'more';
-  function barUI() { bar.innerHTML = ''; for (const [k, ic, name] of TOOL_BTN) bar.append(mk('button', {className: k === tool ? 'on' : '', onclick: () => setTool(k, !(k === tool && up()))}, mk('i', {textContent: ic}), name + (k === tool && up() ? ' ▾' : '')));
+  function barUI() { bar.innerHTML = ''; for (const [k, ic, name] of TOOL_BTN) bar.append(mk('button', {className: k === tool ? 'on' : '', onclick: () => k === 'studio' ? studioOpen() : setTool(k, !(k === tool && up()))}, mk('i', {textContent: ic}), name + (k === tool && up() ? ' ▾' : '')));
     msub.innerHTML = ''; const tabs = TOOLS[tool]; if (tabs.length > 1) for (const t of tabs) msub.append(mk('button', {textContent: TAB_NAME[t], className: t === tab ? 'on' : '', onclick: () => click(tabBtn(t))}));
     else msub.append(mk('b', {textContent: TAB_NAME[tabs[0]], style: 'font-size:13px;padding:0 4px'}));
     msub.append(mk('span', {className: 'sp'}), mk('button', {textContent: pinned ? '📌 Stays open' : '📌', title: 'Keep this open while I work on the model', className: pinned ? 'on' : '', onclick: () => { pinned = !pinned; LS('mf-m-pin', pinned ? '1' : '0'); barUI(); tip(pinned ? '📌 The menu stays open while you work' : 'The menu tucks away when you touch the model', 2200); }}),
@@ -118,7 +124,8 @@
       const c = mk('a', {className: 'card' + (here ? ' here' : '')}, mk('i', {textContent: ICONS[name] || '🧰'}), name, mk('small', {textContent: here ? 'You are here' : sm ? sm.textContent : ''}));
       if (here) c.onclick = () => studio.classList.remove('open'); else { c.href = a.getAttribute('href'); if (a.target) { c.target = a.target; c.rel = 'noopener'; } } cards.append(c); });
     studio.classList.add('open'); }
-  const bStudio = mk('button', {id: 'bStudio', textContent: '🎬 Studio', onclick: studioOpen}); $('bList').after(bStudio); M.studio = studioOpen;
+  M.studio = studioOpen;
+  setInterval(() => document.body.classList.toggle('hassel', !!sel), 250);   // phone: 🗑 shows only while a part is picked   // UI floor A: Studio lives in the bottom bar (phone) and the main tabs (PC), not the top bar
 
   // ------------------------------------------------------------------ 3. radial tool wheels
   const R = 126, R0 = 38, MAXS = 8;

@@ -1711,15 +1711,16 @@ function floatPart(pt, v) { const wp = new THREE.Vector3(); v.G.getWorldPosition
   tip('Floating here' + (bn ? ' — it moves with the ' + niceBone(bn) : ''), 1800); }
 if (window.MF_V2) {
   // ---- main tabs: Start / Build / Paint / Sculpt / ⚙ ; each holds one or two of the old panes
-  const GROUPS = {start: ['start'], build: ['add', 'edit'], paint: ['paint'], sculpt: ['sculpt', 'shape'], more: ['skel', 'fx']};
-  const lastSub = {start: 'start', build: 'add', paint: 'paint', sculpt: 'sculpt', more: 'skel'};
+  // UI floor A (Nov 16): same names as the phone bar: Build / Paint / Sculpt / Studio / More (Start sits under More)
+  const GROUPS = {build: ['add', 'edit'], paint: ['paint'], sculpt: ['sculpt', 'shape'], more: ['start', 'skel', 'fx']};
+  const lastSub = {build: 'add', paint: 'paint', sculpt: 'sculpt', more: 'start'};
   const topOf = t => Object.keys(GROUPS).find(g => GROUPS[g].includes(t)) || 'build';
   function syncTops() { const g = topOf(tab); lastSub[g] = tab; let n = 0;
     document.querySelectorAll('#tops button').forEach(b => b.classList.toggle('on', b.dataset.top === g));
     document.querySelectorAll('#subtabs button').forEach(b => { const show = GROUPS[g].includes(b.dataset.tab); b.style.display = show ? '' : 'none'; if (show) n++; });
     $('subtabs').style.display = n > 1 ? '' : 'none'; }
   document.querySelectorAll('#subtabs button').forEach(b => { const f = b.onclick; b.onclick = ev => { f(ev); syncTops(); }; });
-  document.querySelectorAll('#tops button').forEach(b => b.onclick = () => tabBtn(lastSub[b.dataset.top]).click());
+  document.querySelectorAll('#tops button').forEach(b => b.onclick = () => b.dataset.top === 'studio' ? (window.MFM && window.MFM.studio && window.MFM.studio()) : tabBtn(lastSub[b.dataset.top]).click());
   $('bGoBuild').onclick = () => tabBtn('add').click();
   syncTops();
 
@@ -2019,14 +2020,14 @@ if (window.MF_V2) {
   // ---- first-time tour for the new layout
   TOUR.length = 0; TOUR.push(
     {t: 'Welcome to Mythic Forge', p: 'Build creatures, characters, props and titans like a toy: drag parts on, move them around, sculpt and paint. What are you making? (Change it any time in 🏁 Start.)', start: true},
-    {sel: '#tops [data-top="start"]', pre: () => tabBtn('start').click(), t: '🏁 Start', p: 'Pick what you are making (Creature, Character, Prop, Titan or Blank), then starters to remix, empty body types, and body shape sliders. 🎓 Build together walks you from a bare skeleton to a finished one.'},
+    {sel: '#tops [data-top="more"]', pre: () => tabBtn('start').click(), t: '⚙ More › 🏁 Start', p: 'Pick what you are making (Creature, Character, Prop, Titan or Blank), then starters to remix, empty body types, and body shape sliders. 🎓 Build together walks you from a bare skeleton to a finished one.'},
     {sel: '#lib', pre: () => tabBtn('add').click(), t: '🧩 Build › Add parts', p: 'Press and hold a part, then drag it onto your model. (Or tap it, then tap the model. Double-tap = add it fast.)'},
     {sel: '#placeSeg', pre: () => tabBtn('add').click(), t: 'Snap or Free', p: '🦴 Snap lines parts up with the bones and sizes them to fit. ✋ Free puts it exactly where you let go — even floating in the air.'},
     {sel: '#bWS1', pre: () => tabBtn('add').click(), t: '🛠 Workshop', p: 'Build a part on its own, no skeleton: stack shapes, sculpt, paint, then 💾 Save part. It shows up in My Parts to drag onto any creature.'},
     {sel: '[data-tab="edit"]', pre: () => tabBtn('edit').click(), t: '✋ Move & size', p: 'Tap a part to pick it, then drag it. Drop it on the body and it sticks; drop it in the air and it floats. 🎯 Arrows are there for fine-tuning.'},
     {sel: '#copyRow', pre: () => tabBtn('edit').click(), t: '📄 Copy / 📋 Paste', p: 'Copy a part (or all of them) and paste it into another creature or the Workshop.'},
     {sel: '#vtools', t: '🔍 Focus', p: 'These stay on screen: 🔍 shows only the picked part, 🪟 keeps a zoomed window on it.'},
-    {sel: '#tops', t: 'Paint, Sculpt, ⚙', p: '🎨 Paint = skins, brushes and effects. 🗿 Sculpt = push and pull like clay, plus shape sliders. ⚙ = skeleton, poses, view and look.'},
+    {sel: '#tops', t: 'Build, Paint, Sculpt, Studio, More', p: '🧩 Build = add and move parts. 🎨 Paint = skins, brushes and effects. 🗿 Sculpt = push and pull like clay, plus shape sliders. 🎬 Studio = Level Builder, Sketch Pad, FX Lab. ⚙ More = start, skeleton, poses, view and look.'},
     {sel: '#bMenu', t: 'Save + help', p: '⋯ has Save as, Download model, ❓ How to build, and this tour again. Have fun!'});
 }
 window.__dbg = () => ({LIB, SKEL, MATS, FAMILY});   // test hook

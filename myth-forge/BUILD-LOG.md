@@ -86,6 +86,16 @@ Deeper technical notes for Claude are in `README.md` (same folder).
 - **His design rules:** original designs only (inspired by, never copies — no show / card / game character copies, no brand names); everything gets a low-poly version that looks good (faceted, polygon-art); oozes are unique and can grow their own face; jellyfish have no face; multi-head creatures are built head by head; never put his real name in the repo (MajorasPride).
 
 
+## Nov 16 2026 (UI floor A, NOT LIVE YET — waiting for his OK): same tab names everywhere + a calmer phone screen
+On test.html only: index.html was left at the old build (git checkout) until he OKs. To go live: run build.py (it writes both) and push.
+Redesign Phase 0 picked "A + C" (new shell, core first); floor A = quick UI tidy. His tab names: Build / Paint / Sculpt / Studio / More.
+- Phone bottom bar: 🧩 Build (Add parts + Move & size), 🎨 Paint, 🗿 Sculpt (+ Shape sliders), 🎬 Studio (opens the Studio space), ⚙ More (Start, Skeleton & pose, View & look). Old Add / Select tabs are merged into Build.
+- PC main tabs use the same five names; 🏁 Start moved under ⚙ More. Studio left the top bar.
+- Phone top bar buttons are 44px (were 31-37px). Floating buttons: only ◎ Wheel (56px), 🗑 while a part is picked, and 🧍 Stand up when it applies; 🛠 and 👆 Pick only are on the Build wheel. Tips show under the top bar instead of on the model.
+- Checks: phone 0 buttons under 40px (was 10); every tab, Studio, wheel and trash tapped on phone + PC, 0 errors; walk.js PASS on dragon, hydra, fish, biped, mech (phone complex + PC simple); modes.js all PASS.
+- Concept learned: the thumb zone (the main tools sit where the thumb rests, rare ones go in a menu). Vaccine: one name per tool on every screen size.
+- Next: floor B = the parts catalog sorted by body spot first (Head, Neck, Body, Arms, Legs, Wings, Tail, Extras), kit / style / Old as filter chips; bring the Dragon kit into it. Bug seen: the Blank mannequin opens leaning with one leg out.
+
 ## Nov 13 2026, 8:30pm — T036: 🫧 Soft move (proportional edit), drag picked low-poly faces (Opus scheduled run)
 - Base: the T060 bundle (d85dd72 = T040 + T049 rebuilt + T060), not pushed yet. Blender's proportional edit as an idea only (no Blender code; GPL). No library needed: it is ~150 lines on three.js r160 that is already loaded.
 - **🫧 Soft move** button in ✋ Move & size (under Size) and in the 🔷 Low-poly box (under Step), same settings in both: on / off, **Reach** slider (0.1 to 6), falloff **〰 Smooth / 📌 Sharp / 📐 Linear / ▬ Constant** (tap to cycle). A see-through blue ball shows the Reach while you set it or move. Off by default; remembered on this device.
