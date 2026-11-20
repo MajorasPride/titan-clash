@@ -20,6 +20,20 @@ Hi Claude. This is MajorasPride's game, and we build it together, one chat at a 
 6. I play on PC and on my phone.
 
 =====================================================================
+## Feel reference videos (Nov 19, 2026)
+=====================================================================
+MajorasPride shared two videos to show how the titans should move and feel (files are on his PC, not in the repo):
+- **War of the Monsters (PS2, 2003) tutorial gameplay** ("The Greatest PS2 Arena Fighter Everyone Forgot", https://www.youtube.com/watch?v=hwL8-hk1Xlc). This is the **movement and feel target**. What to take from it:
+  - Heavy, giant movement: weighty walks and stomps, and jumps that feel like a building taking off.
+  - Vertical play: titans climb skyscrapers and fight on rooftops.
+  - The city is a weapon: rip off radio towers, cars and building chunks to throw or swing like clubs.
+  - Grapples: grab-and-throw fights, and you mash buttons to escape when grabbed.
+  - Two ways to attack: punches up close, plus a ranged energy shot that drains a meter.
+  - Everything breaks: buildings crumble during the fight, so the arena changes as you play.
+- **"Gameplay" clip:** a bright low-poly toy city (flat pastel buildings, clean roads, high angled camera), a small flying red mech, an anime pilot portrait and an anime dialogue box giving objectives ("Area cleared, go check out that crater"). This shows how the world can be laid out, not how the fighting should feel.
+- Pacific Rim is still a main feel reference: thrown through buildings, sent flying, heavy hits. The official game (Pacific Rim: The Video Game, Yuke's, 2013, Xbox 360/PS3) was delisted in 2015.
+
+=====================================================================
 ## Sandbox 25 HEAVY FEEL (Nov 13, 2026, sandbox only)
 =====================================================================
 - `sandbox/src/25-heavy-feel.js` (`HV` switches): hit weight per move class (uses `feelClass` and the `FLOW` hit-pause numbers per hit), wind-up/commitment (wraps `FP.updateAtk` time), momentum/footsteps/landings (wraps `FP.update` input), slow-mo on `startSplat`/`bContact` crashes (wraps `loop`), FOV punch + low over-the-shoulder "giant" camera (wraps `updateCamera` and undoes itself before the next frame), bass boom (WebAudio) and `navigator.vibrate`. Full notes are in `sandbox/SANDBOX.md`.
