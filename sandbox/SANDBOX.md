@@ -23,6 +23,17 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 32 (Nov 23, 2026): ARENA CAM (side-on fighting-game camera)
+Status: **testing**. Feedback: waiting. Code: `sandbox/src/32-arena-cam.js`. Sandbox only, not in the game.
+- MajorasPride (showing the new Godzilla game's view): "why isn't there a camera that goes and focuses on the fight?" Also: combat should feel like a true fighting game, but as big, heavy mechs and kaiju.
+- **ARENA CAM:** a raised, side-on view that looks across the line between the two titans, keeps both on screen, zooms out as they move apart and in when they clinch. It turns slowly (max ~1.1 rad/s) and always takes the nearer side, so it never flips. Attacks and shots aim at the rival. Stick up = away from the camera.
+- It is a new view on the 🎥 button (after NEWS CAM) and **the sandbox now starts in it**; tap 🎥 for TITAN CAM and the others. Ultimates and cutscenes still use their own cameras.
+- Tune in code: `ACAM.near` / `ACAM.far` (zoom), `ACAM.rise` (height), `ACAM.turn` (swing speed).
+- Heavy Feel (Sandbox 25) is still on underneath: hit freeze, shake, wind-up, momentum.
+- Bot check (headless Chrome): match starts in ARENA CAM, both titans on screen at 8, 60, 70 and 78 units apart, 🎥 still cycles, lifting still works, no page errors.
+- Not done yet: titan always facing the rival in this view (like lock-on), auto-swing to this view only on lock-on (card `card-camera-feel.md`), 2-player split screen version.
+- **Feedback questions:** Is this the view you meant from the Godzilla game? Too high, too low, too close, too far? Does it turn too slowly or too fast? Do the controls feel right when the camera is side-on? Should the sandbox keep starting in it?
+
 ### Sandbox 31 (Nov 23, 2026): CITY TOYBOX ("make it as fun as the new Godzilla game")
 Status: **testing**. Feedback: waiting. Code: `sandbox/src/31-city-toybox.js`. Sandbox only, not in the game.
 - Why: MajorasPride plays Godzilla: Destroy All Monsters Melee Remastered and it "feels fun to play, ours not so much". Research (reviews): its camera and combat are called clunky; the fun is the toybox: lift and throw buildings, throw monsters through buildings, pickups + rage, simple buttons.
