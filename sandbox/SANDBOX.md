@@ -29,7 +29,8 @@ Status: **testing**. Feedback: waiting. Code: `sandbox/src/34-neon-city-landmark
 - **Face the rival (32):** in ARENA CAM your titan always faces the rival, like a fighting game (`ACAM.face`, false = old free facing). It uses the game's own lock-on.
 - **Pickups + rage (35):** every 9 to 13 s a glowing pickup drops on the streets (max 2). GREEN = +15% health, BLUE = energy full, RED = RAGE (+40% damage for 8 s). The CPU can take them too. `PKP.on`, `PKP.heal`, `PKP.rage`, `PKP.rageT`, `PKP.every`.
 - Bot check (headless Chrome): match starts, scenery built, wheel turning, lock on in Arena Cam, repair heals, rage raises damage, no page errors.
-- Not done: the train rule (hit the line = it stops; short of a station = it falls), throwable train cars, landmark collisions and damage, a rage glow on the titan, a rage attack, ⚙ switches for all of today's features.
+- **Added later the same day:** THE TRAIN RULE (throw a building/car into the line, or send a titan flying into the south waterfront: the train stops; between stations it falls off the rails and the cars drop) and a pulsing red RAGE ring under the raging titan (blinks before it ends).
+- Not done: throwable train cars, the next round turning chaotic after a derail (tsunami early), landmark collisions and damage, a rage attack, ⚙ switches for all of today's features.
 - **Feedback questions:** Does always facing the rival feel like a fighting game or does it fight your controls? Are pickups fun or a distraction? Is RAGE +40% for 8 s right? Does the waterfront make it feel like Neon City?
 
 ### Sandbox 33 (Nov 23, 2026): THE NEW NEON CITY LAYOUT, floor 1
