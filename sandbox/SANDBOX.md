@@ -23,6 +23,16 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 33 (Nov 23, 2026): THE NEW NEON CITY LAYOUT, floor 1
+Status: **testing**. Feedback: waiting. Code: `sandbox/src/33-neon-city-map.js`. Sandbox only, not in the game.
+- MajorasPride: "can you finally switch our neon city for our new one?" The old map scattered buildings in a ring. With CITY on, the sandbox now lays the city out like the Nov 22 Neon City design, centred on the SCRAMBLE CROSSING ("Round 1 starts here") and scaled x0.8 to fit the fight arena.
+- **What is in:** two big avenues meeting at the crossing with a department store on each corner (zebra + diagonal stripes); NEON ALLEYS north (tight small buildings + thin pencil buildings); HARBOR TOWERS west (a few very tall towers, open plazas); NEON CANAL east (low buildings on both banks of a glowing canal, small bridges); DOCKS south-west (low wide warehouses); LANTERN QUARTER south-east (low shops close together); waterfront strip and the BAY to the south. District ground is tinted per district. Same city every time (fixed seed).
+- Buildings are still the game's own: they break, wall-splat, can be ripped up (Sandbox 31) and wear the city-kit models. Titans start on the main avenue.
+- Switch in code: `NCM.on` (false = the old ring city). No ⚙ button yet.
+- **Not in yet (next floors):** elevated harbor train + 3 stations (his rule: hit the line = it stops, short of a station = it falls), Ferris wheel, cruise ship, pier, bay bridge, the landmark set, the preview page's own district models and signs (pagoda shops, sawtooth brick, needle tower...), cars/people on the new streets, the fight moving to another section each round, tsunami + weather on this map. The canal and bay are flat water you can walk on for now.
+- Bot check (headless Chrome): match starts on the new layout, every building dressed, titans not inside a building, lifting works, NCM.on=false brings the old city back, no page errors.
+- **Feedback questions:** Does it read as the new Neon City from the fight view? Are the avenues wide enough to fight in? Too many or too few buildings? Which missing piece first: the train, the Ferris wheel + ship, or the real district models?
+
 ### Sandbox 32 (Nov 23, 2026): ARENA CAM (side-on fighting-game camera)
 Status: **testing**. Feedback: waiting. Code: `sandbox/src/32-arena-cam.js`. Sandbox only, not in the game.
 - MajorasPride (showing the new Godzilla game's view): "why isn't there a camera that goes and focuses on the fight?" Also: combat should feel like a true fighting game, but as big, heavy mechs and kaiju.
