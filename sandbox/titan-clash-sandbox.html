@@ -25,6 +25,16 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 31 (Nov 23, 2026): CITY TOYBOX ("make it as fun as the new Godzilla game")
+Status: **testing**. Feedback: waiting. Code: `sandbox/src/31-city-toybox.js`. Sandbox only, not in the game.
+- Why: MajorasPride plays Godzilla: Destroy All Monsters Melee Remastered and it "feels fun to play, ours not so much". Research (reviews): its camera and combat are called clunky; the fun is the toybox: lift and throw buildings, throw monsters through buildings, pickups + rage, simple buttons.
+- Found: the game already had lifting, throwing, THROUGH THE WALL and WALL SLAM, but the new titans never reached it (INFERNOTH and ASHVIN have their own grab moves; only buildings up to 17 tall could be lifted; city-kit buildings could not be lifted).
+- **Now, every titan and stance:** GRAB next to a small building (rival not in grab range) rips it up. While holding it, GRAB, LIGHT or HEAVY throws it at the rival. Buildings up to 26 tall can be lifted (was 17); a city-kit building is carried as its plain block. With the rival in reach, GRAB is still the titan's own grab.
+- Switch in code: `TOY.on` (false = old behaviour), `TOY.maxH`. No ⚙ button yet.
+- Bot check (headless Chrome): VALOR and INFERNOTH each lifted and threw a city-kit building in a match, no page errors.
+- Not done yet (next floors): ⚙ switch, arena (side-on) camera view, pickups + rage, city weapons (clubs / spears), beam clash, giant mode, the CPU lifting buildings with the new kits. Plan and research: Project docs `handoff-fun-test.md`, `fun-research-best-of.md`; test page "Titan Clash Fun Test".
+- **Feedback questions:** Does ripping up a building feel good with your real titans? Is 26 tall the right limit? Is the carried block OK or should it keep its neon look? Does throwing hit hard enough? Did GRAB ever lift a building when you wanted to grab the rival?
+
 ### Sandbox 28 to 30 (Nov 13, 2026, T053, T054, T055): weather in the 3D world, FX kit, game feel + sound, cinematic moves
 Status: **testing** (he reviews at T057). Built on Sandbox 27 (T050). Each part is its own file with small hooks, so Fable's T051 (beam clash) and T061 (night glow) stack on top cleanly. Build tag: 30.
 - **Sandbox 28, weather (T053, `src/28-weather-fx.js`, `src/28-bloom-lib.js`).** His fix: "can we fix the overlay of weather??" The flat lens layer is gone (⚙ OLD LENS OVERLAY brings it back to compare). Rain, snow, ash, embers and sand now fall through the 3D city, are lit by the nearest neon signs, splash on the ground and on the titans, and never cover the HUD or menus. 13 weathers: clear night, rain, thunderstorm (strikes hit the tallest building nearby or a titan for 2% health), fog bank, snow and blizzard (slower footing, icy slide), sandstorm, heatwave haze (fire hits +8%, water -8%), typhoon wind (pushes shots and debris), volcanic ash, INFERNOTH fire sky (embers, fire +10%), RAGNAVOX storm sky (green strikes that never hit RAGNAVOX), and BRIGHT FOG / NEON HAZE (option, off by default). Each round: FIXED, ROUND BY ROUND, RANDOM or KAIJU WEATHER. Time of day: NIGHT (default, never brightened), DUSK, DAWN. Wet and icy roads show neon reflection streaks. STRENGTH slider. FX kit: one hit set per element (fire, water, ice, lightning, grass, dark, sound) on every landed hit, beam cores (`FXK.beam`), sword trails on sword moves, spell circles with runes under ultimates and supers, TEST buttons in ⚙. Neon bloom (three.js r128 UnrealBloomPass, MIT; BLOOM switch). three.quarks and pmndrs postprocessing need a newer three.js than the game's r128, so the same jobs use r128's own bloom and small shader particles. HDRIs and the Kenney Particle Pack are on his PC only: sprites are drawn in code.
@@ -10992,6 +11002,35 @@ function ccUI(){ const m=el('sbMenu'); if(!m||m.querySelector('[data-cc]')) retu
 function ccSync(){ document.querySelectorAll('#sbMenu [data-cc]').forEach(b=>b.classList.toggle('on',!!CC[CCS[+b.dataset.cc][1]])); }
 { const oS=sbStart; sbStart=function(){ oS(); ccUI(); ccSync(); }; }
 { const oS=sbSync; sbSync=function(){ oS(); ccUI(); ccSync(); }; }
+
+/* =====================================================================
+   SANDBOX 31 (Nov 23, 2026): CITY TOYBOX. MajorasPride: the new Godzilla game (Destroy All Monsters Melee
+   Remastered) "feels fun to play, ours not so much". Research: its fun is the toybox (lift + throw buildings,
+   throw monsters through buildings), not its camera. The game ALREADY has lifting, throwing, THROUGH THE WALL
+   and WALL SLAM (tryGrab / liftBuilding / throwHeld / bContact), but the new kits never reach it:
+   INFERNOTH and ASHVIN have their own grab moves, only buildings up to 17 tall could be lifted, and
+   city-kit buildings could not be lifted at all. This file opens the toybox to every titan:
+   1. GRAB next to a small building (rival not in grab range) = rip it up, for every titan and stance.
+   2. Holding one: GRAB, LIGHT or HEAVY = throw it.
+   3. Buildings up to TOY.maxH tall can be lifted (was 17); city-kit ones are carried as their plain block.
+   Switch: TOY.on (false = the old behaviour). Nothing here changes the real game.
+   ===================================================================== */
+const TOY={on:true,maxH:26};
+{ const o=FP.liftableBuilding; FP.liftableBuilding=function(){ if(!TOY.on) return o.call(this);
+  let best=null, bd=1e9; const fx=Math.sin(this.yaw), fz=Math.cos(this.yaw), R=this.radius();
+  for(const b of city){ if(!b.alive||b.trig||b.kc||!b.mesh||b.h>TOY.maxH||b.h<4) continue;
+   const cx=clamp(this.pos.x,b.x-b.w/2,b.x+b.w/2), cz=clamp(this.pos.z,b.z-b.d/2,b.z+b.d/2), d=Math.hypot(cx-this.pos.x,cz-this.pos.z);
+   if(d>R+5.5||d>=bd) continue; const ax=b.x-this.pos.x, az=b.z-this.pos.z, al=Math.hypot(ax,az)||1; if((ax*fx+az*fz)/al<.1&&d>R*.6) continue; best=b; bd=d; }
+  return best; }; }
+{ const o=FP.liftBuilding; FP.liftBuilding=function(b){
+  try{ if(TOY.on&&b.ck){ for(const k of ['intact','damaged','rubble']) if(b.ck[k]) b.ck[k].visible=false; b.mesh.visible=true; } }catch(e){ console.error(e); }
+  return o.call(this,b); }; }
+function toyGrab(f,inp){ if(!TOY.on||!f||!f.def||game.state!=='fight'||f.dead||f.stun>0||f.grabbedBy||f.rollT>0) return;
+ if(f.held){ if((inp.grab>0||inp.punch>0||inp.heavy>0)&&!f.atk){ inp.grab=inp.punch=inp.heavy=0; f.startAtk('throw'); } return; }
+ if(!(inp.grab>0)||f.atk||f.veh||(f.F&&f.F.hover)) return;
+ const o=f.opp; if(o&&!o.dead&&Math.hypot(o.pos.x-f.pos.x,o.pos.z-f.pos.z)<f.radius()+o.radius()+5) return;   // rival in reach: the titan's own grab
+ const b=f.liftableBuilding(); if(b){ inp.grab=0; f.liftBuilding(b); } }
+{ const o=v8Input; v8Input=function(f,inp,dt){ try{ toyGrab(f,inp); }catch(e){ console.error(e); } return o(f,inp,dt); }; }
 
 </script>
 <!-- SANDBOX END -->
