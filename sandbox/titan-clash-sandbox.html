@@ -25,6 +25,15 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 34 + 35 (Nov 23, 2026): WATERFRONT SCENERY, FACE THE RIVAL, PICKUPS + RAGE
+Status: **testing**. Feedback: waiting. Code: `sandbox/src/34-neon-city-landmarks.js`, `35-pickups.js`, one line in `32-arena-cam.js`. Sandbox only. MajorasPride: "all of them, keep building", "add new fun things too".
+- **Waterfront (34), looks only, just outside the fight ring:** elevated HARBOR TRAIN (viaduct, 3 stations, a 3-car train that runs back and forth and waits at each station), turning FERRIS WHEEL, CRUISE SHIP at a pier, BAY TORII in the water, BEACON SPIRE (west skyline), RED-WHITE BROADCAST TOWER (east skyline). No collisions yet; you can't hit the rail or throw the train cars yet. `NCL.on`.
+- **Face the rival (32):** in ARENA CAM your titan always faces the rival, like a fighting game (`ACAM.face`, false = old free facing). It uses the game's own lock-on.
+- **Pickups + rage (35):** every 9 to 13 s a glowing pickup drops on the streets (max 2). GREEN = +15% health, BLUE = energy full, RED = RAGE (+40% damage for 8 s). The CPU can take them too. `PKP.on`, `PKP.heal`, `PKP.rage`, `PKP.rageT`, `PKP.every`.
+- Bot check (headless Chrome): match starts, scenery built, wheel turning, lock on in Arena Cam, repair heals, rage raises damage, no page errors.
+- Not done: the train rule (hit the line = it stops; short of a station = it falls), throwable train cars, landmark collisions and damage, a rage glow on the titan, a rage attack, ⚙ switches for all of today's features.
+- **Feedback questions:** Does always facing the rival feel like a fighting game or does it fight your controls? Are pickups fun or a distraction? Is RAGE +40% for 8 s right? Does the waterfront make it feel like Neon City?
+
 ### Sandbox 33 (Nov 23, 2026): THE NEW NEON CITY LAYOUT, floor 1
 Status: **testing**. Feedback: waiting. Code: `sandbox/src/33-neon-city-map.js`. Sandbox only, not in the game.
 - MajorasPride: "can you finally switch our neon city for our new one?" The old map scattered buildings in a ring. With CITY on, the sandbox now lays the city out like the Nov 22 Neon City design, centred on the SCRAMBLE CROSSING ("Round 1 starts here") and scaled x0.8 to fit the fight arena.
@@ -11061,7 +11070,7 @@ function toyGrab(f,inp){ if(!TOY.on||!f||!f.def||game.state!=='fight'||f.dead||f
    reviews complain about exactly that). It is a new view on the 🎥 button and the sandbox starts in it.
    Tune: ACAM.near / far (zoom), ACAM.rise (how high), ACAM.turn (how fast it swings). Sandbox only.
    ===================================================================== */
-const ACAM={near:30,far:120,zoom:.85,rise:.46,turn:1.1,yaw:null};
+const ACAM={face:true,near:30,far:120,zoom:.85,rise:.46,turn:1.1,yaw:null};
 CAMVIEWS.push(['arena','ARENA CAM']);
 function arenaCam(dt){ const A=game.p, B=game.e, c=cams[0], C=camera, s=Math.max(A.scale||1,B.scale||1);
  const dx=B.pos.x-A.pos.x, dz=B.pos.z-A.pos.z, sep=Math.hypot(dx,dz);
@@ -11075,7 +11084,8 @@ function arenaCam(dt){ const A=game.p, B=game.e, c=cams[0], C=camera, s=Math.max
  c.yaw=ACAM.yaw;                                         // stick up = away from the camera
  const fov=isTouch?58:50; if(Math.abs(C.fov-fov)>.05){ C.fov+=(fov-C.fov)*Math.min(1,dt*8); C.updateProjectionMatrix(); } v8cam.fov=C.fov;
  C.position.copy(c.pos); if(game.shake>0){ C.position.x+=rand(-1,1)*game.shake; C.position.y+=rand(-1,1)*game.shake; C.position.z+=rand(-1,1)*game.shake; }
- C.lookAt(c.look); if(!B.dead) inps[0].aimPoint.copy(B.chest());   // attacks and shots go at the rival, like a fighting game
+ C.lookAt(c.look); if(!B.dead){ inps[0].aimPoint.copy(B.chest()); if(ACAM.face){ c.lock=true; inps[0].lock=true; } }   // ACAM.face: your titan always faces the rival, like a fighting game
+   // attacks and shots go at the rival, like a fighting game
  game.shake*=Math.exp(-6*dt); try{ computeFade(0,dt); }catch(e){}
  camLook.copy(c.look); moon.target.position.set(camLook.x,0,camLook.z); moon.position.set(camLook.x-50,110,camLook.z+40); }
 { const o=updateCamera; updateCamera=function(dt){
@@ -11152,6 +11162,81 @@ function ncmBuild(){ NCM.s=NCM.seed; NCM.count={}; if(NCM.g) scene.remove(NCM.g)
   const den=MAP.bDen, roads=ckRoads; MAP.bDen=0; ckRoads=function(){};        // the old ring city and its road tiles stay out
   try{ o(); } finally{ MAP.bDen=den; ckRoads=roads; }
   try{ ncmBuild(); }catch(e){ console.error(e); } }; }
+
+/* =====================================================================
+   SANDBOX 34 (Nov 23, 2026): NEON CITY WATERFRONT (floor 2 of the new city). MajorasPride: "all of them, keep
+   building". Scenery along the bay, just outside the fight ring so nothing blocks the fight yet:
+   - the elevated HARBOR TRAIN: viaduct, 3 stations (HARBOR, NEON CENTRAL, LANTERN TOWN), a 3-car train that
+     runs back and forth and waits at each station
+   - the FERRIS WHEEL (turning, pink ring), the CRUISE SHIP at the pier, the BAY TORII standing in the water
+   - two skyline landmarks from the new landmark designs: BEACON SPIRE (west) and the RED-WHITE BROADCAST TOWER (east)
+   Looks only for now: no hitting the rail, no throwing train cars, no tsunami. Those are the next floor.
+   Switch: NCL.on. Sandbox only.
+   ===================================================================== */
+const NCL={on:true,g:null,wheel:null,train:[],tx:-200,dir:1,wait:1.5,TZ:186,DY:14};
+const nclL=c=>new THREE.MeshLambertMaterial({color:c}), nclG=c=>new THREE.MeshBasicMaterial({color:c});
+function nclBox(g,w,h,d,m,x,y,z){ const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); o.position.set(x||0,y||0,z||0); g.add(o); return o; }
+function nclCyl(g,rt,rb,h,m,x,y,z,s){ const o=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,s||8),m); o.position.set(x||0,y||0,z||0); g.add(o); return o; }
+function nclBuild(){ if(NCL.g){ scene.remove(NCL.g); NCL.g=null; } NCL.train=[]; NCL.wheel=null; if(!NCL.on||!NCM.g) return;
+ const g=NCL.g=new THREE.Group(); scene.add(g); const TZ=NCL.TZ, DY=NCL.DY, steel=nclL(0x4a4e5c), dark=nclL(0x34384a), white=nclL(0xeef0f6), red=nclL(0xd8402a);
+ // elevated harbor train
+ nclBox(g,580,1.2,5,steel,0,DY-.6,TZ); nclBox(g,580,.3,.4,nclG(0x29e3ff),0,DY+.2,TZ-2.6);
+ for(let x=-280;x<=280;x+=28) nclBox(g,2,DY-1,2,dark,x,(DY-1)/2,TZ);
+ for(const sx of [-200,0,200]){ nclBox(g,40,1,11,nclL(0x5a5e70),sx,DY+.1,TZ+2); nclBox(g,40,.7,12,nclG(sx?0xff3fb4:0xffd23f),sx,DY+8,TZ+2); for(const e of [-18,18]) nclBox(g,1.2,8,1.2,dark,sx+e,DY+4,TZ+6); nclBox(g,12,12,9,dark,sx,6,TZ+9); }
+ for(let i=0;i<3;i++){ const c=new THREE.Group(); nclBox(c,13,4.4,4,white); nclBox(c,13.1,1.1,4.1,nclG(0xffd28a),0,.5,0); nclBox(c,13.1,.5,4.1,red,0,-1.6,0); c.position.set(0,DY+2.3,TZ); g.add(c); NCL.train.push(c); }
+ // ferris wheel
+ const F=new THREE.Group(); F.position.set(-118,0,216); g.add(F); for(const s of [-1,1]){ const l=nclBox(F,1.6,40,1.6,nclL(0x8a8f98),s*10,18,0); l.rotation.z=s*.27; }
+ const W=NCL.wheel=new THREE.Group(); W.position.y=36; F.add(W); const ring=new THREE.Mesh(new THREE.TorusGeometry(27,.7,6,40),nclG(0xff3fb4)); W.add(ring);
+ for(let i=0;i<12;i++){ const a=i/12*Math.PI*2, sp=nclBox(W,.5,27,.5,nclL(0x8a8f98),Math.cos(a)*13.5,Math.sin(a)*13.5,0); sp.rotation.z=a-Math.PI/2; nclBox(W,4,3.6,4,nclG([0x29e3ff,0xffd23f,0x3dff9a][i%3]),Math.cos(a)*27,Math.sin(a)*27,0); }
+ // pier + cruise ship
+ nclBox(g,12,1.2,70,nclL(0x5a4a3a),70,.6,NCM_SHORE+34);
+ const S=new THREE.Group(); S.position.set(92,0,NCM_SHORE+44); g.add(S); nclBox(S,18,10,78,white,0,3,0); nclBox(S,18.2,2.4,78.2,nclL(0x1d2a44),0,-.6,0);
+ nclBox(S,15,4,60,white,0,10,-3); nclBox(S,15.2,.8,60.2,nclG(0x29e3ff),0,10.4,-3); nclBox(S,13,4,46,white,0,14,-6); nclBox(S,13.2,.8,46.2,nclG(0x29e3ff),0,14.4,-6); nclCyl(S,2.6,3.2,8,red,0,20,-14,10);
+ // bay torii
+ const T=new THREE.Group(); T.position.set(0,0,NCM_SHORE+70); g.add(T); for(const s of [-1,1]){ nclCyl(T,2.2,2.8,44,red,s*17,22,0); nclCyl(T,3.4,3.4,3,dark,s*17,1.5,0); }
+ nclBox(T,48,3.4,4.4,red,0,44,0); nclBox(T,54,2.2,5.4,dark,0,47.4,0); nclBox(T,40,2.6,3,red,0,35,0);
+ // beacon spire (west skyline)
+ const B=new THREE.Group(); B.position.set(-215,0,120); g.add(B); nclCyl(B,5,9,70,nclL(0x2c3346),0,35,0); for(let i=1;i<7;i++){ const r=new THREE.Mesh(new THREE.TorusGeometry(9.6-i*.55,.35,6,24),nclG(0x29e3ff)); r.rotation.x=Math.PI/2; r.position.y=i*10; B.add(r); }
+ nclCyl(B,6,6,4,nclG(0xffd28a),0,76,0); nclCyl(B,3,7,4,red,0,80,0); nclCyl(B,.3,.9,22,white,0,93,0,6);
+ // red-white broadcast tower (east skyline)
+ const R=new THREE.Group(); R.position.set(222,0,-120); g.add(R); for(let i=0;i<7;i++){ const m=i%2?white:red, w0=24-i*3, w1=21-i*3; for(const [sx,sz] of [[1,1],[1,-1],[-1,1],[-1,-1]]){ const o=nclBox(R,1.3,11.4,1.3,m,sx*(w0+w1)/4,i*11+5.5,sz*(w0+w1)/4); o.rotation.z=sx*.13; o.rotation.x=-sz*.13; } nclBox(R,w1,.7,w1,m,0,i*11+11,0); }
+ nclBox(R,12,4,12,white,0,35,0); nclBox(R,12.4,1,12.4,nclG(0xffd28a),0,35,0); nclCyl(R,.4,1,26,red,0,90,0,6); }
+function nclTick(dt){ if(!NCL.g||!(dt>0)) return; if(NCL.wheel) NCL.wheel.rotation.z+=dt*.12;
+ if(NCL.wait>0) NCL.wait-=dt; else { const before=NCL.tx; NCL.tx+=NCL.dir*30*dt;
+  for(const sx of [-200,0,200]) if((before-sx)*(NCL.tx-sx)<=0&&before!==sx){ NCL.tx=sx; NCL.wait=2.2; if(sx===200*NCL.dir) NCL.dir*=-1; }
+  if(Math.abs(NCL.tx)>201){ NCL.tx=Math.sign(NCL.tx)*200; NCL.dir*=-1; NCL.wait=2.2; } }
+ NCL.train.forEach((c,i)=>c.position.x=NCL.tx+(i-1)*13.8); }
+{ const o=makeCity; makeCity=function(){ o(); try{ nclBuild(); }catch(e){ console.error(e); } }; }
+{ const o=updateCamera; updateCamera=function(dt){ o(dt); try{ nclTick(dt); }catch(e){} }; }
+
+/* =====================================================================
+   SANDBOX 35 (Nov 23, 2026): PICKUPS + RAGE. MajorasPride: "add new fun things too". From the fun research:
+   the Godzilla games drop health / energy / rage into the city so there is always something to race for.
+   Every 9 to 13 seconds a glowing pickup drops on the streets (max 2 at once). Walk into it:
+     GREEN  = REPAIR: +15% health          BLUE = ENERGY: energy bar full
+     RED    = RAGE: for 8 seconds your hits do +40% damage (the titan glows red in the toast and HUD text)
+   The CPU can walk into them too. Numbers: PKP.heal, PKP.rage, PKP.rageT, PKP.every. Switch: PKP.on. Sandbox only.
+   ===================================================================== */
+const PKP={on:true,list:[],t:6,every:[9,13],heal:.15,rage:1.4,rageT:8,
+ kinds:{repair:[0x3dff9a,'#3dff9a','REPAIR! +15% HEALTH'],energy:[0x29e3ff,'#29e3ff','ENERGY FULL!'],rage:[0xff4a3a,'#ff6a4a','RAGE! HITS +40% FOR 8 SECONDS']}};
+function pkpClear(){ for(const p of PKP.list) scene.remove(p.g); PKP.list=[]; PKP.t=6; }
+function pkpSpawn(kind,x,z){ kind=kind||['repair','energy','rage'][(Math.random()*3)|0];
+ if(x===undefined) for(let n=0;n<30;n++){ const a=Math.random()*6.283, r=20+Math.random()*90; x=Math.cos(a)*r; z=Math.sin(a)*r; if(!inBuilding(x,z,4)) break; }
+ const K=PKP.kinds[kind], g=new THREE.Group(), gem=new THREE.Mesh(new THREE.OctahedronGeometry(2.2,0),new THREE.MeshBasicMaterial({color:K[0]})); gem.position.y=5; g.add(gem);
+ const col=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,80,6),new THREE.MeshBasicMaterial({color:K[0],transparent:true,opacity:.3,depthWrite:false})); col.position.y=40; g.add(col);
+ g.position.set(x,0,z); scene.add(g); const p={kind,g,gem,x,z}; PKP.list.push(p); return p; }
+function pkpTake(f,p){ const K=PKP.kinds[p.kind];
+ if(p.kind==='repair') f.hp=Math.min(f.def.hp,f.hp+f.def.hp*PKP.heal); else if(p.kind==='energy') f.energy=100; else f._rageUntil=game.time+PKP.rageT;
+ try{ burst(V(p.x,6,p.z),K[1],24,16); Snd.tone&&Snd.tone('square',p.kind==='rage'?300:760,p.kind==='rage'?520:1100,.14); }catch(e){}
+ toast(f.isPlayer?K[2]:f.def.name+' GOT '+p.kind.toUpperCase()+'!',K[1],1300); }
+function pkpTick(dt){ if(!(dt>0)) return; const live=PKP.on&&game.mode==='match'&&game.state==='fight'&&game.p&&game.e&&!game.destroy;
+ if(!live){ if(PKP.list.length&&(!PKP.on||game.state==='over')) pkpClear(); return; }
+ PKP.t-=dt; if(PKP.t<=0){ PKP.t=PKP.every[0]+Math.random()*(PKP.every[1]-PKP.every[0]); if(PKP.list.length<2) pkpSpawn(); }
+ for(let i=PKP.list.length-1;i>=0;i--){ const p=PKP.list[i]; p.gem.rotation.y+=dt*2.2; p.gem.position.y=5+Math.sin(game.time*3+i)*.8;
+  for(const f of [game.p,game.e]){ if(f.dead||f.hidden) continue; if(Math.hypot(f.pos.x-p.x,f.pos.z-p.z)<f.radius()+3.5&&f.pos.y<8){ pkpTake(f,p); scene.remove(p.g); PKP.list.splice(i,1); break; } } } }
+{ const o=FP.takeHit; FP.takeHit=function(src,dmg,kb,launch,cont,dir){ if(PKP.on&&src&&src._rageUntil>game.time&&dmg>0) dmg*=PKP.rage; return o.call(this,src,dmg,kb,launch,cont,dir); }; }
+{ const o=makeCity; makeCity=function(){ pkpClear(); o(); }; }
+{ const o=updateCamera; updateCamera=function(dt){ o(dt); try{ pkpTick(dt); }catch(e){ console.error(e); } }; }
 
 </script>
 <!-- SANDBOX END -->

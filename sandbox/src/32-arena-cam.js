@@ -6,7 +6,7 @@
    reviews complain about exactly that). It is a new view on the 🎥 button and the sandbox starts in it.
    Tune: ACAM.near / far (zoom), ACAM.rise (how high), ACAM.turn (how fast it swings). Sandbox only.
    ===================================================================== */
-const ACAM={near:30,far:120,zoom:.85,rise:.46,turn:1.1,yaw:null};
+const ACAM={face:true,near:30,far:120,zoom:.85,rise:.46,turn:1.1,yaw:null};
 CAMVIEWS.push(['arena','ARENA CAM']);
 function arenaCam(dt){ const A=game.p, B=game.e, c=cams[0], C=camera, s=Math.max(A.scale||1,B.scale||1);
  const dx=B.pos.x-A.pos.x, dz=B.pos.z-A.pos.z, sep=Math.hypot(dx,dz);
@@ -20,7 +20,8 @@ function arenaCam(dt){ const A=game.p, B=game.e, c=cams[0], C=camera, s=Math.max
  c.yaw=ACAM.yaw;                                         // stick up = away from the camera
  const fov=isTouch?58:50; if(Math.abs(C.fov-fov)>.05){ C.fov+=(fov-C.fov)*Math.min(1,dt*8); C.updateProjectionMatrix(); } v8cam.fov=C.fov;
  C.position.copy(c.pos); if(game.shake>0){ C.position.x+=rand(-1,1)*game.shake; C.position.y+=rand(-1,1)*game.shake; C.position.z+=rand(-1,1)*game.shake; }
- C.lookAt(c.look); if(!B.dead) inps[0].aimPoint.copy(B.chest());   // attacks and shots go at the rival, like a fighting game
+ C.lookAt(c.look); if(!B.dead){ inps[0].aimPoint.copy(B.chest()); if(ACAM.face){ c.lock=true; inps[0].lock=true; } }   // ACAM.face: your titan always faces the rival, like a fighting game
+   // attacks and shots go at the rival, like a fighting game
  game.shake*=Math.exp(-6*dt); try{ computeFade(0,dt); }catch(e){}
  camLook.copy(c.look); moon.target.position.set(camLook.x,0,camLook.z); moon.position.set(camLook.x-50,110,camLook.z+40); }
 { const o=updateCamera; updateCamera=function(dt){

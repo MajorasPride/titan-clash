@@ -23,6 +23,15 @@ On screen during the fight: only the **⚙ SANDBOX** button (top left) and a sma
 Feedback is the most important part. After every sandbox test, Claude asks the feedback questions from the Game Plan ("Feedback questions": the core set plus the set for what was built) and logs the answers here before anything moves into the game.
 
 ## Sandbox log (newest first)
+### Sandbox 34 + 35 (Nov 23, 2026): WATERFRONT SCENERY, FACE THE RIVAL, PICKUPS + RAGE
+Status: **testing**. Feedback: waiting. Code: `sandbox/src/34-neon-city-landmarks.js`, `35-pickups.js`, one line in `32-arena-cam.js`. Sandbox only. MajorasPride: "all of them, keep building", "add new fun things too".
+- **Waterfront (34), looks only, just outside the fight ring:** elevated HARBOR TRAIN (viaduct, 3 stations, a 3-car train that runs back and forth and waits at each station), turning FERRIS WHEEL, CRUISE SHIP at a pier, BAY TORII in the water, BEACON SPIRE (west skyline), RED-WHITE BROADCAST TOWER (east skyline). No collisions yet; you can't hit the rail or throw the train cars yet. `NCL.on`.
+- **Face the rival (32):** in ARENA CAM your titan always faces the rival, like a fighting game (`ACAM.face`, false = old free facing). It uses the game's own lock-on.
+- **Pickups + rage (35):** every 9 to 13 s a glowing pickup drops on the streets (max 2). GREEN = +15% health, BLUE = energy full, RED = RAGE (+40% damage for 8 s). The CPU can take them too. `PKP.on`, `PKP.heal`, `PKP.rage`, `PKP.rageT`, `PKP.every`.
+- Bot check (headless Chrome): match starts, scenery built, wheel turning, lock on in Arena Cam, repair heals, rage raises damage, no page errors.
+- Not done: the train rule (hit the line = it stops; short of a station = it falls), throwable train cars, landmark collisions and damage, a rage glow on the titan, a rage attack, ⚙ switches for all of today's features.
+- **Feedback questions:** Does always facing the rival feel like a fighting game or does it fight your controls? Are pickups fun or a distraction? Is RAGE +40% for 8 s right? Does the waterfront make it feel like Neon City?
+
 ### Sandbox 33 (Nov 23, 2026): THE NEW NEON CITY LAYOUT, floor 1
 Status: **testing**. Feedback: waiting. Code: `sandbox/src/33-neon-city-map.js`. Sandbox only, not in the game.
 - MajorasPride: "can you finally switch our neon city for our new one?" The old map scattered buildings in a ring. With CITY on, the sandbox now lays the city out like the Nov 22 Neon City design, centred on the SCRAMBLE CROSSING ("Round 1 starts here") and scaled x0.8 to fit the fight arena.
