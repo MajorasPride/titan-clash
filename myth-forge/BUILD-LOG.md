@@ -4,6 +4,7 @@ Live: https://majoraspride.github.io/titan-clash/myth-forge/ · Newest first. Ev
 Deeper technical notes for Claude are in `README.md` (same folder).
 
 ## 👉 START HERE (handoff for a new chat, updated Nov 13 2026, 8:30pm — T036: 🫧 Soft move (proportional edit) in ✋ Move & size and 🔷 Low-poly, drag picked low-poly faces; before that T060: the 2.0 kits ARE the parts list (Parts | Old tabs), ⭐ kit starters, 🔌 Fits here / ⇄ swap, ✦ glow slot; before that T040: opens in ✨ Blank; T031 + T035 LIVE; after T035 modes (Creature, Character, Prop, Titan, Blank) and T031 wings / fins fit; before that Nov 10 2:40am: paint round (🌫 whole-creature Blend, 🧽 Eraser, skins in every brush) and the 2am round (one-part adding, 37 basic shapes, ✖ Multiply + curve))
+- **Nov 17: FOCUSED again** (with Titan Clash). Phase 0 Brainstorm: write the design doc. Projects\CLAUDE.md rules win over the old steps below: never push or deploy, work on a pc/ branch, he publishes.
 - **BUILD METHOD (MajorasPride, Nov 9 3pm). Follow this, it keeps chats cheap:**
   1. Read ONLY this START HERE section, then start working. Don't re-read the whole README / log / review unless the task needs it.
   2. Take the next item from **NEXT UP** and build it. Don't stop to ask. Where there's a choice, pick the recommended / safest option and write down what you picked.
